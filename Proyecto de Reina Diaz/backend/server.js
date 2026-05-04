@@ -1,5 +1,4 @@
 const express = require('express');
-// Comentario de prueba para verificar persistencia del volumen - 04 Mayo
 const cors = require('cors');
 const db = require('./database');
 const bcrypt = require('bcrypt');
