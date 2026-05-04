@@ -90,7 +90,7 @@ export default function Reportes() {
                 className={`btn ${invFilter === 'pendientes' ? 'btn-primary' : 'btn-secondary'}`}
                 style={{ fontSize: '0.85rem', padding: '0.5rem' }}
               >
-                Solo Pendientes (Sin Asignar)
+                Solo Disponibles (Sin Asignar)
               </button>
             </div>
           </div>

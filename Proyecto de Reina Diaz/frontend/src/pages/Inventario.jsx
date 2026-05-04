@@ -243,7 +243,7 @@ export default function Inventario() {
                           </div>
                         ) : (
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#ef4444', fontWeight: 600, fontSize: '0.85rem' }}>
-                            <div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: '#ef4444', boxShadow: '0 0 5px rgba(239, 68, 68, 0.5)' }}></div> Pendiente
+                            <div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: '#ef4444', boxShadow: '0 0 5px rgba(239, 68, 68, 0.5)' }}></div> Disponible
                           </div>
                         )}
                       </td>
