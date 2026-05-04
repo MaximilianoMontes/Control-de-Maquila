@@ -1,5 +1,6 @@
 import { FileText, Download, PackageSearch, CalendarRange } from 'lucide-react';
 import { useState } from 'react';
+import API_URL from '../config';
 
 export default function Reportes() {
   const [startDate, setStartDate] = useState('');
@@ -7,7 +8,7 @@ export default function Reportes() {
   const [prodDate, setProdDate] = useState('');
   
   const handleDownloadProduccion = () => {
-    let url = 'http://localhost:3001/api/reportes/produccion';
+    let url = `${API_URL}/api/reportes/produccion`;
     if (prodDate) url += `?date=${prodDate}`;
     window.open(url, '_blank');
   };
@@ -15,12 +16,12 @@ export default function Reportes() {
   const [invFilter, setInvFilter] = useState('todos');
   
   const handleDownloadInventario = () => {
-    let url = `http://localhost:3001/api/reportes/inventario?filter=${invFilter}`;
+    let url = `${API_URL}/api/reportes/inventario?filter=${invFilter}`;
     window.open(url, '_blank');
   };
 
   const handleDownloadRecoleccion = () => {
-    let url = 'http://localhost:3001/api/reportes/recoleccion';
+    let url = `${API_URL}/api/reportes/recoleccion`;
     const params = new URLSearchParams();
     if (startDate) params.append('start', startDate);
     if (endDate) params.append('end', endDate);
