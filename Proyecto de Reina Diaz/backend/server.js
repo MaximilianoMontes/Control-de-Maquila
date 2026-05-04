@@ -8,6 +8,7 @@ const xlsx = require('xlsx');
 const PDFDocument = require('pdfkit-table');
 const fs = require('fs');
 const path = require('path');
+const sharp = require('sharp');
 require('dotenv').config();
 
 const uploadDir = path.join(__dirname, 'uploads');
@@ -49,6 +50,32 @@ const logActivity = async (userId, action, target, description) => {
     await db.query("INSERT INTO historial (user_id, action, target, description) VALUES (?, ?, ?, ?)", [userId, action, target, description]);
   } catch (error) {
     console.error("Error al registrar historial:", error);
+  }
+};
+
+// Helper para procesar y comprimir imágenes
+const processImage = async (file) => {
+  if (!file) return null;
+  const fileName = 'compressed-' + Date.now() + '.jpg';
+  const outputPath = path.join(uploadDir, fileName);
+  
+  try {
+    await sharp(file.path)
+      .resize(1200, null, { withoutEnlargement: true }) // Máximo 1200px de ancho
+      .jpeg({ quality: 80 }) // 80% de calidad para ahorrar espacio
+      .toFile(outputPath);
+      
+    // Borrar el archivo original sin comprimir para no duplicar espacio
+    fs.unlink(file.path, (err) => {
+      if (err) {
+        // Ignorar si el archivo no existe
+      }
+    });
+    
+    return '/uploads/' + fileName;
+  } catch (error) {
+    console.error("Error al procesar imagen con sharp:", error);
+    return '/uploads/' + file.filename; // Fallback al original si falla sharp
   }
 };
 
@@ -172,7 +199,7 @@ app.get('/api/maquileros/:id', async (req, res) => {
 
 app.post('/api/maquileros', authenticateToken, upload.single('imagenBtn'), async (req, res) => {
   const { nombre, maquinaria, personal, domicilio, colonia, codigo_postal, telefono } = req.body;
-  const imagen = req.file ? '/uploads/' + req.file.filename : null;
+  const imagen = await processImage(req.file);
   const numPersonal = parseInt(personal) || null;
   
   try {
@@ -187,8 +214,8 @@ app.post('/api/maquileros', authenticateToken, upload.single('imagenBtn'), async
   }
 });
 
-app.put('/api/maquileros/:id/imagen', async (req, res) => {
-  const imagen = req.file ? '/uploads/' + req.file.filename : null;
+app.put('/api/maquileros/:id/imagen', upload.single('imagenBtn'), async (req, res) => {
+  const imagen = await processImage(req.file);
   if (!imagen) return res.status(400).json({ error: 'No se recibió imagen' });
   try {
     await db.query("UPDATE maquileros SET imagen = ? WHERE id = ?", [imagen, req.params.id]);
@@ -200,7 +227,7 @@ app.put('/api/maquileros/:id/imagen', async (req, res) => {
 
 app.put('/api/maquileros/:id', authenticateToken, upload.single('imagenBtn'), async (req, res) => {
   const { nombre, maquinaria, personal, domicilio, colonia, codigo_postal, telefono } = req.body;
-  const imagen = req.file ? '/uploads/' + req.file.filename : req.body.imagen_actual || null;
+  const imagen = req.file ? await processImage(req.file) : (req.body.imagen_actual || null);
   const numPersonal = parseInt(personal) || null;
 
   try {
@@ -256,7 +283,7 @@ app.get('/api/inventario', async (req, res) => {
 
 app.post('/api/inventario', authenticateToken, upload.single('imagenBtn'), async (req, res) => {
   let { numero, modelo, precio, color, cliente, no_orden, piezas_en_proceso, imagenUrl, observaciones, es_reprogramacion } = req.body;
-  const finalImageUrl = req.file ? '/uploads/' + req.file.filename : (imagenUrl || null);
+  const finalImageUrl = req.file ? await processImage(req.file) : (imagenUrl || null);
   const isReprog = (es_reprogramacion === 'true' || es_reprogramacion === true || es_reprogramacion === 1) ? 1 : 0;
 
   try {
@@ -305,9 +332,9 @@ app.post('/api/inventario', authenticateToken, upload.single('imagenBtn'), async
   }
 });
 
-app.put('/api/inventario/:id/imagen', async (req, res) => {
+app.put('/api/inventario/:id/imagen', upload.single('imagenBtn'), async (req, res) => {
   const { imagenUrl } = req.body;
-  const finalImageUrl = req.file ? '/uploads/' + req.file.filename : (imagenUrl || null);
+  const finalImageUrl = req.file ? await processImage(req.file) : (imagenUrl || null);
   try {
     await db.query("UPDATE inventario SET imagen = ? WHERE id = ?", [
       finalImageUrl ? String(finalImageUrl) : null, 
@@ -321,7 +348,7 @@ app.put('/api/inventario/:id/imagen', async (req, res) => {
 
 app.put('/api/inventario/:id', authenticateToken, upload.single('imagenBtn'), async (req, res) => {
   let { numero, modelo, precio, color, cliente, no_orden, piezas_en_proceso, imagenUrl, imagen_actual, observaciones } = req.body;
-  const imagen = req.file ? '/uploads/' + req.file.filename : (imagenUrl || imagen_actual || null);
+  const imagen = req.file ? await processImage(req.file) : (imagenUrl || imagen_actual || null);
   
   try {
     const variantes = JSON.parse(color);
