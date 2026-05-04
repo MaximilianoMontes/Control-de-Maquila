@@ -173,9 +173,11 @@ app.get('/api/maquileros/:id', async (req, res) => {
 app.post('/api/maquileros', authenticateToken, upload.single('imagenBtn'), async (req, res) => {
   const { nombre, maquinaria, personal, domicilio, colonia, codigo_postal, telefono } = req.body;
   const imagen = req.file ? '/uploads/' + req.file.filename : null;
+  const numPersonal = parseInt(personal) || null;
+  
   try {
     const [result] = await db.query("INSERT INTO maquileros (nombre, maquinaria, personal, domicilio, colonia, codigo_postal, telefono, imagen) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", 
-      [nombre, maquinaria, personal, domicilio, colonia, codigo_postal, telefono, imagen]);
+      [nombre, maquinaria, numPersonal, domicilio, colonia, codigo_postal, telefono, imagen]);
     
     await logActivity(req.user.id, 'ALTA', 'MAQUILERO', `Se registró al maquilero: ${nombre}`);
     
@@ -199,13 +201,15 @@ app.put('/api/maquileros/:id/imagen', async (req, res) => {
 app.put('/api/maquileros/:id', authenticateToken, upload.single('imagenBtn'), async (req, res) => {
   const { nombre, maquinaria, personal, domicilio, colonia, codigo_postal, telefono } = req.body;
   const imagen = req.file ? '/uploads/' + req.file.filename : req.body.imagen_actual || null;
+  const numPersonal = parseInt(personal) || null;
+
   try {
     const [olds] = await db.query("SELECT * FROM maquileros WHERE id = ?", [req.params.id]);
     const old = olds[0];
     if (!old) return res.status(404).json({ error: 'Maquilero no encontrado' });
 
     await db.query("UPDATE maquileros SET nombre=?, maquinaria=?, personal=?, domicilio=?, colonia=?, codigo_postal=?, telefono=?, imagen=? WHERE id=?",
-      [nombre, maquinaria, personal, domicilio, colonia, codigo_postal, telefono, imagen, req.params.id]);
+      [nombre, maquinaria, numPersonal, domicilio, colonia, codigo_postal, telefono, imagen, req.params.id]);
 
     let changes = [];
     if (old.nombre !== nombre) changes.push(`Nombre: ${old.nombre} -> ${nombre}`);
