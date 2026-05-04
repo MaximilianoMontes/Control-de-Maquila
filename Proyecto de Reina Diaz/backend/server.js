@@ -885,7 +885,7 @@ app.get('/api/reportes/inventario', async (req, res) => {
       doc.moveDown();
       doc.fontSize(12).text('No hay artículos con el criterio seleccionado.', { align: 'center' });
     } else {
-      const reportTitle = filter === 'asignados' ? "Reporte de Inventario (Asignados)" : (filter === 'pendientes' ? "Reporte de Inventario (Pendientes)" : "Reporte de Estatus de Inventario");
+      const reportTitle = filter === 'asignados' ? "Reporte de Inventario (Asignados)" : (filter === 'pendientes' ? "Reporte de Inventario (Disponibles)" : "Reporte de Estatus de Inventario");
       const tableConfig = {
         title: reportTitle,
         subtitle: "Existencias, costos y unidades actuales registrados en almacén - Generado el " + new Date().toLocaleDateString(),
