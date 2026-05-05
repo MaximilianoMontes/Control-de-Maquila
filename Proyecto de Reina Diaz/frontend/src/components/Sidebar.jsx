@@ -25,10 +25,15 @@ export default function Sidebar() {
     { name: 'Historial', path: '/historial', icon: <History size={20} />, roles: ['admin', 'produccion1', 'produccion2', 'inventario', 'inventario1'] },
   ];
 
-  const userRole = user?.role || user?.rol;
-  const allowedNavItems = navItems.filter(item => 
-    item.roles.some(r => r.toLowerCase() === userRole?.toLowerCase())
-  );
+  // Normalizamos el rol para evitar errores de espacios o mayúsculas
+  const userRole = (user?.role || user?.rol || '').toString().toLowerCase().trim();
+  
+  const allowedNavItems = navItems.filter(item => {
+    // El admin siempre ve todo
+    if (userRole === 'admin') return true;
+    // Para los demás, comparamos contra la lista de roles permitidos
+    return item.roles.some(r => r.toLowerCase().trim() === userRole);
+  });
 
   return (
     <aside className="sidebar">
