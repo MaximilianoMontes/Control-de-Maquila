@@ -14,6 +14,7 @@ export default function Pagos() {
   const [selectedOrden, setSelectedOrden] = useState(initialOrdenId);
   const [monto, setMonto] = useState('');
   const [tipoPago, setTipoPago] = useState('abono');
+  const [pendingDiscount, setPendingDiscount] = useState(0);
 
   // Estados para Descuentos Personales
   const [maquileros, setMaquileros] = useState([]);
@@ -34,10 +35,15 @@ export default function Pagos() {
   useEffect(() => {
     if (selectedOrden) {
       fetchPagos(selectedOrden);
+      const orden = orders.find(o => o.id.toString() === selectedOrden);
+      if (orden) {
+        fetchPendingDiscount(orden.maquilero_id);
+      }
     } else {
       setPagos([]);
+      setPendingDiscount(0);
     }
-  }, [selectedOrden]);
+  }, [selectedOrden, orders]);
 
   useEffect(() => {
     if (selectedMaquilero) {
@@ -79,6 +85,13 @@ export default function Pagos() {
     try {
       const res = await axios.get(`${API_URL}/api/descuentos/maquilero/${maquileroId}`);
       setHistorialDescuentos(res.data);
+    } catch (e) { console.error(e); }
+  };
+
+  const fetchPendingDiscount = async (maquileroId) => {
+    try {
+      const res = await axios.get(`${API_URL}/api/descuentos/pendientes/${maquileroId}`);
+      setPendingDiscount(res.data.total_pendiente);
     } catch (e) { console.error(e); }
   };
 
@@ -158,9 +171,18 @@ export default function Pagos() {
 
               {ordenActual && (
                 <div style={{ background: 'rgba(0,0,0,0.02)', padding: '1rem', borderRadius: '8px', marginBottom: '1rem' }}>
-                  <p><strong>Costo Total:</strong> ${ordenActual.precio_total}</p>
-                  <p style={{ color: '#34d399' }}><strong>Pagado:</strong> ${totalPagado}</p>
-                  <p style={{ color: restante > 0 ? '#ef4444' : '#34d399' }}><strong>Resta:</strong> ${restante > 0 ? restante : 0}</p>
+                  <p><strong>Costo Total de Orden:</strong> ${ordenActual.precio_total}</p>
+                  <p style={{ color: '#34d399' }}><strong>Ya Pagado:</strong> ${totalPagado}</p>
+                  <hr style={{ margin: '0.5rem 0', border: 'none', borderTop: '1px solid #e2e8f0' }} />
+                  {pendingDiscount > 0 && (
+                    <p style={{ color: '#ef4444', fontWeight: 'bold' }}>
+                      <AlertCircle size={14} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
+                      Multas Pendientes: -${pendingDiscount}
+                    </p>
+                  )}
+                  <p style={{ color: (restante - pendingDiscount) > 0 ? '#ef4444' : '#34d399', fontSize: '1.1rem' }}>
+                    <strong>A Pagar (Neto): ${Math.max(0, restante - pendingDiscount)}</strong>
+                  </p>
                 </div>
               )}
 
@@ -173,9 +195,19 @@ export default function Pagos() {
               </div>
 
               <div className="form-group">
-                <label className="form-label">Monto ($)</label>
-                <input type="number" step="0.01" max={restante} required className="form-input" value={monto} onChange={e => setMonto(e.target.value)} disabled={!selectedOrden} />
-              </div>
+              <label className="form-label">Monto a Entregar ($)</label>
+              <input 
+                type="number" 
+                step="0.01" 
+                max={restante} 
+                required 
+                className="form-input" 
+                value={monto} 
+                onChange={e => setMonto(e.target.value)} 
+                disabled={!selectedOrden}
+                placeholder={restante > 0 ? `Sugerido: $${Math.max(0, restante - pendingDiscount)}` : ''}
+              />
+            </div>
 
               <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={!selectedOrden || restante <= 0}>
                 Registrar Pago
@@ -309,11 +341,12 @@ export default function Pagos() {
                       <th>Motivo</th>
                       <th>Piezas</th>
                       <th>Monto</th>
+                      <th>Estado</th>
                     </tr>
                   </thead>
                   <tbody>
                     {historialDescuentos.length === 0 ? (
-                      <tr><td colSpan="5" style={{ textAlign: 'center' }}>Este maquilero no tiene descuentos registrados.</td></tr>
+                      <tr><td colSpan="6" style={{ textAlign: 'center' }}>Este maquilero no tiene descuentos registrados.</td></tr>
                     ) : (
                       historialDescuentos.map(d => (
                         <tr key={d.id}>
@@ -322,6 +355,11 @@ export default function Pagos() {
                           <td style={{ fontSize: '0.85rem', maxWidth: '200px' }}>{d.motivo}</td>
                           <td style={{ textAlign: 'center' }}>{d.piezas_afectadas}</td>
                           <td style={{ color: '#ef4444', fontWeight: 'bold' }}>-${d.monto_total}</td>
+                          <td>
+                            <span className={`badge ${d.aplicado ? 'badge-success' : 'badge-warning'}`} style={{ fontSize: '10px' }}>
+                              {d.aplicado ? 'Cobrado' : 'Pendiente'}
+                            </span>
+                          </td>
                         </tr>
                       ))
                     )}

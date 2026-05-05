@@ -641,18 +641,42 @@ app.get('/api/pagos/:produccion_id', async (req, res) => {
 
 app.post('/api/pagos', authenticateToken, async (req, res) => {
   const { produccion_id, monto, tipo_pago } = req.body;
+  const connection = await db.getConnection();
   try {
+    await connection.beginTransaction();
     const fecha = new Date().toISOString().split('T')[0];
-    const [result] = await db.query("INSERT INTO pagos (produccion_id, monto, fecha, tipo_pago) VALUES (?, ?, ?, ?)",
-      [produccion_id, monto, fecha, tipo_pago]);
     
-    const [prods] = await db.query("SELECT i.modelo FROM produccion p JOIN inventario i ON p.inventario_id = i.id WHERE p.id = ?", [produccion_id]);
-    const prod = prods[0];
-    await logActivity(req.user.id, 'ALTA', 'PAGO', `Registró pago de $${monto} para ${prod ? prod.modelo : 'Orden '+produccion_id}`);
+    // 1. Insertar el Pago
+    const [result] = await connection.query("INSERT INTO pagos (produccion_id, monto, fecha, tipo_pago) VALUES (?, ?, ?, ?)",
+      [produccion_id, monto, fecha, tipo_pago]);
+    const pagoId = result.insertId;
+    
+    // 2. Obtener el Maquilero de la orden
+    const [orders] = await connection.query("SELECT maquilero_id FROM produccion WHERE id = ?", [produccion_id]);
+    if (orders.length > 0) {
+      const maquileroId = orders[0].maquilero_id;
+      // 3. Vincular y marcar como aplicados los descuentos pendientes de ese maquilero
+      await connection.query(
+        "UPDATE descuentos_personales SET aplicado = 1, pago_id = ? WHERE maquilero_id = ? AND aplicado = 0",
+        [pagoId, maquileroId]
+      );
+    }
 
-    res.json({ id: result.insertId, success: true });
+    // 4. Log Actividad
+    const [prods] = await connection.query("SELECT i.modelo FROM produccion p JOIN inventario i ON p.inventario_id = i.id WHERE p.id = ?", [produccion_id]);
+    const prod = prods[0];
+    await connection.query(
+      "INSERT INTO historial (user_id, action, target, description) VALUES (?, ?, ?, ?)",
+      [req.user.id, 'ALTA', 'PAGO', `Registró pago de $${monto} para ${prod ? prod.modelo : 'Orden '+produccion_id} (Multas liquidadas)`]
+    );
+
+    await connection.commit();
+    res.json({ id: pagoId, success: true });
   } catch (error) {
+    await connection.rollback();
     res.status(500).json({ error: error.message });
+  } finally {
+    connection.release();
   }
 });
 
@@ -1056,6 +1080,18 @@ app.get('/api/reportes/recoleccion', async (req, res) => {
     doc.end();
   } catch (error) {
     console.error("Error generando reporte recoleccion:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/descuentos/pendientes/:maquileroId', authenticateToken, async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      "SELECT SUM(monto_total) as total_pendiente FROM descuentos_personales WHERE maquilero_id = ? AND aplicado = 0",
+      [req.params.maquileroId]
+    );
+    res.json({ total_pendiente: rows[0].total_pendiente || 0 });
+  } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });

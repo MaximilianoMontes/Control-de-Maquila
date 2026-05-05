@@ -110,9 +110,12 @@ async function initializeDatabase() {
         motivo TEXT NOT NULL,
         monto_total DECIMAL(10, 2) NOT NULL,
         piezas_afectadas INT DEFAULT 0,
+        aplicado TINYINT(1) DEFAULT 0,
+        pago_id INT DEFAULT NULL,
         fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY(maquilero_id) REFERENCES maquileros(id),
-        FOREIGN KEY(inventario_id) REFERENCES inventario(id)
+        FOREIGN KEY(inventario_id) REFERENCES inventario(id),
+        FOREIGN KEY(pago_id) REFERENCES pagos(id)
       );
     `);
 
