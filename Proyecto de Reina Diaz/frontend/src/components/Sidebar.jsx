@@ -16,23 +16,19 @@ export default function Sidebar() {
   const { user, logout } = useAuth();
   
   const navItems = [
-    { name: 'Dashboard', path: '/', icon: <LayoutDashboard size={20} />, roles: ['admin', 'produccion1', 'produccion2', 'inventario', 'inventario1'] },
-    { name: 'Maquileros', path: '/maquileros', icon: <Users size={20} />, roles: ['admin', 'produccion1', 'produccion2', 'inventario', 'inventario1'] },
-    { name: 'Inventario', path: '/inventario', icon: <Package size={20} />, roles: ['admin', 'produccion1', 'produccion2', 'inventario', 'inventario1'] },
-    { name: 'Producción', path: '/produccion', icon: <Factory size={20} />, roles: ['admin', 'produccion1', 'produccion2', 'inventario', 'inventario1'] },
-    { name: 'Reportes', path: '/reportes', icon: <FileText size={20} />, roles: ['admin', 'produccion1', 'produccion2', 'inventario', 'inventario1'] },
+    { name: 'Dashboard', path: '/', icon: <LayoutDashboard size={20} />, roles: ['admin', 'produccion1', 'produccion2', 'inventario1'] },
+    { name: 'Maquileros', path: '/maquileros', icon: <Users size={20} />, roles: ['admin', 'produccion1', 'produccion2', 'inventario1'] },
+    { name: 'Inventario', path: '/inventario', icon: <Package size={20} />, roles: ['admin', 'produccion1', 'produccion2', 'inventario1'] },
+    { name: 'Producción', path: '/produccion', icon: <Factory size={20} />, roles: ['admin', 'produccion1', 'produccion2', 'inventario1'] },
+    { name: 'Reportes', path: '/reportes', icon: <FileText size={20} />, roles: ['admin', 'produccion1', 'produccion2', 'inventario1'] },
     { name: 'Pagos', path: '/pagos', icon: <Wallet size={20} />, roles: ['admin', 'produccion1', 'produccion2'] },
-    { name: 'Historial', path: '/historial', icon: <History size={20} />, roles: ['admin', 'produccion1', 'produccion2', 'inventario', 'inventario1'] },
+    { name: 'Historial', path: '/historial', icon: <History size={20} />, roles: ['admin', 'produccion1', 'produccion2', 'inventario1'] },
   ];
 
-  // Normalizamos el rol para evitar errores de espacios o mayúsculas
-  const userRole = (user?.role || user?.rol || '').toString().toLowerCase().trim();
-  
+  const userRole = user?.role || user?.rol;
   const allowedNavItems = navItems.filter(item => {
-    // El admin siempre ve todo
     if (userRole === 'admin') return true;
-    // Para los demás, comparamos contra la lista de roles permitidos
-    return item.roles.some(r => r.toLowerCase().trim() === userRole);
+    return item.roles.includes(userRole);
   });
 
   return (
