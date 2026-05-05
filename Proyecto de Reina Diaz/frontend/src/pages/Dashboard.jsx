@@ -127,7 +127,7 @@ export default function Dashboard() {
                         {/* El folio es el número total menos la posición en la lista (si la lista es DESC) */}
                         <td style={{ fontWeight: 'bold' }}>#{totalOrders - index}</td>
                         <td style={{ fontWeight: 600 }}>{o.maquilero_nombre}</td>
-                        <td>{o.fecha_inicio}</td>
+                        <td>{new Date(o.fecha_inicio).toLocaleDateString()}</td>
                         <td>
                           <span className={`badge ${o.estado === 'Terminado' ? 'badge-success' : 'badge-warning'}`}>
                             {o.estado}

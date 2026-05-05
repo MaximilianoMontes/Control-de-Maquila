@@ -202,8 +202,8 @@ export default function Produccion() {
                       </td>
                       <td>
                         <div style={{ display: 'flex', flexDirection: 'column', fontSize: '0.85rem' }}>
-                          <span>In: {o.fecha_inicio}</span>
-                          <span style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.25rem' }}>Fin: {o.fecha_fin || 'N/A'} {delayIcon}</span>
+                          <span>In: {new Date(o.fecha_inicio).toLocaleDateString()}</span>
+                          <span style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.25rem' }}>Fin: {o.fecha_fin ? new Date(o.fecha_fin).toLocaleDateString() : 'N/A'} {delayIcon}</span>
                         </div>
                       </td>
                       <td style={{ minWidth: '130px' }}>
