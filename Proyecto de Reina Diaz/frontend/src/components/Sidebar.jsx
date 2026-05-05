@@ -25,7 +25,10 @@ export default function Sidebar() {
     { name: 'Historial', path: '/historial', icon: <History size={20} />, roles: ['admin', 'produccion1', 'produccion2', 'inventario', 'inventario1'] },
   ];
 
-  const allowedNavItems = navItems.filter(item => item.roles.includes(user?.role));
+  console.log("Rol detectado:", user?.rol);
+  const allowedNavItems = navItems.filter(item => 
+    item.roles.some(r => r.toLowerCase() === user?.rol?.toLowerCase())
+  );
 
   return (
     <aside className="sidebar">
