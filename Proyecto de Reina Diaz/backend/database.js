@@ -102,14 +102,28 @@ async function initializeDatabase() {
       );
     `);
 
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS descuentos_personales (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        maquilero_id INT NOT NULL,
+        inventario_id INT,
+        motivo TEXT NOT NULL,
+        monto_total DECIMAL(10, 2) NOT NULL,
+        piezas_afectadas INT DEFAULT 0,
+        fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(maquilero_id) REFERENCES maquileros(id),
+        FOREIGN KEY(inventario_id) REFERENCES inventario(id)
+      );
+    `);
+
     // Create default users
     const bcrypt = require('bcrypt');
     const users = [
       ['max', 'max123', 'admin'],
       ['admin', 'admin123', 'admin'],
-      ['produccion1', 'prod123', 'produccion_pagos'],
-      ['produccion2', 'prod123', 'produccion_pagos'],
-      ['inventario1', 'inv123', 'inventario']
+      ['produccion1', 'prod123', 'produccion1'],
+      ['produccion2', 'prod123', 'produccion2'],
+      ['inventario1', 'inv123', 'inventario1']
     ];
 
     for (const [username, password, role] of users) {

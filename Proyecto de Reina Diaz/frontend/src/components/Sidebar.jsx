@@ -16,13 +16,13 @@ export default function Sidebar() {
   const { user, logout } = useAuth();
   
   const navItems = [
-    { name: 'Dashboard', path: '/', icon: <LayoutDashboard size={20} />, roles: ['admin', 'produccion_pagos', 'inventario'] },
-    { name: 'Maquileros', path: '/maquileros', icon: <Users size={20} />, roles: ['admin', 'produccion_pagos'] },
-    { name: 'Inventario', path: '/inventario', icon: <Package size={20} />, roles: ['admin', 'inventario', 'produccion_pagos'] },
-    { name: 'Producción', path: '/produccion', icon: <Factory size={20} />, roles: ['admin', 'produccion_pagos'] },
-    { name: 'Reportes', path: '/reportes', icon: <FileText size={20} />, roles: ['admin', 'produccion_pagos', 'inventario'] },
-    { name: 'Pagos', path: '/pagos', icon: <Wallet size={20} />, roles: ['admin', 'produccion_pagos'] },
-    { name: 'Historial', path: '/historial', icon: <History size={20} />, roles: ['admin', 'produccion_pagos', 'inventario'] },
+    { name: 'Dashboard', path: '/', icon: <LayoutDashboard size={20} />, roles: ['admin', 'produccion1', 'produccion2', 'inventario'] },
+    { name: 'Maquileros', path: '/maquileros', icon: <Users size={20} />, roles: ['admin', 'produccion1', 'produccion2', 'inventario'] },
+    { name: 'Inventario', path: '/inventario', icon: <Package size={20} />, roles: ['admin', 'produccion1', 'produccion2', 'inventario'] },
+    { name: 'Producción', path: '/produccion', icon: <Factory size={20} />, roles: ['admin', 'produccion1', 'produccion2', 'inventario'] },
+    { name: 'Reportes', path: '/reportes', icon: <FileText size={20} />, roles: ['admin', 'produccion1', 'produccion2', 'inventario'] },
+    { name: 'Pagos', path: '/pagos', icon: <Wallet size={20} />, roles: ['admin', 'produccion1', 'produccion2'] },
+    { name: 'Historial', path: '/historial', icon: <History size={20} />, roles: ['admin', 'produccion1', 'produccion2', 'inventario'] },
   ];
 
   const allowedNavItems = navItems.filter(item => item.roles.includes(user?.role));

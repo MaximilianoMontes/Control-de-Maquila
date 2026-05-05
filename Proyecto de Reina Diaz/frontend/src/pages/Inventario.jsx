@@ -12,6 +12,7 @@ const getImgSrc = (img) => img ? (img.startsWith('http') ? img : `${API}${img}`)
 
 export default function Inventario() {
   const { user } = useAuth();
+  const canEdit = user?.role === 'admin' || user?.role === 'inventario';
   const [items, setItems] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -175,18 +176,22 @@ export default function Inventario() {
     (item.no_orden || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const canModify = user?.role === 'admin' || user?.role === 'inventario';
-
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
-        <h1 className="gradient-text">Inventario en Proceso</h1>
-        {canModify && (
-          <div style={{ display: 'flex', gap: '1rem' }}>
-            <button className="btn btn-secondary" onClick={() => setIsUploadModalOpen(true)}><UploadCloud size={20} /> Importar Excel</button>
-            <button className="btn btn-primary" onClick={openNew}><Plus size={20} /> Nuevo Ingreso</button>
-          </div>
-        )}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', gap: '1rem', flexWrap: 'wrap' }}>
+        <h1 className="gradient-text" style={{ fontSize: '2.5rem', margin: 0 }}>Inventario en Proceso</h1>
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          {canEdit && (
+            <>
+              <button className="btn btn-secondary" onClick={() => setIsUploadModalOpen(true)}>
+                <UploadCloud size={20} /> Importar Excel
+              </button>
+              <button className="btn btn-primary" onClick={openNew}>
+                <Plus size={20} /> Nuevo Ingreso
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       <div className="glass-card" style={{ marginBottom: '2rem', padding: '1rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -210,12 +215,12 @@ export default function Inventario() {
                 <th>Precio</th>
                 <th>Piezas</th>
                 <th>Total</th>
-                {canModify && <th>Acciones</th>}
+                <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
               {filteredItems.length === 0 ? (
-                <tr><td colSpan={canModify ? 11 : 10} style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>No hay registros</td></tr>
+                <tr><td colSpan={10} style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>No hay registros</td></tr>
               ) : (
                 filteredItems.map(item => {
                   const total = (parseFloat(item.precio) || 0) * (parseInt(item.piezas_en_proceso) || 0);
@@ -225,7 +230,7 @@ export default function Inventario() {
                       <td>
                         {imgSrc
                           ? <img src={imgSrc} alt={item.modelo} className="img-zoom" style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 8, border: '1px solid #e2e8f0' }} />
-                          : canModify
+                          : canEdit
                             ? <button className="btn btn-secondary" style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem' }} onClick={() => setEditImageItem(item)}>+ Foto</button>
                             : <div style={{ width: 48, height: 48, background: '#f1f5f9', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><ImageIcon size={20} color="#cbd5e1" /></div>
                         }
@@ -264,27 +269,25 @@ export default function Inventario() {
                       <td>${item.precio}</td>
                       <td style={{ fontWeight: 700, fontSize: '1.1rem' }}>{item.piezas_en_proceso}</td>
                       <td style={{ fontWeight: 700, color: '#2563eb' }}>${total.toFixed(2)}</td>
-                      {canModify && (
-                        <td>
-                          <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
-                            {item.observaciones && (
+                      <td>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          {item.observaciones && (
                               <div className="tooltip-container" style={{ marginRight: '0.2rem' }}>
                                 <MessageSquare size={18} color="#64748b" />
                                 <div className="tooltip-box">{item.observaciones}</div>
                               </div>
-                            )}
-                            <button className="btn btn-secondary" style={{ padding: '0.35rem 0.6rem' }} onClick={(e) => openReprogram(item, e)} title="Reprogramar (Nueva Corrida)">
-                              <RefreshCw size={15} />
-                            </button>
-                            <button className="btn btn-secondary" style={{ padding: '0.35rem 0.6rem' }} onClick={(e) => openEdit(item, e)} title="Editar Datos">
-                              <Pencil size={15} />
-                            </button>
-                            <button className="btn btn-danger" style={{ padding: '0.35rem 0.6rem' }} onClick={(e) => handleDelete(item.id, e)} title="Eliminar">
-                              <Trash2 size={15} />
-                            </button>
-                          </div>
-                        </td>
-                      )}
+                          )}
+                          {canEdit ? (
+                            <>
+                              <button className="btn-icon" onClick={(e) => openEdit(item, e)} title="Editar"><Pencil size={18} /></button>
+                              <button className="btn-icon" onClick={(e) => openReprogram(item, e)} title="Reprogramar" style={{ color: '#8b5cf6' }}><RefreshCw size={18} /></button>
+                              <button className="btn-icon" onClick={(e) => handleDelete(item.id, e)} title="Eliminar" style={{ color: '#ef4444' }}><Trash2 size={18} /></button>
+                            </>
+                          ) : (
+                            <button className="btn-icon" onClick={(e) => { e.stopPropagation(); setFormData(item); setEditingId(item.id); setIsModalOpen(true); setEditMode(true); }} title="Ver Detalles"><Search size={18} /></button>
+                          )}
+                        </div>
+                      </td>
                     </tr>
                   );
                 })
