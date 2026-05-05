@@ -148,7 +148,7 @@ export default function Pagos() {
   };
 
   const ordenActual = orders.find(o => o.id.toString() === selectedOrden);
-  const totalPagado = ordenActual ? (ordenActual.pagado || 0) : 0;
+  const totalPagado = ordenActual ? parseFloat(ordenActual.pagado || 0) : 0;
   const restante = ordenActual ? (ordenActual.precio_total - totalPagado) : 0;
 
   return (

@@ -32,7 +32,7 @@ export default function Dashboard() {
         const ordenes_proceso = prodRes.data.filter(o => o.estado === 'En proceso').length;
 
         // Pagos totales (acumulado mostrado en dashboard)
-        const pagos_mes = prodRes.data.reduce((sum, o) => sum + (o.pagado || 0), 0);
+        const pagos_mes = prodRes.data.reduce((sum, o) => sum + parseFloat(o.pagado || 0), 0);
 
         // Mostrar todas las órdenes en el dashboard
         const recent = prodRes.data;
