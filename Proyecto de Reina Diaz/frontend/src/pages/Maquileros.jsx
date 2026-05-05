@@ -55,7 +55,9 @@ export default function Maquileros() {
     try {
       await axios.delete(`${API}/api/maquileros/${id}`);
       fetchMaquileros();
-    } catch (e) { alert('Error al eliminar'); }
+    } catch (e) { 
+      alert(e.response?.data?.error || 'Error al eliminar'); 
+    }
   };
 
   const handleRowClick = async (id) => {

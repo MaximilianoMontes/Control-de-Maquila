@@ -104,7 +104,9 @@ export default function Inventario() {
     try {
       await axios.delete(`${API}/api/inventario/${id}`);
       fetchItems();
-    } catch (e) { alert('Error al eliminar'); }
+    } catch (e) { 
+      alert(e.response?.data?.error || 'Error al eliminar'); 
+    }
   };
 
   const handleManualSubmit = async (e) => {

@@ -410,6 +410,9 @@ app.delete('/api/inventario/:id', authenticateToken, async (req, res) => {
     }
     res.json({ success: true });
   } catch (error) {
+    if (error.code === 'ER_ROW_IS_REFERENCED_2' || error.code === 'ER_ROW_IS_REFERENCED') {
+      return res.status(400).json({ error: 'No se puede eliminar este producto porque ya tiene órdenes de producción o descuentos vinculados. Primero debe eliminar esas vinculaciones.' });
+    }
     res.status(500).json({ error: error.message });
   }
 });
