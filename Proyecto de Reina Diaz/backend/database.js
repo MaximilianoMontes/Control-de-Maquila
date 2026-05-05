@@ -119,6 +119,16 @@ async function initializeDatabase() {
       );
     `);
 
+    // Migración: Asegurar que existan las columnas de aplicado y pago_id en tablas existentes
+    try {
+      await connection.query("ALTER TABLE descuentos_personales ADD COLUMN aplicado TINYINT(1) DEFAULT 0");
+      await connection.query("ALTER TABLE descuentos_personales ADD COLUMN pago_id INT DEFAULT NULL");
+      await connection.query("ALTER TABLE descuentos_personales ADD CONSTRAINT fk_pago FOREIGN KEY(pago_id) REFERENCES pagos(id)");
+      console.log("Migration: Columns added to descuentos_personales");
+    } catch (e) {
+      // Si ya existen, ignoramos el error
+    }
+
     // Create default users
     const bcrypt = require('bcrypt');
     const users = [
