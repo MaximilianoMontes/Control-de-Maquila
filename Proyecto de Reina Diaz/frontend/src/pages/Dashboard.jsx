@@ -31,8 +31,8 @@ export default function Dashboard() {
         const inventario = invRes.data.reduce((sum, item) => sum + (item.piezas_en_proceso || 0), 0);
         const ordenes_proceso = prodRes.data.filter(o => o.estado === 'En proceso').length;
 
-        // Pagos totales (acumulado mostrado en dashboard)
-        const pagos_mes = prodRes.data.reduce((sum, o) => sum + parseFloat(o.pagado || 0), 0);
+        // Pagos totales (solo efectivo real en dashboard)
+        const pagos_mes = prodRes.data.reduce((sum, o) => sum + parseFloat(o.pagado_efectivo || 0), 0);
 
         // Mostrar todas las órdenes en el dashboard
         const recent = prodRes.data;
