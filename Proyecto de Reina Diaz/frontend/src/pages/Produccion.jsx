@@ -102,7 +102,9 @@ export default function Produccion() {
     try {
       await axios.delete(`${API}/api/produccion/${id}`);
       fetchOrders();
-    } catch (e) { alert('Error al eliminar'); }
+    } catch (e) { 
+      alert(e.response?.data?.error || 'Error al eliminar'); 
+    }
   };
 
   const handleRecibidasBlur = async (id, val) => {
