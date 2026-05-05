@@ -12,7 +12,7 @@ const getImgSrc = (img) => img ? (img.startsWith('http') ? img : `${API}${img}`)
 
 export default function Maquileros() {
   const { user } = useAuth();
-  const canEdit = user?.role === 'admin' || user?.role === 'produccion1' || user?.role === 'produccion2';
+  const canEdit = user?.rol === 'admin' || user?.rol === 'produccion1' || user?.rol === 'produccion2';
   const [maquileros, setMaquileros] = useState([]);
   const [selectedMaquilero, setSelectedMaquilero] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);

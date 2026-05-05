@@ -11,7 +11,7 @@ const getImgSrc = (img) => img ? (img.startsWith('http') ? img : `${API}${img}`)
 
 export default function Produccion() {
   const { user } = useAuth();
-  const canEdit = user?.role === 'admin' || user?.role === 'produccion1' || user?.role === 'produccion2';
+  const canEdit = user?.rol === 'admin' || user?.rol === 'produccion1' || user?.rol === 'produccion2';
   const [orders, setOrders] = useState([]);
   const [maquileros, setMaquileros] = useState([]);
   const [inventario, setInventario] = useState([]);
