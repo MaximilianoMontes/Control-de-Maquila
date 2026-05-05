@@ -476,6 +476,7 @@ app.get('/api/produccion', async (req, res) => {
     const [orders] = await db.query(`
       SELECT p.*, m.nombre as maquilero_nombre,
       i.modelo as producto_modelo, i.imagen as producto_imagen, i.precio as precio_unitario,
+      (SELECT COALESCE(SUM(monto), 0) FROM pagos WHERE produccion_id = p.id) as pagado_efectivo,
       (SELECT COALESCE(SUM(monto), 0) FROM pagos WHERE produccion_id = p.id) + 
       (SELECT COALESCE(SUM(dp.monto_total), 0) FROM descuentos_personales dp 
        JOIN pagos pg ON dp.pago_id = pg.id 
