@@ -183,13 +183,13 @@ export default function Maquileros() {
       {/* Modal Perfil */}
       {selectedMaquilero && (
         <div className="modal-overlay" onClick={() => setSelectedMaquilero(null)}>
-          <div className="modal-content glass-card" style={{ maxWidth: '1100px', width: '95%' }} onClick={e => e.stopPropagation()}>
+          <div className="modal-content glass-card" style={{ maxWidth: '1350px', width: '95%' }} onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Perfil y Desempeño del Maquilero</h2>
               <button className="btn-icon" onClick={() => setSelectedMaquilero(null)}><X size={24} /></button>
             </div>
             
-            <div style={{ display: 'grid', gridTemplateColumns: '350px 1fr', gap: '2rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: '2rem' }}>
               {/* Columna Izquierda: Perfil y Calificación */}
               <div style={{ borderRight: '1px solid #e2e8f0', paddingRight: '2rem' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '1.5rem', textAlign: 'center' }}>
