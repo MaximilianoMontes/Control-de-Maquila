@@ -38,6 +38,8 @@ export default function Pagos() {
       const orden = orders.find(o => o.id.toString() === selectedOrden);
       if (orden) {
         fetchPendingDiscount(orden.maquilero_id);
+        setSelectedMaquilero(orden.maquilero_id.toString());
+        setSelectedInventario(orden.inventario_id.toString()); // Pre-selecciona el producto de la orden
       }
     } else {
       setPagos([]);
