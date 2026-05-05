@@ -39,7 +39,7 @@ export default function Pagos() {
       if (orden) {
         fetchPendingDiscount(orden.maquilero_id);
         setSelectedMaquilero(orden.maquilero_id.toString());
-        setSelectedInventario(orden.inventario_id.toString()); // Pre-selecciona el producto de la orden
+        setSelectedModelo(orden.inventario_id.toString()); // Pre-selecciona el producto de la orden
       }
     } else {
       setPagos([]);
