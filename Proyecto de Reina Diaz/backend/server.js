@@ -1060,6 +1060,43 @@ app.get('/api/reportes/recoleccion', async (req, res) => {
   }
 });
 
+// APIs Descuentos Personales
+app.post('/api/descuentos', authenticateToken, async (req, res) => {
+  const { maquilero_id, inventario_id, motivo, monto_total, piezas_afectadas } = req.body;
+  try {
+    const [result] = await db.query(
+      "INSERT INTO descuentos_personales (maquilero_id, inventario_id, motivo, monto_total, piezas_afectadas) VALUES (?, ?, ?, ?, ?)",
+      [maquilero_id, inventario_id || null, motivo, monto_total, piezas_afectadas || 0]
+    );
+
+    // Registrar en historial
+    await db.query(
+      "INSERT INTO historial (user_id, action, target, description) VALUES (?, ?, ?, ?)",
+      [req.user.id, 'CREAR', 'DESCUENTO', `Descuento de $${monto_total} a maquilero ID ${maquilero_id} por: ${motivo}`]
+    );
+
+    res.status(201).json({ message: 'Descuento registrado correctamente', id: result.insertId });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/descuentos/maquilero/:id', authenticateToken, async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      `SELECT d.*, i.modelo as producto_modelo 
+       FROM descuentos_personales d 
+       LEFT JOIN inventario i ON d.inventario_id = i.id 
+       WHERE d.maquilero_id = ? 
+       ORDER BY d.fecha DESC`,
+      [req.params.id]
+    );
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
 });

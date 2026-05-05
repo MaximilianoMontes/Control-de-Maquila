@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Plus, X, Pencil, Trash2, User, AlertTriangle, Search } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 import API_URL from '../config';
 
 const API = API_URL;
@@ -10,6 +11,8 @@ const emptyForm = { nombre: '', maquinaria: '', personal: '', domicilio: '', col
 const getImgSrc = (img) => img ? (img.startsWith('http') ? img : `${API}${img}`) : null;
 
 export default function Maquileros() {
+  const { user } = useAuth();
+  const canEdit = user?.role === 'admin' || user?.role === 'produccion1' || user?.role === 'produccion2';
   const [maquileros, setMaquileros] = useState([]);
   const [selectedMaquilero, setSelectedMaquilero] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -105,8 +108,12 @@ export default function Maquileros() {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <h1 className="gradient-text">Maquileros</h1>
-        <button className="btn btn-primary" onClick={openNew}><Plus size={20} /> Nuevo Maquilero</button>
+        <h1 className="gradient-text">Maquileros y Talleres</h1>
+        {canEdit && (
+          <button className="btn btn-primary" onClick={openNew}>
+            <Plus size={20} /> Nuevo Maquilero
+          </button>
+        )}
       </div>
 
       <div className="glass-card" style={{ marginBottom: '2rem', padding: '1rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -149,12 +156,20 @@ export default function Maquileros() {
                     <td>{m.colonia || 'N/A'}</td>
                     <td>
                       <div style={{ display: 'flex', gap: '0.5rem' }} onClick={e => e.stopPropagation()}>
-                        <button className="btn btn-secondary" style={{ padding: '0.35rem 0.6rem' }} onClick={(e) => openEdit(m, e)} title="Editar">
-                          <Pencil size={15} />
-                        </button>
-                        <button className="btn btn-danger" style={{ padding: '0.35rem 0.6rem' }} onClick={(e) => handleDelete(m.id, e)} title="Eliminar">
-                          <Trash2 size={15} />
-                        </button>
+                        {canEdit ? (
+                          <>
+                            <button className="btn btn-secondary" style={{ padding: '0.35rem 0.6rem' }} onClick={(e) => openEdit(m, e)} title="Editar">
+                              <Pencil size={15} />
+                            </button>
+                            <button className="btn btn-danger" style={{ padding: '0.35rem 0.6rem' }} onClick={(e) => handleDelete(m.id, e)} title="Eliminar">
+                              <Trash2 size={15} />
+                            </button>
+                          </>
+                        ) : (
+                          <button className="btn btn-secondary" style={{ padding: '0.35rem 0.6rem' }} onClick={() => handleRowClick(m.id)} title="Ver Perfil">
+                            <Search size={15} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
