@@ -280,7 +280,7 @@ export default function Maquileros() {
                               </td>
                               <td style={{ fontWeight: 600 }}>{h.producto_modelo}</td>
                               <td>{h.cantidad} / <span style={{ color: esCompleto ? '#10b981' : '#dc2626' }}>{h.cantidad_recibida || '-'}</span></td>
-                               <td>
+                              <td>
                                 <span style={{ fontWeight: 600 }}>${Number(h.precio_total).toFixed(2)}</span>
                               </td>
                               <td style={{ color: h.descuento_aplicado > 0 ? '#ef4444' : '#94a3b8' }}>
