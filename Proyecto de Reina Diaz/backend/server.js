@@ -163,7 +163,11 @@ app.get('/api/maquileros/:id', async (req, res) => {
 
     // Obtener historial de produccion
     const [historial] = await db.query(`
-      SELECT p.*, i.modelo as producto_modelo, i.imagen as producto_imagen
+      SELECT p.*, i.modelo as producto_modelo, i.imagen as producto_imagen,
+             (SELECT COALESCE(SUM(monto), 0) FROM pagos WHERE produccion_id = p.id) as pagado_efectivo,
+             (SELECT COALESCE(SUM(dp.monto_total), 0) FROM descuentos_personales dp 
+              JOIN pagos pg ON dp.pago_id = pg.id 
+              WHERE pg.produccion_id = p.id) as descuento_aplicado
       FROM produccion p
       LEFT JOIN inventario i ON p.inventario_id = i.id
       WHERE p.maquilero_id = ?
@@ -472,7 +476,10 @@ app.get('/api/produccion', async (req, res) => {
     const [orders] = await db.query(`
       SELECT p.*, m.nombre as maquilero_nombre,
       i.modelo as producto_modelo, i.imagen as producto_imagen, i.precio as precio_unitario,
-      (SELECT SUM(monto) FROM pagos WHERE produccion_id = p.id) as pagado
+      (SELECT COALESCE(SUM(monto), 0) FROM pagos WHERE produccion_id = p.id) + 
+      (SELECT COALESCE(SUM(dp.monto_total), 0) FROM descuentos_personales dp 
+       JOIN pagos pg ON dp.pago_id = pg.id 
+       WHERE pg.produccion_id = p.id) as pagado
       FROM produccion p 
       JOIN maquileros m ON p.maquilero_id = m.id
       LEFT JOIN inventario i ON p.inventario_id = i.id

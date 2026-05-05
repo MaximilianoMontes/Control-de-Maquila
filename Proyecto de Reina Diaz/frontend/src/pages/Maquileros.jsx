@@ -255,7 +255,9 @@ export default function Maquileros() {
                         <th>Foto</th>
                         <th>Modelo</th>
                         <th>Pzas (E/R)</th>
-                        <th>Pago</th>
+                        <th>Total</th>
+                        <th>Multa</th>
+                        <th>Neto</th>
                         <th>Entrega</th>
                         <th>Calidad</th>
                       </tr>
@@ -276,15 +278,14 @@ export default function Maquileros() {
                               </td>
                               <td style={{ fontWeight: 600 }}>{h.producto_modelo}</td>
                               <td>{h.cantidad} / <span style={{ color: esCompleto ? '#10b981' : '#dc2626' }}>{h.cantidad_recibida || '-'}</span></td>
-                              <td>
-                                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                  <span style={{ fontWeight: 600 }}>${Number(h.precio_total).toFixed(2)}</span>
-                                  {h.ajuste_tipo && h.ajuste_tipo !== 'ninguno' && (
-                                    <span style={{ fontSize: '10px', color: h.ajuste_tipo === 'bono' ? '#10b981' : '#dc2626' }}>
-                                      {h.ajuste_tipo === 'bono' ? '+' : '-'}{h.ajuste_porcentaje}% {h.ajuste_tipo}
-                                    </span>
-                                  )}
-                                </div>
+                               <td>
+                                <span style={{ fontWeight: 600 }}>${Number(h.precio_total).toFixed(2)}</span>
+                              </td>
+                              <td style={{ color: h.descuento_aplicado > 0 ? '#ef4444' : '#94a3b8' }}>
+                                {h.descuento_aplicado > 0 ? `-$${Number(h.descuento_aplicado).toFixed(2)}` : '$0.00'}
+                              </td>
+                              <td style={{ color: '#10b981', fontWeight: 'bold' }}>
+                                ${Number(h.pagado_efectivo).toFixed(2)}
                               </td>
                               <td>
                                 <div style={{ display: 'flex', flexDirection: 'column' }}>
