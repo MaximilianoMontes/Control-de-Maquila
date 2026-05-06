@@ -287,7 +287,7 @@ export default function Inventario() {
                               <button className="btn-icon" onClick={(e) => handleDelete(item.id, e)} title="Eliminar" style={{ color: '#ef4444' }}><Trash2 size={18} /></button>
                             </>
                           ) : (
-                            <button className="btn-icon" onClick={(e) => { e.stopPropagation(); setFormData(item); setEditingId(item.id); setIsModalOpen(true); setEditMode(true); }} title="Ver Detalles"><Search size={18} /></button>
+                            <button className="btn-icon" onClick={(e) => { e.stopPropagation(); openEdit(item, e); }} title="Ver Detalles"><Search size={18} /></button>
                           )}
                         </div>
                       </td>

@@ -18,7 +18,8 @@ export default function Sidebar() {
   // Todos los items del sidebar - cualquier usuario autenticado los ve
   // excepto Pagos que solo es para admin y produccion
   const userRole = (user?.role || user?.rol || '').trim();
-  const esSoloInventario = userRole === 'inventario1';
+  // Solo admin y produccion pueden ver Pagos
+  const puedeVerPagos = ['admin', 'produccion1', 'produccion2'].includes(userRole);
 
   const navItems = [
     { path: '/',           name: 'Dashboard',   icon: <LayoutDashboard size={20} /> },
@@ -26,7 +27,7 @@ export default function Sidebar() {
     { path: '/inventario', name: 'Inventario',  icon: <Package size={20} /> },
     { path: '/produccion', name: 'Producción',  icon: <Factory size={20} /> },
     { path: '/reportes',   name: 'Reportes',    icon: <FileText size={20} /> },
-    ...(!esSoloInventario ? [{ path: '/pagos', name: 'Pagos', icon: <Wallet size={20} /> }] : []),
+    ...(puedeVerPagos ? [{ path: '/pagos', name: 'Pagos', icon: <Wallet size={20} /> }] : []),
     { path: '/historial',  name: 'Historial',   icon: <History size={20} /> },
   ];
 
