@@ -618,14 +618,16 @@ app.put('/api/produccion/:id/ajuste', authenticateToken, async (req, res) => {
 });
 
 app.put('/api/produccion/:id/agregar-dia', authenticateToken, async (req, res) => {
+  const { dias } = req.body;
+  const numDias = parseInt(dias) || 1;
   try {
     const [olds] = await db.query("SELECT fecha_fin, retrasos FROM produccion WHERE id = ?", [req.params.id]);
     const old = olds[0];
     if (!old) return res.status(404).json({ error: 'Orden no encontrada' });
 
     const newDate = new Date(old.fecha_fin);
-    newDate.setDate(newDate.getDate() + 1);
-    const newRetrasos = (old.retrasos || 0) + 1;
+    newDate.setDate(newDate.getDate() + numDias);
+    const newRetrasos = (old.retrasos || 0) + 1; // Se cuenta como un evento de retraso sin importar los días
 
     await db.query("UPDATE produccion SET fecha_fin = ?, retrasos = ? WHERE id = ?", [newDate, newRetrasos, req.params.id]);
     res.json({ success: true, newDate, newRetrasos });

@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Plus, X, DollarSign, CheckCircle, Package, Search, Image as ImageIcon, Archive, Trash2, XCircle, Pencil, ArchiveRestore, Calendar, AlertTriangle, AlertCircle } from 'lucide-react';
+import { 
+  Plus, Search, Pencil, Trash2, CheckCircle, XCircle, DollarSign, 
+  Archive, ArchiveRestore, Image as ImageIcon, AlertTriangle, AlertCircle, Calendar 
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
@@ -126,8 +129,10 @@ export default function Produccion() {
   };
 
   const handleAddDay = async (id) => {
+    const dias = prompt("¿Cuántos días de prórroga deseas agregar?", "1");
+    if (!dias || isNaN(dias)) return;
     try {
-      await axios.put(`${API}/api/produccion/${id}/agregar-dia`);
+      await axios.put(`${API}/api/produccion/${id}/agregar-dia`, { dias: parseInt(dias) });
       fetchOrders();
     } catch (e) { alert('Error al agregar día'); }
   };
@@ -217,15 +222,6 @@ export default function Produccion() {
                             <span style={{ fontWeight: 600, color: o.retrasos > 0 ? '#ef4444' : 'inherit' }}>
                               Entrega: {o.fecha_fin ? new Date(o.fecha_fin).toLocaleDateString() : 'N/A'}
                             </span>
-                            {canEdit && o.estado === 'En proceso' && (
-                              <button 
-                                onClick={() => handleAddDay(o.id)}
-                                style={{ border: 'none', background: '#f1f5f9', borderRadius: '4px', padding: '2px 4px', cursor: 'pointer', fontSize: '10px', fontWeight: 'bold', color: '#6366f1' }}
-                                title="Agregar 1 día de prórroga"
-                              >
-                                +1d
-                              </button>
-                            )}
                             {delayIcon}
                           </div>
                         </div>
@@ -241,8 +237,18 @@ export default function Produccion() {
                           {canEdit && o.estado === 'En proceso' && (
                             <select className="form-input" style={{ width: '100%', padding: '2px', fontSize: '10px', height: '24px' }} value={o.ajuste_tipo === 'ninguno' ? '' : `${o.ajuste_tipo}-${o.ajuste_porcentaje}`} onChange={(e) => handleApplyAdjustment(o.id, e.target.value)}>
                               <option value="">Ajustar...</option>
-                              <optgroup label="Bonos"><option value="bono-5">Bono +5%</option><option value="bono-10">Bono +10%</option></optgroup>
-                              <optgroup label="Descuentos"><option value="descuento-5">Desc -5%</option><option value="descuento-10">Desc -10%</option></optgroup>
+                              <optgroup label="Bonos">
+                                <option value="bono-5">Bono +5%</option>
+                                <option value="bono-10">Bono +10%</option>
+                                <option value="bono-15">Bono +15%</option>
+                                <option value="bono-20">Bono +20%</option>
+                              </optgroup>
+                              <optgroup label="Descuentos">
+                                <option value="descuento-5">Desc -5%</option>
+                                <option value="descuento-10">Desc -10%</option>
+                                <option value="descuento-15">Desc -15%</option>
+                                <option value="descuento-20">Desc -20%</option>
+                              </optgroup>
                             </select>
                           )}
                         </div>
@@ -258,6 +264,7 @@ export default function Produccion() {
                           {canEdit && o.estado === 'En proceso' && (
                             <>
                               <button className="btn btn-success" style={{ padding: '0.4rem' }} onClick={() => handleTerminar(o.id)} title="Terminar Orden"><CheckCircle size={16} /></button>
+                              <button className="btn btn-warning" style={{ padding: '0.4rem', color: 'white' }} onClick={() => handleAddDay(o.id)} title="Agregar Prórroga (Días)"><Calendar size={16} /></button>
                               <button className="btn btn-danger" style={{ padding: '0.4rem' }} onClick={() => handleCancelar(o.id)} title="Cancelar Orden"><XCircle size={16} /></button>
                               <Link to={`/pagos?orden=${o.id}`} className="btn btn-primary" style={{ padding: '0.4rem', display: 'flex', alignItems: 'center' }} title="Registrar Pago"><DollarSign size={16} /></Link>
                             </>
