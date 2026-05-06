@@ -144,18 +144,6 @@ app.get('/api/historial', authenticateToken, async (req, res) => {
   }
 });
 
-// Temporal cleanup route
-app.get('/api/admin/final-cleanup', async (req, res) => {
-  try {
-    const id = 4; // El ID que encontramos
-    await db.query("DELETE FROM pagos WHERE produccion_id = ?", [id]);
-    await db.query("DELETE FROM produccion WHERE id = ?", [id]);
-    res.json({ success: true, message: `Orden ${id} eliminada permanentemente` });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
 // APIs Maquileros
 app.get('/api/maquileros', async (req, res) => {
   try {
