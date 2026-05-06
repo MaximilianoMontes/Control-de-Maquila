@@ -807,9 +807,21 @@ app.get('/api/pagos/:id/comprobante', async (req, res) => {
     doc.text(`Número de Pago: ${nroPago} de ${todosLosPagos.length}`);
     doc.moveDown();
 
-    doc.fontSize(18).font('Helvetica-Bold').fillColor('#059669').text(`MONTO PAGADO: $${pago.monto.toLocaleString()}`, { align: 'center' });
+    doc.fontSize(18).font('Helvetica-Bold').fillColor('#059669').text(`MONTO PAGADO: $${Number(pago.monto).toLocaleString('es-MX', { minimumFractionDigits: 2 })}`, { align: 'center' });
+    
+    // Cálculo de saldo restante
+    const [totalPagadoRows] = await db.query("SELECT SUM(monto) as total FROM pagos WHERE produccion_id = ? AND id <= ?", [pago.produccion_id, pagoId]);
+    const [ordenRows] = await db.query("SELECT precio_total FROM produccion WHERE id = ?", [pago.produccion_id]);
+    
+    const totalPagadoHastaAhora = totalPagadoRows[0].total || 0;
+    const precioTotalOrden = ordenRows[0].precio_total || 0;
+    const saldoRestante = Math.max(0, precioTotalOrden - totalPagadoHastaAhora);
+
+    doc.moveDown(0.2);
+    doc.fontSize(14).font('Helvetica-Bold').fillColor('#ef4444').text(`SALDO RESTANTE: $${saldoRestante.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`, { align: 'center' });
+    
     doc.fillColor('black');
-    doc.moveDown(2);
+    doc.moveDown(1.5);
 
     const startY = doc.y;
     doc.moveTo(60, startY + 40).lineTo(240, startY + 40).stroke();
