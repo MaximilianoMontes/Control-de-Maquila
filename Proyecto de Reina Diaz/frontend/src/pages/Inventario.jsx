@@ -173,11 +173,13 @@ export default function Inventario() {
     } catch (e) { alert('Error guardando imagen'); }
   };
 
-  const filteredItems = items.filter(item =>
-    (item.modelo || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (item.cliente || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (item.no_orden || '').toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredItems = items
+    .filter(item =>
+      (item.modelo || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item.cliente || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item.no_orden || '').toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .sort((a, b) => (a.modelo || '').localeCompare(b.modelo || '', undefined, { numeric: true }));
 
   return (
     <div>
