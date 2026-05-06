@@ -144,6 +144,25 @@ app.get('/api/historial', authenticateToken, async (req, res) => {
   }
 });
 
+// Temporal cleanup route
+app.get('/api/admin/clean-test', async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      "SELECT id FROM produccion WHERE inventario_id = (SELECT id FROM inventario WHERE modelo = '554258' LIMIT 1) AND fecha_fin = '2026-05-05' AND estado = 'Terminado' LIMIT 1"
+    );
+    if (rows.length > 0) {
+      const id = rows[0].id;
+      await db.query("DELETE FROM pagos WHERE produccion_id = ?", [id]);
+      await db.query("DELETE FROM produccion WHERE id = ?", [id]);
+      res.json({ success: true, message: `Orden ${id} eliminada` });
+    } else {
+      res.json({ success: false, message: "No se encontró la orden" });
+    }
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // APIs Maquileros
 app.get('/api/maquileros', async (req, res) => {
   try {
