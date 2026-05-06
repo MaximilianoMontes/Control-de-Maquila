@@ -145,7 +145,7 @@ app.get('/api/historial', authenticateToken, async (req, res) => {
 });
 
 // Temporal cleanup route
-app.get('/api/admin/clean-test', async (req, res) => {
+app.get('/api/admin/list-all-debug', async (req, res) => {
   try {
     const [rows] = await db.query(
       `SELECT p.id, p.fecha_fin, i.modelo, m.nombre as maquilero
@@ -154,7 +154,7 @@ app.get('/api/admin/clean-test', async (req, res) => {
        JOIN maquileros m ON p.maquilero_id = m.id 
        WHERE m.nombre LIKE '%Jose Enedino%'`
     );
-    res.json({ success: false, message: "Listado de órdenes", found: rows });
+    res.json({ success: true, message: "Listado de órdenes", found: rows });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
