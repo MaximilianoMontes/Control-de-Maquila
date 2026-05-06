@@ -13,7 +13,7 @@ const getImgSrc = (img) => img ? (img.startsWith('http') ? img : `${API}${img}`)
 export default function Inventario() {
   const { user } = useAuth();
   const userRole = (user?.role || user?.rol || '').toString().toLowerCase().trim();
-  const canEdit = userRole === 'admin' || userRole === 'inventario' || userRole === 'inventario1';
+  const canEdit = userRole === 'admin' || userRole === 'inventario1';
   const [items, setItems] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
