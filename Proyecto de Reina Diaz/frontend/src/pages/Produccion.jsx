@@ -125,6 +125,13 @@ export default function Produccion() {
     } catch (e) { alert('Error al aplicar ajuste'); }
   };
 
+  const handleAddDay = async (id) => {
+    try {
+      await axios.put(`${API}/api/produccion/${id}/agregar-dia`);
+      fetchOrders();
+    } catch (e) { alert('Error al agregar día'); }
+  };
+
   const filteredOrders = orders.filter(o => 
     (o.maquilero_nombre || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     (o.producto_modelo || '').toLowerCase().includes(searchTerm.toLowerCase())
@@ -204,9 +211,23 @@ export default function Produccion() {
                         />
                       </td>
                       <td>
-                        <div style={{ display: 'flex', flexDirection: 'column', fontSize: '0.85rem' }}>
-                          <span>In: {new Date(o.fecha_inicio).toLocaleDateString()}</span>
-                          <span style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.25rem' }}>Fin: {o.fecha_fin ? new Date(o.fecha_fin).toLocaleDateString() : 'N/A'} {delayIcon}</span>
+                        <div style={{ display: 'flex', flexDirection: 'column', fontSize: '0.75rem', gap: '2px' }}>
+                          <span style={{ color: '#64748b' }}>Inicio: {new Date(o.fecha_inicio).toLocaleDateString()}</span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                            <span style={{ fontWeight: 600, color: o.retrasos > 0 ? '#ef4444' : 'inherit' }}>
+                              Entrega: {o.fecha_fin ? new Date(o.fecha_fin).toLocaleDateString() : 'N/A'}
+                            </span>
+                            {canEdit && o.estado === 'En proceso' && (
+                              <button 
+                                onClick={() => handleAddDay(o.id)}
+                                style={{ border: 'none', background: '#f1f5f9', borderRadius: '4px', padding: '2px 4px', cursor: 'pointer', fontSize: '10px', fontWeight: 'bold', color: '#6366f1' }}
+                                title="Agregar 1 día de prórroga"
+                              >
+                                +1d
+                              </button>
+                            )}
+                            {delayIcon}
+                          </div>
                         </div>
                       </td>
                       <td style={{ minWidth: '130px' }}>

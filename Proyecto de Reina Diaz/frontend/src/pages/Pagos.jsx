@@ -244,8 +244,8 @@ export default function Pagos() {
                       pagos.map((p, index) => (
                         <tr key={p.id}>
                           <td>#{pagos.length - index}</td>
-                          <td>{p.fecha}</td>
-                          <td><span className="badge badge-info">{p.tipo_pago}</span></td>
+                          <td>{new Date(p.fecha).toLocaleDateString()}</td>
+                          <td><span className="badge badge-info" style={{ textTransform: 'uppercase' }}>{p.tipo_pago}</span></td>
                           <td style={{ color: '#34d399', fontWeight: 'bold' }}>${p.monto}</td>
                           <td>
                             <button className="btn-icon" onClick={() => handlePrintComprobante(p.id)} style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#60a5fa', border: 'none', padding: '6px', borderRadius: '4px', cursor: 'pointer' }}>

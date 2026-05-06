@@ -594,6 +594,46 @@ app.put('/api/produccion/:id', authenticateToken, async (req, res) => {
   }
 });
 
+app.put('/api/produccion/:id/ajuste', authenticateToken, async (req, res) => {
+  const { tipo, porcentaje } = req.body;
+  try {
+    const [olds] = await db.query("SELECT * FROM produccion WHERE id = ?", [req.params.id]);
+    const old = olds[0];
+    if (!old) return res.status(404).json({ error: 'Orden no encontrada' });
+
+    const [invs] = await db.query("SELECT precio FROM inventario WHERE id = ?", [old.inventario_id]);
+    const unitPrice = invs[0]?.precio || (old.precio_total / old.cantidad);
+    const subtotal = (old.cantidad_recibida || old.cantidad) * unitPrice;
+    
+    let adjustmentAmount = subtotal * (porcentaje / 100);
+    let finalTotal = (tipo === 'bono') ? (subtotal + adjustmentAmount) : (subtotal - adjustmentAmount);
+
+    await db.query("UPDATE produccion SET ajuste_tipo = ?, ajuste_porcentaje = ?, ajuste_monto = ?, precio_total = ? WHERE id = ?", 
+      [tipo, porcentaje, adjustmentAmount, finalTotal, req.params.id]);
+    
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.put('/api/produccion/:id/agregar-dia', authenticateToken, async (req, res) => {
+  try {
+    const [olds] = await db.query("SELECT fecha_fin, retrasos FROM produccion WHERE id = ?", [req.params.id]);
+    const old = olds[0];
+    if (!old) return res.status(404).json({ error: 'Orden no encontrada' });
+
+    const newDate = new Date(old.fecha_fin);
+    newDate.setDate(newDate.getDate() + 1);
+    const newRetrasos = (old.retrasos || 0) + 1;
+
+    await db.query("UPDATE produccion SET fecha_fin = ?, retrasos = ? WHERE id = ?", [newDate, newRetrasos, req.params.id]);
+    res.json({ success: true, newDate, newRetrasos });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.put('/api/produccion/:id/archivo', authenticateToken, async (req, res) => {
   const { archivado } = req.body;
   try {
@@ -693,10 +733,10 @@ app.post('/api/pagos', authenticateToken, async (req, res) => {
 });
 
 app.get('/api/pagos/:id/comprobante', async (req, res) => {
+  const pagoId = req.params.id;
   try {
-    const pagoId = req.params.id;
     const [pagos] = await db.query(`
-      SELECT pg.*, p.id as orden_id, p.precio_total, p.maquilero_id,
+      SELECT pg.*, p.id as orden_id, p.maquilero_id, p.inventario_id, 
              p.cantidad, p.cantidad_recibida, p.ajuste_tipo, p.ajuste_porcentaje, p.ajuste_monto,
              m.nombre as maquilero_nombre,
              i.modelo as producto_modelo, i.precio as precio_unitario
@@ -733,7 +773,10 @@ app.get('/api/pagos/:id/comprobante', async (req, res) => {
     doc.moveDown(2); 
 
     doc.fontSize(12).font('Helvetica').text(`Folio Interno: #${pago.id}`, { align: 'right' });
-    doc.text(`Fecha: ${pago.fecha}`, { align: 'right' });
+    const fechaFormateada = new Date(pago.fecha).toLocaleDateString('es-MX', { 
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+    });
+    doc.text(`Fecha: ${fechaFormateada}`, { align: 'right' });
     doc.moveDown(1.5);
 
     doc.fontSize(14).font('Helvetica-Bold').text('DATOS DEL MAQUILERO');
