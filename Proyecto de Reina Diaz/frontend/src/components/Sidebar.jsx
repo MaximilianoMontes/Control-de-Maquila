@@ -25,11 +25,9 @@ export default function Sidebar() {
     { name: 'Historial', path: '/historial', icon: <History size={20} />, roles: ['admin', 'produccion1', 'produccion2', 'inventario1'] },
   ];
 
-  const userRole = user?.role || user?.rol;
-  const allowedNavItems = navItems.filter(item => {
-    if (userRole === 'admin') return true;
-    return item.roles.includes(userRole);
-  });
+  // Leer el rol desde cualquier campo posible (role = inglés del servidor, rol = español)
+  const userRole = (user?.role || user?.rol || '').trim();
+  const allowedNavItems = navItems.filter(item => item.roles.includes(userRole));
 
   return (
     <aside className="sidebar">
