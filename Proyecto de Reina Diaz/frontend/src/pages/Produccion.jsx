@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { 
   Plus, Search, Pencil, Trash2, CheckCircle, XCircle, DollarSign, 
-  Archive, ArchiveRestore, Image as ImageIcon, AlertTriangle, AlertCircle, Calendar 
+  Archive, ArchiveRestore, Image as ImageIcon, AlertTriangle, AlertCircle, Calendar, X 
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -311,7 +311,9 @@ export default function Produccion() {
                   disabled={!canEdit && isEditModalOpen}
                 >
                   <option value="">-- Seleccionar --</option>
-                  {maquileros.map(m => <option key={m.id} value={m.id}>{m.nombre}</option>)}
+                  {[...maquileros].sort((a,b) => a.nombre.localeCompare(b.nombre)).map(m => (
+                    <option key={m.id} value={m.id}>{m.nombre}</option>
+                  ))}
                 </select>
               </div>
               <div className="form-group">
@@ -324,7 +326,9 @@ export default function Produccion() {
                   disabled={!canEdit && isEditModalOpen}
                 >
                   <option value="">-- Seleccionar --</option>
-                  {inventario.map(i => <option key={i.id} value={i.id}>{i.modelo} - {i.numero}</option>)}
+                  {[...inventario].sort((a,b) => (a.modelo || '').localeCompare(b.modelo || '', undefined, {numeric: true})).map(i => (
+                    <option key={i.id} value={i.id}>{i.modelo} - {i.numero}</option>
+                  ))}
                 </select>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
