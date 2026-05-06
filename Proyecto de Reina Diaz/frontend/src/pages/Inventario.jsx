@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { Plus, X, UploadCloud, Search, Image as ImageIcon, Pencil, Trash2, RefreshCw, MessageSquare } from 'lucide-react';
+import { Plus, X, UploadCloud, Search, Image as ImageIcon, Pencil, Trash2, RefreshCw, MessageSquare, PlusCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import API_URL from '../config';
 
@@ -12,6 +13,7 @@ const getImgSrc = (img) => img ? (img.startsWith('http') ? img : `${API}${img}`)
 
 export default function Inventario() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const userRole = (user?.role || user?.rol || '').toString().toLowerCase().trim();
   const canEdit = userRole === 'admin' || userRole === 'inventario1';
   const [items, setItems] = useState([]);
@@ -284,13 +286,17 @@ export default function Inventario() {
                           )}
                           {canEdit ? (
                             <>
-                              <button className="btn-icon" onClick={(e) => openEdit(item, e)} title="Editar"><Pencil size={18} /></button>
-                              <button className="btn-icon" onClick={(e) => openReprogram(item, e)} title="Reprogramar" style={{ color: '#8b5cf6' }}><RefreshCw size={18} /></button>
-                              <button className="btn-icon" onClick={(e) => handleDelete(item.id, e)} title="Eliminar" style={{ color: '#ef4444' }}><Trash2 size={18} /></button>
-                            </>
-                          ) : (
-                            <button className="btn-icon" onClick={(e) => { e.stopPropagation(); openEdit(item, e); }} title="Ver Detalles"><Search size={18} /></button>
-                          )}
+                               <button className="btn-icon" onClick={(e) => openEdit(item, e)} title="Editar"><Pencil size={18} /></button>
+                               <button className="btn-icon" onClick={(e) => openReprogram(item, e)} title="Reprogramar" style={{ color: '#8b5cf6' }}><RefreshCw size={18} /></button>
+                               <button className="btn-icon" onClick={(e) => { e.stopPropagation(); navigate(`/produccion?productId=${item.id}`); }} title="Iniciar Producción" style={{ color: '#10b981' }}><PlusCircle size={18} /></button>
+                               <button className="btn-icon" onClick={(e) => handleDelete(item.id, e)} title="Eliminar" style={{ color: '#ef4444' }}><Trash2 size={18} /></button>
+                             </>
+                           ) : (
+                             <>
+                               <button className="btn-icon" onClick={(e) => { e.stopPropagation(); navigate(`/produccion?productId=${item.id}`); }} title="Iniciar Producción" style={{ color: '#10b981' }}><PlusCircle size={18} /></button>
+                               <button className="btn-icon" onClick={(e) => { e.stopPropagation(); openEdit(item, e); }} title="Ver Detalles"><Search size={18} /></button>
+                             </>
+                           )}
                         </div>
                       </td>
                     </tr>

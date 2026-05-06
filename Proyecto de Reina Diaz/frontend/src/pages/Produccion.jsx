@@ -3,7 +3,7 @@ import {
   Plus, Search, Pencil, Trash2, CheckCircle, XCircle, DollarSign, 
   Archive, ArchiveRestore, Image as ImageIcon, AlertTriangle, AlertCircle, Calendar, X 
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import API_URL from '../config';
@@ -14,6 +14,7 @@ const getImgSrc = (img) => img ? (img.startsWith('http') ? img : `${API}${img}`)
 
 export default function Produccion() {
   const { user } = useAuth();
+  const location = useLocation();
   const userRole = (user?.role || user?.rol || '').toString().toLowerCase().trim();
   const canEdit = userRole === 'admin' || userRole === 'produccion1' || userRole === 'produccion2';
   const [orders, setOrders] = useState([]);
@@ -31,7 +32,17 @@ export default function Produccion() {
     fetchOrders();
     fetchMaquileros();
     fetchInventario();
-  }, [verArchivados]);
+
+    // Lógica para el atajo desde Inventario
+    const queryParams = new URLSearchParams(location.search);
+    const productId = queryParams.get('productId');
+    if (productId && canEdit) {
+      setFormData(prev => ({ ...prev, inventario_id: productId, fecha_inicio: new Date().toISOString().split('T')[0] }));
+      setIsModalOpen(true);
+      // Limpiar la URL para evitar que se abra de nuevo al recargar
+      window.history.replaceState({}, document.title, "/produccion");
+    }
+  }, [verArchivados, location]);
 
   const fetchOrders = async () => {
     try {
