@@ -93,7 +93,7 @@ export default function Inventario() {
       cliente: item.cliente || '',
       no_orden: item.no_orden || '',
       variantes: parsedVariantes,
-      imagenUrl: '',
+      imagenUrl: item.imagen || '',
       observaciones: item.observaciones || '',
     });
     setImagenFile(null);
