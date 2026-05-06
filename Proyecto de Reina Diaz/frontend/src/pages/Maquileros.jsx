@@ -292,7 +292,7 @@ export default function Maquileros() {
                               </td>
                               <td>
                                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                  <span>{h.fecha_fin || 'N/A'}</span>
+                                  <span>{h.fecha_fin ? new Date(h.fecha_fin).toLocaleDateString() : 'N/A'}</span>
                                   {h.retrasos > 0 && <span style={{ fontSize: '0.7rem', color: '#dc2626' }}>{h.retrasos} retraso(s)</span>}
                                 </div>
                               </td>
