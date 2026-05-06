@@ -148,6 +148,17 @@ async function initializeDatabase() {
       }
     }
 
+    // Migración: Forzar roles correctos para todos los usuarios conocidos
+    // Esto corrige usuarios que pudieron haberse creado con roles incorrectos o nulos
+    try {
+      for (const [username, , role] of users) {
+        await connection.query("UPDATE users SET role = ? WHERE username = ?", [role, username]);
+      }
+      console.log('Migration: Roles de usuarios verificados y corregidos.');
+    } catch (e) {
+      console.error('Error al migrar roles:', e);
+    }
+
     connection.release();
     console.log('Database initialization complete.');
   } catch (error) {
