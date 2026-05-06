@@ -237,6 +237,7 @@ export default function Produccion() {
                           {canEdit && o.estado === 'En proceso' && (
                             <select className="form-input" style={{ width: '100%', padding: '2px', fontSize: '10px', height: '24px' }} value={o.ajuste_tipo === 'ninguno' ? '' : `${o.ajuste_tipo}-${o.ajuste_porcentaje}`} onChange={(e) => handleApplyAdjustment(o.id, e.target.value)}>
                               <option value="">Ajustar...</option>
+                              <option value="ninguno-0">❌ Sin Ajuste</option>
                               <optgroup label="Bonos">
                                 <option value="bono-5">Bono +5%</option>
                                 <option value="bono-10">Bono +10%</option>
@@ -264,7 +265,7 @@ export default function Produccion() {
                           {canEdit && o.estado === 'En proceso' && (
                             <>
                               <button className="btn btn-success" style={{ padding: '0.4rem' }} onClick={() => handleTerminar(o.id)} title="Terminar Orden"><CheckCircle size={16} /></button>
-                              <button className="btn btn-warning" style={{ padding: '0.4rem', color: 'white' }} onClick={() => handleAddDay(o.id)} title="Agregar Prórroga (Días)"><Calendar size={16} /></button>
+                              <button className="btn" style={{ padding: '0.4rem', background: '#8b5cf6', color: 'white' }} onClick={() => handleAddDay(o.id)} title="Agregar Prórroga (Días)"><Calendar size={16} /></button>
                               <button className="btn btn-danger" style={{ padding: '0.4rem' }} onClick={() => handleCancelar(o.id)} title="Cancelar Orden"><XCircle size={16} /></button>
                               <Link to={`/pagos?orden=${o.id}`} className="btn btn-primary" style={{ padding: '0.4rem', display: 'flex', alignItems: 'center' }} title="Registrar Pago"><DollarSign size={16} /></Link>
                             </>
