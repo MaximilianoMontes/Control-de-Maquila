@@ -27,11 +27,13 @@ function MainLayout({ children }) {
 
 function ProtectedRoute({ children, allowedRoles }) {
   const { user, loading } = useAuth();
-  
+  // Leer el rol desde cualquier campo posible
+  const userRole = user?.role || user?.rol;
+
   if (loading) return <div>Cargando...</div>;
   if (!user) return <Navigate to="/login" replace />;
-  if (allowedRoles && !allowedRoles.includes(user.role)) return <Navigate to="/" replace />;
-  
+  if (allowedRoles && !allowedRoles.includes(userRole)) return <Navigate to="/" replace />;
+
   return children;
 }
 
