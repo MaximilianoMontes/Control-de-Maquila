@@ -148,26 +148,13 @@ app.get('/api/historial', authenticateToken, async (req, res) => {
 app.get('/api/admin/clean-test', async (req, res) => {
   try {
     const [rows] = await db.query(
-      `SELECT p.id, p.fecha_fin, i.modelo 
+      `SELECT p.id, p.fecha_fin, i.modelo, m.nombre as maquilero
        FROM produccion p 
        JOIN inventario i ON p.inventario_id = i.id 
        JOIN maquileros m ON p.maquilero_id = m.id 
-       WHERE m.nombre LIKE '%Jose Enedino%' AND p.estado = 'Terminado' AND i.modelo = '554258'`
+       WHERE m.nombre LIKE '%Jose Enedino%'`
     );
-    
-    if (rows.length > 0) {
-      // Intentar borrar la que tiene fecha de mayo
-      const testOrder = rows.find(r => r.fecha_fin.toString().includes('2026-05-05'));
-      if (testOrder) {
-        const id = testOrder.id;
-        await db.query("DELETE FROM pagos WHERE produccion_id = ?", [id]);
-        await db.query("DELETE FROM produccion WHERE id = ?", [id]);
-        return res.json({ success: true, message: `Orden ${id} eliminada`, details: testOrder });
-      }
-      return res.json({ success: false, message: "Se encontraron órdenes pero ninguna del 5/5", found: rows });
-    } else {
-      res.json({ success: false, message: "No se encontró ninguna orden para Jose Enedino con modelo 554258" });
-    }
+    res.json({ success: false, message: "Listado de órdenes", found: rows });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
