@@ -15,19 +15,22 @@ export default function Sidebar() {
   const location = useLocation();
   const { user, logout } = useAuth();
   
+  // Todos los items del sidebar - cualquier usuario autenticado los ve
+  // excepto Pagos que solo es para admin y produccion
+  const userRole = (user?.role || user?.rol || '').trim();
+  const esSoloInventario = userRole === 'inventario1';
+
   const navItems = [
-    { name: 'Dashboard', path: '/', icon: <LayoutDashboard size={20} />, roles: ['admin', 'produccion1', 'produccion2', 'inventario1'] },
-    { name: 'Maquileros', path: '/maquileros', icon: <Users size={20} />, roles: ['admin', 'produccion1', 'produccion2', 'inventario1'] },
-    { name: 'Inventario', path: '/inventario', icon: <Package size={20} />, roles: ['admin', 'produccion1', 'produccion2', 'inventario1'] },
-    { name: 'Producción', path: '/produccion', icon: <Factory size={20} />, roles: ['admin', 'produccion1', 'produccion2', 'inventario1'] },
-    { name: 'Reportes', path: '/reportes', icon: <FileText size={20} />, roles: ['admin', 'produccion1', 'produccion2', 'inventario1'] },
-    { name: 'Pagos', path: '/pagos', icon: <Wallet size={20} />, roles: ['admin', 'produccion1', 'produccion2'] },
-    { name: 'Historial', path: '/historial', icon: <History size={20} />, roles: ['admin', 'produccion1', 'produccion2', 'inventario1'] },
+    { path: '/',           name: 'Dashboard',   icon: <LayoutDashboard size={20} /> },
+    { path: '/maquileros', name: 'Maquileros',  icon: <Users size={20} /> },
+    { path: '/inventario', name: 'Inventario',  icon: <Package size={20} /> },
+    { path: '/produccion', name: 'Producción',  icon: <Factory size={20} /> },
+    { path: '/reportes',   name: 'Reportes',    icon: <FileText size={20} /> },
+    ...(!esSoloInventario ? [{ path: '/pagos', name: 'Pagos', icon: <Wallet size={20} /> }] : []),
+    { path: '/historial',  name: 'Historial',   icon: <History size={20} /> },
   ];
 
-  // Leer el rol desde cualquier campo posible (role = inglés del servidor, rol = español)
-  const userRole = (user?.role || user?.rol || '').trim();
-  const allowedNavItems = navItems.filter(item => item.roles.includes(userRole));
+  const allowedNavItems = navItems;
 
   return (
     <aside className="sidebar">
