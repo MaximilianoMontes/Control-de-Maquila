@@ -144,6 +144,33 @@ app.get('/api/historial', authenticateToken, async (req, res) => {
   }
 });
 
+// Temporal cleanup route
+app.get('/api/admin/delete-by-maquilero', async (req, res) => {
+  const { nombre, fecha } = req.query;
+  try {
+    const [rows] = await db.query(
+      `SELECT p.id 
+       FROM produccion p 
+       JOIN maquileros m ON p.maquilero_id = m.id 
+       WHERE m.nombre LIKE ? AND p.fecha_fin LIKE ?`,
+      [`%${nombre}%`, `%${fecha}%`]
+    );
+    
+    if (rows.length > 0) {
+      const ids = rows.map(r => r.id);
+      for (const id of ids) {
+        await db.query("DELETE FROM pagos WHERE produccion_id = ?", [id]);
+        await db.query("DELETE FROM produccion WHERE id = ?", [id]);
+      }
+      res.json({ success: true, message: `Se eliminaron ${ids.length} órdenes para ${nombre}`, ids });
+    } else {
+      res.json({ success: false, message: "No se encontraron órdenes con esos criterios" });
+    }
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // APIs Maquileros
 app.get('/api/maquileros', async (req, res) => {
   try {
