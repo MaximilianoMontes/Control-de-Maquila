@@ -46,12 +46,12 @@ function App() {
     <Routes>
       <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
       <Route path="/" element={<ProtectedRoute><MainLayout><Dashboard /></MainLayout></ProtectedRoute>} />
-      <Route path="/maquileros" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2', 'inventario1']}><MainLayout><Maquileros /></MainLayout></ProtectedRoute>} />
-      <Route path="/inventario" element={<ProtectedRoute allowedRoles={['admin', 'inventario1', 'produccion1', 'produccion2']}><MainLayout><Inventario /></MainLayout></ProtectedRoute>} />
-      <Route path="/produccion" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2', 'inventario1']}><MainLayout><Produccion /></MainLayout></ProtectedRoute>} />
-      <Route path="/pagos" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2']}><MainLayout><Pagos /></MainLayout></ProtectedRoute>} />
-      <Route path="/reportes" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2', 'inventario1']}><MainLayout><Reportes /></MainLayout></ProtectedRoute>} />
-      <Route path="/historial" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2', 'inventario1']}><MainLayout><Historial /></MainLayout></ProtectedRoute>} />
+      <Route path="/maquileros" element={<ProtectedRoute><MainLayout><Maquileros /></MainLayout></ProtectedRoute>} />
+      <Route path="/inventario" element={<ProtectedRoute><MainLayout><Inventario /></MainLayout></ProtectedRoute>} />
+      <Route path="/produccion" element={<ProtectedRoute><MainLayout><Produccion /></MainLayout></ProtectedRoute>} />
+      <Route path="/pagos" element={<ProtectedRoute><MainLayout><Pagos /></MainLayout></ProtectedRoute>} />
+      <Route path="/reportes" element={<ProtectedRoute><MainLayout><Reportes /></MainLayout></ProtectedRoute>} />
+      <Route path="/historial" element={<ProtectedRoute><MainLayout><Historial /></MainLayout></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
