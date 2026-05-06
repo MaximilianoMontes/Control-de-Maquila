@@ -1153,6 +1153,99 @@ app.get('/api/reportes/recoleccion', async (req, res) => {
   }
 });
 
+app.get('/api/reportes/pagos', async (req, res) => {
+  const { start, end } = req.query;
+  try {
+    let query = `
+      SELECT pg.*, m.nombre as maquilero_nombre, i.modelo as producto_modelo
+      FROM pagos pg
+      JOIN produccion p ON pg.produccion_id = p.id
+      JOIN maquileros m ON p.maquilero_id = m.id
+      LEFT JOIN inventario i ON p.inventario_id = i.id
+    `;
+    const params = [];
+    let subtitleDate = "";
+
+    if (start && end) {
+      if (start === end) {
+        query += ` WHERE pg.fecha = ?`;
+        params.push(start);
+        subtitleDate = `del día ${start}`;
+      } else {
+        query += ` WHERE pg.fecha BETWEEN ? AND ?`;
+        params.push(start, end);
+        subtitleDate = `del ${start} al ${end}`;
+      }
+    } else if (start) {
+      query += ` WHERE pg.fecha >= ?`;
+      params.push(start);
+      subtitleDate = `desde ${start}`;
+    } else if (end) {
+      query += ` WHERE pg.fecha <= ?`;
+      params.push(end);
+      subtitleDate = `hasta ${end}`;
+    }
+    
+    query += ` ORDER BY pg.fecha ASC, pg.id ASC`;
+    const [rows] = await db.query(query, params);
+
+    const doc = new PDFDocument({ margin: 20, size: 'A4', layout: 'portrait' });
+    res.setHeader('Content-disposition', 'attachment; filename="Reporte_Pagos.pdf"');
+    res.setHeader('Content-type', 'application/pdf');
+
+    doc.pipe(res);
+
+    try {
+      const logoPath = path.join(__dirname, '..', 'frontend', 'public', 'logo.png');
+      if (fs.existsSync(logoPath)) {
+        doc.image(logoPath, 25, 20, { width: 85 });
+      }
+    } catch (e) {}
+
+    doc.y = 100;
+
+    if (rows.length === 0) {
+      doc.fontSize(20).text('Reporte de Pagos', { align: 'center' });
+      doc.moveDown();
+      doc.fontSize(12).text('No se encontraron pagos en el periodo seleccionado.', { align: 'center' });
+    } else {
+      const tableConfig = {
+        title: "Reporte de Pagos a Maquileros",
+        subtitle: `Pagos realizados ${subtitleDate}` + " - Generado el " + new Date().toLocaleDateString(),
+        headers: [
+          { label: "FECHA", property: "fecha", width: 80 },
+          { label: "MAQUILERO", property: "maquilero", width: 160 },
+          { label: "MODELO", property: "modelo", width: 100 },
+          { label: "TIPO", property: "tipo", width: 80 },
+          { label: "MONTO", property: "monto", width: 100 }
+        ],
+        datas: rows.map(r => ({
+          fecha: new Date(r.fecha).toLocaleDateString(),
+          maquilero: (r.maquilero_nombre || '').toUpperCase(),
+          modelo: r.producto_modelo || '-',
+          tipo: (r.tipo_pago || 'ABONO').toUpperCase(),
+          monto: '$' + Number(r.monto).toFixed(2)
+        })),
+        options: { padding: 5 }
+      };
+
+      await doc.table(tableConfig, {
+        prepareHeader: () => doc.font("Helvetica-Bold").fontSize(10),
+        prepareRow: () => doc.font("Helvetica").fontSize(10)
+      });
+
+      const totalMonto = rows.reduce((sum, r) => sum + Number(r.monto), 0);
+      doc.moveDown();
+      doc.fontSize(14).font("Helvetica-Bold").text(`TOTAL PAGADO EN EL PERIODO: $${totalMonto.toFixed(2)}`, { align: 'right' });
+    }
+
+    doc.end();
+  } catch (error) {
+    console.error("Error generando reporte pagos:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.get('/api/descuentos/pendientes/:maquileroId', authenticateToken, async (req, res) => {
   try {
     const [rows] = await db.query(
