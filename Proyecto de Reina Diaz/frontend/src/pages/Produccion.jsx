@@ -327,7 +327,9 @@ export default function Produccion() {
                 >
                   <option value="">-- Seleccionar --</option>
                   {[...inventario].sort((a,b) => (a.modelo || '').localeCompare(b.modelo || '', undefined, {numeric: true})).map(i => (
-                    <option key={i.id} value={i.id}>{i.modelo} - {i.numero}</option>
+                    <option key={i.id} value={i.id}>
+                      {i.modelo} - {i.numero} {i.es_reprogramacion === 1 ? ' (REPROGRAMADO)' : ''}
+                    </option>
                   ))}
                 </select>
               </div>
