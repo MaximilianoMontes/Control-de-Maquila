@@ -872,25 +872,42 @@ app.get('/api/pagos/:id/comprobante', async (req, res) => {
 
 // APIs Reportes
 app.get('/api/reportes/produccion', async (req, res) => {
-  const { date } = req.query;
-  try {
-    let query = `
-      SELECT p.*, 
-        m.nombre as maquilero_nombre, m.imagen as maquilero_imagen,
-        i.modelo as producto_modelo, i.numero as producto_codigo,
-        i.color as producto_color, i.cliente as producto_cliente,
-        i.no_orden as inventario_orden, i.imagen as producto_imagen
-      FROM produccion p 
-      JOIN maquileros m ON p.maquilero_id = m.id 
-      LEFT JOIN inventario i ON p.inventario_id = i.id
-      WHERE p.estado = 'Terminado' AND p.archivado = 0
-    `;
-    const params = [];
-    if (date) {
-      query += ` AND p.fecha_fin = ?`;
-      params.push(date);
-    }
-    query += ` ORDER BY p.fecha_fin DESC`;
+    const { start, end, date } = req.query;
+    try {
+      let query = `
+        SELECT p.*, 
+          m.nombre as maquilero_nombre, m.imagen as maquilero_imagen,
+          i.modelo as producto_modelo, i.numero as producto_codigo,
+          i.color as producto_color, i.cliente as producto_cliente,
+          i.no_orden as inventario_orden, i.imagen as producto_imagen
+        FROM produccion p 
+        JOIN maquileros m ON p.maquilero_id = m.id 
+        LEFT JOIN inventario i ON p.inventario_id = i.id
+        WHERE p.estado = 'Terminado' AND p.archivado = 0
+      `;
+      const params = [];
+      let subtitleDate = "Detalle completo de órdenes terminadas";
+
+      if (start && end) {
+        if (start === end) {
+          query += ` AND p.fecha_fin = ?`;
+          params.push(start);
+          subtitleDate = `Reporte del día ${start}`;
+        } else {
+          query += ` AND p.fecha_fin BETWEEN ? AND ?`;
+          params.push(start, end);
+          subtitleDate = `Del ${start} al ${end}`;
+        }
+      } else if (start) {
+        query += ` AND p.fecha_fin = ?`;
+        params.push(start);
+        subtitleDate = `Reporte del día ${start}`;
+      } else if (date) {
+        query += ` AND p.fecha_fin = ?`;
+        params.push(date);
+        subtitleDate = `Reporte del día ${date}`;
+      }
+      query += ` ORDER BY p.fecha_fin DESC`;
 
     const [orders] = await db.query(query, params);
 
@@ -912,11 +929,11 @@ app.get('/api/reportes/produccion', async (req, res) => {
     if (orders.length === 0) {
       doc.fontSize(20).text('Reporte de Órdenes Terminadas', { align: 'center' });
       doc.moveDown();
-      doc.fontSize(12).text(date ? `No hay órdenes terminadas el día ${date}.` : 'No hay órdenes terminadas.', { align: 'center' });
+      doc.fontSize(12).text(subtitleDate.includes('el') || subtitleDate.includes('Del') ? `No hay órdenes terminadas ${subtitleDate.toLowerCase()}.` : 'No hay órdenes terminadas.', { align: 'center' });
     } else {
       const tableConfig = {
         title: "Reporte de Órdenes Terminadas",
-        subtitle: (date ? `Reporte del día ${date}` : "Detalle completo de órdenes terminadas") + " - Generado el " + new Date().toLocaleDateString(),
+        subtitle: subtitleDate + " - Generado el " + new Date().toLocaleDateString(),
         headers: [
           { label: "MAQUILERO", property: "maquilero", width: 110 },
           { label: "MODELO", property: "modelo", width: 80 },
