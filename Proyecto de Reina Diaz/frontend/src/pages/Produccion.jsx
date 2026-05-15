@@ -227,20 +227,22 @@ export default function Produccion() {
                   if (isCancelado) {
                     rowBg = 'transparent';
                   } else if (!isTerminado && o.fecha_fin) {
-                    const today = new Date();
-                    today.setHours(0,0,0,0);
-                    const deliveryDate = new Date(o.fecha_fin);
-                    deliveryDate.setHours(0,0,0,0);
+                    // Normalizar fechas a medianoche UTC para cálculo exacto de días de diferencia
+                    const now = new Date();
+                    const today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
                     
-                    const diffTime = today - deliveryDate;
-                    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
+                    const dDate = new Date(o.fecha_fin);
+                    const deliveryDate = Date.UTC(dDate.getUTCFullYear(), dDate.getUTCMonth(), dDate.getUTCDate());
+                    
+                    const diffMs = today - deliveryDate;
+                    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                    
                     if (diffDays >= 1 && diffDays <= 3) {
-                      rowBg = '#fef9c3'; // Amarillo
-                      delayIcon = <AlertTriangle size={14} color="#ca8a04" />;
+                      rowBg = '#fef9c3'; // Amarillo (retraso 1-3 días)
+                      delayIcon = <AlertTriangle size={16} color="#ca8a04" title={`Retraso: ${diffDays} día(s)`} />;
                     } else if (diffDays >= 4) {
-                      rowBg = '#fee2e2'; // Rojo
-                      delayIcon = <AlertCircle size={14} color="#dc2626" />;
+                      rowBg = '#fee2e2'; // Rojo (retraso 4+ días)
+                      delayIcon = <AlertCircle size={16} color="#dc2626" title={`Retraso: ${diffDays} día(s)`} />;
                     }
                   }
                   
