@@ -5,13 +5,18 @@ import API_URL from '../config';
 export default function Reportes() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [prodDate, setProdDate] = useState('');
+  const [prodStart, setProdStart] = useState('');
+  const [prodEnd, setProdEnd] = useState('');
   const [payStart, setPayStart] = useState('');
   const [payEnd, setPayEnd] = useState('');
   
   const handleDownloadProduccion = () => {
     let url = `${API_URL}/api/reportes/produccion`;
-    if (prodDate) url += `?date=${prodDate}`;
+    const params = new URLSearchParams();
+    if (prodStart) params.append('start', prodStart);
+    if (prodEnd) params.append('end', prodEnd);
+    const query = params.toString();
+    if (query) url += `?${query}`;
     window.open(url, '_blank');
   };
 
@@ -57,14 +62,23 @@ export default function Reportes() {
           <p style={{ color: '#94a3b8', marginBottom: '1.5rem' }}>Genera un reporte en PDF de todas las órdenes de producción que han sido marcadas como terminadas o filtra por una fecha específica.</p>
           
           <div style={{ width: '100%', marginBottom: '1.5rem', textAlign: 'left' }}>
-            <label className="form-label">Filtrar por Fecha (Opcional)</label>
-            <input type="date" className="form-input" value={prodDate} onChange={e => setProdDate(e.target.value)} />
-            {prodDate && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div>
+                <label className="form-label" style={{ fontSize: '0.75rem' }}>Desde</label>
+                <input type="date" className="form-input" value={prodStart} onChange={e => setProdStart(e.target.value)} />
+              </div>
+              <div>
+                <label className="form-label" style={{ fontSize: '0.75rem' }}>Hasta</label>
+                <input type="date" className="form-input" value={prodEnd} onChange={e => setProdEnd(e.target.value)} />
+              </div>
+            </div>
+            
+            {(prodStart || prodEnd) && (
               <button 
-                onClick={() => setProdDate('')}
-                style={{ background: 'none', border: 'none', color: '#64748b', fontSize: '0.75rem', marginTop: '0.5rem', cursor: 'pointer', textDecoration: 'underline' }}
+                onClick={() => { setProdStart(''); setProdEnd(''); }}
+                style={{ background: 'none', border: 'none', color: '#64748b', fontSize: '0.75rem', marginTop: '1rem', cursor: 'pointer', textDecoration: 'underline' }}
               >
-                Limpiar fecha
+                Limpiar fechas
               </button>
             )}
           </div>
