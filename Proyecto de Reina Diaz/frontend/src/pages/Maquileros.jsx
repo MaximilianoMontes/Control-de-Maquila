@@ -212,21 +212,47 @@ export default function Maquileros() {
       {/* Modal Perfil */}
       {selectedMaquilero && (
         <div className="modal-overlay" onClick={() => setSelectedMaquilero(null)}>
-            <div className="modal-content glass-card" style={{ maxWidth: '1350px', width: '95%', position: 'relative' }} onClick={e => e.stopPropagation()}>
+            <div className="modal-content glass-card" style={{ maxWidth: '1350px', width: '85%', position: 'relative' }} onClick={e => e.stopPropagation()}>
               {/* Botones de Navegación */}
               <button 
                 className="btn-icon" 
-                style={{ position: 'absolute', left: '-60px', top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.2)', color: 'white', borderRadius: '50%', padding: '12px' }}
+                style={{ 
+                  position: 'absolute', 
+                  left: '-70px', 
+                  top: '50%', 
+                  transform: 'translateY(-50%)', 
+                  background: 'white', 
+                  color: '#2563eb', 
+                  borderRadius: '50%', 
+                  padding: '15px',
+                  boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
+                  border: '2px solid #2563eb',
+                  zIndex: 100,
+                  display: 'flex'
+                }}
                 onClick={() => navigateMaquilero(-1)}
               >
-                <ChevronLeft size={32} />
+                <ChevronLeft size={40} strokeWidth={3} />
               </button>
               <button 
                 className="btn-icon" 
-                style={{ position: 'absolute', right: '-60px', top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.2)', color: 'white', borderRadius: '50%', padding: '12px' }}
+                style={{ 
+                  position: 'absolute', 
+                  right: '-70px', 
+                  top: '50%', 
+                  transform: 'translateY(-50%)', 
+                  background: 'white', 
+                  color: '#2563eb', 
+                  borderRadius: '50%', 
+                  padding: '15px',
+                  boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
+                  border: '2px solid #2563eb',
+                  zIndex: 100,
+                  display: 'flex'
+                }}
                 onClick={() => navigateMaquilero(1)}
               >
-                <ChevronRight size={32} />
+                <ChevronRight size={40} strokeWidth={3} />
               </button>
 
               <div className="modal-header">
@@ -293,7 +319,7 @@ export default function Maquileros() {
               {/* Columna Derecha: Historial */}
               <div style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
                 <h3 style={{ marginBottom: '1rem', color: '#1e293b' }}>Historial de Maquila</h3>
-                <div className="table-wrapper" style={{ flex: 1, maxHeight: '500px', overflowY: 'auto' }}>
+                <div className="table-wrapper" style={{ flex: 1, maxHeight: '90vh', overflowY: 'auto' }}>
                   <table className="data-table" style={{ fontSize: '0.85rem' }}>
                     <thead>
                       <tr>
