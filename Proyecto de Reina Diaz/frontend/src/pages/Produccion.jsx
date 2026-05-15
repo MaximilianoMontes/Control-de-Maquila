@@ -11,6 +11,10 @@ import API_URL from '../config';
 const API = API_URL;
 
 const getImgSrc = (img) => img ? (img.startsWith('http') ? img : `${API}${img}`) : null;
+const formatDate = (date) => {
+  if (!date) return '';
+  return new Date(date).toISOString().split('T')[0];
+};
 
 export default function Produccion() {
   const { user } = useAuth();
@@ -316,7 +320,16 @@ export default function Produccion() {
                           )}
                           {canEdit ? (
                             <>
-                              <button className="btn btn-secondary" style={{ padding: '0.4rem' }} onClick={() => { setEditingOrder(o); setFormData({ maquilero_id: o.maquilero_id, inventario_id: o.inventario_id, fecha_inicio: o.fecha_inicio, fecha_fin: o.fecha_fin }); setIsEditModalOpen(true); }} title="Editar"><Pencil size={16} /></button>
+                              <button className="btn btn-secondary" style={{ padding: '0.4rem' }} onClick={() => { 
+                                setEditingOrder(o); 
+                                setFormData({ 
+                                  maquilero_id: o.maquilero_id, 
+                                  inventario_id: o.inventario_id, 
+                                  fecha_inicio: formatDate(o.fecha_inicio), 
+                                  fecha_fin: formatDate(o.fecha_fin) 
+                                }); 
+                                setIsEditModalOpen(true); 
+                              }} title="Editar"><Pencil size={16} /></button>
                               <button className="btn btn-secondary" style={{ padding: '0.4rem' }} onClick={() => handleArchivar(o.id, o.archivado)} title={o.archivado ? "Restaurar" : "Archivar"}>
                                 {o.archivado ? <ArchiveRestore size={16} /> : <Archive size={16} />}
                               </button>

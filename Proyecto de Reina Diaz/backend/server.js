@@ -568,17 +568,33 @@ app.put('/api/produccion/:id', authenticateToken, async (req, res) => {
       ajuste_monto = ?
       WHERE id = ?
     `, [
-      maquilero_id, inventario_id, fecha_inicio, fecha_fin, estado, 
-      finalPrecioTotal, cantidad, 
-      cantidad_recibida !== undefined ? cantidad_recibida : old.cantidad_recibida, 
-      retrasos, 
-      curAjusteTipo, curAjustePorc, adjustmentAmount,
+      maquilero_id || null, 
+      inventario_id || null, 
+      fecha_inicio || null, 
+      fecha_fin || null, 
+      estado || null, 
+      finalPrecioTotal, 
+      cantidad || null, 
+      cantidad_recibida !== undefined && cantidad_recibida !== '' ? cantidad_recibida : old.cantidad_recibida, 
+      retrasos !== undefined && retrasos !== '' ? retrasos : old.retrasos, 
+      curAjusteTipo, 
+      curAjustePorc, 
+      adjustmentAmount,
       req.params.id
     ]);
 
     let changes = [];
     if (estado && old.estado !== estado) changes.push(`Estado: ${old.estado} -> ${estado}`);
     if (curAjusteTipo !== old.ajuste_tipo) changes.push(`Ajuste: ${old.ajuste_tipo} -> ${curAjusteTipo} (${curAjustePorc}%)`);
+    
+    // Formatear fechas para comparar (YYYY-MM-DD)
+    const fmtDate = (d) => d ? new Date(d).toISOString().split('T')[0] : null;
+    if (fecha_fin && fmtDate(old.fecha_fin) !== fmtDate(fecha_fin)) {
+      changes.push(`Fecha Entrega: ${fmtDate(old.fecha_fin)} -> ${fmtDate(fecha_fin)}`);
+    }
+    if (fecha_inicio && fmtDate(old.fecha_inicio) !== fmtDate(fecha_inicio)) {
+      changes.push(`Fecha Inicio: ${fmtDate(old.fecha_inicio)} -> ${fmtDate(fecha_inicio)}`);
+    }
     
     const silentFields = ['cantidad_recibida', 'ajuste_tipo', 'ajuste_porcentaje'];
     const isSilentUpdate = Object.keys(req.body).every(key => silentFields.includes(key));
@@ -631,6 +647,11 @@ app.put('/api/produccion/:id/agregar-dia', authenticateToken, async (req, res) =
     const newRetrasos = (old.retrasos || 0) + 1; // Se cuenta como un evento de retraso sin importar los días
 
     await db.query("UPDATE produccion SET fecha_fin = ?, retrasos = ? WHERE id = ?", [newDate, newRetrasos, req.params.id]);
+    
+    const [invs] = await db.query("SELECT modelo FROM inventario WHERE id = (SELECT inventario_id FROM produccion WHERE id = ?)", [req.params.id]);
+    const inv = invs[0];
+    await logActivity(req.user.id, 'EDIT', 'PRODUCCION', `Agregó ${numDias} días de prórroga a ${inv ? inv.modelo : 'ID '+req.params.id} (Nueva fecha: ${newDate.toISOString().split('T')[0]})`);
+
     res.json({ success: true, newDate, newRetrasos });
   } catch (error) {
     res.status(500).json({ error: error.message });
