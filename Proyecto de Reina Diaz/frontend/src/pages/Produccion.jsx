@@ -72,7 +72,9 @@ export default function Produccion() {
       setIsModalOpen(false);
       setFormData({ maquilero_id: '', inventario_id: '', fecha_inicio: '', fecha_fin: '' });
       fetchOrders();
-    } catch (e) { alert('Error al crear orden'); }
+    } catch (e) { 
+      alert('Error al crear orden: ' + (e.response?.data?.error || e.message)); 
+    }
   };
 
   const handleEditSubmit = async (e) => {
