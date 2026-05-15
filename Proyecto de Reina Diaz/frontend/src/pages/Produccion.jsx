@@ -13,7 +13,12 @@ const API = API_URL;
 const getImgSrc = (img) => img ? (img.startsWith('http') ? img : `${API}${img}`) : null;
 const formatDate = (date) => {
   if (!date) return '';
-  return new Date(date).toISOString().split('T')[0];
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return '';
+  const year = d.getUTCFullYear();
+  const month = String(d.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(d.getUTCDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 };
 
 export default function Produccion() {
@@ -84,12 +89,11 @@ export default function Produccion() {
 
   const handleEditSubmit = async (e) => {
     e.preventDefault();
-    const item = inventario.find(i => i.id === parseInt(formData.inventario_id));
-    const cantidadFinal = item?.piezas_en_proceso || 0;
-    const total = (item?.precio || 0) * cantidadFinal;
-
     try {
-      await axios.put(`${API}/api/produccion/${editingOrder.id}`, { ...formData, cantidad: cantidadFinal, precio_total: total });
+      // Al editar, NO recalculamos cantidad ni precio desde el inventario, 
+      // ya que esos datos son para órdenes NUEVAS.
+      // Solo enviamos lo que está en el formulario (maquilero, fechas, etc)
+      await axios.put(`${API}/api/produccion/${editingOrder.id}`, formData);
       setIsEditModalOpen(false);
       setEditingOrder(null);
       fetchOrders();
