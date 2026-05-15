@@ -24,6 +24,7 @@ export default function Produccion() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [verArchivados, setVerArchivados] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
   
   const [formData, setFormData] = useState({ maquilero_id: '', inventario_id: '', fecha_inicio: '', fecha_fin: '' });
   const [editingOrder, setEditingOrder] = useState(null);
@@ -201,11 +202,30 @@ export default function Produccion() {
                   const pagado = o.pagado || 0;
                   const prodImg = getImgSrc(o.producto_imagen);
                   const isCancelado = o.estado === 'Cancelado';
+                  const isTerminado = o.estado === 'Terminado';
+                  
                   let rowBg = '#f0fdf4'; 
                   let delayIcon = null;
-                  if (o.retrasos === 1) { rowBg = '#fef9c3'; delayIcon = <AlertTriangle size={14} color="#ca8a04" />; } 
-                  else if (o.retrasos >= 2) { rowBg = '#fee2e2'; delayIcon = <AlertCircle size={14} color="#dc2626" />; }
-                  if (isCancelado) rowBg = 'transparent';
+                  
+                  if (isCancelado) {
+                    rowBg = 'transparent';
+                  } else if (!isTerminado && o.fecha_fin) {
+                    const today = new Date();
+                    today.setHours(0,0,0,0);
+                    const deliveryDate = new Date(o.fecha_fin);
+                    deliveryDate.setHours(0,0,0,0);
+                    
+                    const diffTime = today - deliveryDate;
+                    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+                    if (diffDays >= 1 && diffDays <= 3) {
+                      rowBg = '#fef9c3'; // Amarillo
+                      delayIcon = <AlertTriangle size={14} color="#ca8a04" />;
+                    } else if (diffDays >= 4) {
+                      rowBg = '#fee2e2'; // Rojo
+                      delayIcon = <AlertCircle size={14} color="#dc2626" />;
+                    }
+                  }
                   
                   return (
                     <tr key={o.id} style={{ opacity: isCancelado ? 0.6 : 1, backgroundColor: rowBg }}>
@@ -213,7 +233,18 @@ export default function Produccion() {
                       <td style={{ fontWeight: 600 }}>{o.maquilero_nombre}</td>
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          {prodImg ? <img src={prodImg} alt="" style={{ width: 32, height: 32, borderRadius: 4, objectFit: 'cover' }} /> : <div style={{ width: 32, height: 32, background: '#f1f5f9', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><ImageIcon size={16} /></div>}
+                          {prodImg ? (
+                            <img 
+                              src={prodImg} 
+                              alt="" 
+                              style={{ width: 32, height: 32, borderRadius: 4, objectFit: 'cover', cursor: 'zoom-in' }} 
+                              onClick={() => setSelectedImage(prodImg)}
+                            />
+                          ) : (
+                            <div style={{ width: 32, height: 32, background: '#f1f5f9', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <ImageIcon size={16} />
+                            </div>
+                          )}
                           <span>{o.producto_modelo || 'N/A'}</span>
                         </div>
                       </td>
@@ -378,6 +409,25 @@ export default function Produccion() {
                 </div>
               )}
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Zoom de Imagen */}
+      {selectedImage && (
+        <div className="modal-overlay" style={{ zIndex: 2000 }} onClick={() => setSelectedImage(null)}>
+          <div style={{ position: 'relative', maxWidth: '90vw', maxHeight: '90vh' }} onClick={e => e.stopPropagation()}>
+            <button 
+              onClick={() => setSelectedImage(null)}
+              style={{ position: 'absolute', top: '-40px', right: '-40px', background: 'white', border: 'none', borderRadius: '50%', padding: '8px', cursor: 'pointer', display: 'flex' }}
+            >
+              <X size={24} />
+            </button>
+            <img 
+              src={selectedImage} 
+              alt="Zoom" 
+              style={{ width: '100%', height: '100%', borderRadius: '12px', objectFit: 'contain', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' }} 
+            />
           </div>
         </div>
       )}

@@ -22,6 +22,7 @@ export default function Maquileros() {
   const [imagenFile, setImagenFile] = useState(null);
   const [formData, setFormData] = useState(emptyForm);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedImage, setSelectedImage] = useState(null);
 
   useEffect(() => { fetchMaquileros(); }, []);
 
@@ -90,7 +91,20 @@ export default function Maquileros() {
 
   const Avatar = ({ imagen, nombre, size = 40, showZoom = true }) => {
     const src = getImgSrc(imagen);
-    if (src) return <img src={src} alt={nombre} className={showZoom ? "img-zoom" : ""} style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover', border: '2px solid #e2e8f0' }} />;
+    if (src) return (
+      <img 
+        src={src} 
+        alt={nombre} 
+        className={showZoom ? "img-zoom" : ""} 
+        style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover', border: '2px solid #e2e8f0', cursor: showZoom ? 'zoom-in' : 'default' }} 
+        onClick={(e) => {
+          if (showZoom) {
+            e.stopPropagation();
+            setSelectedImage(src);
+          }
+        }}
+      />
+    );
     return (
       <div style={{ width: size, height: size, borderRadius: '50%', background: 'linear-gradient(135deg, #2563eb, #7c3aed)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 600, fontSize: size * 0.4 }}>
         {nombre?.charAt(0).toUpperCase()}
@@ -196,7 +210,7 @@ export default function Maquileros() {
               {/* Columna Izquierda: Perfil y Calificación */}
               <div style={{ borderRight: '1px solid #e2e8f0', paddingRight: '2rem' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '1.5rem', textAlign: 'center' }}>
-                  <Avatar imagen={selectedMaquilero.imagen} nombre={selectedMaquilero.nombre} size={100} showZoom={false} />
+                  <Avatar imagen={selectedMaquilero.imagen} nombre={selectedMaquilero.nombre} size={100} showZoom={true} />
                   <h3 style={{ marginTop: '1rem', marginBottom: '0.25rem', fontSize: '1.25rem', width: '100%' }}>{selectedMaquilero.nombre}</h3>
                   
                   {/* Calificación Visual */}
@@ -277,7 +291,16 @@ export default function Maquileros() {
                           return (
                             <tr key={h.id}>
                               <td>
-                                {pImg ? <img src={pImg} alt="" style={{ width: 35, height: 35, borderRadius: 4, objectFit: 'cover' }} /> : <div style={{ width: 35, height: 35, borderRadius: 4, background: '#f1f5f9' }} />}
+                                {pImg ? (
+                                  <img 
+                                    src={pImg} 
+                                    alt="" 
+                                    style={{ width: 35, height: 35, borderRadius: 4, objectFit: 'cover', cursor: 'zoom-in' }} 
+                                    onClick={() => setSelectedImage(pImg)}
+                                  />
+                                ) : (
+                                  <div style={{ width: 35, height: 35, borderRadius: 4, background: '#f1f5f9' }} />
+                                )}
                               </td>
                               <td style={{ fontWeight: 600 }}>{h.producto_modelo}</td>
                               <td>{h.cantidad} / <span style={{ color: esCompleto ? '#10b981' : '#dc2626' }}>{h.cantidad_recibida || '-'}</span></td>
@@ -395,6 +418,24 @@ export default function Maquileros() {
                 <button type="submit" className="btn btn-primary">{editMode ? 'Actualizar' : 'Guardar'}</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* Modal Zoom de Imagen */}
+      {selectedImage && (
+        <div className="modal-overlay" style={{ zIndex: 3000 }} onClick={() => setSelectedImage(null)}>
+          <div style={{ position: 'relative', maxWidth: '90vw', maxHeight: '90vh' }} onClick={e => e.stopPropagation()}>
+            <button 
+              onClick={() => setSelectedImage(null)}
+              style={{ position: 'absolute', top: '-40px', right: '-40px', background: 'white', border: 'none', borderRadius: '50%', padding: '8px', cursor: 'pointer', display: 'flex' }}
+            >
+              <X size={24} />
+            </button>
+            <img 
+              src={selectedImage} 
+              alt="Zoom" 
+              style={{ width: '100%', height: '100%', borderRadius: '12px', objectFit: 'contain', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' }} 
+            />
           </div>
         </div>
       )}
