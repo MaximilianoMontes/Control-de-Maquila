@@ -638,22 +638,27 @@ app.put('/api/produccion/:id/agregar-dia', authenticateToken, async (req, res) =
   const { dias } = req.body;
   const numDias = parseInt(dias) || 1;
   try {
-    const [olds] = await db.query("SELECT fecha_fin, retrasos FROM produccion WHERE id = ?", [req.params.id]);
-    const old = olds[0];
-    if (!old) return res.status(404).json({ error: 'Orden no encontrada' });
-
-    const newDate = new Date(old.fecha_fin);
-    newDate.setDate(newDate.getDate() + numDias);
-    const newRetrasos = (old.retrasos || 0) + 1; // Se cuenta como un evento de retraso sin importar los días
-
-    await db.query("UPDATE produccion SET fecha_fin = ?, retrasos = ? WHERE id = ?", [newDate, newRetrasos, req.params.id]);
+    // Primero actualizamos usando aritmética de SQL para evitar problemas de zona horaria en JS
+    await db.query("UPDATE produccion SET fecha_fin = DATE_ADD(fecha_fin, INTERVAL ? DAY), retrasos = retrasos + 1 WHERE id = ?", [numDias, req.params.id]);
     
-    const [invs] = await db.query("SELECT modelo FROM inventario WHERE id = (SELECT inventario_id FROM produccion WHERE id = ?)", [req.params.id]);
-    const inv = invs[0];
-    await logActivity(req.user.id, 'EDIT', 'PRODUCCION', `Agregó ${numDias} días de prórroga a ${inv ? inv.modelo : 'ID '+req.params.id} (Nueva fecha: ${newDate.toISOString().split('T')[0]})`);
-
-    res.json({ success: true, newDate, newRetrasos });
+    // Obtenemos los datos actualizados para el log y la respuesta
+    const [rows] = await db.query(`
+      SELECT p.fecha_fin, p.retrasos, i.modelo 
+      FROM produccion p 
+      LEFT JOIN inventario i ON p.inventario_id = i.id 
+      WHERE p.id = ?
+    `, [req.params.id]);
+    
+    const updated = rows[0];
+    if (updated) {
+      const fmtDate = updated.fecha_fin ? new Date(updated.fecha_fin).toISOString().split('T')[0] : 'N/A';
+      await logActivity(req.user.id, 'EDIT', 'PRODUCCION', `Agregó ${numDias} días de prórroga a ${updated.modelo || 'ID '+req.params.id} (Nueva fecha: ${fmtDate})`);
+      res.json({ success: true, newDate: updated.fecha_fin, newRetrasos: updated.retrasos });
+    } else {
+      res.status(404).json({ error: 'Orden no encontrada' });
+    }
   } catch (error) {
+    console.error("Error en /agregar-dia:", error);
     res.status(500).json({ error: error.message });
   }
 });
