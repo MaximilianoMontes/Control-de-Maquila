@@ -7,7 +7,8 @@ import {
   FileText, 
   Wallet,
   LogOut,
-  History
+  History,
+  Scissors
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -25,6 +26,7 @@ export default function Sidebar() {
     { path: '/',           name: 'Dashboard',   icon: <LayoutDashboard size={20} /> },
     { path: '/maquileros', name: 'Maquileros',  icon: <Users size={20} /> },
     { path: '/inventario', name: 'Inventario',  icon: <Package size={20} /> },
+    { path: '/cortes',     name: 'Cortes',      icon: <Scissors size={20} /> },
     { path: '/produccion', name: 'Producción',  icon: <Factory size={20} /> },
     { path: '/reportes',   name: 'Reportes',    icon: <FileText size={20} /> },
     ...(puedeVerPagos ? [{ path: '/pagos', name: 'Pagos', icon: <Wallet size={20} /> }] : []),

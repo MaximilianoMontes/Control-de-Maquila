@@ -7,6 +7,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Maquileros from './pages/Maquileros';
 import Inventario from './pages/Inventario';
+import Cortes from './pages/Cortes';
 import Produccion from './pages/Produccion';
 import Pagos from './pages/Pagos';
 import Reportes from './pages/Reportes';
@@ -48,6 +49,7 @@ function App() {
       <Route path="/" element={<ProtectedRoute><MainLayout><Dashboard /></MainLayout></ProtectedRoute>} />
       <Route path="/maquileros" element={<ProtectedRoute><MainLayout><Maquileros /></MainLayout></ProtectedRoute>} />
       <Route path="/inventario" element={<ProtectedRoute><MainLayout><Inventario /></MainLayout></ProtectedRoute>} />
+      <Route path="/cortes" element={<ProtectedRoute><MainLayout><Cortes /></MainLayout></ProtectedRoute>} />
       <Route path="/produccion" element={<ProtectedRoute><MainLayout><Produccion /></MainLayout></ProtectedRoute>} />
       <Route path="/pagos" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2']}><MainLayout><Pagos /></MainLayout></ProtectedRoute>} />
       <Route path="/reportes" element={<ProtectedRoute><MainLayout><Reportes /></MainLayout></ProtectedRoute>} />
