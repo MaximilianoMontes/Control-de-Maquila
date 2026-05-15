@@ -587,8 +587,14 @@ app.put('/api/produccion/:id', authenticateToken, async (req, res) => {
     if (estado && old.estado !== estado) changes.push(`Estado: ${old.estado} -> ${estado}`);
     if (curAjusteTipo !== old.ajuste_tipo) changes.push(`Ajuste: ${old.ajuste_tipo} -> ${curAjusteTipo} (${curAjustePorc}%)`);
     
-    // Formatear fechas para comparar (YYYY-MM-DD)
-    const fmtDate = (d) => d ? new Date(d).toISOString().split('T')[0] : null;
+    // Formatear fechas para comparar (YYYY-MM-DD) usando UTC para evitar desfases
+    const fmtDate = (d) => {
+      if (!d) return null;
+      const dateObj = new Date(d);
+      if (isNaN(dateObj.getTime())) return null;
+      return dateObj.toISOString().split('T')[0];
+    };
+    
     if (fecha_fin && fmtDate(old.fecha_fin) !== fmtDate(fecha_fin)) {
       changes.push(`Fecha Entrega: ${fmtDate(old.fecha_fin)} -> ${fmtDate(fecha_fin)}`);
     }
