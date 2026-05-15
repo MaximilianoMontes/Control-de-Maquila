@@ -512,6 +512,7 @@ app.post('/api/produccion', authenticateToken, async (req, res) => {
     
     res.json({ id: result.insertId, success: true });
   } catch (error) {
+    console.error("Error en POST /api/produccion:", error);
     res.status(500).json({ error: error.message });
   }
 });
