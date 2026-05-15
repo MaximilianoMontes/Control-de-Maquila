@@ -15,10 +15,16 @@ const formatDate = (date) => {
   if (!date) return '';
   const d = new Date(date);
   if (isNaN(d.getTime())) return '';
-  const year = d.getUTCFullYear();
-  const month = String(d.getUTCMonth() + 1).padStart(2, '0');
-  const day = String(d.getUTCDate()).padStart(2, '0');
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
+};
+const displayDate = (date) => {
+  if (!date) return 'N/A';
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return 'N/A';
+  return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
 };
 
 export default function Produccion() {
@@ -94,10 +100,13 @@ export default function Produccion() {
       // ya que esos datos son para órdenes NUEVAS.
       // Solo enviamos lo que está en el formulario (maquilero, fechas, etc)
       await axios.put(`${API}/api/produccion/${editingOrder.id}`, formData);
+      alert('Orden actualizada con éxito');
       setIsEditModalOpen(false);
       setEditingOrder(null);
       fetchOrders();
-    } catch (e) { alert('Error al actualizar orden'); }
+    } catch (e) { 
+      alert('Error al actualizar orden: ' + (e.response?.data?.error || e.message)); 
+    }
   };
 
   const handleTerminar = async (id) => {
@@ -269,11 +278,9 @@ export default function Produccion() {
                       </td>
                       <td>
                         <div style={{ display: 'flex', flexDirection: 'column', fontSize: '0.75rem', gap: '2px' }}>
-                          <span style={{ color: '#64748b' }}>Inicio: {new Date(o.fecha_inicio).toLocaleDateString()}</span>
+                          <span>Inicio: {displayDate(o.fecha_inicio)}</span>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                            <span style={{ fontWeight: 600, color: o.retrasos > 0 ? '#ef4444' : 'inherit' }}>
-                              Entrega: {o.fecha_fin ? new Date(o.fecha_fin).toLocaleDateString() : 'N/A'}
-                            </span>
+                            <span style={{ fontWeight: 700 }}>Entrega: {displayDate(o.fecha_fin)}</span>
                             {delayIcon}
                           </div>
                         </div>
