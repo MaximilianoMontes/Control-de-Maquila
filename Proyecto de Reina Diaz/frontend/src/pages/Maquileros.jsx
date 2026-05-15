@@ -212,47 +212,49 @@ export default function Maquileros() {
       {/* Modal Perfil */}
       {selectedMaquilero && (
         <div className="modal-overlay" onClick={() => setSelectedMaquilero(null)}>
-            <div className="modal-content glass-card" style={{ maxWidth: '1350px', width: '85%', position: 'relative' }} onClick={e => e.stopPropagation()}>
-              {/* Botones de Navegación */}
+            <div className="modal-content glass-card" style={{ maxWidth: '1350px', width: '95%', position: 'relative', padding: '2rem 3.5rem' }} onClick={e => e.stopPropagation()}>
+              {/* Botones de Navegación (Dentro del modal para evitar scrollbars) */}
               <button 
                 className="btn-icon" 
                 style={{ 
                   position: 'absolute', 
-                  left: '-70px', 
+                  left: '10px', 
                   top: '50%', 
                   transform: 'translateY(-50%)', 
-                  background: 'white', 
+                  background: 'rgba(255,255,255,0.8)', 
                   color: '#2563eb', 
                   borderRadius: '50%', 
-                  padding: '15px',
-                  boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
-                  border: '2px solid #2563eb',
+                  padding: '10px',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                  border: '1px solid #e2e8f0',
                   zIndex: 100,
-                  display: 'flex'
+                  display: 'flex',
+                  backdropFilter: 'blur(4px)'
                 }}
                 onClick={() => navigateMaquilero(-1)}
               >
-                <ChevronLeft size={40} strokeWidth={3} />
+                <ChevronLeft size={30} strokeWidth={2.5} />
               </button>
               <button 
                 className="btn-icon" 
                 style={{ 
                   position: 'absolute', 
-                  right: '-70px', 
+                  right: '10px', 
                   top: '50%', 
                   transform: 'translateY(-50%)', 
-                  background: 'white', 
+                  background: 'rgba(255,255,255,0.8)', 
                   color: '#2563eb', 
                   borderRadius: '50%', 
-                  padding: '15px',
-                  boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
-                  border: '2px solid #2563eb',
+                  padding: '10px',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                  border: '1px solid #e2e8f0',
                   zIndex: 100,
-                  display: 'flex'
+                  display: 'flex',
+                  backdropFilter: 'blur(4px)'
                 }}
                 onClick={() => navigateMaquilero(1)}
               >
-                <ChevronRight size={40} strokeWidth={3} />
+                <ChevronRight size={30} strokeWidth={2.5} />
               </button>
 
               <div className="modal-header">
