@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Plus, X, Pencil, Trash2, User, AlertTriangle, Search } from 'lucide-react';
+import { Plus, X, Pencil, Trash2, User, AlertTriangle, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import API_URL from '../config';
 
@@ -67,6 +67,18 @@ export default function Maquileros() {
       const res = await axios.get(`${API}/api/maquileros/${id}`);
       setSelectedMaquilero(res.data);
     } catch (e) { console.error(e); }
+  };
+
+  const navigateMaquilero = (direction) => {
+    if (!selectedMaquilero || filteredMaquileros.length === 0) return;
+    const currentIndex = filteredMaquileros.findIndex(m => m.id === selectedMaquilero.id);
+    if (currentIndex === -1) return;
+
+    let nextIndex = currentIndex + direction;
+    if (nextIndex < 0) nextIndex = filteredMaquileros.length - 1;
+    if (nextIndex >= filteredMaquileros.length) nextIndex = 0;
+
+    handleRowClick(filteredMaquileros[nextIndex].id);
   };
 
   const handleSubmit = async (e) => {
@@ -200,11 +212,27 @@ export default function Maquileros() {
       {/* Modal Perfil */}
       {selectedMaquilero && (
         <div className="modal-overlay" onClick={() => setSelectedMaquilero(null)}>
-          <div className="modal-content glass-card" style={{ maxWidth: '1350px', width: '95%' }} onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>Perfil y Desempeño del Maquilero</h2>
-              <button className="btn-icon" onClick={() => setSelectedMaquilero(null)}><X size={24} /></button>
-            </div>
+            <div className="modal-content glass-card" style={{ maxWidth: '1350px', width: '95%', position: 'relative' }} onClick={e => e.stopPropagation()}>
+              {/* Botones de Navegación */}
+              <button 
+                className="btn-icon" 
+                style={{ position: 'absolute', left: '-60px', top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.2)', color: 'white', borderRadius: '50%', padding: '12px' }}
+                onClick={() => navigateMaquilero(-1)}
+              >
+                <ChevronLeft size={32} />
+              </button>
+              <button 
+                className="btn-icon" 
+                style={{ position: 'absolute', right: '-60px', top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.2)', color: 'white', borderRadius: '50%', padding: '12px' }}
+                onClick={() => navigateMaquilero(1)}
+              >
+                <ChevronRight size={32} />
+              </button>
+
+              <div className="modal-header">
+                <h2>Perfil y Desempeño del Maquilero</h2>
+                <button className="btn-icon" onClick={() => setSelectedMaquilero(null)}><X size={24} /></button>
+              </div>
             
             <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: '2rem' }}>
               {/* Columna Izquierda: Perfil y Calificación */}
