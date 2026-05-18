@@ -54,7 +54,25 @@ async function initializeDatabase() {
         piezas_en_proceso INT DEFAULT 0,
         imagen TEXT,
         observaciones TEXT,
-        es_reprogramacion TINYINT(1) DEFAULT 0
+        es_reprogramacion TINYINT(1) DEFAULT 0,
+        en_inventario TINYINT(1) DEFAULT 0
+      );
+    `);
+
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS inventario_real (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        numero VARCHAR(100),
+        temporada VARCHAR(100),
+        modelo VARCHAR(255),
+        precio DECIMAL(10, 2) DEFAULT 0,
+        color TEXT,
+        cliente VARCHAR(255),
+        no_orden VARCHAR(100),
+        piezas INT DEFAULT 0,
+        imagen TEXT,
+        observaciones TEXT,
+        fecha_ingreso TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
 
@@ -119,7 +137,7 @@ async function initializeDatabase() {
       );
     `);
 
-    // Migración: Asegurar que existan las columnas de aplicado y pago_id en tablas existentes
+    // Migraciones
     try {
       await connection.query("ALTER TABLE descuentos_personales ADD COLUMN aplicado TINYINT(1) DEFAULT 0");
       await connection.query("ALTER TABLE descuentos_personales ADD COLUMN pago_id INT DEFAULT NULL");
@@ -127,6 +145,13 @@ async function initializeDatabase() {
       console.log("Migration: Columns added to descuentos_personales");
     } catch (e) {
       // Si ya existen, ignoramos el error
+    }
+
+    try {
+      await connection.query("ALTER TABLE inventario ADD COLUMN en_inventario TINYINT(1) DEFAULT 0");
+      console.log("Migration: en_inventario column added to inventario");
+    } catch (e) {
+      // Si ya existe, ignoramos el error
     }
 
     // Create default users
