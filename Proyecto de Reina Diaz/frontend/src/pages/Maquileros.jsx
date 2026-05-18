@@ -24,7 +24,11 @@ export default function Maquileros() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
 
-  useEffect(() => { fetchMaquileros(); }, []);
+  useEffect(() => {
+    fetchMaquileros();
+    const interval = setInterval(fetchMaquileros, 15000); // Auto-refresca cada 15 segundos en segundo plano
+    return () => clearInterval(interval);
+  }, []);
 
   const fetchMaquileros = async () => {
     try {

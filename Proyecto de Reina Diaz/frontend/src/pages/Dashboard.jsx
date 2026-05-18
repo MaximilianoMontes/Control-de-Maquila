@@ -48,6 +48,8 @@ export default function Dashboard() {
     };
 
     fetchStats();
+    const interval = setInterval(fetchStats, 15000); // Auto-refresca cada 15 segundos en segundo plano
+    return () => clearInterval(interval);
   }, []);
 
   const kpiCards = [

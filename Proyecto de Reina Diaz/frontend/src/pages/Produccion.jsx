@@ -58,6 +58,14 @@ export default function Produccion() {
       // Limpiar la URL para evitar que se abra de nuevo al recargar
       window.history.replaceState({}, document.title, "/produccion");
     }
+
+    const interval = setInterval(() => {
+      fetchOrders();
+      fetchMaquileros();
+      fetchInventario();
+    }, 15000); // Auto-refresca cada 15 segundos en segundo plano
+
+    return () => clearInterval(interval);
   }, [verArchivados, location]);
 
   const fetchOrders = async () => {
