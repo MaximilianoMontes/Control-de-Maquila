@@ -26,6 +26,8 @@ export default function Inventario() {
 
   useEffect(() => {
     fetchItems();
+    const interval = setInterval(fetchItems, 15000); // Auto-refresca cada 15 segundos en segundo plano
+    return () => clearInterval(interval);
   }, []);
 
   const fetchItems = async () => {
@@ -63,7 +65,13 @@ export default function Inventario() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
         <div>
-          <h1 className="gradient-text" style={{ fontSize: '2.5rem', margin: 0 }}>Inventario General</h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <h1 className="gradient-text" style={{ fontSize: '2.5rem', margin: 0 }}>Inventario General</h1>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', padding: '0.25rem 0.6rem', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 600, border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#10b981', display: 'inline-block' }}></span>
+              ACTUALIZADO EN VIVO
+            </div>
+          </div>
           <p style={{ color: '#94a3b8', margin: '0.25rem 0 0 0' }}>Historial y stock actual de prendas terminadas y liquidadas</p>
         </div>
       </div>
