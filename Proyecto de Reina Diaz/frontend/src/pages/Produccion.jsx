@@ -404,11 +404,22 @@ export default function Produccion() {
                   disabled={!canEdit && isEditModalOpen}
                 >
                   <option value="">-- Seleccionar --</option>
-                  {[...inventario].sort((a,b) => (a.modelo || '').localeCompare(b.modelo || '', undefined, {numeric: true})).map(i => (
-                    <option key={i.id} value={i.id}>
-                      {i.modelo} - {i.numero} {i.es_reprogramacion === 1 ? ' (REPROGRAMADO)' : ''}
-                    </option>
-                  ))}
+                  {[...inventario]
+                    .filter(i => {
+                      if (isModalOpen) {
+                        return i.producciones_count === 0;
+                      }
+                      if (isEditModalOpen && editingOrder) {
+                        return i.producciones_count === 0 || i.id === editingOrder.inventario_id;
+                      }
+                      return true;
+                    })
+                    .sort((a,b) => (a.modelo || '').localeCompare(b.modelo || '', undefined, {numeric: true}))
+                    .map(i => (
+                      <option key={i.id} value={i.id}>
+                        {i.modelo} - {i.numero} {i.es_reprogramacion === 1 ? ' (REPROGRAMADO)' : ''}
+                      </option>
+                    ))}
                 </select>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
