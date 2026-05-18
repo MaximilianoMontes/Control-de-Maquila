@@ -190,7 +190,7 @@ export default function Cortes() {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', gap: '1rem', flexWrap: 'wrap' }}>
-        <h1 className="gradient-text" style={{ fontSize: '2.5rem', margin: 0 }}>Inventario en Proceso</h1>
+        <h1 className="gradient-text" style={{ fontSize: '2.5rem', margin: 0 }}>Cortes Disponibles</h1>
         <div style={{ display: 'flex', gap: '1rem' }}>
           {canEdit && (
             <>
