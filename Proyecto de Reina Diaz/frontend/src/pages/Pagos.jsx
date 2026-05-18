@@ -30,21 +30,39 @@ export default function Pagos() {
     fetchOrders();
     fetchMaquileros();
     fetchInventario();
+
+    const interval = setInterval(() => {
+      fetchOrders();
+      fetchMaquileros();
+      fetchInventario();
+    }, 15000); // Auto-refresca cada 15 segundos en segundo plano
+
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
+    let interval;
     if (selectedOrden) {
-      fetchPagos(selectedOrden);
-      const orden = orders.find(o => o.id.toString() === selectedOrden);
-      if (orden) {
-        fetchPendingDiscount(orden.maquilero_id);
-        setSelectedMaquilero(orden.maquilero_id.toString());
-        setSelectedModelo(orden.inventario_id.toString()); // Pre-selecciona el producto de la orden
-      }
+      const loadSelectedData = () => {
+        fetchPagos(selectedOrden);
+        const orden = orders.find(o => o.id.toString() === selectedOrden);
+        if (orden) {
+          fetchPendingDiscount(orden.maquilero_id);
+          setSelectedMaquilero(orden.maquilero_id.toString());
+          setSelectedModelo(orden.inventario_id.toString()); // Pre-selecciona el producto de la orden
+        }
+      };
+      
+      loadSelectedData();
+      interval = setInterval(loadSelectedData, 15000); // Auto-refresca pagos y descuentos cada 15 segundos
     } else {
       setPagos([]);
       setPendingDiscount(0);
     }
+    
+    return () => {
+      if (interval) clearInterval(interval);
+    };
   }, [selectedOrden, orders]);
 
   useEffect(() => {

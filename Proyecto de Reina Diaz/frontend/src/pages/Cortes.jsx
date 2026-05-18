@@ -30,7 +30,11 @@ export default function Cortes() {
   const [editImageFile, setEditImageFile] = useState(null);
   const [editImageUrl, setEditImageUrl] = useState('');
 
-  useEffect(() => { fetchItems(); }, []);
+  useEffect(() => {
+    fetchItems();
+    const interval = setInterval(fetchItems, 15000); // Auto-refresca cada 15 segundos en segundo plano
+    return () => clearInterval(interval);
+  }, []);
 
   const fetchItems = async () => {
     try {

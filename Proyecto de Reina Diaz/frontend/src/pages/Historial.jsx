@@ -12,6 +12,8 @@ export default function Historial() {
 
   useEffect(() => {
     fetchHistory();
+    const interval = setInterval(fetchHistory, 15000); // Auto-refresca cada 15 segundos en segundo plano
+    return () => clearInterval(interval);
   }, []);
 
   const fetchHistory = async () => {
