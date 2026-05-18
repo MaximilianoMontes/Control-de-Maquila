@@ -180,6 +180,7 @@ export default function Cortes() {
   };
 
   const filteredItems = items
+    .filter(item => item.producciones_count === 0)
     .filter(item =>
       (item.modelo || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (item.cliente || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
