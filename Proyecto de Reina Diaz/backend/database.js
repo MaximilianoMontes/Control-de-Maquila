@@ -55,7 +55,8 @@ async function initializeDatabase() {
         imagen TEXT,
         observaciones TEXT,
         es_reprogramacion TINYINT(1) DEFAULT 0,
-        en_inventario TINYINT(1) DEFAULT 0
+        en_inventario TINYINT(1) DEFAULT 0,
+        fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
 
@@ -152,6 +153,33 @@ async function initializeDatabase() {
       console.log("Migration: en_inventario column added to inventario");
     } catch (e) {
       // Si ya existe, ignoramos el error
+    }
+
+    try {
+      await connection.query("ALTER TABLE inventario ADD COLUMN fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP");
+      console.log("Migration: fecha_creacion column added to inventario");
+    } catch (e) {
+      // Si ya existe, ignoramos el error
+    }
+
+    // Migration: Backfill fecha_creacion for existing cuts using historial records
+    try {
+      const [cuts] = await connection.query("SELECT id, modelo, fecha_creacion FROM inventario");
+      for (const cut of cuts) {
+        // Query the oldest ALTA/REPROGRAMACION timestamp in historial matching the model name
+        const [histRows] = await connection.query(`
+          SELECT timestamp FROM historial 
+          WHERE target = 'INVENTARIO' AND (action = 'ALTA' OR action = 'REPROGRAMACION') AND description LIKE ? 
+          ORDER BY timestamp ASC LIMIT 1
+        `, [`%${cut.modelo}%`]);
+        
+        if (histRows.length > 0) {
+          await connection.query("UPDATE inventario SET fecha_creacion = ? WHERE id = ?", [histRows[0].timestamp, cut.id]);
+        }
+      }
+      console.log("Migration: Backfilled fecha_creacion for existing cuts from history");
+    } catch (e) {
+      console.error("Migration error backfilling cuts:", e);
     }
 
     // Create default users
