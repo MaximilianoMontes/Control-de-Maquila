@@ -283,7 +283,7 @@ export default function Produccion() {
                           style={{ width: '80px', padding: '0.25rem 0.5rem', textAlign: 'center' }}
                           defaultValue={o.cantidad_recibida ?? ''}
                           onBlur={(e) => handleRecibidasBlur(o.id, e.target.value)}
-                          disabled={!canEdit}
+                          disabled={!canEdit || o.estado === 'Terminado' || o.estado === 'Cancelado'}
                         />
                       </td>
                       <td>
