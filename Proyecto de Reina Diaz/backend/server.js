@@ -88,7 +88,7 @@ const checkAndMoveToInventory = async (produccionId, userId) => {
 
     // 1. Get the production order details and associated cut
     const [prods] = await connection.query(`
-      SELECT p.*, i.id as cut_id, i.numero, i.temporada, i.modelo, i.precio, i.color, i.cliente, i.no_orden, i.imagen, i.observaciones, i.en_inventario
+      SELECT p.*, i.id as cut_id, i.numero, i.temporada, i.modelo, i.precio, i.color, i.cliente, i.no_orden, i.imagen, i.observaciones, i.en_inventario, i.fecha_creacion
       FROM produccion p
       LEFT JOIN inventario i ON p.inventario_id = i.id
       WHERE p.id = ? FOR UPDATE
@@ -130,8 +130,8 @@ const checkAndMoveToInventory = async (produccionId, userId) => {
 
       // 4. Move to inventario_real
       await connection.query(`
-        INSERT INTO inventario_real (numero, temporada, modelo, precio, color, cliente, no_orden, piezas, imagen, observaciones)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO inventario_real (numero, temporada, modelo, precio, color, cliente, no_orden, piezas, imagen, observaciones, fecha_ingreso)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `, [
         prod.numero,
         prod.temporada,
@@ -142,7 +142,8 @@ const checkAndMoveToInventory = async (produccionId, userId) => {
         prod.no_orden,
         piezasFinal,
         prod.imagen,
-        prod.observaciones
+        prod.observaciones,
+        prod.fecha_creacion
       ]);
 
       // 5. Mark the cut as en_inventario = 1
