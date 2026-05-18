@@ -1215,7 +1215,7 @@ app.get('/api/reportes/recoleccion', async (req, res) => {
       FROM produccion p 
       JOIN maquileros m ON p.maquilero_id = m.id 
       LEFT JOIN inventario i ON p.inventario_id = i.id
-      WHERE p.archivado = 0
+      WHERE p.archivado = 0 AND p.estado = 'En proceso'
     `;
     const params = [];
     let subtitleDate = "estimada";
