@@ -162,6 +162,20 @@ async function initializeDatabase() {
       // Si ya existe, ignoramos el error
     }
 
+    try {
+      await connection.query("ALTER TABLE produccion ADD COLUMN fecha_terminado TIMESTAMP NULL DEFAULT NULL");
+      console.log("Migration: fecha_terminado column added to produccion");
+    } catch (e) {
+      // Si ya existe, ignoramos el error
+    }
+
+    try {
+      await connection.query("UPDATE produccion SET fecha_terminado = NOW() WHERE estado = 'Terminado' AND fecha_terminado IS NULL");
+      console.log("Migration: Backfilled fecha_terminado for existing Terminado orders");
+    } catch (e) {
+      // Si ya existe, ignoramos el error
+    }
+
     // Migration: Backfill fecha_creacion for existing cuts using historial records
     try {
       const [cuts] = await connection.query("SELECT id, modelo, fecha_creacion FROM inventario");

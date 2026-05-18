@@ -584,10 +584,37 @@ app.delete('/api/inventario_real/:id', authenticateToken, async (req, res) => {
   }
 });
 
+const autoArchiveOrders = async () => {
+  try {
+    await db.query(`
+      UPDATE produccion p
+      SET p.archivado = 1
+      WHERE p.archivado = 0
+        AND p.estado = 'Terminado'
+        AND p.fecha_terminado <= DATE_SUB(NOW(), INTERVAL 1 DAY)
+        AND p.precio_total <= (
+          SELECT COALESCE(SUM(pg.monto), 0) + COALESCE(SUM(dp.monto_total), 0)
+          FROM pagos pg
+          LEFT JOIN descuentos_personales dp ON dp.pago_id = pg.id
+          WHERE pg.produccion_id = p.id
+        )
+        AND (
+          SELECT COALESCE(MAX(pg.fecha), '1970-01-01')
+          FROM pagos pg
+          WHERE pg.produccion_id = p.id
+        ) <= DATE_SUB(CURDATE(), INTERVAL 1 DAY)
+    `);
+  } catch (error) {
+    console.error("Error running auto-archive:", error);
+  }
+};
+
 app.get('/api/produccion', async (req, res) => {
   const { verArchivados } = req.query;
   const whereArchivado = verArchivados === 'true' ? 'p.archivado = 1' : 'p.archivado = 0';
   try {
+    await autoArchiveOrders();
+
     const [orders] = await db.query(`
       SELECT p.*, m.nombre as maquilero_nombre,
       i.modelo as producto_modelo, i.imagen as producto_imagen, i.precio as precio_unitario,
@@ -663,6 +690,15 @@ app.put('/api/produccion/:id', authenticateToken, async (req, res) => {
       finalPrecioTotal = subtotal;
     }
 
+    let finalFechaTerminado = old.fecha_terminado;
+    if (estado !== undefined) {
+      if (estado === 'Terminado' && old.estado !== 'Terminado') {
+        finalFechaTerminado = new Date();
+      } else if (estado !== 'Terminado') {
+        finalFechaTerminado = null;
+      }
+    }
+
     await db.query(`
       UPDATE produccion SET 
       maquilero_id = COALESCE(?, maquilero_id),
@@ -676,7 +712,8 @@ app.put('/api/produccion/:id', authenticateToken, async (req, res) => {
       retrasos = COALESCE(?, retrasos),
       ajuste_tipo = ?,
       ajuste_porcentaje = ?,
-      ajuste_monto = ?
+      ajuste_monto = ?,
+      fecha_terminado = ?
       WHERE id = ?
     `, [
       maquilero_id || null, 
@@ -691,6 +728,7 @@ app.put('/api/produccion/:id', authenticateToken, async (req, res) => {
       curAjusteTipo, 
       curAjustePorc, 
       adjustmentAmount,
+      finalFechaTerminado,
       req.params.id
     ]);
 
