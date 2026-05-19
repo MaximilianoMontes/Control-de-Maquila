@@ -591,18 +591,12 @@ const autoArchiveOrders = async () => {
       SET p.archivado = 1
       WHERE p.archivado = 0
         AND p.estado = 'Terminado'
-        AND p.fecha_terminado <= DATE_SUB(NOW(), INTERVAL 1 DAY)
         AND p.precio_total <= (
           SELECT COALESCE(SUM(pg.monto), 0) + COALESCE(SUM(dp.monto_total), 0)
           FROM pagos pg
           LEFT JOIN descuentos_personales dp ON dp.pago_id = pg.id
           WHERE pg.produccion_id = p.id
         )
-        AND (
-          SELECT COALESCE(MAX(pg.fecha), '1970-01-01')
-          FROM pagos pg
-          WHERE pg.produccion_id = p.id
-        ) <= DATE_SUB(CURDATE(), INTERVAL 1 DAY)
     `);
   } catch (error) {
     console.error("Error running auto-archive:", error);
