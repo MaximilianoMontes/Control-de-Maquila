@@ -297,7 +297,7 @@ export default function Pagos() {
                 <label className="form-label">Elegir Maquilero</label>
                 <select className="form-input" value={selectedMaquilero} onChange={e => setSelectedMaquilero(e.target.value)} required>
                   <option value="">-- Seleccionar --</option>
-                  {maquileros.map(m => <option key={m.id} value={m.id}>{m.nombre}</option>)}
+                  {[...maquileros].sort((a, b) => a.nombre.localeCompare(b.nombre, 'es')).map(m => <option key={m.id} value={m.id}>{m.nombre}</option>)}
                 </select>
               </div>
 
@@ -305,7 +305,7 @@ export default function Pagos() {
                 <label className="form-label">Modelo / Producto</label>
                 <select className="form-input" value={selectedModelo} onChange={e => setSelectedModelo(e.target.value)} required>
                   <option value="">-- Seleccionar --</option>
-                  {inventario.map(i => <option key={i.id} value={i.id}>{i.modelo} - {i.numero}</option>)}
+                  {[...inventario].sort((a, b) => (a.modelo || '').localeCompare(b.modelo || '', undefined, { numeric: true })).map(i => <option key={i.id} value={i.id}>{i.modelo} - {i.numero}</option>)}
                 </select>
               </div>
 
