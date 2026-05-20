@@ -81,8 +81,7 @@ export default function Dashboard() {
 
   return (
     <div>
-      <h1 className="gradient-text">Bienvenido, {user?.username}</h1>
-      <p style={{ marginBottom: '2rem' }}>Este es el resumen actual del sistema de control de maquileros.</p>
+
 
       {loading ? (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem' }}>

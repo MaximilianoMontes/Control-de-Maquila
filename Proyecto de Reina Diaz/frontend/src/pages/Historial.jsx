@@ -47,7 +47,7 @@ export default function Historial() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <div>
           <h1 className="gradient-text" style={{ marginBottom: '0.5rem' }}>Historial de Actividad</h1>
-          <p style={{ color: 'var(--text-secondary)' }}>Registro detallado de todos los cambios realizados en el sistema.</p>
+
         </div>
         <div style={{ position: 'relative' }}>
           <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
