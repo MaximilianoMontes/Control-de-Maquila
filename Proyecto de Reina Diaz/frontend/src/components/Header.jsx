@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useSettings } from '../context/SettingsContext';
 import { 
   Search, 
   Bell, 
@@ -25,6 +26,7 @@ import {
 
 export default function Header() {
   const { user, logout } = useAuth();
+  const { settings, updateSetting, t } = useSettings();
   const navigate = useNavigate();
   
   // Dropdown states
@@ -40,16 +42,6 @@ export default function Header() {
   const [commandQuery, setCommandQuery] = useState('');
   const [selectedCommandIndex, setSelectedCommandIndex] = useState(0);
 
-  // Settings State (persisted in localStorage)
-  const [settings, setSettings] = useState(() => {
-    const saved = localStorage.getItem('system_settings');
-    return saved ? JSON.parse(saved) : {
-      density: 'normal',
-      alerts: 'enabled',
-      language: 'es'
-    };
-  });
-
   // Notifications state (simulating real system updates)
   const [notifications, setNotifications] = useState([
     { id: 1, text: 'Nueva orden de producción registrada para el maquilero Montes', time: 'Hace 5 min', unread: true, type: 'alta' },
@@ -63,16 +55,6 @@ export default function Header() {
   const helpRef = useRef(null);
   const profileRef = useRef(null);
   const commandPaletteInputRef = useRef(null);
-
-  // Apply settings (visual density)
-  useEffect(() => {
-    localStorage.setItem('system_settings', JSON.stringify(settings));
-    if (settings.density === 'compact') {
-      document.body.classList.add('compact-mode');
-    } else {
-      document.body.classList.remove('compact-mode');
-    }
-  }, [settings]);
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -118,15 +100,15 @@ export default function Header() {
 
   // Available commands in Command Palette
   const commands = [
-    { name: 'Dashboard', desc: 'Panel general con estadísticas y órdenes', path: '/', icon: <LayoutDashboard size={18} />, badge: 'Inicio' },
-    { name: 'Maquileros', desc: 'Control de maquileros, desempeño y tarifas', path: '/maquileros', icon: <Users size={18} />, badge: 'Contactos' },
-    { name: 'Inventario', desc: 'Gestión de rollos de tela y retazos', path: '/inventario', icon: <Package size={18} />, badge: 'Materiales' },
-    { name: 'Cortes', desc: 'Registro de cortes a partir de rollos', path: '/cortes', icon: <Scissors size={18} />, badge: 'Producción' },
-    { name: 'Producción', desc: 'Monitoreo de órdenes de maquila', path: '/produccion', icon: <Factory size={18} />, badge: 'Fábrica' },
-    { name: 'Reportes', desc: 'Gráficas, estados y reportes generales', path: '/reportes', icon: <FileText size={18} />, badge: 'Análisis' },
-    { name: 'Pagos y Abonos', desc: 'Nómina, depósitos y saldos de maquileros', path: '/pagos', icon: <Wallet size={18} />, badge: 'Finanzas' },
-    { name: 'Historial', desc: 'Bitácora de movimientos y auditoría', path: '/historial', icon: <History size={18} />, badge: 'Seguridad' },
-    { name: 'Centro de Ayuda', desc: 'Manual del usuario e instrucciones paso a paso', path: '/ayuda', icon: <HelpCircle size={18} />, badge: 'Soporte' },
+    { name: t('nav.dashboard'), desc: 'Panel general con estadísticas y órdenes', path: '/', icon: <LayoutDashboard size={18} />, badge: 'Inicio' },
+    { name: t('nav.maquileros'), desc: 'Control de maquileros, desempeño y tarifas', path: '/maquileros', icon: <Users size={18} />, badge: 'Contactos' },
+    { name: t('nav.inventario'), desc: 'Gestión de rollos de tela y retazos', path: '/inventario', icon: <Package size={18} />, badge: 'Materiales' },
+    { name: t('nav.cortes'), desc: 'Registro de cortes a partir de rollos', path: '/cortes', icon: <Scissors size={18} />, badge: 'Producción' },
+    { name: t('nav.produccion'), desc: 'Monitoreo de órdenes de maquila', path: '/produccion', icon: <Factory size={18} />, badge: 'Fábrica' },
+    { name: t('nav.reportes'), desc: 'Gráficas, estados y reportes generales', path: '/reportes', icon: <FileText size={18} />, badge: 'Análisis' },
+    { name: t('nav.pagos'), desc: 'Nómina, depósitos y saldos de maquileros', path: '/pagos', icon: <Wallet size={18} />, badge: 'Finanzas' },
+    { name: t('nav.historial'), desc: 'Bitácora de movimientos y auditoría', path: '/historial', icon: <History size={18} />, badge: 'Seguridad' },
+    { name: t('header.helpCenter'), desc: 'Manual del usuario e instrucciones paso a paso', path: '/ayuda', icon: <HelpCircle size={18} />, badge: 'Soporte' },
   ];
 
   // Filter commands based on search query
@@ -166,7 +148,7 @@ export default function Header() {
   };
 
   const toggleSetting = (key, value) => {
-    setSettings(prev => ({ ...prev, [key]: value }));
+    updateSetting(key, value);
   };
 
   // Get unread notification count
@@ -179,7 +161,7 @@ export default function Header() {
         <div className="header-search-container" onClick={() => setShowCommandPalette(true)}>
           <Search size={18} color="var(--text-secondary)" />
           <div className="header-search-input-placeholder">
-            Buscar comando...
+            {t('header.search')}
           </div>
           <span className="header-search-badge">Ctrl + G</span>
         </div>
@@ -199,14 +181,14 @@ export default function Header() {
 
             <div className={`header-dropdown notifications-dropdown ${showNotifications ? 'active' : ''}`}>
               <div className="dropdown-header">
-                <h4>Notificaciones</h4>
+                <h4>{t('header.notifications')}</h4>
                 {notifications.length > 0 && (
                   <div style={{ display: 'flex', gap: '8px' }}>
                     <button className="dropdown-header-btn" onClick={handleMarkAllNotificationsAsRead}>
-                      Leer todo
+                      {t('header.readAll')}
                     </button>
                     <button className="dropdown-header-btn" style={{ color: 'var(--danger-color)' }} onClick={handleClearNotifications}>
-                      Limpiar
+                      {t('header.clear')}
                     </button>
                   </div>
                 )}
@@ -214,7 +196,7 @@ export default function Header() {
               <div className="notification-list">
                 {notifications.length === 0 ? (
                   <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-                    No tienes notificaciones pendientes.
+                    {t('header.noNotifications')}
                   </div>
                 ) : (
                   notifications.map(n => (
@@ -243,38 +225,38 @@ export default function Header() {
               onClick={() => setShowHelp(!showHelp)}
             >
               <HelpCircle size={18} />
-              <span>Ayuda</span>
+              <span>{t('header.help')}</span>
               <ChevronDown size={14} />
             </button>
 
             <div className={`header-dropdown help-dropdown ${showHelp ? 'active' : ''}`}>
               <div className="dropdown-header">
-                <h4>Centro de Ayuda</h4>
+                <h4>{t('header.helpCenter')}</h4>
               </div>
               <div style={{ padding: '4px' }}>
                 <Link to="/ayuda?tab=general" className="profile-dropdown-item" onClick={() => setShowHelp(false)}>
                   <BookOpen size={16} />
-                  <span>Manual de Usuario</span>
+                  <span>{t('header.userManual')}</span>
                 </Link>
                 <Link to="/ayuda?tab=maquileros" className="profile-dropdown-item" onClick={() => setShowHelp(false)}>
                   <Users size={16} />
-                  <span>Guía de Maquileros</span>
+                  <span>{t('header.tailorGuide')}</span>
                 </Link>
                 <Link to="/ayuda?tab=inventario" className="profile-dropdown-item" onClick={() => setShowHelp(false)}>
                   <Package size={16} />
-                  <span>Control de Inventario</span>
+                  <span>{t('header.inventoryControl')}</span>
                 </Link>
                 <Link to="/ayuda?tab=cortes" className="profile-dropdown-item" onClick={() => setShowHelp(false)}>
                   <Scissors size={16} />
-                  <span>Cortes y Diseño</span>
+                  <span>{t('header.cutsDesign')}</span>
                 </Link>
                 <Link to="/ayuda?tab=produccion" className="profile-dropdown-item" onClick={() => setShowHelp(false)}>
                   <Factory size={16} />
-                  <span>Flujo de Producción</span>
+                  <span>{t('header.productionFlow')}</span>
                 </Link>
                 <Link to="/ayuda?tab=pagos" className="profile-dropdown-item" onClick={() => setShowHelp(false)}>
                   <Wallet size={16} />
-                  <span>Pagos y Abonos</span>
+                  <span>{t('header.paymentsAcum')}</span>
                 </Link>
               </div>
             </div>
@@ -307,14 +289,14 @@ export default function Header() {
                   onClick={() => { setShowProfile(false); navigate('/ayuda'); }}
                 >
                   <User size={16} />
-                  <span>Mi Perfil e Instructivo</span>
+                  <span>{t('header.profileGuide')}</span>
                 </button>
                 <button 
                   className="profile-dropdown-item"
                   onClick={() => { setShowProfile(false); setShowSettingsModal(true); }}
                 >
                   <Settings size={16} />
-                  <span>Configuración</span>
+                  <span>{t('header.settings')}</span>
                 </button>
                 <div style={{ borderTop: '1px solid var(--border-color)', margin: '4px 0' }} />
                 <button 
@@ -322,7 +304,7 @@ export default function Header() {
                   onClick={() => { setShowProfile(false); logout(); }}
                 >
                   <LogOut size={16} />
-                  <span>Cerrar Sesión</span>
+                  <span>{t('header.logout')}</span>
                 </button>
               </div>
             </div>
@@ -340,7 +322,7 @@ export default function Header() {
                 ref={commandPaletteInputRef}
                 type="text" 
                 className="command-palette-input" 
-                placeholder="Escribe el nombre del módulo para navegar..." 
+                placeholder={t('header.commandPalettePlaceholder')} 
                 value={commandQuery}
                 onChange={(e) => { setCommandQuery(e.target.value); setSelectedCommandIndex(0); }}
                 onKeyDown={handleCommandKeyDown}
@@ -349,11 +331,11 @@ export default function Header() {
             </div>
             
             <div className="command-palette-results">
-              <div className="command-palette-results-title">Comandos y Navegación</div>
+              <div className="command-palette-results-title">{t('header.commandPaletteTitle')}</div>
               
               {filteredCommands.length === 0 ? (
                 <div className="command-palette-no-results">
-                  No se encontraron comandos para "{commandQuery}"
+                  {t('header.commandPaletteNoResults', { query: commandQuery })}
                 </div>
               ) : (
                 filteredCommands.map((cmd, index) => (
@@ -384,7 +366,7 @@ export default function Header() {
         <div className="modal-overlay" onClick={() => setShowSettingsModal(false)}>
           <div className="modal-content glass-card settings-modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>Configuración del Sistema</h2>
+              <h2>{t('settings.title')}</h2>
               <button 
                 className="header-action-btn" 
                 onClick={() => setShowSettingsModal(false)}
@@ -397,48 +379,48 @@ export default function Header() {
             <div className="settings-list">
               {/* Visual Density */}
               <div className="settings-item">
-                <span className="settings-item-label">Densidad de la Interfaz</span>
-                <span className="settings-item-desc">Ajusta el espaciado de las tablas y los componentes para mayor comodidad.</span>
+                <span className="settings-item-label">{t('settings.densityLabel')}</span>
+                <span className="settings-item-desc">{t('settings.densityDesc')}</span>
                 <div className="settings-options-row">
                   <button 
                     className={`settings-option-btn ${settings.density === 'normal' ? 'active' : ''}`}
                     onClick={() => toggleSetting('density', 'normal')}
                   >
-                    {settings.density === 'normal' && <Check size={14} />} Normal
+                    {settings.density === 'normal' && <Check size={14} />} {t('settings.densityNormal')}
                   </button>
                   <button 
                     className={`settings-option-btn ${settings.density === 'compact' ? 'active' : ''}`}
                     onClick={() => toggleSetting('density', 'compact')}
                   >
-                    {settings.density === 'compact' && <Check size={14} />} Compacta
+                    {settings.density === 'compact' && <Check size={14} />} {t('settings.densityCompact')}
                   </button>
                 </div>
               </div>
 
               {/* System Alerts */}
               <div className="settings-item">
-                <span className="settings-item-label">Alertas de Actividad</span>
-                <span className="settings-item-desc">Habilita o deshabilita los sonidos de notificación y las ventanas emergentes de actividad.</span>
+                <span className="settings-item-label">{t('settings.alertsLabel')}</span>
+                <span className="settings-item-desc">{t('settings.alertsDesc')}</span>
                 <div className="settings-options-row">
                   <button 
                     className={`settings-option-btn ${settings.alerts === 'enabled' ? 'active' : ''}`}
                     onClick={() => toggleSetting('alerts', 'enabled')}
                   >
-                    {settings.alerts === 'enabled' && <Check size={14} />} Habilitadas
+                    {settings.alerts === 'enabled' && <Check size={14} />} {t('settings.alertsEnabled')}
                   </button>
                   <button 
                     className={`settings-option-btn ${settings.alerts === 'disabled' ? 'active' : ''}`}
                     onClick={() => toggleSetting('alerts', 'disabled')}
                   >
-                    {settings.alerts === 'disabled' && <Check size={14} />} Deshabilitadas
+                    {settings.alerts === 'disabled' && <Check size={14} />} {t('settings.alertsDisabled')}
                   </button>
                 </div>
               </div>
 
               {/* Interface Language */}
               <div className="settings-item">
-                <span className="settings-item-label">Idioma del Sistema</span>
-                <span className="settings-item-desc">Idioma de traducción preferido para los controles del ERP.</span>
+                <span className="settings-item-label">{t('settings.languageLabel')}</span>
+                <span className="settings-item-desc">{t('settings.languageDesc')}</span>
                 <div className="settings-options-row">
                   <button 
                     className={`settings-option-btn ${settings.language === 'es' ? 'active' : ''}`}
@@ -458,7 +440,7 @@ export default function Header() {
 
             <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'flex-end' }}>
               <button className="btn btn-primary" onClick={() => setShowSettingsModal(false)}>
-                Listo, Guardar Cambios
+                {t('settings.save')}
               </button>
             </div>
           </div>
@@ -467,3 +449,4 @@ export default function Header() {
     </>
   );
 }
+

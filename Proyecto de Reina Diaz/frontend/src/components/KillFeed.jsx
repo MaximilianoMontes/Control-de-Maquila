@@ -1,16 +1,25 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { ArrowRight } from 'lucide-react';
+import { useSettings } from '../context/SettingsContext';
 import API_URL from '../config';
 
 const API = API_URL;
 
 export default function KillFeed() {
+  const { settings } = useSettings();
   const [logs, setLogs] = useState([]);
   const [visibleLogs, setVisibleLogs] = useState([]);
   const [lastId, setLastId] = useState(0);
 
+  const alertsEnabled = settings.alerts !== 'disabled';
+
   useEffect(() => {
+    if (!alertsEnabled) {
+      setVisibleLogs([]);
+      return;
+    }
+
     // Initial fetch to set the baseline
     const getInitial = async () => {
       try {
@@ -42,7 +51,7 @@ export default function KillFeed() {
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [lastId]);
+  }, [lastId, alertsEnabled]);
 
   const addNotification = (log) => {
     const id = Math.random().toString(36).substr(2, 9);
@@ -60,7 +69,7 @@ export default function KillFeed() {
     }, 5000);
   };
 
-  if (visibleLogs.length === 0) return null;
+  if (!alertsEnabled || visibleLogs.length === 0) return null;
 
   return (
     <div className="kill-feed">
@@ -78,3 +87,4 @@ export default function KillFeed() {
     </div>
   );
 }
+
