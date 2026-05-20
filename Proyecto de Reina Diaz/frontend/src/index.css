@@ -1356,3 +1356,95 @@ p { color: var(--text-secondary); line-height: 1.6; }
   color: var(--text-secondary);
 }
 
+/* Compact Mode Styles */
+body.compact-mode {
+  font-size: 0.9rem;
+}
+
+body.compact-mode .main-header {
+  height: 52px;
+  padding: 0 1.5rem;
+}
+
+body.compact-mode .main-content {
+  padding: 1rem 1.5rem;
+}
+
+body.compact-mode .glass-card {
+  padding: 1rem 1.25rem;
+  border-radius: var(--radius-md);
+}
+
+body.compact-mode h1 {
+  font-size: 1.8rem;
+  margin-bottom: 0.5rem;
+}
+
+body.compact-mode h2 {
+  font-size: 1.35rem;
+  margin-bottom: 0.5rem;
+}
+
+body.compact-mode .data-table th,
+body.compact-mode .data-table td {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.825rem;
+}
+
+body.compact-mode .kpi-grid {
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+body.compact-mode .kpi-card {
+  padding: 1rem;
+  gap: 1rem;
+}
+
+body.compact-mode .kpi-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+}
+
+body.compact-mode .kpi-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+body.compact-mode .kpi-info h3 {
+  font-size: 1.4rem;
+}
+
+body.compact-mode .sidebar {
+  padding: 1rem 0.75rem;
+}
+
+body.compact-mode .sidebar-logo {
+  margin-bottom: 1rem;
+}
+
+body.compact-mode .logo-img {
+  max-width: 130px;
+}
+
+body.compact-mode .nav-link {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+}
+
+body.compact-mode .form-group {
+  margin-bottom: 0.75rem;
+}
+
+body.compact-mode .form-input {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+body.compact-mode .btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+
+

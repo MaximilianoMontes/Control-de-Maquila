@@ -11,10 +11,12 @@ import {
   Scissors
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useSettings } from '../context/SettingsContext';
 
 export default function Sidebar() {
   const location = useLocation();
   const { user, logout } = useAuth();
+  const { t } = useSettings();
   
   // Todos los items del sidebar - cualquier usuario autenticado los ve
   // excepto Pagos que solo es para admin y produccion
@@ -23,14 +25,14 @@ export default function Sidebar() {
   const puedeVerPagos = ['admin', 'produccion1', 'produccion2'].includes(userRole);
 
   const navItems = [
-    { path: '/',           name: 'Dashboard',   icon: <LayoutDashboard size={20} /> },
-    { path: '/maquileros', name: 'Maquileros',  icon: <Users size={20} /> },
-    { path: '/inventario', name: 'Inventario',  icon: <Package size={20} /> },
-    { path: '/cortes',     name: 'Cortes',      icon: <Scissors size={20} /> },
-    { path: '/produccion', name: 'Producción',  icon: <Factory size={20} /> },
-    { path: '/reportes',   name: 'Reportes',    icon: <FileText size={20} /> },
-    ...(puedeVerPagos ? [{ path: '/pagos', name: 'Pagos', icon: <Wallet size={20} /> }] : []),
-    { path: '/historial',  name: 'Historial',   icon: <History size={20} /> },
+    { path: '/',           name: t('nav.dashboard'),   icon: <LayoutDashboard size={20} /> },
+    { path: '/maquileros', name: t('nav.maquileros'),  icon: <Users size={20} /> },
+    { path: '/inventario', name: t('nav.inventario'),  icon: <Package size={20} /> },
+    { path: '/cortes',     name: t('nav.cortes'),      icon: <Scissors size={20} /> },
+    { path: '/produccion', name: t('nav.produccion'),  icon: <Factory size={20} /> },
+    { path: '/reportes',   name: t('nav.reportes'),    icon: <FileText size={20} /> },
+    ...(puedeVerPagos ? [{ path: '/pagos', name: t('nav.pagos'), icon: <Wallet size={20} /> }] : []),
+    { path: '/historial',  name: t('nav.historial'),   icon: <History size={20} /> },
   ];
 
   const allowedNavItems = navItems;
@@ -56,8 +58,9 @@ export default function Sidebar() {
       </nav>
 
       <button className="btn logout-btn" onClick={logout}>
-        <LogOut size={20} /> Cerrar Sesión
+        <LogOut size={20} /> {t('nav.logout')}
       </button>
     </aside>
   );
 }
+

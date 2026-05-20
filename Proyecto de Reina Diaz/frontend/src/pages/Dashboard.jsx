@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useSettings } from '../context/SettingsContext';
 import { Users, Package, Factory, TrendingUp } from 'lucide-react';
 import axios from 'axios';
 import API_URL from '../config';
@@ -8,6 +9,7 @@ const API = API_URL;
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const { t } = useSettings();
   const [stats, setStats] = useState({
     maquileros: 0,
     inventario: 0,
@@ -56,25 +58,25 @@ export default function Dashboard() {
     {
       icon: <Users size={24} />,
       value: stats.maquileros,
-      label: 'Maquileros Activos',
+      label: t('dash.activeTailors'),
       style: {},
     },
     {
       icon: <Package size={24} />,
       value: stats.inventario.toLocaleString(),
-      label: 'Piezas en Inventario',
+      label: t('dash.piecesInventory'),
       style: { background: 'rgba(16, 185, 129, 0.2)', color: '#34d399' },
     },
     {
       icon: <Factory size={24} />,
       value: stats.ordenes_proceso,
-      label: 'Órdenes en Proceso',
+      label: t('dash.ordersProcess'),
       style: { background: 'rgba(245, 158, 11, 0.2)', color: '#fbbf24' },
     },
     {
       icon: <TrendingUp size={24} />,
       value: `$${stats.pagos_mes.toLocaleString('es-MX', { minimumFractionDigits: 0 })}`,
-      label: 'Total Pagado (Acumulado)',
+      label: t('dash.totalPaid'),
       style: { background: 'rgba(139, 92, 246, 0.2)', color: '#a78bfa' },
     },
   ];
@@ -85,7 +87,7 @@ export default function Dashboard() {
 
       {loading ? (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem' }}>
-          <p style={{ color: 'var(--text-secondary)' }}>Cargando datos del sistema...</p>
+          <p style={{ color: 'var(--text-secondary)' }}>{t('dash.loading')}</p>
         </div>
       ) : (
         <>
@@ -104,22 +106,22 @@ export default function Dashboard() {
           </div>
 
           <div className="glass-card" style={{ marginTop: '2rem' }}>
-            <h2>Órdenes de Producción</h2>
+            <h2>{t('dash.productionOrders')}</h2>
             <div className="table-wrapper">
               <table className="data-table">
                 <thead>
                   <tr>
-                    <th>Folio</th>
-                    <th>Maquilero</th>
-                    <th>Fecha Inicio</th>
-                    <th>Estado</th>
+                    <th>{t('dash.folio')}</th>
+                    <th>{t('dash.tailor')}</th>
+                    <th>{t('dash.startDate')}</th>
+                    <th>{t('dash.status')}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {recentOrders.length === 0 ? (
                     <tr>
                       <td colSpan="4" style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>
-                        No hay órdenes registradas aún.
+                        {t('dash.noOrders')}
                       </td>
                     </tr>
                   ) : (
@@ -146,3 +148,4 @@ export default function Dashboard() {
     </div>
   );
 }
+
