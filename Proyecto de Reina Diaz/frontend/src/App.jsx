@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import Sidebar from './components/Sidebar';
+import Header from './components/Header';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Maquileros from './pages/Maquileros';
@@ -12,6 +13,7 @@ import Produccion from './pages/Produccion';
 import Pagos from './pages/Pagos';
 import Reportes from './pages/Reportes';
 import Historial from './pages/Historial';
+import Ayuda from './pages/Ayuda';
 import KillFeed from './components/KillFeed';
 
 function MainLayout({ children }) {
@@ -19,9 +21,12 @@ function MainLayout({ children }) {
     <div className="app-layout">
       <Sidebar />
       <KillFeed />
-      <main className="main-content">
-        {children}
-      </main>
+      <div className="main-container">
+        <Header />
+        <main className="main-content">
+          {children}
+        </main>
+      </div>
     </div>
   );
 }
@@ -54,6 +59,7 @@ function App() {
       <Route path="/pagos" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2']}><MainLayout><Pagos /></MainLayout></ProtectedRoute>} />
       <Route path="/reportes" element={<ProtectedRoute><MainLayout><Reportes /></MainLayout></ProtectedRoute>} />
       <Route path="/historial" element={<ProtectedRoute><MainLayout><Historial /></MainLayout></ProtectedRoute>} />
+      <Route path="/ayuda" element={<ProtectedRoute><MainLayout><Ayuda /></MainLayout></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
