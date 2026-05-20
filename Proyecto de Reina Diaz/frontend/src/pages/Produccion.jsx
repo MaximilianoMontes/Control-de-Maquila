@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useSettings } from '../context/SettingsContext';
 import axios from 'axios';
 import API_URL from '../config';
 
@@ -29,6 +30,7 @@ const displayDate = (date) => {
 
 export default function Produccion() {
   const { user } = useAuth();
+  const { t } = useSettings();
   const location = useLocation();
   const userRole = (user?.role || user?.rol || '').toString().toLowerCase().trim();
   const canEdit = userRole === 'admin' || userRole === 'produccion1' || userRole === 'produccion2';
@@ -184,14 +186,15 @@ export default function Produccion() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-        <h1 className="gradient-text" style={{ fontSize: '2.5rem', margin: 0 }}>Gestión de Producción</h1>
+        <h1 className="gradient-text" style={{ fontSize: '2.5rem', margin: 0 }}>{t('prod.title')}
+        </h1>
         <div style={{ display: 'flex', gap: '1rem' }}>
           <button className="btn btn-secondary" onClick={() => setVerArchivados(!verArchivados)}>
-            {verArchivados ? 'Ver Activos' : 'Ver Archivados'}
+            {verArchivados ? t('nav.produccion') + ' (Activos)' : t('nav.historial') + ' (Archivados)'}
           </button>
           {canEdit && (
             <button className="btn btn-primary" onClick={() => setIsModalOpen(true)}>
-              <Plus size={20} /> Nueva Orden
+              <Plus size={20} /> {t('prod.new')}
             </button>
           )}
         </div>
@@ -199,7 +202,7 @@ export default function Produccion() {
 
       <div className="glass-card" style={{ padding: '1rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
         <Search size={20} color="#94a3b8" />
-        <input type="text" className="form-input" style={{ border: 'none', background: 'transparent', padding: '0.5rem' }} placeholder="Buscar por maquilero o modelo..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+        <input type="text" className="form-input" style={{ border: 'none', background: 'transparent', padding: '0.5rem' }} placeholder={t('prod.search')} value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
       </div>
 
       <div className="glass-card">
@@ -207,21 +210,21 @@ export default function Produccion() {
           <table className="data-table">
             <thead>
               <tr>
-                <th>Folio</th>
-                <th>Maquilero</th>
-                <th>Producto / Modelo</th>
-                <th>Pzas. Enviadas</th>
-                <th>Pzas. Recibidas</th>
-                <th>Inicio / Entrega</th>
+                <th>{t('prod.folio')}</th>
+                <th>{t('prod.tailor')}</th>
+                <th>{t('prod.model')}</th>
+                <th>{t('prod.pieces')} ({t('dash.status') === 'Status' ? 'Sent' : 'Env.'})</th>
+                <th>{t('prod.pieces')} ({t('dash.status') === 'Status' ? 'Recv.' : 'Rec.'})</th>
+                <th>{t('prod.startDate')} / {t('prod.endDate')}</th>
                 <th>Costo Est.</th>
-                <th>Pagado</th>
-                <th>Estado</th>
-                <th>Acciones</th>
+                <th>{t('prod.paid')}</th>
+                <th>{t('prod.status')}</th>
+                <th>{t('prod.actions')}</th>
               </tr>
             </thead>
             <tbody>
               {filteredOrders.length === 0 ? (
-                <tr><td colSpan="10" style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>No hay órdenes en esta vista</td></tr>
+                <tr><td colSpan="10" style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>{t('prod.noResults')}</td></tr>
               ) : (
                 filteredOrders.map((o, index) => {
                   const pagado = o.pagado || 0;

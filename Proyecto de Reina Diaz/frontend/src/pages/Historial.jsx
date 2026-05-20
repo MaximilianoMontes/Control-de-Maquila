@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { History, Search, Filter, Clock, User as UserIcon, Tag } from 'lucide-react';
+import { useSettings } from '../context/SettingsContext';
 import API_URL from '../config';
 
 const API = API_URL;
@@ -9,6 +10,7 @@ export default function Historial() {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('');
+  const { t } = useSettings();
 
   useEffect(() => {
     fetchHistory();
@@ -46,14 +48,13 @@ export default function Historial() {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <div>
-          <h1 className="gradient-text" style={{ marginBottom: '0.5rem' }}>Historial de Actividad</h1>
-
+          <h1 className="gradient-text" style={{ marginBottom: '0.5rem' }}>{t('hist.title')}</h1>
         </div>
         <div style={{ position: 'relative' }}>
           <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
           <input 
             type="text" 
-            placeholder="Buscar por usuario o acción..." 
+            placeholder={t('hist.search')} 
             className="form-input" 
             style={{ paddingLeft: '40px', width: '300px' }}
             value={filter}
@@ -67,18 +68,18 @@ export default function Historial() {
           <table className="data-table">
             <thead>
               <tr>
-                <th>Fecha y Hora</th>
-                <th>Usuario</th>
-                <th>Acción</th>
-                <th>Módulo</th>
-                <th>Detalle del Cambio</th>
+                <th>{t('hist.date')}</th>
+                <th>{t('hist.user')}</th>
+                <th>{t('hist.action')}</th>
+                <th>{t('hist.module')}</th>
+                <th>{t('hist.detail')}</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan="5" style={{ textAlign: 'center', padding: '3rem' }}>Cargando registros...</td></tr>
+                <tr><td colSpan="5" style={{ textAlign: 'center', padding: '3rem' }}>{t('hist.loading')}</td></tr>
               ) : filteredLogs.length === 0 ? (
-                <tr><td colSpan="5" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>No se encontraron registros de actividad</td></tr>
+                <tr><td colSpan="5" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>{t('hist.noResults')}</td></tr>
               ) : (
                 filteredLogs.map(log => (
                   <tr key={log.id} className="log-row">
