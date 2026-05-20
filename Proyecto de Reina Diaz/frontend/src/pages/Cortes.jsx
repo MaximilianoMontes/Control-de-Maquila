@@ -7,7 +7,7 @@ import API_URL from '../config';
 
 const API = API_URL;
 
-const emptyForm = { numero: '', modelo: '', precio: '', cliente: '', no_orden: '', variantes: [{ color: '', cantidad: '' }], imagenUrl: '', observaciones: '' };
+const getEmptyForm = () => ({ numero: '', modelo: '', precio: '', cliente: '', no_orden: '', variantes: [{ color: '', cantidad: '' }], imagenUrl: '', observaciones: '' });
 
 const getImgSrc = (img) => img ? (img.startsWith('http') ? img : `${API}${img}`) : null;
 
@@ -25,7 +25,7 @@ export default function Cortes() {
   const [isReprogram, setIsReprogram] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const fileInputRef = useRef(null);
-  const [formData, setFormData] = useState(emptyForm);
+  const [formData, setFormData] = useState(getEmptyForm());
   const [imagenFile, setImagenFile] = useState(null);
   const [editImageFile, setEditImageFile] = useState(null);
   const [editImageUrl, setEditImageUrl] = useState('');
@@ -47,7 +47,7 @@ export default function Cortes() {
     setEditMode(false);
     setIsReprogram(false);
     setEditingId(null);
-    setFormData(emptyForm);
+    setFormData(getEmptyForm());
     setImagenFile(null);
     setIsModalOpen(true);
   };
@@ -323,7 +323,7 @@ export default function Cortes() {
           <div className="modal-content glass-card" style={{ maxWidth: '640px' }} onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h2>
-                {isReprogram ? 'Reprogramar Producción' : (editMode ? 'Editar Producto' : 'Alta de Producciones en Proceso')}
+                {isReprogram ? 'Reprogramar Producción' : (editMode ? 'Editar Producto' : 'Alta de Corte en Proceso')}
               </h2>
               <button className="btn-icon" onClick={() => setIsModalOpen(false)}><X size={24} /></button>
             </div>
