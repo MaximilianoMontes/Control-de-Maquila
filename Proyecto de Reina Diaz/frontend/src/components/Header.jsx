@@ -252,17 +252,29 @@ export default function Header() {
                 <h4>Centro de Ayuda</h4>
               </div>
               <div style={{ padding: '4px' }}>
-                <Link to="/ayuda" className="profile-dropdown-item" onClick={() => setShowHelp(false)}>
+                <Link to="/ayuda?tab=general" className="profile-dropdown-item" onClick={() => setShowHelp(false)}>
                   <BookOpen size={16} />
                   <span>Manual de Usuario</span>
+                </Link>
+                <Link to="/ayuda?tab=maquileros" className="profile-dropdown-item" onClick={() => setShowHelp(false)}>
+                  <Users size={16} />
+                  <span>Guía de Maquileros</span>
+                </Link>
+                <Link to="/ayuda?tab=inventario" className="profile-dropdown-item" onClick={() => setShowHelp(false)}>
+                  <Package size={16} />
+                  <span>Control de Inventario</span>
+                </Link>
+                <Link to="/ayuda?tab=cortes" className="profile-dropdown-item" onClick={() => setShowHelp(false)}>
+                  <Scissors size={16} />
+                  <span>Cortes y Diseño</span>
                 </Link>
                 <Link to="/ayuda?tab=produccion" className="profile-dropdown-item" onClick={() => setShowHelp(false)}>
                   <Factory size={16} />
                   <span>Flujo de Producción</span>
                 </Link>
-                <Link to="/ayuda?tab=inventario" className="profile-dropdown-item" onClick={() => setShowHelp(false)}>
-                  <Package size={16} />
-                  <span>Control de Inventario</span>
+                <Link to="/ayuda?tab=pagos" className="profile-dropdown-item" onClick={() => setShowHelp(false)}>
+                  <Wallet size={16} />
+                  <span>Pagos y Abonos</span>
                 </Link>
               </div>
             </div>
