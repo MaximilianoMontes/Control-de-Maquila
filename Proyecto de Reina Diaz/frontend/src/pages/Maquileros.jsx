@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Plus, X, Pencil, Trash2, User, AlertTriangle, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useSettings } from '../context/SettingsContext';
 import API_URL from '../config';
 
 const API = API_URL;
@@ -12,6 +13,7 @@ const getImgSrc = (img) => img ? (img.startsWith('http') ? img : `${API}${img}`)
 
 export default function Maquileros() {
   const { user } = useAuth();
+  const { t } = useSettings();
   const userRole = (user?.role || user?.rol || '').toString().toLowerCase().trim();
   const canEdit = userRole === 'admin' || userRole === 'produccion1' || userRole === 'produccion2';
   const [maquileros, setMaquileros] = useState([]);
@@ -141,17 +143,17 @@ export default function Maquileros() {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <h1 className="gradient-text">Maquileros y Talleres</h1>
+        <h1 className="gradient-text">{t('maq.title')}</h1>
         {canEdit && (
           <button className="btn btn-primary" onClick={openNew}>
-            <Plus size={20} /> Nuevo Maquilero
+            <Plus size={20} /> {t('maq.new')}
           </button>
         )}
       </div>
 
       <div className="glass-card" style={{ marginBottom: '2rem', padding: '1rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
         <Search size={20} color="#94a3b8" />
-        <input type="text" placeholder="Buscar por nombre, teléfono o colonia..."
+        <input type="text" placeholder={t('maq.search')}
           style={{ width: '100%', background: 'transparent', border: 'none', color: 'var(--text-primary)', outline: 'none' }}
           value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
       </div>
@@ -161,17 +163,17 @@ export default function Maquileros() {
           <table className="data-table">
             <thead>
               <tr>
-                <th>Foto</th>
-                <th>ID</th>
-                <th>Nombre</th>
-                <th>Teléfono</th>
-                <th>Colonia</th>
-                <th>Acciones</th>
+                <th>{t('maq.photo')}</th>
+                <th>{t('maq.id')}</th>
+                <th>{t('maq.name')}</th>
+                <th>{t('maq.phone')}</th>
+                <th>{t('maq.colonia')}</th>
+                <th>{t('maq.actions')}</th>
               </tr>
             </thead>
             <tbody>
               {filteredMaquileros.length === 0 ? (
-                <tr><td colSpan="6" style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>No hay maquileros que coincidan con la búsqueda</td></tr>
+                <tr><td colSpan="6" style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>{t('maq.noResults')}</td></tr>
               ) : (
                 filteredMaquileros.map((m, index) => (
                   <tr key={m.id} onClick={() => handleRowClick(m.id)} style={{ cursor: 'pointer' }}>

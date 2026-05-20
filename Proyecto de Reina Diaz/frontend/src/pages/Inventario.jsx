@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Search, Image as ImageIcon, Trash2, Calendar, ClipboardList } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useSettings } from '../context/SettingsContext';
 import API_URL from '../config';
 
 const API = API_URL;
@@ -17,6 +18,7 @@ const displayDate = (date) => {
 
 export default function Inventario() {
   const { user } = useAuth();
+  const { t } = useSettings();
   const userRole = (user?.role || user?.rol || '').toString().toLowerCase().trim();
   const canEdit = userRole === 'admin' || userRole === 'inventario1';
   
@@ -66,7 +68,7 @@ export default function Inventario() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-            <h1 className="gradient-text" style={{ fontSize: '2.5rem', margin: 0 }}>Inventario General</h1>
+            <h1 className="gradient-text" style={{ fontSize: '2.5rem', margin: 0 }}>{t('inv.title')}</h1>
           </div>
         </div>
       </div>
@@ -78,7 +80,7 @@ export default function Inventario() {
             <ClipboardList size={28} />
           </div>
           <div>
-            <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 600 }}>Modelos Diferentes</span>
+            <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 600 }}>{t('inv.kpiModels')}</span>
             <h3 style={{ fontSize: '1.75rem', margin: '0.25rem 0 0 0', fontWeight: 700 }}>{filteredItems.length}</h3>
           </div>
         </div>
@@ -88,7 +90,7 @@ export default function Inventario() {
             <Calendar size={28} />
           </div>
           <div>
-            <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 600 }}>Total Piezas en Stock</span>
+            <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 600 }}>{t('inv.kpiTotal')}</span>
             <h3 style={{ fontSize: '1.75rem', margin: '0.25rem 0 0 0', fontWeight: 700, color: '#10b981' }}>{totalPiezas}</h3>
           </div>
         </div>
@@ -98,7 +100,7 @@ export default function Inventario() {
             <span style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>$</span>
           </div>
           <div>
-            <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 600 }}>Valor Total Estimado</span>
+            <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 600 }}>{t('inv.kpiValue')}</span>
             <h3 style={{ fontSize: '1.75rem', margin: '0.25rem 0 0 0', fontWeight: 700, color: '#8b5cf6' }}>
               ${valorTotal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
             </h3>
@@ -111,7 +113,7 @@ export default function Inventario() {
         <Search size={20} color="#94a3b8" />
         <input 
           type="text" 
-          placeholder="Buscar por modelo, cliente u orden..."
+          placeholder={t('inv.search')}
           style={{ width: '100%', background: 'transparent', border: 'none', color: 'var(--text-primary)', outline: 'none' }}
           value={searchTerm} 
           onChange={(e) => setSearchTerm(e.target.value)} 
@@ -124,16 +126,16 @@ export default function Inventario() {
           <table className="data-table">
             <thead>
               <tr>
-                <th>Imagen</th>
-                <th>Código / Modelo</th>
-                <th>Variantes de Color</th>
-                <th>Cliente</th>
-                <th>No. Orden</th>
-                <th>Precio Unit.</th>
-                <th>Stock Terminado</th>
-                <th>Valor Total</th>
-                <th>Fecha Ingreso</th>
-                {canEdit && <th>Acciones</th>}
+                <th>{t('inv.image')}</th>
+                <th>{t('inv.code')}</th>
+                <th>{t('inv.colors')}</th>
+                <th>{t('inv.client')}</th>
+                <th>{t('inv.orderNo')}</th>
+                <th>{t('inv.price')}</th>
+                <th>{t('inv.stock')}</th>
+                <th>{t('inv.total')}</th>
+                <th>{t('inv.date')}</th>
+                {canEdit && <th>{t('inv.actions')}</th>}
               </tr>
             </thead>
             <tbody>
@@ -143,9 +145,9 @@ export default function Inventario() {
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
                       <ClipboardList size={48} color="#cbd5e1" />
                       <div>
-                        <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600 }}>No hay productos en inventario</h4>
+                        <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600 }}>{t('inv.noResults')}</h4>
                         <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.9rem', maxWidth: '500px', lineHeight: '1.5' }}>
-                          Los cortes se pasarán automáticamente aquí una vez que su orden de producción sea marcada como <strong>Terminada</strong> y esté <strong>100% Pagada</strong>.
+                          {t('inv.emptyDesc')}
                         </p>
                       </div>
                     </div>

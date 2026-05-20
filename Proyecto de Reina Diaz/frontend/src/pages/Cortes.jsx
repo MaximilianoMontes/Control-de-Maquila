@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Plus, X, UploadCloud, Search, Image as ImageIcon, Pencil, Trash2, RefreshCw, MessageSquare, PlusCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useSettings } from '../context/SettingsContext';
 import API_URL from '../config';
 
 const API = API_URL;
@@ -13,6 +14,7 @@ const getImgSrc = (img) => img ? (img.startsWith('http') ? img : `${API}${img}`)
 
 export default function Cortes() {
   const { user } = useAuth();
+  const { t } = useSettings();
   const navigate = useNavigate();
   const userRole = (user?.role || user?.rol || '').toString().toLowerCase().trim();
   const canEdit = userRole === 'admin' || userRole === 'inventario1';
@@ -191,15 +193,15 @@ export default function Cortes() {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', gap: '1rem', flexWrap: 'wrap' }}>
-        <h1 className="gradient-text" style={{ fontSize: '2.5rem', margin: 0 }}>Cortes Disponibles</h1>
+        <h1 className="gradient-text" style={{ fontSize: '2.5rem', margin: 0 }}>{t('cortes.title')}</h1>
         <div style={{ display: 'flex', gap: '1rem' }}>
           {canEdit && (
             <>
               <button className="btn btn-secondary" onClick={() => setIsUploadModalOpen(true)}>
-                <UploadCloud size={20} /> Importar Excel
+                <UploadCloud size={20} /> {t('cortes.import')}
               </button>
               <button className="btn btn-primary" onClick={openNew}>
-                <Plus size={20} /> Nuevo Ingreso
+                <Plus size={20} /> {t('cortes.new')}
               </button>
             </>
           )}
@@ -208,7 +210,7 @@ export default function Cortes() {
 
       <div className="glass-card" style={{ marginBottom: '2rem', padding: '1rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
         <Search size={20} color="#94a3b8" />
-        <input type="text" placeholder="Buscar por modelo, cliente u orden..."
+        <input type="text" placeholder={t('cortes.search')}
           style={{ width: '100%', background: 'transparent', border: 'none', color: 'var(--text-primary)', outline: 'none' }}
           value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
       </div>
@@ -218,21 +220,21 @@ export default function Cortes() {
           <table className="data-table">
             <thead>
               <tr>
-                <th>Imagen</th>
-                <th>Código del Producto</th>
-                <th>Estado</th>
-                <th>Colores</th>
-                <th>Cliente</th>
-                <th>No. Orden</th>
-                <th>Precio</th>
-                <th>Piezas</th>
-                <th>Total</th>
-                <th>Acciones</th>
+                <th>{t('cortes.image')}</th>
+                <th>{t('cortes.code')}</th>
+                <th>{t('cortes.status')}</th>
+                <th>{t('cortes.colors')}</th>
+                <th>{t('cortes.client')}</th>
+                <th>{t('cortes.orderNo')}</th>
+                <th>{t('cortes.price')}</th>
+                <th>{t('cortes.pieces')}</th>
+                <th>{t('cortes.total')}</th>
+                <th>{t('cortes.actions')}</th>
               </tr>
             </thead>
             <tbody>
               {filteredItems.length === 0 ? (
-                <tr><td colSpan={10} style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>No hay registros</td></tr>
+                <tr><td colSpan={10} style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>{t('cortes.noResults')}</td></tr>
               ) : (
                 filteredItems.map(item => {
                   const total = (parseFloat(item.precio) || 0) * (parseInt(item.piezas_en_proceso) || 0);
@@ -250,17 +252,17 @@ export default function Cortes() {
                       <td style={{ fontWeight: 700 }}>
                         {item.modelo}
                         {item.es_reprogramacion === 1 && (
-                          <div style={{ fontSize: '0.65rem', color: '#8b5cf6', background: '#e0e7ff', padding: '0.1rem 0.3rem', borderRadius: 4, width: 'fit-content', marginTop: '0.2rem', fontWeight: 600 }}>REPROGRAMADO</div>
+                          <div style={{ fontSize: '0.65rem', color: '#8b5cf6', background: '#e0e7ff', padding: '0.1rem 0.3rem', borderRadius: 4, width: 'fit-content', marginTop: '0.2rem', fontWeight: 600 }}>{t('cortes.reprogrammed')}</div>
                         )}
                       </td>
                       <td>
                         {item.producciones_count > 0 ? (
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#16a34a', fontWeight: 600, fontSize: '0.85rem' }}>
-                            <div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: '#16a34a', boxShadow: '0 0 5px rgba(22, 163, 74, 0.5)' }}></div> Asignado
+                            <div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: '#16a34a', boxShadow: '0 0 5px rgba(22, 163, 74, 0.5)' }}></div> {t('cortes.assigned')}
                           </div>
                         ) : (
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#ef4444', fontWeight: 600, fontSize: '0.85rem' }}>
-                            <div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: '#ef4444', boxShadow: '0 0 5px rgba(239, 68, 68, 0.5)' }}></div> Disponible
+                            <div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: '#ef4444', boxShadow: '0 0 5px rgba(239, 68, 68, 0.5)' }}></div> {t('cortes.available')}
                           </div>
                         )}
                       </td>

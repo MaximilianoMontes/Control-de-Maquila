@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useSearchParams } from 'react-router-dom';
 import { Printer, AlertCircle, History as HistoryIcon } from 'lucide-react';
+import { useSettings } from '../context/SettingsContext';
 import API_URL from '../config';
 
 export default function Pagos() {
+  const { t } = useSettings();
   const [searchParams] = useSearchParams();
   const initialOrdenId = searchParams.get('orden') || '';
 
@@ -174,16 +176,16 @@ export default function Pagos() {
       {/* SECCIÓN 1: PAGOS DE ÓRDENES */}
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 1fr) 2fr', gap: '2rem' }}>
         <div>
-          <h1 className="gradient-text" style={{ fontSize: '2rem' }}>Generar Pago</h1>
+          <h1 className="gradient-text" style={{ fontSize: '2rem' }}>{t('pay.title')}</h1>
           <div className="glass-card" style={{ marginTop: '2rem' }}>
             <form onSubmit={handlePago}>
               <div className="form-group">
-                <label className="form-label">Seleccionar Orden</label>
+                <label className="form-label">{t('pay.selectOrder')}</label>
                 <select className="form-input" style={{ backgroundColor: 'var(--bg-input)' }} value={selectedOrden} onChange={e => setSelectedOrden(e.target.value)} required>
-                  <option value="">-- Elige una orden --</option>
+                  <option value="">{t('pay.chooseOrder')}</option>
                   {orders.map((o, index) => (
                     <option key={o.id} value={o.id}>
-                      Orden #{orders.length - index} - {o.maquilero_nombre}
+                      {t('pay.order')} #{orders.length - index} - {o.maquilero_nombre}
                     </option>
                   ))}
                 </select>
@@ -191,31 +193,31 @@ export default function Pagos() {
 
               {ordenActual && (
                 <div style={{ background: 'rgba(0,0,0,0.02)', padding: '1rem', borderRadius: '8px', marginBottom: '1rem' }}>
-                  <p><strong>Costo Total de Orden:</strong> ${ordenActual.precio_total}</p>
-                  <p style={{ color: '#34d399' }}><strong>Ya Pagado:</strong> ${totalPagado}</p>
+                  <p><strong>{t('pay.totalCost')}</strong> ${ordenActual.precio_total}</p>
+                  <p style={{ color: '#34d399' }}><strong>{t('pay.alreadyPaid')}</strong> ${totalPagado}</p>
                   <hr style={{ margin: '0.5rem 0', border: 'none', borderTop: '1px solid #e2e8f0' }} />
                   {pendingDiscount > 0 && (
                     <p style={{ color: '#ef4444', fontWeight: 'bold' }}>
                       <AlertCircle size={14} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
-                      Multas Pendientes: -${pendingDiscount}
+                      {t('pay.pendingFines')} -${pendingDiscount}
                     </p>
                   )}
                   <p style={{ color: (restante - pendingDiscount) > 0 ? '#ef4444' : '#34d399', fontSize: '1.1rem' }}>
-                    <strong>A Pagar (Neto): ${Math.max(0, restante - pendingDiscount)}</strong>
+                    <strong>{t('pay.netToPay')} ${Math.max(0, restante - pendingDiscount)}</strong>
                   </p>
                 </div>
               )}
 
               <div className="form-group">
-                <label className="form-label">Tipo de Pago</label>
+                <label className="form-label">{t('pay.paymentType')}</label>
                 <select className="form-input" style={{ backgroundColor: 'var(--bg-input)' }} value={tipoPago} onChange={e => setTipoPago(e.target.value)}>
-                  <option value="abono">Abono</option>
-                  <option value="completo">Pago Completo (Liquidación)</option>
+                  <option value="abono">{t('pay.deposit')}</option>
+                  <option value="completo">{t('pay.full')}</option>
                 </select>
               </div>
 
               <div className="form-group">
-              <label className="form-label">Monto a Entregar ($)</label>
+              <label className="form-label">{t('pay.amount')}</label>
               <input 
                 type="number" 
                 step="0.01" 
@@ -225,39 +227,39 @@ export default function Pagos() {
                 value={monto} 
                 onChange={e => setMonto(e.target.value)} 
                 disabled={!selectedOrden}
-                placeholder={restante > 0 ? `Sugerido: $${Math.max(0, restante - pendingDiscount)}` : ''}
+                placeholder={restante > 0 ? `${t('pay.suggested')} $${Math.max(0, restante - pendingDiscount)}` : ''}
               />
             </div>
 
               <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={!selectedOrden || restante <= 0}>
-                Registrar Pago
+                {t('pay.register')}
               </button>
             </form>
           </div>
         </div>
 
         <div>
-          <h2 style={{ marginTop: '1rem' }}>Historial de Pagos de la Orden</h2>
+          <h2 style={{ marginTop: '1rem' }}>{t('pay.histTitle')}</h2>
           <div className="glass-card" style={{ marginTop: '1rem', minHeight: '300px' }}>
             {!selectedOrden ? (
               <p style={{ textAlign: 'center', color: '#94a3b8', marginTop: '2rem' }}>
-                Selecciona una orden para ver los pagos.
+                {t('pay.selectSee')}
               </p>
             ) : (
               <div className="table-wrapper">
                 <table className="data-table">
                   <thead>
                     <tr>
-                      <th>ID Pago</th>
-                      <th>Fecha</th>
-                      <th>Tipo</th>
-                      <th>Monto</th>
-                      <th>Acción</th>
+                      <th>{t('pay.payId')}</th>
+                      <th>{t('pay.date')}</th>
+                      <th>{t('pay.type')}</th>
+                      <th>{t('pay.amount2')}</th>
+                      <th>{t('pay.action')}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {pagos.length === 0 ? (
-                      <tr><td colSpan="5" style={{ textAlign: 'center' }}>Aún no hay abonos registrados para esta orden.</td></tr>
+                      <tr><td colSpan="5" style={{ textAlign: 'center' }}>{t('pay.noPays')}</td></tr>
                     ) : (
                       pagos.map((p, index) => (
                         <tr key={p.id}>
@@ -288,52 +290,52 @@ export default function Pagos() {
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', marginBottom: '1.5rem' }}>
             <AlertCircle color="#ef4444" size={28} />
-            <h2 className="gradient-text" style={{ fontSize: '1.8rem', margin: 0 }}>Descuento Personal</h2>
+            <h2 className="gradient-text" style={{ fontSize: '1.8rem', margin: 0 }}>{t('pay.discountTitle')}</h2>
           </div>
           
           <div className="glass-card">
             <form onSubmit={handleDescuento}>
               <div className="form-group">
-                <label className="form-label">Elegir Maquilero</label>
+                <label className="form-label">{t('pay.chooseTailor')}</label>
                 <select className="form-input" value={selectedMaquilero} onChange={e => setSelectedMaquilero(e.target.value)} required>
-                  <option value="">-- Seleccionar --</option>
+                  <option value="">{t('pay.chooseSelect')}</option>
                   {[...maquileros].sort((a, b) => a.nombre.localeCompare(b.nombre, 'es')).map(m => <option key={m.id} value={m.id}>{m.nombre}</option>)}
                 </select>
               </div>
 
               <div className="form-group">
-                <label className="form-label">Modelo / Producto</label>
+                <label className="form-label">{t('pay.model')}</label>
                 <select className="form-input" value={selectedModelo} onChange={e => setSelectedModelo(e.target.value)} required>
-                  <option value="">-- Seleccionar --</option>
+                  <option value="">{t('pay.chooseSelect')}</option>
                   {[...inventario].sort((a, b) => (a.modelo || '').localeCompare(b.modelo || '', undefined, { numeric: true })).map(i => <option key={i.id} value={i.id}>{i.modelo} - {i.numero}</option>)}
                 </select>
               </div>
 
               <div className="form-group">
-                <label className="form-label">Motivo del Error / Hallazgo</label>
+                <label className="form-label">{t('pay.reason')}</label>
                 <textarea 
                   className="form-input" 
                   style={{ minHeight: '80px', resize: 'vertical' }} 
                   value={motivoDescuento} 
                   onChange={e => setMotivoDescuento(e.target.value)} 
-                  placeholder="Describe el error encontrado..."
+                  placeholder={t('pay.reasonPlaceholder')}
                   required
                 />
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div className="form-group">
-                  <label className="form-label">Piezas Malas</label>
+                  <label className="form-label">{t('pay.badPieces')}</label>
                   <input type="number" className="form-input" value={piezasMalas} onChange={e => setPiezasMalas(e.target.value)} required />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Monto Total ($)</label>
+                  <label className="form-label">{t('pay.totalAmount')}</label>
                   <input type="number" step="0.01" className="form-input" value={montoDescuento} onChange={e => setMontoDescuento(e.target.value)} required />
                 </div>
               </div>
 
               <button type="submit" className="btn" style={{ width: '100%', background: 'linear-gradient(135deg, #ef4444, #dc2626)', color: 'white', marginTop: '1rem' }}>
-                Registrar Descuento
+                {t('pay.registerDiscount')}
               </button>
             </form>
           </div>
@@ -342,31 +344,31 @@ export default function Pagos() {
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', marginBottom: '1.5rem' }}>
             <HistoryIcon color="#64748b" size={28} />
-            <h2 style={{ fontSize: '1.5rem', margin: 0 }}>Historial de Descuentos Personales</h2>
+            <h2 style={{ fontSize: '1.5rem', margin: 0 }}>{t('pay.discountHistory')}</h2>
           </div>
           
           <div className="glass-card" style={{ minHeight: '400px' }}>
             {!selectedMaquilero ? (
               <div style={{ textAlign: 'center', color: '#94a3b8', marginTop: '5rem' }}>
                 <HistoryIcon size={48} style={{ opacity: 0.2, marginBottom: '1rem' }} />
-                <p>Selecciona un maquilero para ver su historial de multas acumuladas.</p>
+                <p>{t('pay.selectTailorSee')}</p>
               </div>
             ) : (
               <div className="table-wrapper">
                 <table className="data-table">
                   <thead>
                     <tr>
-                      <th>Fecha</th>
-                      <th>Modelo</th>
-                      <th>Motivo</th>
-                      <th>Piezas</th>
-                      <th>Monto</th>
-                      <th>Estado</th>
+                      <th>{t('pay.date')}</th>
+                      <th>{t('pay.discModel')}</th>
+                      <th>{t('pay.discReason')}</th>
+                      <th>{t('pay.discPieces')}</th>
+                      <th>{t('pay.discAmount')}</th>
+                      <th>{t('pay.discStatus')}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {historialDescuentos.length === 0 ? (
-                      <tr><td colSpan="6" style={{ textAlign: 'center' }}>Este maquilero no tiene descuentos registrados.</td></tr>
+                      <tr><td colSpan="6" style={{ textAlign: 'center' }}>{t('pay.discNone')}</td></tr>
                     ) : (
                       historialDescuentos.map(d => (
                         <tr key={d.id}>
@@ -377,7 +379,7 @@ export default function Pagos() {
                           <td style={{ color: '#ef4444', fontWeight: 'bold' }}>-${d.monto_total}</td>
                           <td>
                             <span className={`badge ${d.aplicado ? 'badge-success' : 'badge-warning'}`} style={{ fontSize: '10px' }}>
-                              {d.aplicado ? 'Cobrado' : 'Pendiente'}
+                              {d.aplicado ? t('pay.discCharged') : t('pay.discPending')}
                             </span>
                           </td>
                         </tr>
