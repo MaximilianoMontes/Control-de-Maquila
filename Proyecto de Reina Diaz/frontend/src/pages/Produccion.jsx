@@ -30,7 +30,7 @@ const displayDate = (date) => {
 
 export default function Produccion() {
   const { user } = useAuth();
-  const { t } = useSettings();
+  const { settings, t, formatCurrency } = useSettings();
   const location = useLocation();
   const userRole = (user?.role || user?.rol || '').toString().toLowerCase().trim();
   const canEdit = userRole === 'admin' || userRole === 'produccion1' || userRole === 'produccion2';
@@ -74,6 +74,23 @@ export default function Produccion() {
     try {
       const res = await axios.get(`${API}/api/produccion?verArchivados=${verArchivados}`);
       setOrders(res.data);
+
+      // Auto-archive check
+      if (settings.autoArchive === 'enabled') {
+        const toArchive = res.data.filter(o => 
+          o.estado === 'Terminado' && 
+          parseFloat(o.pagado || 0) >= parseFloat(o.precio_total || 0) && 
+          !o.archivado
+        );
+        if (toArchive.length > 0) {
+          await Promise.all(toArchive.map(o => 
+            axios.put(`${API}/api/produccion/${o.id}/archivo`, { archivado: true })
+          ));
+          // Refresh after auto-archiving
+          const refreshed = await axios.get(`${API}/api/produccion?verArchivados=${verArchivados}`);
+          setOrders(refreshed.data);
+        }
+      }
     } catch (e) { console.error(e); }
   };
 
@@ -300,7 +317,7 @@ export default function Produccion() {
                       </td>
                       <td style={{ minWidth: '130px' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                          <span style={{ fontWeight: 700, fontSize: '1rem' }}>${Number(o.precio_total).toFixed(2)}</span>
+                          <span style={{ fontWeight: 700, fontSize: '1rem' }}>{formatCurrency(o.precio_total)}</span>
                           {o.ajuste_tipo && o.ajuste_tipo !== 'ninguno' && (
                             <span style={{ fontSize: '10px', padding: '2px 4px', borderRadius: '4px', width: 'fit-content', background: o.ajuste_tipo === 'bono' ? '#dcfce7' : '#fee2e2', color: o.ajuste_tipo === 'bono' ? '#166534' : '#991b1b', fontWeight: 600 }}>
                               {o.ajuste_tipo === 'bono' ? (t('prod.bonuses') === 'Bonuses' ? 'BONUS' : 'BONO') : (t('prod.discounts') === 'Discounts' ? 'DISC' : 'DESC')} {o.ajuste_porcentaje}%
@@ -326,7 +343,7 @@ export default function Produccion() {
                           )}
                         </div>
                       </td>
-                      <td style={{ color: '#10b981', fontWeight: 600 }}>${pagado}</td>
+                      <td style={{ color: '#10b981', fontWeight: 600 }}>{formatCurrency(pagado)}</td>
                       <td>
                         <span className={`badge ${o.estado === 'Terminado' ? 'badge-success' : o.estado === 'Cancelado' ? 'badge-danger' : 'badge-warning'}`}>
                           {o.estado === 'Terminado' ? t('prod.statusFinished') : o.estado === 'Cancelado' ? t('prod.statusCanceled') : t('prod.statusInProgress')}

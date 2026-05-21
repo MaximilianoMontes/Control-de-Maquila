@@ -18,7 +18,7 @@ const displayDate = (date) => {
 
 export default function Inventario() {
   const { user } = useAuth();
-  const { t } = useSettings();
+  const { t, formatCurrency } = useSettings();
   const userRole = (user?.role || user?.rol || '').toString().toLowerCase().trim();
   const canEdit = userRole === 'admin' || userRole === 'inventario1';
   
@@ -102,7 +102,7 @@ export default function Inventario() {
           <div>
             <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 600 }}>{t('inv.kpiValue')}</span>
             <h3 style={{ fontSize: '1.75rem', margin: '0.25rem 0 0 0', fontWeight: 700, color: '#8b5cf6' }}>
-              ${valorTotal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+              {formatCurrency(valorTotal)}
             </h3>
           </div>
         </div>
@@ -188,9 +188,9 @@ export default function Inventario() {
                       </td>
                       <td>{item.cliente || '-'}</td>
                       <td><span className="badge badge-info">{item.no_orden || '-'}</span></td>
-                      <td>${parseFloat(item.precio || 0).toFixed(2)}</td>
+                      <td>{formatCurrency(item.precio || 0)}</td>
                       <td style={{ fontWeight: 700, fontSize: '1.1rem', color: '#10b981' }}>{item.piezas} {t('dash.status') === 'Status' ? 'pcs' : 'pzas'}</td>
-                      <td style={{ fontWeight: 700, color: '#2563eb' }}>${total.toFixed(2)}</td>
+                      <td style={{ fontWeight: 700, color: '#2563eb' }}>{formatCurrency(total)}</td>
                       <td>{displayDate(item.fecha_ingreso)}</td>
                       {canEdit && (
                         <td>

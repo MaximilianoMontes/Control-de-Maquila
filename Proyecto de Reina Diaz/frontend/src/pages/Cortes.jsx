@@ -14,7 +14,7 @@ const getImgSrc = (img) => img ? (img.startsWith('http') ? img : `${API}${img}`)
 
 export default function Cortes() {
   const { user } = useAuth();
-  const { t } = useSettings();
+  const { t, formatCurrency } = useSettings();
   const navigate = useNavigate();
   const userRole = (user?.role || user?.rol || '').toString().toLowerCase().trim();
   const canEdit = userRole === 'admin' || userRole === 'inventario1';
@@ -280,9 +280,9 @@ export default function Cortes() {
                       </td>
                       <td>{item.cliente}</td>
                       <td><span className="badge badge-info">{item.no_orden}</span></td>
-                      <td>${item.precio}</td>
+                      <td>{formatCurrency(item.precio || 0)}</td>
                       <td style={{ fontWeight: 700, fontSize: '1.1rem' }}>{item.piezas_en_proceso}</td>
-                      <td style={{ fontWeight: 700, color: '#2563eb' }}>${total.toFixed(2)}</td>
+                      <td style={{ fontWeight: 700, color: '#2563eb' }}>{formatCurrency(total)}</td>
                       <td>
                         <div style={{ display: 'flex', gap: '0.5rem' }}>
                           {item.observaciones && (
