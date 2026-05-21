@@ -133,7 +133,7 @@ export default function Pagos() {
       fetchOrders();
     } catch (e) {
       console.error("Error al registrar pago:", e);
-      alert(e.response?.data?.error || 'Error registrando pago');
+      alert(e.response?.data?.error || t('pay.paymentError'));
     }
   };
 
@@ -156,10 +156,10 @@ export default function Pagos() {
       setMontoDescuento('');
       setPiezasMalas('');
       fetchHistorialDescuentos(selectedMaquilero);
-      alert("Descuento registrado correctamente");
+      alert(t('pay.discountSuccess'));
     } catch (e) {
       console.error("Error al registrar descuento:", e);
-      alert(e.response?.data?.error || 'Error registrando descuento');
+      alert(e.response?.data?.error || t('pay.discountError'));
     }
   };
 

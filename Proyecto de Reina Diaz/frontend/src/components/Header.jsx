@@ -44,10 +44,10 @@ export default function Header() {
 
   // Notifications state (simulating real system updates)
   const [notifications, setNotifications] = useState([
-    { id: 1, text: 'Nueva orden de producción registrada para el maquilero Montes', time: 'Hace 5 min', unread: true, type: 'alta' },
-    { id: 2, text: 'El inventario de Rollo Mezclilla #4 ha sido actualizado', time: 'Hace 20 min', unread: true, type: 'edit' },
-    { id: 3, text: 'Pago registrado por nómina acumulada de Maquilero Díaz', time: 'Hace 1 hora', unread: false, type: 'alta' },
-    { id: 4, text: 'Orden #45 marcada como Terminado y archivada automáticamente', time: 'Hace 3 horas', unread: false, type: 'edit' }
+    { id: 1, textKey: 'header.notif1', timeKey: 'header.time5m', unread: true, type: 'alta' },
+    { id: 2, textKey: 'header.notif2', timeKey: 'header.time20m', unread: true, type: 'edit' },
+    { id: 3, textKey: 'header.notif3', timeKey: 'header.time1h', unread: false, type: 'alta' },
+    { id: 4, textKey: 'header.notif4', timeKey: 'header.time3h', unread: false, type: 'edit' }
   ]);
 
   // Refs for closing dropdowns on click outside
@@ -100,15 +100,15 @@ export default function Header() {
 
   // Available commands in Command Palette
   const commands = [
-    { name: t('nav.dashboard'), desc: 'Panel general con estadísticas y órdenes', path: '/', icon: <LayoutDashboard size={18} />, badge: 'Inicio' },
-    { name: t('nav.maquileros'), desc: 'Control de maquileros, desempeño y tarifas', path: '/maquileros', icon: <Users size={18} />, badge: 'Contactos' },
-    { name: t('nav.inventario'), desc: 'Gestión de rollos de tela y retazos', path: '/inventario', icon: <Package size={18} />, badge: 'Materiales' },
-    { name: t('nav.cortes'), desc: 'Registro de cortes a partir de rollos', path: '/cortes', icon: <Scissors size={18} />, badge: 'Producción' },
-    { name: t('nav.produccion'), desc: 'Monitoreo de órdenes de maquila', path: '/produccion', icon: <Factory size={18} />, badge: 'Fábrica' },
-    { name: t('nav.reportes'), desc: 'Gráficas, estados y reportes generales', path: '/reportes', icon: <FileText size={18} />, badge: 'Análisis' },
-    { name: t('nav.pagos'), desc: 'Nómina, depósitos y saldos de maquileros', path: '/pagos', icon: <Wallet size={18} />, badge: 'Finanzas' },
-    { name: t('nav.historial'), desc: 'Bitácora de movimientos y auditoría', path: '/historial', icon: <History size={18} />, badge: 'Seguridad' },
-    { name: t('header.helpCenter'), desc: 'Manual del usuario e instrucciones paso a paso', path: '/ayuda', icon: <HelpCircle size={18} />, badge: 'Soporte' },
+    { name: t('nav.dashboard'), desc: t('header.cmdDashboardDesc'), path: '/', icon: <LayoutDashboard size={18} />, badge: t('header.cmdDashboardBadge') },
+    { name: t('nav.maquileros'), desc: t('header.cmdMaquilerosDesc'), path: '/maquileros', icon: <Users size={18} />, badge: t('header.cmdMaquilerosBadge') },
+    { name: t('nav.inventario'), desc: t('header.cmdInventarioDesc'), path: '/inventario', icon: <Package size={18} />, badge: t('header.cmdInventarioBadge') },
+    { name: t('nav.cortes'), desc: t('header.cmdCortesDesc'), path: '/cortes', icon: <Scissors size={18} />, badge: t('header.cmdCortesBadge') },
+    { name: t('nav.produccion'), desc: t('header.cmdProduccionDesc'), path: '/produccion', icon: <Factory size={18} />, badge: t('header.cmdProduccionBadge') },
+    { name: t('nav.reportes'), desc: t('header.cmdReportesDesc'), path: '/reportes', icon: <FileText size={18} />, badge: t('header.cmdReportesBadge') },
+    { name: t('nav.pagos'), desc: t('header.cmdPagosDesc'), path: '/pagos', icon: <Wallet size={18} />, badge: t('header.cmdPagosBadge') },
+    { name: t('nav.historial'), desc: t('header.cmdHistorialDesc'), path: '/historial', icon: <History size={18} />, badge: t('header.cmdHistorialBadge') },
+    { name: t('header.helpCenter'), desc: t('header.cmdHelpDesc'), path: '/ayuda', icon: <HelpCircle size={18} />, badge: t('header.cmdHelpBadge') },
   ];
 
   // Filter commands based on search query
@@ -173,7 +173,7 @@ export default function Header() {
             <button 
               className="header-action-btn" 
               onClick={() => setShowNotifications(!showNotifications)}
-              title="Notificaciones del sistema"
+              title={t('header.sysNotifications')}
             >
               <Bell size={20} />
               {unreadCount > 0 && <span className="header-action-badge" />}
@@ -208,8 +208,8 @@ export default function Header() {
                         <Info size={14} />
                       </div>
                       <div className="notification-item-content">
-                        <p className="notification-text" style={n.unread ? { fontWeight: 600 } : {}}>{n.text}</p>
-                        <span className="notification-time">{n.time}</span>
+                        <p className="notification-text" style={n.unread ? { fontWeight: 600 } : {}}>{t(n.textKey)}</p>
+                        <span className="notification-time">{t(n.timeKey)}</span>
                       </div>
                     </div>
                   ))
@@ -279,8 +279,8 @@ export default function Header() {
                   {user?.username ? user.username.charAt(0).toUpperCase() : 'U'}
                 </div>
                 <div className="profile-dropdown-info">
-                  <span className="profile-dropdown-name">{user?.username || 'Usuario'}</span>
-                  <span className="profile-dropdown-role">{user?.role || user?.rol || 'Operador'}</span>
+                  <span className="profile-dropdown-name">{user?.username || t('header.defaultUser')}</span>
+                  <span className="profile-dropdown-role">{user?.role || user?.rol || t('header.defaultRole')}</span>
                 </div>
               </div>
               <div style={{ padding: '4px' }}>

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useSettings } from '../context/SettingsContext';
 import { Factory } from 'lucide-react';
 
 export default function Login() {
@@ -7,6 +8,7 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const { login } = useAuth();
+  const { t } = useSettings();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -24,7 +26,7 @@ export default function Login() {
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <img src="/logo.png" alt="Logo" style={{ width: '100%', maxWidth: '200px', margin: '0 auto', display: 'block', borderRadius: '8px' }} />
           <h2 className="gradient-text" style={{ marginTop: '1rem', fontSize: '2rem' }}>Maquila ERP</h2>
-          <p>Control de Producción Textil</p>
+          <p>{t('login.subtitle')}</p>
         </div>
 
         {error && (
@@ -35,7 +37,7 @@ export default function Login() {
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label className="form-label">Usuario</label>
+            <label className="form-label">{t('login.username')}</label>
             <input 
               type="text" 
               className="form-input" 
@@ -45,7 +47,7 @@ export default function Login() {
             />
           </div>
           <div className="form-group">
-            <label className="form-label">Contraseña</label>
+            <label className="form-label">{t('login.password')}</label>
             <input 
               type="password" 
               className="form-input" 
@@ -55,7 +57,7 @@ export default function Login() {
             />
           </div>
           <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '1rem' }}>
-            Ingresar
+            {t('login.submit')}
           </button>
         </form>
       </div>

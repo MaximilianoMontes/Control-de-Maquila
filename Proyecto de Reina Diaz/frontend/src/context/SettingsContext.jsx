@@ -4,6 +4,12 @@ const SettingsContext = createContext();
 
 const translations = {
   es: {
+    // Login
+    'login.subtitle': 'Control de Producción Textil',
+    'login.username': 'Usuario',
+    'login.password': 'Contraseña',
+    'login.submit': 'Ingresar',
+
     // Sidebar
     'nav.dashboard': 'Dashboard',
     'nav.maquileros': 'Maquileros',
@@ -35,6 +41,62 @@ const translations = {
     'header.commandPaletteTitle': 'Comandos y Navegación',
     'header.commandPalettePlaceholder': 'Escribe el nombre del módulo para navegar...',
     'header.commandPaletteNoResults': 'No se encontraron comandos para "{query}"',
+    'header.sysNotifications': 'Notificaciones del sistema',
+    'header.defaultUser': 'Usuario',
+    'header.defaultRole': 'Operador',
+    'header.notif1': 'Nueva orden de producción registrada para el maquilero Montes',
+    'header.notif2': 'El inventario de Rollo Mezclilla #4 ha sido actualizado',
+    'header.notif3': 'Pago registrado por nómina acumulada de Maquilero Díaz',
+    'header.notif4': 'Orden #45 marcada como Terminado y archivada automáticamente',
+    'header.time5m': 'Hace 5 min',
+    'header.time20m': 'Hace 20 min',
+    'header.time1h': 'Hace 1 hora',
+    'header.time3h': 'Hace 3 horas',
+    'header.cmdDashboardDesc': 'Panel general con estadísticas y órdenes',
+    'header.cmdDashboardBadge': 'Inicio',
+    'header.cmdMaquilerosDesc': 'Control de maquileros, desempeño y tarifas',
+    'header.cmdMaquilerosBadge': 'Contactos',
+    'header.cmdInventarioDesc': 'Gestión de rollos de tela y retazos',
+    'header.cmdInventarioBadge': 'Materiales',
+    'header.cmdCortesDesc': 'Registro de cortes a partir de rollos',
+    'header.cmdCortesBadge': 'Producción',
+    'header.cmdProduccionDesc': 'Monitoreo de órdenes de maquila',
+    'header.cmdProduccionBadge': 'Fábrica',
+    'header.cmdReportesDesc': 'Gráficas, estados y reportes generales',
+    'header.cmdReportesBadge': 'Análisis',
+    'header.cmdPagosDesc': 'Nómina, depósitos y saldos de maquileros',
+    'header.cmdPagosBadge': 'Finanzas',
+    'header.cmdHistorialDesc': 'Bitácora de movimientos y auditoría',
+    'header.cmdHistorialBadge': 'Seguridad',
+    'header.cmdHelpDesc': 'Manual del usuario e instrucciones paso a paso',
+    'header.cmdHelpBadge': 'Soporte',
+
+    // Historial Action and Target translation keys
+    'hist.actionAlta': 'ALTA',
+    'hist.actionEdit': 'EDIT',
+    'hist.actionBaja': 'BAJA',
+    'hist.target.MAQUILERO': 'MAQUILERO',
+    'hist.target.INVENTARIO': 'INVENTARIO',
+    'hist.target.PRODUCCION': 'PRODUCCIÓN',
+    'hist.target.INVENTARIO_REAL': 'INVENTARIO GENERAL',
+
+    // Ayuda UI keys
+    'ayuda.title': 'Centro de Aprendizaje e Instrucciones',
+    'ayuda.subtitle': '¿Tienes dudas sobre cómo realizar algún proceso? Aquí encontrarás guías interactivas paso a paso para dominar Maquila ERP.',
+    'ayuda.searchPlaceholder': 'Escribe tu duda... (ej: registrar corte, pago, archivado)',
+    'ayuda.noResults': 'No encontramos guías que coincidan con tu búsqueda.',
+    'ayuda.noResultsSub': 'Intenta buscando palabras clave más simples como "rollo", "abono" o "orden".',
+    'ayuda.guidesOf': 'Guías de ',
+    'ayuda.guide': 'guía',
+    'ayuda.guides': 'guías',
+    'ayuda.tabGeneral': 'Visión General',
+    'ayuda.tipHeader': 'Consejos del Desarrollador para Productividad',
+    'ayuda.tip1Title': 'Paleta de Comandos Rápida',
+    'ayuda.tip1Text': 'Presiona la combinación de teclas Ctrl + G desde cualquier parte del sistema para abrir el buscador flotante y moverte entre pantallas sin usar el ratón.',
+    'ayuda.tip2Title': 'Cero Hojas de Cálculo',
+    'ayuda.tip2Text': 'Al finalizar producciones, deja que el sistema calcule los montos exactos a pagar. Las nóminas y balances de deuda de tus maquileros se consolidan solas.',
+    'ayuda.tip3Title': 'Auditoría en Historial',
+    'ayuda.tip3Text': 'Cualquier cambio operativo importante (alta, edición, abono) queda asentado con fecha, usuario y acción en el módulo de Historial para total transparencia.',
 
     // Settings Modal
     'settings.title': 'Configuración del Sistema',
@@ -63,7 +125,6 @@ const translations = {
     'dash.status': 'Estado',
     'dash.noOrders': 'No hay órdenes registradas aún.',
 
-    // Maquileros
     'maq.title': 'Maquileros y Talleres',
     'maq.new': 'Nuevo Maquilero',
     'maq.search': 'Buscar por nombre, teléfono o colonia...',
@@ -74,6 +135,47 @@ const translations = {
     'maq.colonia': 'Colonia',
     'maq.actions': 'Acciones',
     'maq.noResults': 'No hay maquileros que coincidan con la búsqueda',
+    'maq.profileTitle': 'Perfil y Desempeño del Maquilero',
+    'maq.generalRating': 'Calificación General basada en historial',
+    'maq.personalLabel': 'Personal:',
+    'maq.personalValue': 'personas',
+    'maq.machineryLabel': 'Maquinaria:',
+    'maq.addressLabel': 'Domicilio:',
+    'maq.colLabel': 'Col.',
+    'maq.cpLabel': 'C.P.',
+    'maq.qualitySummary': 'Resumen de Calidad',
+    'maq.punctuality': 'Puntualidad:',
+    'maq.fulfillment': 'Cumplimiento:',
+    'maq.historyTitle': 'Historial de Maquila',
+    'maq.tablePhoto': 'Foto',
+    'maq.tableModel': 'Modelo',
+    'maq.tablePieces': 'Pzas (E/R)',
+    'maq.tableTotal': 'Total',
+    'maq.tableDescuento': 'Multa',
+    'maq.tableNeto': 'Neto',
+    'maq.tableEntrega': 'Entrega',
+    'maq.tableCalidad': 'Calidad',
+    'maq.noHistory': 'Este maquilero aún no tiene historial de producción.',
+    'maq.retrasosText': 'retraso(s)',
+    'maq.ontimeTitle': 'Entregado a tiempo',
+    'maq.delayedTitle': 'Con retraso',
+    'maq.completeTitle': 'Piezas completas',
+    'maq.incompleteTitle': 'Incompleto',
+    'maq.modalEditMaq': 'Editar Maquilero',
+    'maq.modalNewMaq': 'Nuevo Maquilero',
+    'maq.photoLabel': 'Foto del Maquilero',
+    'maq.photoSub': '(dejar vacío para no cambiar)',
+    'maq.fullName': 'Nombre Completo *',
+    'maq.nameTitle': 'El nombre solo puede contener letras y espacios',
+    'maq.phoneLabel': 'Teléfono',
+    'maq.personalNo': 'Personal (personas)',
+    'maq.machinery': 'Maquinaria',
+    'maq.domicilio': 'Domicilio',
+    'maq.coloniaLabel': 'Colonia',
+    'maq.cp': 'C.P.',
+    'maq.cancel': 'Cancelar',
+    'maq.save': 'Guardar',
+    'maq.update': 'Actualizar',
 
     // Inventario
     'inv.title': 'Inventario General',
@@ -113,6 +215,29 @@ const translations = {
     'cortes.assigned': 'Asignado',
     'cortes.available': 'Disponible',
     'cortes.reprogrammed': 'REPROGRAMADO',
+    'cortes.modalReprogram': 'Reprogramar Producción',
+    'cortes.modalEdit': 'Editar Producto',
+    'cortes.modalNew': 'Alta de Corte en Proceso',
+    'cortes.colorQty': 'Colores y Cantidades',
+    'cortes.color': 'Color',
+    'cortes.qty': 'Cantidad',
+    'cortes.addColor': '+ Agregar Color',
+    'cortes.priceMaquila': 'Precio de maquila',
+    'cortes.prodImage': 'Imagen del Producto',
+    'cortes.localFile': 'Archivo Local',
+    'cortes.internetUrl': 'URL de Internet',
+    'cortes.notes': 'Observaciones / Notas',
+    'cortes.notesPlaceholder': 'Detalles adicionales del producto...',
+    'cortes.cancel': 'Cancelar',
+    'cortes.save': 'Guardar Producto',
+    'cortes.update': 'Actualizar',
+    'cortes.addPhoto': 'Agregar Foto al Producto',
+    'cortes.close': 'Cerrar',
+    'cortes.savePhoto': 'Guardar Foto',
+    'cortes.importTitle': 'Importar Cortes desde Excel',
+    'cortes.importSelect': 'Selecciona el archivo Excel (.xlsx o .xls) con las columnas correspondientes.',
+    'cortes.importBtn': 'Subir e Importar',
+    'cortes.importing': 'Importando...',
 
     // Historial
     'hist.title': 'Historial de Actividad',
@@ -193,6 +318,12 @@ const translations = {
     'pay.discCharged': 'Cobrado',
     'pay.discPending': 'Pendiente',
     'pay.discNone': 'Este maquilero no tiene descuentos registrados.',
+    'pay.discountSuccess': 'Descuento registrado correctamente',
+    'pay.paymentError': 'Error registrando pago',
+    'pay.discountError': 'Error registrando descuento',
+    'pay.confirmCancel': '¿Estás seguro de que deseas cancelar esta orden de producción?',
+    'pay.confirmFinish': '¿Estás seguro de que deseas marcar como Terminada esta orden de producción?',
+    'pay.confirmProrroga': '¿Deseas agregar 1 día de prórroga a la fecha de entrega?',
 
     // Produccion
     'prod.title': 'Control de Producción',
@@ -209,9 +340,44 @@ const translations = {
     'prod.actions': 'ACCIONES',
     'prod.noResults': 'No hay órdenes de producción',
     'prod.statusInProgress': 'EN PROCESO',
-    'prod.statusFinished': 'TERMINADO'
+    'prod.statusFinished': 'TERMINADO',
+    'prod.statusCanceled': 'CANCELADO',
+    'prod.modalNewOrder': 'Nueva Orden de Producción',
+    'prod.modalEditOrder': 'Editar Orden',
+    'prod.modalOrderDetails': 'Detalles de la Orden',
+    'prod.modalCancel': 'Cancelar',
+    'prod.modalCreate': 'Crear Orden',
+    'prod.modalUpdate': 'Actualizar Orden',
+    'prod.selectMaquilero': 'Maquilero *',
+    'prod.selectProduct': 'Producto del Inventario *',
+    'prod.startDateLabel': 'Fecha Inicio *',
+    'prod.endDateLabel': 'Fecha Entrega Est. *',
+    'prod.selectDefault': '-- Seleccionar --',
+    'prod.adjust': 'Ajustar...',
+    'prod.noAdjust': '❌ Sin Ajuste',
+    'prod.bonuses': 'Bonos',
+    'prod.discounts': 'Descuentos',
+    'prod.reprogrammedLabel': ' (REPROGRAMADO)',
+    'prod.alertCreateError': 'Error al crear orden: ',
+    'prod.alertUpdateSuccess': 'Orden actualizada con éxito',
+    'prod.alertUpdateError': 'Error al actualizar orden: ',
+    'prod.alertGenericError': 'Error',
+    'prod.alertArchiveError': 'Error al archivar',
+    'prod.alertDeleteError': 'Error al eliminar',
+    'prod.alertAdjustError': 'Error al aplicar ajuste',
+    'prod.alertAddDayError': 'Error al agregar día',
+    'prod.confirmFinish': '¿Marcar esta orden como terminada?',
+    'prod.confirmCancel2': '¿Cancelar este proceso de producción?',
+    'prod.confirmDelete': '¿Eliminar esta orden permanentemente? Esto también borrará todos los pagos asociados.',
+    'prod.promptDays': '¿Cuántos días de prórroga deseas agregar?',
   },
   en: {
+    // Login
+    'login.subtitle': 'Textile Production Control',
+    'login.username': 'Username',
+    'login.password': 'Password',
+    'login.submit': 'Log In',
+
     // Sidebar
     'nav.dashboard': 'Dashboard',
     'nav.maquileros': 'Tailors',
@@ -243,6 +409,62 @@ const translations = {
     'header.commandPaletteTitle': 'Commands & Navigation',
     'header.commandPalettePlaceholder': 'Type module name to navigate...',
     'header.commandPaletteNoResults': 'No commands found for "{query}"',
+    'header.sysNotifications': 'System notifications',
+    'header.defaultUser': 'User',
+    'header.defaultRole': 'Operator',
+    'header.notif1': 'New production order registered for tailor Montes',
+    'header.notif2': 'Inventory of Denim Roll #4 has been updated',
+    'header.notif3': 'Payment registered for accumulated payroll of Tailor Díaz',
+    'header.notif4': 'Order #45 marked as Finished and automatically archived',
+    'header.time5m': '5 min ago',
+    'header.time20m': '20 min ago',
+    'header.time1h': '1 hour ago',
+    'header.time3h': '3 hours ago',
+    'header.cmdDashboardDesc': 'General dashboard with statistics and orders',
+    'header.cmdDashboardBadge': 'Home',
+    'header.cmdMaquilerosDesc': 'Tailors control, performance and rates',
+    'header.cmdMaquilerosBadge': 'Contacts',
+    'header.cmdInventarioDesc': 'Management of fabric rolls and scraps',
+    'header.cmdInventarioBadge': 'Materials',
+    'header.cmdCortesDesc': 'Registry of cuts from rolls',
+    'header.cmdCortesBadge': 'Production',
+    'header.cmdProduccionDesc': 'Monitoring of tailor production orders',
+    'header.cmdProduccionBadge': 'Factory',
+    'header.cmdReportesDesc': 'Graphs, statuses and general reports',
+    'header.cmdReportesBadge': 'Analysis',
+    'header.cmdPagosDesc': 'Payroll, deposits and tailor balances',
+    'header.cmdPagosBadge': 'Finance',
+    'header.cmdHistorialDesc': 'Activity log and audit trail',
+    'header.cmdHistorialBadge': 'Security',
+    'header.cmdHelpDesc': 'User manual and step-by-step instructions',
+    'header.cmdHelpBadge': 'Support',
+
+    // Historial Action and Target translation keys
+    'hist.actionAlta': 'CREATE',
+    'hist.actionEdit': 'EDIT',
+    'hist.actionBaja': 'DELETE',
+    'hist.target.MAQUILERO': 'TAILOR',
+    'hist.target.INVENTARIO': 'INVENTORY',
+    'hist.target.PRODUCCION': 'PRODUCTION',
+    'hist.target.INVENTARIO_REAL': 'GENERAL INVENTORY',
+
+    // Ayuda UI keys
+    'ayuda.title': 'Learning Center & Instructions',
+    'ayuda.subtitle': 'Have doubts about any process? Here you will find step-by-step interactive guides to master Maquila ERP.',
+    'ayuda.searchPlaceholder': 'Type your question... (e.g. register cut, payment, archiving)',
+    'ayuda.noResults': 'We couldn\'t find any guides matching your search.',
+    'ayuda.noResultsSub': 'Try searching for simpler keywords like "roll", "deposit" or "order".',
+    'ayuda.guidesOf': 'Guides for ',
+    'ayuda.guide': 'guide',
+    'ayuda.guides': 'guides',
+    'ayuda.tabGeneral': 'Overview',
+    'ayuda.tipHeader': 'Developer Tips for Productivity',
+    'ayuda.tip1Title': 'Quick Command Palette',
+    'ayuda.tip1Text': 'Press the key combination Ctrl + G from anywhere in the system to open the floating search bar and navigate between screens without using the mouse.',
+    'ayuda.tip2Title': 'Zero Spreadsheets',
+    'ayuda.tip2Text': 'When completing production orders, let the system calculate the exact amounts to pay. Payroll and tailor debt balances are consolidated automatically.',
+    'ayuda.tip3Title': 'History Audit Trail',
+    'ayuda.tip3Text': 'Any major operational change (creation, edit, payment) is registered with date, user, and action in the History module for total transparency.',
 
     // Settings Modal
     'settings.title': 'System Settings',
@@ -271,7 +493,6 @@ const translations = {
     'dash.status': 'Status',
     'dash.noOrders': 'No registered orders yet.',
 
-    // Maquileros
     'maq.title': 'Tailors & Workshops',
     'maq.new': 'New Tailor',
     'maq.search': 'Search by name, phone or neighborhood...',
@@ -282,6 +503,47 @@ const translations = {
     'maq.colonia': 'Neighborhood',
     'maq.actions': 'Actions',
     'maq.noResults': 'No tailors match your search',
+    'maq.profileTitle': 'Tailor Profile & Performance',
+    'maq.generalRating': 'General Rating based on history',
+    'maq.personalLabel': 'Staff:',
+    'maq.personalValue': 'people',
+    'maq.machineryLabel': 'Machinery:',
+    'maq.addressLabel': 'Address:',
+    'maq.colLabel': 'Col.',
+    'maq.cpLabel': 'C.P.',
+    'maq.qualitySummary': 'Quality Summary',
+    'maq.punctuality': 'Punctuality:',
+    'maq.fulfillment': 'Fulfillment:',
+    'maq.historyTitle': 'Maquila History',
+    'maq.tablePhoto': 'Photo',
+    'maq.tableModel': 'Model',
+    'maq.tablePieces': 'Pcs (Sent/Recv)',
+    'maq.tableTotal': 'Total',
+    'maq.tableDescuento': 'Fine',
+    'maq.tableNeto': 'Net',
+    'maq.tableEntrega': 'Delivery',
+    'maq.tableCalidad': 'Quality',
+    'maq.noHistory': 'This tailor has no production history yet.',
+    'maq.retrasosText': 'delay(s)',
+    'maq.ontimeTitle': 'Delivered on time',
+    'maq.delayedTitle': 'Delayed',
+    'maq.completeTitle': 'Complete pieces',
+    'maq.incompleteTitle': 'Incomplete',
+    'maq.modalEditMaq': 'Edit Tailor',
+    'maq.modalNewMaq': 'New Tailor',
+    'maq.photoLabel': 'Tailor Photo',
+    'maq.photoSub': '(leave blank to keep current)',
+    'maq.fullName': 'Full Name *',
+    'maq.nameTitle': 'Name can only contain letters and spaces',
+    'maq.phoneLabel': 'Phone',
+    'maq.personalNo': 'Staff (people)',
+    'maq.machinery': 'Machinery',
+    'maq.domicilio': 'Address',
+    'maq.coloniaLabel': 'Neighborhood',
+    'maq.cp': 'Zip Code',
+    'maq.cancel': 'Cancel',
+    'maq.save': 'Save',
+    'maq.update': 'Update',
 
     // Inventario
     'inv.title': 'General Inventory',
@@ -321,6 +583,29 @@ const translations = {
     'cortes.assigned': 'Assigned',
     'cortes.available': 'Available',
     'cortes.reprogrammed': 'REPROGRAMMED',
+    'cortes.modalReprogram': 'Reprogram Production',
+    'cortes.modalEdit': 'Edit Product',
+    'cortes.modalNew': 'Add Cut in Process',
+    'cortes.colorQty': 'Colors & Quantities',
+    'cortes.color': 'Color',
+    'cortes.qty': 'Quantity',
+    'cortes.addColor': '+ Add Color',
+    'cortes.priceMaquila': 'Maquila price',
+    'cortes.prodImage': 'Product Image',
+    'cortes.localFile': 'Local File',
+    'cortes.internetUrl': 'Internet URL',
+    'cortes.notes': 'Notes / Comments',
+    'cortes.notesPlaceholder': 'Additional product details...',
+    'cortes.cancel': 'Cancel',
+    'cortes.save': 'Save Product',
+    'cortes.update': 'Update',
+    'cortes.addPhoto': 'Add Photo to Product',
+    'cortes.close': 'Close',
+    'cortes.savePhoto': 'Save Photo',
+    'cortes.importTitle': 'Import Cuts from Excel',
+    'cortes.importSelect': 'Select the Excel file (.xlsx or .xls) with the corresponding columns.',
+    'cortes.importBtn': 'Upload & Import',
+    'cortes.importing': 'Importing...',
 
     // Historial
     'hist.title': 'Activity History',
@@ -401,6 +686,12 @@ const translations = {
     'pay.discCharged': 'Charged',
     'pay.discPending': 'Pending',
     'pay.discNone': 'This tailor has no registered discounts.',
+    'pay.discountSuccess': 'Discount registered successfully',
+    'pay.paymentError': 'Error registering payment',
+    'pay.discountError': 'Error registering discount',
+    'pay.confirmCancel': 'Are you sure you want to cancel this production order?',
+    'pay.confirmFinish': 'Are you sure you want to mark this production order as Finished?',
+    'pay.confirmProrroga': 'Do you want to add 1 day of extension to the delivery date?',
 
     // Produccion
     'prod.title': 'Production Control',
@@ -417,7 +708,36 @@ const translations = {
     'prod.actions': 'ACTIONS',
     'prod.noResults': 'No production orders found',
     'prod.statusInProgress': 'IN PROGRESS',
-    'prod.statusFinished': 'FINISHED'
+    'prod.statusFinished': 'FINISHED',
+    'prod.statusCanceled': 'CANCELLED',
+    'prod.modalNewOrder': 'New Production Order',
+    'prod.modalEditOrder': 'Edit Order',
+    'prod.modalOrderDetails': 'Order Details',
+    'prod.modalCancel': 'Cancel',
+    'prod.modalCreate': 'Create Order',
+    'prod.modalUpdate': 'Update Order',
+    'prod.selectMaquilero': 'Tailor *',
+    'prod.selectProduct': 'Inventory Product *',
+    'prod.startDateLabel': 'Start Date *',
+    'prod.endDateLabel': 'Est. Delivery Date *',
+    'prod.selectDefault': '-- Select --',
+    'prod.adjust': 'Adjust...',
+    'prod.noAdjust': '❌ No Adjustment',
+    'prod.bonuses': 'Bonuses',
+    'prod.discounts': 'Discounts',
+    'prod.reprogrammedLabel': ' (REPROGRAMMED)',
+    'prod.alertCreateError': 'Error creating order: ',
+    'prod.alertUpdateSuccess': 'Order updated successfully',
+    'prod.alertUpdateError': 'Error updating order: ',
+    'prod.alertGenericError': 'Error',
+    'prod.alertArchiveError': 'Error archiving order',
+    'prod.alertDeleteError': 'Error deleting order',
+    'prod.alertAdjustError': 'Error applying adjustment',
+    'prod.alertAddDayError': 'Error adding extension day',
+    'prod.confirmFinish': 'Mark this order as finished?',
+    'prod.confirmCancel2': 'Cancel this production process?',
+    'prod.confirmDelete': 'Permanently delete this order? This will also erase all associated payments.',
+    'prod.promptDays': 'How many extension days do you want to add?',
   }
 };
 
@@ -457,8 +777,62 @@ export const SettingsProvider = ({ children }) => {
     return text;
   };
 
+  const translateLog = (desc) => {
+    const lang = settings.language || 'es';
+    if (lang === 'es') return desc;
+    
+    let text = desc || '';
+    // Apply translations for known patterns
+    text = text.replace(/Se registró al maquilero:\s*/g, 'Registered tailor: ');
+    text = text.replace(/Eliminó al maquilero:\s*/g, 'Deleted tailor: ');
+    text = text.replace(/^Agregó\s+/g, 'Added ');
+    text = text.replace(/^Reprogramó\s+/g, 'Reprogrammed ');
+    text = text.replace(/Eliminó del inventario:\s*/g, 'Deleted from inventory: ');
+    text = text.replace(/Eliminó del inventario general:\s*/g, 'Deleted from general inventory: ');
+    text = text.replace(/Nueva orden para\s*/g, 'New order for ');
+    text = text.replace(/Agregó\s+(\d+)\s+días de prórroga a\s*/g, 'Added $1 extension days to ');
+    text = text.replace(/Archivó orden terminada de\s*/g, 'Archived finished order of ');
+    text = text.replace(/Archivó orden de\s*/g, 'Archived order of ');
+    text = text.replace(/Desarchivó orden de\s*/g, 'Unarchived order of ');
+    text = text.replace(/Eliminó orden de\s*/g, 'Deleted order of ');
+    text = text.replace(/\s+piezas/g, ' pieces');
+    text = text.replace(/\s+días de prórroga/g, ' extension days');
+    text = text.replace(/Nueva fecha:\s*/g, 'New date: ');
+    text = text.replace(/Se actualizó el campo\s*/g, 'Updated field ');
+    text = text.replace(/Actualizó maquilero:\s*/g, 'Updated tailor: ');
+    
+    // Field updates translations
+    text = text.replace(/maquinaria/g, 'machinery');
+    text = text.replace(/domicilio/g, 'address');
+    text = text.replace(/colonia/g, 'neighborhood');
+    text = text.replace(/personal/g, 'staff');
+    text = text.replace(/nombre/g, 'name');
+    text = text.replace(/teléfono/g, 'phone');
+    text = text.replace(/foto/g, 'photo');
+    text = text.replace(/colores/g, 'colors');
+    text = text.replace(/cliente/g, 'client');
+    text = text.replace(/precio/g, 'price');
+    text = text.replace(/observaciones/g, 'notes');
+    text = text.replace(/estatus/g, 'status');
+    text = text.replace(/estado/g, 'status');
+    
+    text = text.replace(/\s+de\s+/g, ' of ');
+    text = text.replace(/\s+a\s+/g, ' to ');
+    text = text.replace(/\s+en\s+/g, ' in ');
+    
+    text = text.replace(/Registró pago por nómina acumulada/g, 'Registered payment for accumulated payroll');
+    text = text.replace(/Registró descuento personal/g, 'Registered personal discount');
+    
+    // Statuses
+    text = text.replace(/Terminado/g, 'Finished');
+    text = text.replace(/Cancelado/g, 'Cancelled');
+    text = text.replace(/En Proceso/g, 'In Process');
+    
+    return text;
+  };
+
   return (
-    <SettingsContext.Provider value={{ settings, updateSetting, t }}>
+    <SettingsContext.Provider value={{ settings, updateSetting, t, translateLog }}>
       {children}
     </SettingsContext.Provider>
   );
