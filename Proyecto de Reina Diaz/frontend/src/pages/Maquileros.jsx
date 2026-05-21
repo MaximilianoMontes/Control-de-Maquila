@@ -264,7 +264,7 @@ export default function Maquileros() {
               </button>
 
               <div className="modal-header">
-                <h2>Perfil y Desempeño del Maquilero</h2>
+                <h2>{t('maq.profileTitle')}</h2>
                 <button className="btn-icon" onClick={() => setSelectedMaquilero(null)}><X size={24} /></button>
               </div>
             
@@ -289,36 +289,36 @@ export default function Maquileros() {
                       {selectedMaquilero.rating?.total}%
                     </span>
                   </div>
-                  <p style={{ fontSize: '0.8rem', color: '#64748b' }}>Calificación General basada en historial</p>
+                  <p style={{ fontSize: '0.8rem', color: '#64748b' }}>{t('maq.generalRating')}</p>
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.75rem', fontSize: '0.9rem' }}>
                   <div style={{ background: '#f8fafc', padding: '0.75rem', borderRadius: '8px' }}>
-                    <strong style={{ color: '#64748b', fontSize: '0.75rem', display: 'block', textTransform: 'uppercase' }}>Teléfono:</strong>
+                    <strong style={{ color: '#64748b', fontSize: '0.75rem', display: 'block', textTransform: 'uppercase' }}>{t('maq.phoneLabel')}:</strong>
                     <span>{selectedMaquilero.telefono || 'N/A'}</span>
                   </div>
                   <div style={{ background: '#f8fafc', padding: '0.75rem', borderRadius: '8px' }}>
-                    <strong style={{ color: '#64748b', fontSize: '0.75rem', display: 'block', textTransform: 'uppercase' }}>Personal:</strong>
-                    <span>{selectedMaquilero.personal || 'N/A'} personas</span>
+                    <strong style={{ color: '#64748b', fontSize: '0.75rem', display: 'block', textTransform: 'uppercase' }}>{t('maq.personalNo')}:</strong>
+                    <span>{selectedMaquilero.personal || 'N/A'} {t('maq.personalValue')}</span>
                   </div>
                   <div style={{ background: '#f8fafc', padding: '0.75rem', borderRadius: '8px' }}>
-                    <strong style={{ color: '#64748b', fontSize: '0.75rem', display: 'block', textTransform: 'uppercase' }}>Maquinaria:</strong>
+                    <strong style={{ color: '#64748b', fontSize: '0.75rem', display: 'block', textTransform: 'uppercase' }}>{t('maq.machinery')}:</strong>
                     <span>{selectedMaquilero.maquinaria || 'N/A'}</span>
                   </div>
                   <div style={{ background: '#f8fafc', padding: '0.75rem', borderRadius: '8px' }}>
-                    <strong style={{ color: '#64748b', fontSize: '0.75rem', display: 'block', textTransform: 'uppercase' }}>Domicilio:</strong>
-                    <span>{selectedMaquilero.domicilio || 'N/A'}, Col. {selectedMaquilero.colonia || 'N/A'}, C.P. {selectedMaquilero.codigo_postal || 'N/A'}</span>
+                    <strong style={{ color: '#64748b', fontSize: '0.75rem', display: 'block', textTransform: 'uppercase' }}>{t('maq.domicilio')}:</strong>
+                    <span>{selectedMaquilero.domicilio || 'N/A'}, {t('maq.colonia')}: {selectedMaquilero.colonia || 'N/A'}, {t('maq.cp')}: {selectedMaquilero.codigo_postal || 'N/A'}</span>
                   </div>
                 </div>
 
                 <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'linear-gradient(135deg, #eff6ff, #dbeafe)', borderRadius: '12px' }}>
-                   <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', color: '#1e40af' }}>Resumen de Calidad</h4>
+                   <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', color: '#1e40af' }}>{t('maq.qualitySummary')}</h4>
                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem', fontSize: '0.85rem' }}>
-                      <span>Puntualidad:</span>
+                      <span>{t('maq.punctuality')}</span>
                       <span style={{ fontWeight: 600 }}>{selectedMaquilero.rating?.punctuality}%</span>
                    </div>
                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
-                      <span>Cumplimiento:</span>
+                      <span>{t('maq.fulfillment')}</span>
                       <span style={{ fontWeight: 600 }}>{selectedMaquilero.rating?.fulfillment}%</span>
                    </div>
                 </div>
@@ -326,24 +326,24 @@ export default function Maquileros() {
 
               {/* Columna Derecha: Historial */}
               <div style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                <h3 style={{ marginBottom: '1rem', color: '#1e293b' }}>Historial de Maquila</h3>
+                <h3 style={{ marginBottom: '1rem', color: '#1e293b' }}>{t('maq.historyTitle')}</h3>
                 <div className="table-wrapper" style={{ flex: 1, maxHeight: '90vh', overflowY: 'auto' }}>
                   <table className="data-table" style={{ fontSize: '0.85rem' }}>
                     <thead>
                       <tr>
-                        <th>Foto</th>
-                        <th>Modelo</th>
-                        <th>Pzas (E/R)</th>
-                        <th>Total</th>
-                        <th>Multa</th>
-                        <th>Neto</th>
-                        <th>Entrega</th>
-                        <th>Calidad</th>
+                        <th>{t('maq.tablePhoto')}</th>
+                        <th>{t('maq.tableModel')}</th>
+                        <th>{t('maq.tablePieces')}</th>
+                        <th>{t('maq.tableTotal')}</th>
+                        <th>{t('maq.tableDescuento')}</th>
+                        <th>{t('maq.tableNeto')}</th>
+                        <th>{t('maq.tableEntrega')}</th>
+                        <th>{t('maq.tableCalidad')}</th>
                       </tr>
                     </thead>
                     <tbody>
                       {(!selectedMaquilero.historial || selectedMaquilero.historial.length === 0) ? (
-                        <tr><td colSpan="6" style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>Este maquilero aún no tiene historial de producción.</td></tr>
+                        <tr><td colSpan="6" style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>{t('maq.noHistory')}</td></tr>
                       ) : (
                         selectedMaquilero.historial.map(h => {
                           const pImg = h.producto_imagen ? (h.producto_imagen.startsWith('http') ? h.producto_imagen : `${API}${h.producto_imagen}`) : null;
@@ -378,13 +378,13 @@ export default function Maquileros() {
                               <td>
                                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                                   <span>{h.fecha_fin ? new Date(h.fecha_fin).toLocaleDateString() : 'N/A'}</span>
-                                  {h.retrasos > 0 && <span style={{ fontSize: '0.7rem', color: '#dc2626' }}>{h.retrasos} retraso(s)</span>}
+                                  {h.retrasos > 0 && <span style={{ fontSize: '0.7rem', color: '#dc2626' }}>{h.retrasos} {t('maq.retrasosText')}</span>}
                                 </div>
                               </td>
                               <td>
                                 <div style={{ display: 'flex', gap: '0.25rem' }}>
-                                  <div style={{ width: 12, height: 12, borderRadius: '50%', background: esPuntual ? '#10b981' : '#f59e0b' }} title={esPuntual ? "Entregado a tiempo" : "Con retraso"}></div>
-                                  <div style={{ width: 12, height: 12, borderRadius: '50%', background: esCompleto ? '#10b981' : '#dc2626' }} title={esCompleto ? "Piezas completas" : "Incompleto"}></div>
+                                  <div style={{ width: 12, height: 12, borderRadius: '50%', background: esPuntual ? '#10b981' : '#f59e0b' }} title={esPuntual ? t('maq.ontimeTitle') : t('maq.delayedTitle')}></div>
+                                  <div style={{ width: 12, height: 12, borderRadius: '50%', background: esCompleto ? '#10b981' : '#dc2626' }} title={esCompleto ? t('maq.completeTitle') : t('maq.incompleteTitle')}></div>
                                 </div>
                               </td>
                             </tr>
@@ -405,7 +405,7 @@ export default function Maquileros() {
         <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
           <div className="modal-content glass-card" style={{ maxWidth: '640px' }} onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>{editMode ? 'Editar Maquilero' : 'Nuevo Maquilero'}</h2>
+              <h2>{editMode ? t('maq.modalEditMaq') : t('maq.modalNewMaq')}</h2>
               <button className="btn-icon" onClick={() => setIsModalOpen(false)}><X size={24} /></button>
             </div>
             <form onSubmit={handleSubmit}>
@@ -422,20 +422,20 @@ export default function Maquileros() {
                   )}
                 </div>
                 <div style={{ flex: 1 }}>
-                  <label className="form-label">Foto del Maquilero {editMode ? '(dejar vacío para no cambiar)' : ''}</label>
+                  <label className="form-label">{t('maq.photoLabel')} {editMode ? t('maq.photoSub') : ''}</label>
                   <input type="file" accept="image/*" className="form-input" style={{ padding: '0.4rem' }} onChange={e => setImagenFile(e.target.files[0])} />
                 </div>
               </div>
 
               <div className="form-group">
-                <label className="form-label">Nombre Completo *</label>
+                <label className="form-label">{t('maq.fullName')}</label>
                 <input
                   required
                   type="text"
                   className="form-input"
                   value={formData.nombre}
                   pattern="[A-Za-záéíóúÁÉÍÓÚüÜñÑ\s]+"
-                  title="El nombre solo puede contener letras y espacios"
+                  title={t('maq.nameTitle')}
                   onChange={e => {
                     const onlyLetters = e.target.value.replace(/[^A-Za-záéíóúÁÉÍÓÚüÜñÑ\s]/g, '');
                     setFormData({...formData, nombre: onlyLetters});
@@ -445,39 +445,39 @@ export default function Maquileros() {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div className="form-group">
-                  <label className="form-label">Teléfono</label>
+                  <label className="form-label">{t('maq.phoneLabel')}</label>
                   <input type="tel" className="form-input" placeholder="Ej: 55 1234 5678" value={formData.telefono} onChange={e => setFormData({...formData, telefono: e.target.value})} />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Personal (personas)</label>
+                  <label className="form-label">{t('maq.personalNo')}</label>
                   <input type="number" min="0" className="form-input" placeholder="Ej: 8" value={formData.personal} onChange={e => setFormData({...formData, personal: e.target.value})} />
                 </div>
               </div>
 
               <div className="form-group">
-                <label className="form-label">Maquinaria</label>
+                <label className="form-label">{t('maq.machinery')}</label>
                 <input type="text" className="form-input" placeholder="Ej: 5 máquinas overlock, 2 rectas" value={formData.maquinaria} onChange={e => setFormData({...formData, maquinaria: e.target.value})} />
               </div>
 
               <div className="form-group">
-                <label className="form-label">Domicilio</label>
+                <label className="form-label">{t('maq.domicilio')}</label>
                 <input type="text" className="form-input" value={formData.domicilio} onChange={e => setFormData({...formData, domicilio: e.target.value})} />
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '3fr 1fr', gap: '1rem' }}>
                 <div className="form-group">
-                  <label className="form-label">Colonia</label>
+                  <label className="form-label">{t('maq.coloniaLabel')}</label>
                   <input type="text" className="form-input" value={formData.colonia} onChange={e => setFormData({...formData, colonia: e.target.value})} />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">C.P.</label>
+                  <label className="form-label">{t('maq.cp')}</label>
                   <input type="text" className="form-input" value={formData.codigo_postal} onChange={e => setFormData({...formData, codigo_postal: e.target.value})} />
                 </div>
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1.5rem' }}>
-                <button type="button" className="btn btn-secondary" onClick={() => setIsModalOpen(false)}>Cancelar</button>
-                <button type="submit" className="btn btn-primary">{editMode ? 'Actualizar' : 'Guardar'}</button>
+                <button type="button" className="btn btn-secondary" onClick={() => setIsModalOpen(false)}>{t('maq.cancel')}</button>
+                <button type="submit" className="btn btn-primary">{editMode ? t('maq.update') : t('maq.save')}</button>
               </div>
             </form>
           </div>

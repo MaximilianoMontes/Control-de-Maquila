@@ -189,7 +189,7 @@ export default function Inventario() {
                       <td>{item.cliente || '-'}</td>
                       <td><span className="badge badge-info">{item.no_orden || '-'}</span></td>
                       <td>${parseFloat(item.precio || 0).toFixed(2)}</td>
-                      <td style={{ fontWeight: 700, fontSize: '1.1rem', color: '#10b981' }}>{item.piezas} pzas</td>
+                      <td style={{ fontWeight: 700, fontSize: '1.1rem', color: '#10b981' }}>{item.piezas} {t('dash.status') === 'Status' ? 'pcs' : 'pzas'}</td>
                       <td style={{ fontWeight: 700, color: '#2563eb' }}>${total.toFixed(2)}</td>
                       <td>{displayDate(item.fecha_ingreso)}</td>
                       {canEdit && (
@@ -218,7 +218,7 @@ export default function Inventario() {
               onClick={() => setSelectedImage(null)}
               style={{ position: 'absolute', top: '10px', right: '10px', minWidth: 'auto', padding: '0.25rem 0.5rem' }}
             >
-              Cerrar
+              {t('cortes.close')}
             </button>
           </div>
         </div>

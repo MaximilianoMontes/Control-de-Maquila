@@ -132,8 +132,8 @@ export default function Dashboard() {
                         <td style={{ fontWeight: 600 }}>{o.maquilero_nombre}</td>
                         <td>{new Date(o.fecha_inicio).toLocaleDateString()}</td>
                         <td>
-                          <span className={`badge ${o.estado === 'Terminado' ? 'badge-success' : 'badge-warning'}`}>
-                            {o.estado}
+                          <span className={`badge ${o.estado === 'Terminado' ? 'badge-success' : o.estado === 'Cancelado' ? 'badge-danger' : 'badge-warning'}`}>
+                            {o.estado === 'Terminado' ? t('prod.statusFinished') : o.estado === 'Cancelado' ? t('prod.statusCanceled') : t('prod.statusInProgress')}
                           </span>
                         </td>
                       </tr>

@@ -10,7 +10,7 @@ export default function Historial() {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('');
-  const { t } = useSettings();
+  const { t, settings, translateLog } = useSettings();
 
   useEffect(() => {
     fetchHistory();
@@ -86,7 +86,7 @@ export default function Historial() {
                     <td style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', minWidth: '160px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <Clock size={14} />
-                        {new Date(log.timestamp).toLocaleString()}
+                        {new Date(log.timestamp).toLocaleString(settings.language === 'en' ? 'en-US' : 'es-MX')}
                       </div>
                     </td>
                     <td style={{ fontWeight: 600 }}>
@@ -106,17 +106,17 @@ export default function Historial() {
                         gap: '4px'
                       }}>
                         <div style={{ width: 6, height: 6, borderRadius: '50%', background: getActionColor(log.action) }} />
-                        {log.action}
+                        {log.action === 'ALTA' ? t('hist.actionAlta') : log.action === 'EDIT' ? t('hist.actionEdit') : log.action === 'BAJA' ? t('hist.actionBaja') : log.action}
                       </span>
                     </td>
                     <td style={{ fontWeight: 500, color: 'var(--text-secondary)' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <Tag size={14} />
-                        {log.target}
+                        {t('hist.target.' + log.target) !== 'hist.target.' + log.target ? t('hist.target.' + log.target) : log.target}
                       </div>
                     </td>
                     <td style={{ fontSize: '0.9rem', maxWidth: '400px' }}>
-                      <span style={{ fontWeight: 500 }}>{log.description}</span>
+                      <span style={{ fontWeight: 500 }}>{translateLog(log.description)}</span>
                     </td>
                   </tr>
                 ))

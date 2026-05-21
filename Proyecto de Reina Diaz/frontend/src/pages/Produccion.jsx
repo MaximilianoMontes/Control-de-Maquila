@@ -99,7 +99,7 @@ export default function Produccion() {
       setFormData({ maquilero_id: '', inventario_id: '', fecha_inicio: '', fecha_fin: '' });
       fetchOrders();
     } catch (e) { 
-      alert('Error al crear orden: ' + (e.response?.data?.error || e.message)); 
+      alert(t('prod.alertCreateError') + (e.response?.data?.error || e.message)); 
     }
   };
 
@@ -110,45 +110,45 @@ export default function Produccion() {
       // ya que esos datos son para órdenes NUEVAS.
       // Solo enviamos lo que está en el formulario (maquilero, fechas, etc)
       await axios.put(`${API}/api/produccion/${editingOrder.id}`, formData);
-      alert('Orden actualizada con éxito');
+      alert(t('prod.alertUpdateSuccess'));
       setIsEditModalOpen(false);
       setEditingOrder(null);
       fetchOrders();
     } catch (e) { 
-      alert('Error al actualizar orden: ' + (e.response?.data?.error || e.message)); 
+      alert(t('prod.alertUpdateError') + (e.response?.data?.error || e.message)); 
     }
   };
 
   const handleTerminar = async (id) => {
-    if (!confirm('¿Marcar esta orden como terminada?')) return;
+    if (!confirm(t('prod.confirmFinish'))) return;
     try {
       await axios.put(`${API}/api/produccion/${id}`, { estado: 'Terminado', fecha_fin: new Date().toISOString().split('T')[0] });
       fetchOrders();
-    } catch (e) { alert('Error'); }
+    } catch (e) { alert(t('prod.alertGenericError')); }
   };
 
   const handleCancelar = async (id) => {
-    if (!confirm('¿Cancelar este proceso de producción?')) return;
+    if (!confirm(t('prod.confirmCancel2'))) return;
     try {
       await axios.put(`${API}/api/produccion/${id}`, { estado: 'Cancelado', fecha_fin: new Date().toISOString().split('T')[0] });
       fetchOrders();
-    } catch (e) { alert('Error'); }
+    } catch (e) { alert(t('prod.alertGenericError')); }
   };
 
   const handleArchivar = async (id, currentStatus) => {
     try {
       await axios.put(`${API}/api/produccion/${id}/archivo`, { archivado: !currentStatus });
       fetchOrders();
-    } catch (e) { alert('Error al archivar'); }
+    } catch (e) { alert(t('prod.alertArchiveError')); }
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('¿Eliminar esta orden permanentemente? Esto también borrará todos los pagos asociados.')) return;
+    if (!confirm(t('prod.confirmDelete'))) return;
     try {
       await axios.delete(`${API}/api/produccion/${id}`);
       fetchOrders();
     } catch (e) { 
-      alert(e.response?.data?.error || 'Error al eliminar'); 
+      alert(e.response?.data?.error || t('prod.alertDeleteError')); 
     }
   };
 
@@ -166,16 +166,16 @@ export default function Produccion() {
     try {
       await axios.put(`${API}/api/produccion/${id}/ajuste`, { tipo, porcentaje: parseInt(porcentaje) });
       fetchOrders();
-    } catch (e) { alert('Error al aplicar ajuste'); }
+    } catch (e) { alert(t('prod.alertAdjustError')); }
   };
 
   const handleAddDay = async (id) => {
-    const dias = prompt("¿Cuántos días de prórroga deseas agregar?", "1");
+    const dias = prompt(t('prod.promptDays'), "1");
     if (!dias || isNaN(dias)) return;
     try {
       await axios.put(`${API}/api/produccion/${id}/agregar-dia`, { dias: parseInt(dias) });
       fetchOrders();
-    } catch (e) { alert('Error al agregar día'); }
+    } catch (e) { alert(t('prod.alertAddDayError')); }
   };
 
   const filteredOrders = orders.filter(o => 
@@ -297,30 +297,29 @@ export default function Produccion() {
                             {delayIcon}
                           </div>
                         </div>
-                      </td>
-                      <td style={{ minWidth: '130px' }}>
+                             <td style={{ minWidth: '130px' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                           <span style={{ fontWeight: 700, fontSize: '1rem' }}>${Number(o.precio_total).toFixed(2)}</span>
                           {o.ajuste_tipo && o.ajuste_tipo !== 'ninguno' && (
                             <span style={{ fontSize: '10px', padding: '2px 4px', borderRadius: '4px', width: 'fit-content', background: o.ajuste_tipo === 'bono' ? '#dcfce7' : '#fee2e2', color: o.ajuste_tipo === 'bono' ? '#166534' : '#991b1b', fontWeight: 600 }}>
-                              {o.ajuste_tipo === 'bono' ? 'BONO' : 'DESC'} {o.ajuste_porcentaje}%
+                              {o.ajuste_tipo === 'bono' ? (t('prod.bonuses') === 'Bonuses' ? 'BONUS' : 'BONO') : (t('prod.discounts') === 'Discounts' ? 'DISC' : 'DESC')} {o.ajuste_porcentaje}%
                             </span>
                           )}
                           {canEdit && o.estado === 'En proceso' && (
                             <select className="form-input" style={{ width: '100%', padding: '2px', fontSize: '10px', height: '24px' }} value={o.ajuste_tipo === 'ninguno' ? '' : `${o.ajuste_tipo}-${o.ajuste_porcentaje}`} onChange={(e) => handleApplyAdjustment(o.id, e.target.value)}>
-                              <option value="">Ajustar...</option>
-                              <option value="ninguno-0">❌ Sin Ajuste</option>
-                              <optgroup label="Bonos">
-                                <option value="bono-5">Bono +5%</option>
-                                <option value="bono-10">Bono +10%</option>
-                                <option value="bono-15">Bono +15%</option>
-                                <option value="bono-20">Bono +20%</option>
+                              <option value="">{t('prod.adjust')}</option>
+                              <option value="ninguno-0">{t('prod.noAdjust')}</option>
+                              <optgroup label={t('prod.bonuses')}>
+                                <option value="bono-5">{t('prod.bonuses') === 'Bonuses' ? 'Bonus +5%' : 'Bono +5%'}</option>
+                                <option value="bono-10">{t('prod.bonuses') === 'Bonuses' ? 'Bonus +10%' : 'Bono +10%'}</option>
+                                <option value="bono-15">{t('prod.bonuses') === 'Bonuses' ? 'Bonus +15%' : 'Bono +15%'}</option>
+                                <option value="bono-20">{t('prod.bonuses') === 'Bonuses' ? 'Bonus +20%' : 'Bono +20%'}</option>
                               </optgroup>
-                              <optgroup label="Descuentos">
-                                <option value="descuento-5">Desc -5%</option>
-                                <option value="descuento-10">Desc -10%</option>
-                                <option value="descuento-15">Desc -15%</option>
-                                <option value="descuento-20">Desc -20%</option>
+                              <optgroup label={t('prod.discounts')}>
+                                <option value="descuento-5">{t('prod.discounts') === 'Discounts' ? 'Disc -5%' : 'Desc -5%'}</option>
+                                <option value="descuento-10">{t('prod.discounts') === 'Discounts' ? 'Disc -10%' : 'Desc -10%'}</option>
+                                <option value="descuento-15">{t('prod.discounts') === 'Discounts' ? 'Disc -15%' : 'Desc -15%'}</option>
+                                <option value="descuento-20">{t('prod.discounts') === 'Discounts' ? 'Disc -20%' : 'Desc -20%'}</option>
                               </optgroup>
                             </select>
                           )}
@@ -329,7 +328,7 @@ export default function Produccion() {
                       <td style={{ color: '#10b981', fontWeight: 600 }}>${pagado}</td>
                       <td>
                         <span className={`badge ${o.estado === 'Terminado' ? 'badge-success' : o.estado === 'Cancelado' ? 'badge-danger' : 'badge-warning'}`}>
-                          {o.estado}
+                          {o.estado === 'Terminado' ? t('prod.statusFinished') : o.estado === 'Cancelado' ? t('prod.statusCanceled') : t('prod.statusInProgress')}
                         </span>
                       </td>
                       <td>
@@ -378,12 +377,12 @@ export default function Produccion() {
         <div className="modal-overlay" onClick={() => { setIsModalOpen(false); setIsEditModalOpen(false); }}>
           <div className="modal-content glass-card" style={{ maxWidth: '640px' }} onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>{isEditModalOpen ? (canEdit ? 'Editar Orden' : 'Detalles de la Orden') : 'Nueva Orden de Producción'}</h2>
+              <h2>{isEditModalOpen ? (canEdit ? t('prod.modalEditOrder') : t('prod.modalOrderDetails')) : t('prod.modalNewOrder')}</h2>
               <button className="btn-icon" onClick={() => { setIsModalOpen(false); setIsEditModalOpen(false); }}><X size={24} /></button>
             </div>
             <form onSubmit={isEditModalOpen ? handleEditSubmit : handleSubmit}>
               <div className="form-group">
-                <label className="form-label">Maquilero *</label>
+                <label className="form-label">{t('prod.selectMaquilero')}</label>
                 <select 
                   required 
                   className="form-input" 
@@ -391,14 +390,14 @@ export default function Produccion() {
                   onChange={e => setFormData({...formData, maquilero_id: e.target.value})}
                   disabled={!canEdit && isEditModalOpen}
                 >
-                  <option value="">-- Seleccionar --</option>
+                  <option value="">{t('prod.selectDefault')}</option>
                   {[...maquileros].sort((a,b) => a.nombre.localeCompare(b.nombre)).map(m => (
                     <option key={m.id} value={m.id}>{m.nombre}</option>
                   ))}
                 </select>
               </div>
               <div className="form-group">
-                <label className="form-label">Producto del Inventario *</label>
+                <label className="form-label">{t('prod.selectProduct')}</label>
                 <select 
                   required 
                   className="form-input" 
@@ -406,7 +405,7 @@ export default function Produccion() {
                   onChange={e => setFormData({...formData, inventario_id: e.target.value})}
                   disabled={!canEdit && isEditModalOpen}
                 >
-                  <option value="">-- Seleccionar --</option>
+                  <option value="">{t('prod.selectDefault')}</option>
                   {[...inventario]
                     .filter(i => {
                       if (isModalOpen) {
@@ -420,14 +419,14 @@ export default function Produccion() {
                     .sort((a,b) => (a.modelo || '').localeCompare(b.modelo || '', undefined, {numeric: true}))
                     .map(i => (
                       <option key={i.id} value={i.id}>
-                        {i.modelo} - {i.numero} {i.es_reprogramacion === 1 ? ' (REPROGRAMADO)' : ''}
+                        {i.modelo} - {i.numero} {i.es_reprogramacion === 1 ? t('prod.reprogrammedLabel') : ''}
                       </option>
                     ))}
                 </select>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div className="form-group">
-                  <label className="form-label">Fecha Inicio *</label>
+                  <label className="form-label">{t('prod.startDateLabel')}</label>
                   <input 
                     type="date" 
                     required 
@@ -438,7 +437,7 @@ export default function Produccion() {
                   />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Fecha Entrega Est. *</label>
+                  <label className="form-label">{t('prod.endDateLabel')}</label>
                   <input 
                     type="date" 
                     required 
@@ -452,8 +451,8 @@ export default function Produccion() {
 
               {canEdit && (
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1.5rem' }}>
-                  <button type="button" className="btn btn-secondary" onClick={() => { setIsModalOpen(false); setIsEditModalOpen(false); }}>Cancelar</button>
-                  <button type="submit" className="btn btn-primary">{isEditModalOpen ? 'Actualizar Orden' : 'Crear Orden'}</button>
+                  <button type="button" className="btn btn-secondary" onClick={() => { setIsModalOpen(false); setIsEditModalOpen(false); }}>{t('prod.modalCancel')}</button>
+                  <button type="submit" className="btn btn-primary">{isEditModalOpen ? t('prod.modalUpdate') : t('prod.modalCreate')}</button>
                 </div>
               )}
             </form>

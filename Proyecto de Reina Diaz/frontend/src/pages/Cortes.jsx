@@ -325,13 +325,13 @@ export default function Cortes() {
           <div className="modal-content glass-card" style={{ maxWidth: '640px' }} onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h2>
-                {isReprogram ? 'Reprogramar Producción' : (editMode ? 'Editar Producto' : 'Alta de Corte en Proceso')}
+                {isReprogram ? t('cortes.modalReprogram') : (editMode ? t('cortes.modalEdit') : t('cortes.modalNew'))}
               </h2>
               <button className="btn-icon" onClick={() => setIsModalOpen(false)}><X size={24} /></button>
             </div>
             <form onSubmit={handleManualSubmit}>
               <div className="form-group">
-                <label className="form-label">Código del Producto *</label>
+                <label className="form-label">{t('cortes.code')} *</label>
                 <input 
                   type="text" 
                   required 
@@ -342,15 +342,15 @@ export default function Cortes() {
                 />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.5rem', marginBottom: '1rem', border: '1px solid #e2e8f0', padding: '1rem', borderRadius: 8 }}>
-                <label className="form-label" style={{ marginBottom: 0 }}>Colores y Cantidades</label>
+                <label className="form-label" style={{ marginBottom: 0 }}>{t('cortes.colorQty')}</label>
                 {formData.variantes.map((v, i) => (
                   <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: '0.5rem', alignItems: 'center' }}>
-                    <input type="text" placeholder="Color" className="form-input" value={v.color} onChange={e => {
+                    <input type="text" placeholder={t('cortes.color')} className="form-input" value={v.color} onChange={e => {
                       const newVar = [...formData.variantes];
                       newVar[i].color = e.target.value;
                       setFormData({...formData, variantes: newVar});
                     }} />
-                    <input type="number" placeholder="Cantidad" className="form-input" value={v.cantidad} onChange={e => {
+                    <input type="number" placeholder={t('cortes.qty')} className="form-input" value={v.cantidad} onChange={e => {
                       const newVar = [...formData.variantes];
                       newVar[i].cantidad = e.target.value;
                       setFormData({...formData, variantes: newVar});
@@ -363,21 +363,21 @@ export default function Cortes() {
                     )}
                   </div>
                 ))}
-                <button type="button" className="btn btn-secondary" style={{ width: 'fit-content', marginTop: '0.5rem' }} onClick={() => setFormData({...formData, variantes: [...formData.variantes, {color: '', cantidad: ''}] })}>+ Agregar Color</button>
+                <button type="button" className="btn btn-secondary" style={{ width: 'fit-content', marginTop: '0.5rem' }} onClick={() => setFormData({...formData, variantes: [...formData.variantes, {color: '', cantidad: ''}] })}>{t('cortes.addColor')}</button>
               </div>
 
               <div className="form-group">
-                <label className="form-label">Cliente</label>
+                <label className="form-label">{t('cortes.client')}</label>
                 <input type="text" className="form-input" value={formData.cliente} onChange={e => setFormData({...formData, cliente: e.target.value})} />
               </div>
               
               <div className="form-group">
-                <label className="form-label">No. Orden</label>
+                <label className="form-label">{t('cortes.orderNo')}</label>
                 <input type="text" className="form-input" value={formData.no_orden} onChange={e => setFormData({...formData, no_orden: e.target.value})} />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
                 <div className="form-group">
-                  <label className="form-label">Precio de maquila</label>
+                  <label className="form-label">{t('cortes.priceMaquila')}</label>
                   <div style={{ position: 'relative' }}>
                     <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#64748b', fontWeight: 500 }}>$</span>
                     <input type="number" step="0.01" className="form-input" style={{ paddingLeft: '2rem' }} value={formData.precio} onChange={e => setFormData({...formData, precio: e.target.value})} />
@@ -385,31 +385,31 @@ export default function Cortes() {
                 </div>
               </div>
               <div style={{ border: '1px solid #e2e8f0', borderRadius: 8, padding: '1rem', marginTop: '0.5rem' }}>
-                <label className="form-label">Imagen del Producto</label>
+                <label className="form-label">{t('cortes.prodImage')}</label>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '0.5rem' }}>
                   <div>
-                    <label style={{ fontSize: '0.8rem', color: '#64748b' }}>Archivo Local</label>
+                    <label style={{ fontSize: '0.8rem', color: '#64748b' }}>{t('cortes.localFile')}</label>
                     <input type="file" accept="image/*" className="form-input" style={{ padding: '0.5rem', marginTop: '0.25rem' }} onChange={e => setImagenFile(e.target.files[0])} />
                   </div>
                   <div>
-                    <label style={{ fontSize: '0.8rem', color: '#64748b' }}>URL de Internet</label>
+                    <label style={{ fontSize: '0.8rem', color: '#64748b' }}>{t('cortes.internetUrl')}</label>
                     <input type="url" placeholder="https://..." className="form-input" style={{ marginTop: '0.25rem' }} value={formData.imagenUrl} onChange={e => setFormData({...formData, imagenUrl: e.target.value})} />
                   </div>
                 </div>
               </div>
               <div className="form-group" style={{ marginTop: '1rem' }}>
-                <label className="form-label">Observaciones / Notas</label>
+                <label className="form-label">{t('cortes.notes')}</label>
                 <textarea 
                   className="form-input" 
                   style={{ minHeight: '80px', resize: 'vertical' }} 
                   value={formData.observaciones} 
                   onChange={e => setFormData({...formData, observaciones: e.target.value})}
-                  placeholder="Detalles adicionales del producto..."
+                  placeholder={t('cortes.notesPlaceholder')}
                 />
               </div>
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1.5rem' }}>
-                <button type="button" className="btn btn-secondary" onClick={() => setIsModalOpen(false)}>Cancelar</button>
-                <button type="submit" className="btn btn-primary">{editMode ? 'Actualizar' : 'Guardar Producto'}</button>
+                <button type="button" className="btn btn-secondary" onClick={() => setIsModalOpen(false)}>{t('cortes.cancel')}</button>
+                <button type="submit" className="btn btn-primary">{editMode ? t('cortes.update') : t('cortes.save')}</button>
               </div>
             </form>
           </div>
@@ -421,22 +421,22 @@ export default function Cortes() {
         <div className="modal-overlay">
           <div className="modal-content glass-card" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>Agregar Foto: {editImageItem.modelo}</h2>
+              <h2>{t('cortes.addPhoto')}: {editImageItem.modelo}</h2>
               <button className="btn-icon" onClick={() => setEditImageItem(null)}><X size={24} /></button>
             </div>
             <form onSubmit={handleEditImageSubmit}>
               <div className="form-group">
-                <label className="form-label">Archivo Local</label>
+                <label className="form-label">{t('cortes.localFile')}</label>
                 <input type="file" accept="image/*" className="form-input" onChange={e => setEditImageFile(e.target.files[0])} />
               </div>
-              <div style={{ textAlign: 'center', color: '#94a3b8', margin: '0.5rem 0' }}>— O —</div>
+              <div style={{ textAlign: 'center', color: '#94a3b8', margin: '0.5rem 0' }}>— {t('dash.status') === 'Status' ? 'OR' : 'O'} —</div>
               <div className="form-group">
-                <label className="form-label">URL Externa</label>
+                <label className="form-label">{t('cortes.internetUrl')}</label>
                 <input type="url" placeholder="https://..." className="form-input" value={editImageUrl} onChange={e => setEditImageUrl(e.target.value)} />
               </div>
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' }}>
-                <button type="button" className="btn btn-secondary" onClick={() => setEditImageItem(null)}>Cancelar</button>
-                <button type="submit" className="btn btn-primary">Subir Foto</button>
+                <button type="button" className="btn btn-secondary" onClick={() => setEditImageItem(null)}>{t('cortes.cancel')}</button>
+                <button type="submit" className="btn btn-primary">{t('cortes.savePhoto')}</button>
               </div>
             </form>
           </div>
@@ -448,15 +448,15 @@ export default function Cortes() {
         <div className="modal-overlay">
           <div className="modal-content glass-card" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>Importar desde Excel</h2>
+              <h2>{t('cortes.importTitle')}</h2>
               <button className="btn-icon" onClick={() => setIsUploadModalOpen(false)}><X size={24} /></button>
             </div>
-            <p style={{ marginBottom: '1rem', color: '#64748b' }}>Columnas esperadas: #, MODELO, PRECIO, COLOR, CLIENTE, NO. ORDEN, PIEZAS EN PROCESO.</p>
+            <p style={{ marginBottom: '1rem', color: '#64748b' }}>{t('dash.status') === 'Status' ? 'Expected columns: MODELO, PRECIO, COLOR, CLIENTE, NO. ORDEN, PIEZAS EN PROCESO.' : 'Columnas esperadas: MODELO, PRECIO, COLOR, CLIENTE, NO. ORDEN, PIEZAS EN PROCESO.'}</p>
             <form onSubmit={handleFileUpload}>
               <div className="form-group">
                 <input type="file" ref={fileInputRef} accept=".xlsx, .xls" required className="form-input" style={{ paddingTop: '0.5rem' }} />
               </div>
-              <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '1rem' }}>Subir y Procesar</button>
+              <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '1rem' }}>{t('cortes.importBtn')}</button>
             </form>
           </div>
         </div>

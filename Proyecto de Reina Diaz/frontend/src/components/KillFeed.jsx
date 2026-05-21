@@ -7,7 +7,7 @@ import API_URL from '../config';
 const API = API_URL;
 
 export default function KillFeed() {
-  const { settings } = useSettings();
+  const { settings, t } = useSettings();
   const [logs, setLogs] = useState([]);
   const [visibleLogs, setVisibleLogs] = useState([]);
   const [lastId, setLastId] = useState(0);
@@ -73,17 +73,24 @@ export default function KillFeed() {
 
   return (
     <div className="kill-feed">
-      {visibleLogs.map(log => (
-        <div key={log.tempId} className={`kill-item ${log.fading ? 'fade-out' : ''}`}>
-          <span className="kill-username">{log.username}</span>
-          <ArrowRight className="kill-arrow" size={14} />
-          <span className={`kill-action action-${log.action.toLowerCase()}`}>
-            {log.action}
-          </span>
-          <ArrowRight className="kill-arrow" size={14} />
-          <span className="kill-target">{log.target}</span>
-        </div>
-      ))}
+      {visibleLogs.map(log => {
+        const normAction = (log.action || '').toUpperCase();
+        const translatedAction = normAction === 'ALTA' ? t('hist.actionAlta') : normAction === 'EDIT' ? t('hist.actionEdit') : normAction === 'BAJA' ? t('hist.actionBaja') : log.action;
+        const targetKey = 'hist.target.' + log.target;
+        const translatedTarget = t(targetKey) !== targetKey ? t(targetKey) : log.target;
+        
+        return (
+          <div key={log.tempId} className={`kill-item ${log.fading ? 'fade-out' : ''}`}>
+            <span className="kill-username">{log.username}</span>
+            <ArrowRight className="kill-arrow" size={14} />
+            <span className={`kill-action action-${(log.action || '').toLowerCase()}`}>
+              {translatedAction}
+            </span>
+            <ArrowRight className="kill-arrow" size={14} />
+            <span className="kill-target">{translatedTarget}</span>
+          </div>
+        );
+      })}
     </div>
   );
 }
