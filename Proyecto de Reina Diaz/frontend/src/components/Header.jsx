@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
+import API_URL from '../config';
 import { 
   Search, 
   Bell, 
@@ -25,12 +26,15 @@ import {
   ChevronDown,
   Globe,
   ExternalLink,
-  Lock
+  Lock,
+  Plus,
+  Trash2,
+  AlertTriangle
 } from 'lucide-react';
 
 export default function Header() {
   const { user, logout } = useAuth();
-  const { settings, updateSetting, t } = useSettings();
+  const { settings, updateSetting, t, translateLog } = useSettings();
   const navigate = useNavigate();
   const isAdmin = user?.role === 'admin' || user?.rol === 'admin';
   
@@ -51,13 +55,66 @@ export default function Header() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncMessage, setSyncMessage] = useState(null); // { text: '', type: 'success' | 'error' }
 
-  // Notifications state (simulating real system updates)
-  const [notifications, setNotifications] = useState([
-    { id: 1, textKey: 'header.notif1', timeKey: 'header.time5m', unread: true, type: 'alta' },
-    { id: 2, textKey: 'header.notif2', timeKey: 'header.time20m', unread: true, type: 'edit' },
-    { id: 3, textKey: 'header.notif3', timeKey: 'header.time1h', unread: false, type: 'alta' },
-    { id: 4, textKey: 'header.notif4', timeKey: 'header.time3h', unread: false, type: 'edit' }
-  ]);
+  // Dynamic movements notifications state
+  const [logs, setLogs] = useState([]);
+  const [readIds, setReadIds] = useState(() => {
+    try {
+      const saved = localStorage.getItem('read_notification_ids');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [clearedUntil, setClearedUntil] = useState(() => {
+    try {
+      const saved = localStorage.getItem('notifications_cleared_until');
+      return saved ? parseInt(saved, 10) : 0;
+    } catch {
+      return 0;
+    }
+  });
+
+  // Fetch movements and poll every 10 seconds
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const res = await axios.get(`${API_URL}/api/historial?limit=15`);
+        if (res.data && Array.isArray(res.data)) {
+          setLogs(res.data);
+        }
+      } catch (e) {
+        console.error('Error fetching notifications for header:', e);
+      }
+    };
+
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Filter active notifications
+  const activeNotifications = logs.filter(log => log.id > clearedUntil);
+  const unreadCount = activeNotifications.filter(log => !readIds.includes(log.id)).length;
+
+  const getRelativeTime = (timestamp, lang) => {
+    const diffMs = new Date() - new Date(timestamp);
+    const diffSec = Math.floor(diffMs / 1000);
+    const diffMin = Math.floor(diffSec / 60);
+    const diffHour = Math.floor(diffMin / 60);
+    const diffDay = Math.floor(diffHour / 24);
+
+    if (lang === 'en') {
+      if (diffSec < 60) return 'Just now';
+      if (diffMin < 60) return `${diffMin} min ago`;
+      if (diffHour < 24) return diffHour === 1 ? '1 hour ago' : `${diffHour} hours ago`;
+      return diffDay === 1 ? '1 day ago' : `${diffDay} days ago`;
+    } else {
+      if (diffSec < 60) return 'Justo ahora';
+      if (diffMin < 60) return `Hace ${diffMin} min`;
+      if (diffHour < 24) return diffHour === 1 ? 'Hace 1 hora' : `Hace ${diffHour} horas`;
+      return diffDay === 1 ? 'Hace 1 día' : `Hace ${diffDay} días`;
+    }
+  };
 
   // Refs for closing dropdowns on click outside
   const notificationsRef = useRef(null);
@@ -149,11 +206,25 @@ export default function Header() {
   };
 
   const handleMarkAllNotificationsAsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, unread: false })));
+    const newReadIds = [...new Set([...readIds, ...activeNotifications.map(n => n.id)])];
+    setReadIds(newReadIds);
+    localStorage.setItem('read_notification_ids', JSON.stringify(newReadIds));
   };
 
   const handleClearNotifications = () => {
-    setNotifications([]);
+    const maxId = activeNotifications.length > 0 ? Math.max(...activeNotifications.map(n => n.id)) : clearedUntil;
+    setClearedUntil(maxId);
+    localStorage.setItem('notifications_cleared_until', maxId.toString());
+  };
+
+  const handleReadNotification = (id) => {
+    if (!readIds.includes(id)) {
+      const newReadIds = [...readIds, id];
+      setReadIds(newReadIds);
+      localStorage.setItem('read_notification_ids', JSON.stringify(newReadIds));
+    }
+    setShowNotifications(false);
+    navigate('/historial');
   };
 
   const toggleSetting = (key, value) => {
@@ -200,9 +271,6 @@ export default function Header() {
     }
   };
 
-  // Get unread notification count
-  const unreadCount = notifications.filter(n => n.unread).length;
-
   return (
     <>
       <header className="main-header">
@@ -231,7 +299,7 @@ export default function Header() {
             <div className={`header-dropdown notifications-dropdown ${showNotifications ? 'active' : ''}`}>
               <div className="dropdown-header">
                 <h4>{t('header.notifications')}</h4>
-                {notifications.length > 0 && (
+                {activeNotifications.length > 0 && (
                   <div style={{ display: 'flex', gap: '8px' }}>
                     <button className="dropdown-header-btn" onClick={handleMarkAllNotificationsAsRead}>
                       {t('header.readAll')}
@@ -243,25 +311,52 @@ export default function Header() {
                 )}
               </div>
               <div className="notification-list">
-                {notifications.length === 0 ? (
+                {activeNotifications.length === 0 ? (
                   <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
                     {t('header.noNotifications')}
                   </div>
                 ) : (
-                  notifications.map(n => (
-                    <div key={n.id} className={`notification-item ${n.unread ? 'unread' : ''}`} style={n.unread ? { background: 'rgba(59, 130, 246, 0.04)' } : {}}>
-                      <div className="notification-icon-wrapper" style={{
-                        background: n.type === 'alta' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(59, 130, 246, 0.1)',
-                        color: n.type === 'alta' ? 'var(--success-color)' : 'var(--primary-color)'
-                      }}>
-                        <Info size={14} />
+                  activeNotifications.map(n => {
+                    const isUnread = !readIds.includes(n.id);
+                    const actionLower = (n.action || '').toLowerCase();
+                    
+                    let IconComponent = Info;
+                    let iconColor = 'var(--primary-color)';
+                    let bgColor = 'rgba(59, 130, 246, 0.1)';
+                    
+                    if (actionLower === 'alta') {
+                      IconComponent = Plus;
+                      iconColor = 'var(--success-color)';
+                      bgColor = 'rgba(16, 185, 129, 0.1)';
+                    } else if (actionLower === 'edit') {
+                      IconComponent = AlertTriangle;
+                      iconColor = '#fbbf24';
+                      bgColor = 'rgba(245, 158, 11, 0.1)';
+                    } else if (actionLower === 'baja') {
+                      IconComponent = Trash2;
+                      iconColor = 'var(--danger-color)';
+                      bgColor = 'rgba(239, 68, 68, 0.1)';
+                    }
+
+                    return (
+                      <div 
+                        key={n.id} 
+                        className={`notification-item ${isUnread ? 'unread' : ''}`} 
+                        style={{ cursor: 'pointer', background: isUnread ? 'rgba(59, 130, 246, 0.04)' : 'transparent' }}
+                        onClick={() => handleReadNotification(n.id)}
+                      >
+                        <div className="notification-icon-wrapper" style={{ background: bgColor, color: iconColor }}>
+                          <IconComponent size={14} />
+                        </div>
+                        <div className="notification-item-content">
+                          <p className="notification-text" style={isUnread ? { fontWeight: 600 } : {}}>
+                            <strong style={{ color: 'var(--text-primary)' }}>{n.username}</strong>: {translateLog(n.description)}
+                          </p>
+                          <span className="notification-time">{getRelativeTime(n.timestamp, settings.language)}</span>
+                        </div>
                       </div>
-                      <div className="notification-item-content">
-                        <p className="notification-text" style={n.unread ? { fontWeight: 600 } : {}}>{t(n.textKey)}</p>
-                        <span className="notification-time">{t(n.timeKey)}</span>
-                      </div>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
             </div>
