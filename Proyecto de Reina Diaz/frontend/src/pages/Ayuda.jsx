@@ -79,6 +79,22 @@ const guides_es = {
         </div>
       ),
       keywords: 'roles administrador produccion operario permisos seguridad accesos admin inventario'
+    },
+    {
+      title: 'Configuración Avanzada y Personalización del ERP',
+      content: (
+        <div>
+          <p>El sistema Maquila ERP te permite ajustar la interfaz y la lógica operacional para adaptarse a tus necesidades diarias a través del panel de <strong>Configuración del Sistema</strong> (al que puedes acceder desde tu perfil en la esquina superior derecha):</p>
+          <ul>
+            <li><strong>Tema del Sistema (Slate Theme):</strong> Elige entre los modos **Claro**, **Oscuro** (diseñado en una gama Slate premium que reduce la fatiga visual) o **Sistema** (sincronizado con la preferencia del navegador).</li>
+            <li><strong>Color de Acento:</strong> Personaliza los botones, insignias, y bordes interactivos seleccionando entre 5 colores premium: Azul Real, Verde Esmeralda, Púrpura Índigo, Rojo Rubí y Naranja Coral.</li>
+            <li><strong>Densidad de la Interfaz:</strong> Alterna entre la visualización **Normal** y la **Compacta** para optimizar el espaciado en tablas y ver más registros sin hacer scroll.</li>
+            <li><strong>Formato de Moneda y Tipo de Cambio:</strong> Puedes cambiar la moneda de visualización de todos los montos financieros del ERP entre pesos mexicanos (<strong>MXN</strong>) y dólares (<strong>USD</strong>). Al seleccionar USD, todos los valores mostrados en el Dashboard, Inventario, Cortes, Pagos y Producción se calcularán en dólares de forma automática utilizando la tasa configurada en <strong>Tipo de Cambio</strong>. Recuerda ajustar esta tasa periódicamente (diaria, semanal o mensualmente) conforme fluctúe el valor del dólar en el mercado para garantizar finanzas precisas.</li>
+            <li><strong>Auto-Archivado de Órdenes:</strong> Si está habilitado, el sistema monitorea reactivamente tus órdenes de producción. Tan pronto como una orden cambie al estado **Terminado** y sea liquidada al 100%, el sistema la archivará de manera automática e inmediata, quitándola del panel activo.</li>
+          </ul>
+        </div>
+      ),
+      keywords: 'configuracion tema oscuro claro slate acento colores moneda usd tipo de cambio dolar archivar automatico'
     }
   ],
   maquileros: [

@@ -9,7 +9,7 @@ const API = API_URL;
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const { t } = useSettings();
+  const { t, formatCurrency } = useSettings();
   const [stats, setStats] = useState({
     maquileros: 0,
     inventario: 0,
@@ -75,7 +75,7 @@ export default function Dashboard() {
     },
     {
       icon: <TrendingUp size={24} />,
-      value: `$${stats.pagos_mes.toLocaleString('es-MX', { minimumFractionDigits: 0 })}`,
+      value: formatCurrency(stats.pagos_mes),
       label: t('dash.totalPaid'),
       style: { background: 'rgba(139, 92, 246, 0.2)', color: '#a78bfa' },
     },

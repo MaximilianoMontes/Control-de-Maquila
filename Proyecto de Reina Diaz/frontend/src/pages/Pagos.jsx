@@ -6,7 +6,7 @@ import { useSettings } from '../context/SettingsContext';
 import API_URL from '../config';
 
 export default function Pagos() {
-  const { t } = useSettings();
+  const { settings, t, formatCurrency } = useSettings();
   const [searchParams] = useSearchParams();
   const initialOrdenId = searchParams.get('orden') || '';
 
@@ -79,6 +79,23 @@ export default function Pagos() {
     try {
       const res = await axios.get(`${API_URL}/api/produccion`);
       setOrders(res.data);
+
+      // Auto-archive check
+      if (settings.autoArchive === 'enabled') {
+        const toArchive = res.data.filter(o => 
+          o.estado === 'Terminado' && 
+          parseFloat(o.pagado || 0) >= parseFloat(o.precio_total || 0) && 
+          !o.archivado
+        );
+        if (toArchive.length > 0) {
+          await Promise.all(toArchive.map(o => 
+            axios.put(`${API_URL}/api/produccion/${o.id}/archivo`, { archivado: true })
+          ));
+          // Refresh after auto-archiving
+          const refreshed = await axios.get(`${API_URL}/api/produccion`);
+          setOrders(refreshed.data);
+        }
+      }
     } catch (e) { console.error(e); }
   };
 
@@ -193,17 +210,17 @@ export default function Pagos() {
 
               {ordenActual && (
                 <div style={{ background: 'rgba(0,0,0,0.02)', padding: '1rem', borderRadius: '8px', marginBottom: '1rem' }}>
-                  <p><strong>{t('pay.totalCost')}</strong> ${ordenActual.precio_total}</p>
-                  <p style={{ color: '#34d399' }}><strong>{t('pay.alreadyPaid')}</strong> ${totalPagado}</p>
+                  <p><strong>{t('pay.totalCost')}</strong> {formatCurrency(ordenActual.precio_total)}</p>
+                  <p style={{ color: '#34d399' }}><strong>{t('pay.alreadyPaid')}</strong> {formatCurrency(totalPagado)}</p>
                   <hr style={{ margin: '0.5rem 0', border: 'none', borderTop: '1px solid #e2e8f0' }} />
                   {pendingDiscount > 0 && (
                     <p style={{ color: '#ef4444', fontWeight: 'bold' }}>
                       <AlertCircle size={14} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
-                      {t('pay.pendingFines')} -${pendingDiscount}
+                      {t('pay.pendingFines')} -{formatCurrency(pendingDiscount)}
                     </p>
                   )}
                   <p style={{ color: (restante - pendingDiscount) > 0 ? '#ef4444' : '#34d399', fontSize: '1.1rem' }}>
-                    <strong>{t('pay.netToPay')} ${Math.max(0, restante - pendingDiscount)}</strong>
+                    <strong>{t('pay.netToPay')} {formatCurrency(Math.max(0, restante - pendingDiscount))}</strong>
                   </p>
                 </div>
               )}
@@ -227,7 +244,7 @@ export default function Pagos() {
                 value={monto} 
                 onChange={e => setMonto(e.target.value)} 
                 disabled={!selectedOrden}
-                placeholder={restante > 0 ? `${t('pay.suggested')} $${Math.max(0, restante - pendingDiscount)}` : ''}
+                placeholder={restante > 0 ? `${t('pay.suggested')} ${formatCurrency(Math.max(0, restante - pendingDiscount))}` : ''}
               />
             </div>
 
@@ -266,7 +283,7 @@ export default function Pagos() {
                           <td>#{pagos.length - index}</td>
                           <td>{new Date(p.fecha).toLocaleDateString()}</td>
                           <td><span className="badge badge-info" style={{ textTransform: 'uppercase' }}>{p.tipo_pago}</span></td>
-                          <td style={{ color: '#34d399', fontWeight: 'bold' }}>${p.monto}</td>
+                          <td style={{ color: '#34d399', fontWeight: 'bold' }}>{formatCurrency(p.monto)}</td>
                           <td>
                             <button className="btn-icon" onClick={() => handlePrintComprobante(p.id)} style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#60a5fa', border: 'none', padding: '6px', borderRadius: '4px', cursor: 'pointer' }}>
                               <Printer size={18} />
@@ -376,7 +393,7 @@ export default function Pagos() {
                           <td><strong>{d.producto_modelo}</strong></td>
                           <td style={{ fontSize: '0.85rem', maxWidth: '200px' }}>{d.motivo}</td>
                           <td style={{ textAlign: 'center' }}>{d.piezas_afectadas}</td>
-                          <td style={{ color: '#ef4444', fontWeight: 'bold' }}>-${d.monto_total}</td>
+                          <td style={{ color: '#ef4444', fontWeight: 'bold' }}>-{formatCurrency(d.monto_total)}</td>
                           <td>
                             <span className={`badge ${d.aplicado ? 'badge-success' : 'badge-warning'}`} style={{ fontSize: '10px' }}>
                               {d.aplicado ? t('pay.discCharged') : t('pay.discPending')}

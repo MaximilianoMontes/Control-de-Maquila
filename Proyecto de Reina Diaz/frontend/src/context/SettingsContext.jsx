@@ -110,6 +110,21 @@ const translations = {
     'settings.alertsDisabled': 'Deshabilitadas',
     'settings.languageLabel': 'Idioma del Sistema',
     'settings.languageDesc': 'Idioma de traducción preferido para los controles del ERP.',
+    'settings.themeLabel': 'Tema del Sistema',
+    'settings.themeDesc': 'Elige el aspecto visual de la aplicación.',
+    'settings.themeLight': 'Claro',
+    'settings.themeDark': 'Oscuro',
+    'settings.themeSystem': 'Sistema',
+    'settings.accentLabel': 'Color de Acento',
+    'settings.accentDesc': 'Elige un color personalizado para destacar elementos de la interfaz.',
+    'settings.currencyLabel': 'Formato de Moneda',
+    'settings.currencyDesc': 'Selecciona la divisa para mostrar los montos monetarios.',
+    'settings.exchangeRateLabel': 'Tipo de Cambio (1 USD = X MXN)',
+    'settings.exchangeRateDesc': 'Establece el tipo de cambio del dólar en pesos para las conversiones.',
+    'settings.autoArchiveLabel': 'Auto-Archivado de Órdenes',
+    'settings.autoArchiveDesc': 'Archiva automáticamente órdenes de producción terminadas y 100% pagadas.',
+    'settings.autoArchiveEnabled': 'Habilitado',
+    'settings.autoArchiveDisabled': 'Deshabilitado',
     'settings.save': 'Listo, Guardar Cambios',
 
     // Dashboard
@@ -480,6 +495,21 @@ const translations = {
     'settings.alertsDisabled': 'Disabled',
     'settings.languageLabel': 'System Language',
     'settings.languageDesc': 'Preferred translation language for ERP controls.',
+    'settings.themeLabel': 'System Theme',
+    'settings.themeDesc': 'Choose the visual appearance of the application.',
+    'settings.themeLight': 'Light',
+    'settings.themeDark': 'Dark',
+    'settings.themeSystem': 'System',
+    'settings.accentLabel': 'Accent Color',
+    'settings.accentDesc': 'Choose a custom color to highlight interface elements.',
+    'settings.currencyLabel': 'Currency Format',
+    'settings.currencyDesc': 'Select the currency to display monetary amounts.',
+    'settings.exchangeRateLabel': 'Exchange Rate (1 USD = X MXN)',
+    'settings.exchangeRateDesc': 'Set the dollar-to-peso exchange rate for conversions.',
+    'settings.autoArchiveLabel': 'Auto-Archive Orders',
+    'settings.autoArchiveDesc': 'Automatically archive finished and 100% paid production orders.',
+    'settings.autoArchiveEnabled': 'Enabled',
+    'settings.autoArchiveDisabled': 'Disabled',
     'settings.save': 'Done, Save Changes',
 
     // Dashboard
@@ -748,11 +778,25 @@ const translations = {
 export const SettingsProvider = ({ children }) => {
   const [settings, setSettings] = useState(() => {
     const saved = localStorage.getItem('system_settings');
-    return saved ? JSON.parse(saved) : {
+    const defaults = {
       density: 'normal',
       alerts: 'enabled',
-      language: 'es'
+      language: 'es',
+      theme: 'light',
+      accentColor: 'blue',
+      autoArchive: 'disabled',
+      currency: 'mxn',
+      exchangeRate: 20
     };
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        return { ...defaults, ...parsed };
+      } catch (e) {
+        return defaults;
+      }
+    }
+    return defaults;
   });
 
   useEffect(() => {
@@ -765,6 +809,46 @@ export const SettingsProvider = ({ children }) => {
       document.body.classList.remove('compact-mode');
     }
   }, [settings]);
+
+  // Apply visual theme (Light / Dark / System)
+  useEffect(() => {
+    const applyTheme = () => {
+      const isDark = settings.theme === 'dark' || 
+        (settings.theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      
+      if (isDark) {
+        document.body.classList.add('dark-mode');
+      } else {
+        document.body.classList.remove('dark-mode');
+      }
+    };
+
+    applyTheme();
+
+    if (settings.theme === 'system') {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      const listener = () => applyTheme();
+      mediaQuery.addEventListener('change', listener);
+      return () => mediaQuery.removeEventListener('change', listener);
+    }
+  }, [settings.theme]);
+
+  // Apply custom accent colors
+  useEffect(() => {
+    const accents = {
+      blue: { primary: '#2563eb', hover: '#1d4ed8', shadow: 'rgba(37, 99, 235, 0.4)' },
+      green: { primary: '#10b981', hover: '#059669', shadow: 'rgba(16, 185, 129, 0.4)' },
+      purple: { primary: '#6366f1', hover: '#4f46e5', shadow: 'rgba(99, 102, 241, 0.4)' },
+      red: { primary: '#ef4444', hover: '#dc2626', shadow: 'rgba(239, 68, 68, 0.4)' },
+      orange: { primary: '#f97316', hover: '#ea580c', shadow: 'rgba(249, 115, 22, 0.4)' }
+    };
+
+    const chosen = accents[settings.accentColor] || accents.blue;
+    const root = document.documentElement;
+    root.style.setProperty('--primary-color', chosen.primary);
+    root.style.setProperty('--primary-hover', chosen.hover);
+    root.style.setProperty('--primary-shadow', chosen.shadow);
+  }, [settings.accentColor]);
 
   const updateSetting = (key, value) => {
     setSettings(prev => ({ ...prev, [key]: value }));
@@ -779,6 +863,28 @@ export const SettingsProvider = ({ children }) => {
     });
     
     return text;
+  };
+
+  const formatCurrency = (value) => {
+    let num = Number(value) || 0;
+    const isUSD = settings.currency === 'usd';
+    const rate = parseFloat(settings.exchangeRate || 20);
+    const lang = settings.language === 'en' ? 'en-US' : 'es-MX';
+    
+    if (isUSD) {
+      num = num / rate; // Convert MXN base value to USD
+      const formatted = num.toLocaleString(lang, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+      return `$${formatted} USD`;
+    } else {
+      const formatted = num.toLocaleString(lang, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+      return `$${formatted}`;
+    }
   };
 
   const translateLog = (desc) => {
@@ -836,7 +942,7 @@ export const SettingsProvider = ({ children }) => {
   };
 
   return (
-    <SettingsContext.Provider value={{ settings, updateSetting, t, translateLog }}>
+    <SettingsContext.Provider value={{ settings, updateSetting, t, translateLog, formatCurrency }}>
       {children}
     </SettingsContext.Provider>
   );

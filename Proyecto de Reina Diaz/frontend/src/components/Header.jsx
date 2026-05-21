@@ -364,7 +364,7 @@ export default function Header() {
       {/* Settings Modal */}
       {showSettingsModal && (
         <div className="modal-overlay" onClick={() => setShowSettingsModal(false)}>
-          <div className="modal-content glass-card settings-modal-card" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-content glass-card settings-modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '520px' }}>
             <div className="modal-header">
               <h2>{t('settings.title')}</h2>
               <button 
@@ -376,7 +376,71 @@ export default function Header() {
               </button>
             </div>
             
-            <div className="settings-list">
+            <div className="settings-list" style={{ maxHeight: '70vh', overflowY: 'auto', paddingRight: '6px' }}>
+              {/* Visual Theme */}
+              <div className="settings-item">
+                <span className="settings-item-label">{t('settings.themeLabel')}</span>
+                <span className="settings-item-desc">{t('settings.themeDesc')}</span>
+                <div className="settings-options-row">
+                  <button 
+                    className={`settings-option-btn ${settings.theme === 'light' ? 'active' : ''}`}
+                    onClick={() => toggleSetting('theme', 'light')}
+                  >
+                    {settings.theme === 'light' && <Check size={14} />} {t('settings.themeLight')}
+                  </button>
+                  <button 
+                    className={`settings-option-btn ${settings.theme === 'dark' ? 'active' : ''}`}
+                    onClick={() => toggleSetting('theme', 'dark')}
+                  >
+                    {settings.theme === 'dark' && <Check size={14} />} {t('settings.themeDark')}
+                  </button>
+                  <button 
+                    className={`settings-option-btn ${settings.theme === 'system' ? 'active' : ''}`}
+                    onClick={() => toggleSetting('theme', 'system')}
+                  >
+                    {settings.theme === 'system' && <Check size={14} />} {t('settings.themeSystem')}
+                  </button>
+                </div>
+              </div>
+
+              {/* Accent Color */}
+              <div className="settings-item">
+                <span className="settings-item-label">{t('settings.accentLabel')}</span>
+                <span className="settings-item-desc">{t('settings.accentDesc')}</span>
+                <div style={{ display: 'flex', gap: '14px', alignItems: 'center', marginTop: '6px', flexWrap: 'wrap' }}>
+                  {[
+                    { id: 'blue', color: '#2563eb', label: settings.language === 'en' ? 'Royal Blue' : 'Azul Real' },
+                    { id: 'green', color: '#10b981', label: settings.language === 'en' ? 'Emerald Green' : 'Verde Esmeralda' },
+                    { id: 'purple', color: '#6366f1', label: settings.language === 'en' ? 'Indigo Purple' : 'Púrpura Índigo' },
+                    { id: 'red', color: '#ef4444', label: settings.language === 'en' ? 'Ruby Red' : 'Rojo Rubí' },
+                    { id: 'orange', color: '#f97316', label: settings.language === 'en' ? 'Coral Orange' : 'Naranja Coral' }
+                  ].map(item => (
+                    <button
+                      key={item.id}
+                      onClick={() => toggleSetting('accentColor', item.id)}
+                      title={item.label}
+                      style={{
+                        width: '34px',
+                        height: '34px',
+                        borderRadius: '50%',
+                        background: item.color,
+                        border: settings.accentColor === item.id ? '3px solid var(--text-primary)' : '2px solid transparent',
+                        boxShadow: settings.accentColor === item.id ? `0 0 12px ${item.color}` : 'none',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'white',
+                        padding: 0
+                      }}
+                    >
+                      {settings.accentColor === item.id && <Check size={14} strokeWidth={3} />}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {/* Visual Density */}
               <div className="settings-item">
                 <span className="settings-item-label">{t('settings.densityLabel')}</span>
@@ -436,9 +500,67 @@ export default function Header() {
                   </button>
                 </div>
               </div>
+
+              {/* Currency Selector */}
+              <div className="settings-item">
+                <span className="settings-item-label">{t('settings.currencyLabel')}</span>
+                <span className="settings-item-desc">{t('settings.currencyDesc')}</span>
+                <div className="settings-options-row">
+                  <button 
+                    className={`settings-option-btn ${settings.currency === 'mxn' ? 'active' : ''}`}
+                    onClick={() => toggleSetting('currency', 'mxn')}
+                  >
+                    {settings.currency === 'mxn' && <Check size={14} />} MXN ($)
+                  </button>
+                  <button 
+                    className={`settings-option-btn ${settings.currency === 'usd' ? 'active' : ''}`}
+                    onClick={() => toggleSetting('currency', 'usd')}
+                  >
+                    {settings.currency === 'usd' && <Check size={14} />} USD ($ USD)
+                  </button>
+                </div>
+              </div>
+
+              {/* Exchange Rate */}
+              <div className="settings-item">
+                <span className="settings-item-label">{t('settings.exchangeRateLabel')}</span>
+                <span className="settings-item-desc">{t('settings.exchangeRateDesc')}</span>
+                <div style={{ marginTop: '4px', position: 'relative', display: 'flex', alignItems: 'center' }}>
+                  <span style={{ position: 'absolute', left: '12px', color: 'var(--text-secondary)', fontWeight: 500 }}>$</span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    className="form-input"
+                    style={{ paddingLeft: '24px', maxWidth: '140px' }}
+                    value={settings.exchangeRate || 20}
+                    onChange={(e) => toggleSetting('exchangeRate', parseFloat(e.target.value) || 20)}
+                  />
+                  <span style={{ marginLeft: '12px', fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>MXN</span>
+                </div>
+              </div>
+
+              {/* Auto Archive */}
+              <div className="settings-item">
+                <span className="settings-item-label">{t('settings.autoArchiveLabel')}</span>
+                <span className="settings-item-desc">{t('settings.autoArchiveDesc')}</span>
+                <div className="settings-options-row">
+                  <button 
+                    className={`settings-option-btn ${settings.autoArchive === 'enabled' ? 'active' : ''}`}
+                    onClick={() => toggleSetting('autoArchive', 'enabled')}
+                  >
+                    {settings.autoArchive === 'enabled' && <Check size={14} />} {t('settings.autoArchiveEnabled')}
+                  </button>
+                  <button 
+                    className={`settings-option-btn ${settings.autoArchive === 'disabled' ? 'active' : ''}`}
+                    onClick={() => toggleSetting('autoArchive', 'disabled')}
+                  >
+                    {settings.autoArchive === 'disabled' && <Check size={14} />} {t('settings.autoArchiveDisabled')}
+                  </button>
+                </div>
+              </div>
             </div>
 
-            <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'flex-end' }}>
+            <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
               <button className="btn btn-primary" onClick={() => setShowSettingsModal(false)}>
                 {t('settings.save')}
               </button>
