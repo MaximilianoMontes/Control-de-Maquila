@@ -1518,4 +1518,55 @@ body.compact-mode .btn {
   animation: spin 1.2s linear infinite;
 }
 
+/* Theme-aware Profile Detail Items & Quality Card in Maquilero Profile Modal */
+.profile-detail-item {
+  background: var(--bg-input);
+  padding: 0.75rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  transition: var(--transition);
+}
 
+.profile-detail-item strong {
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  display: block;
+  text-transform: uppercase;
+  margin-bottom: 0.25rem;
+}
+
+.profile-detail-item span {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.quality-summary-card {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, #eff6ff, #dbeafe);
+  border-radius: 12px;
+  transition: var(--transition);
+}
+
+.quality-summary-card h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.9rem;
+  color: #1e40af;
+}
+
+.quality-summary-card span {
+  color: #475569;
+}
+
+body.dark-mode .quality-summary-card {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.15), rgba(124, 58, 237, 0.15));
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+body.dark-mode .quality-summary-card h4 {
+  color: #60a5fa;
+}
+
+body.dark-mode .quality-summary-card span {
+  color: var(--text-secondary);
+}
