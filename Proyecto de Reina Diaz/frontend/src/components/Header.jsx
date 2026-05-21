@@ -412,7 +412,7 @@ export default function Header() {
 
       {/* Settings Modal */}
       {showSettingsModal && (
-        <div className="modal-overlay" onClick={() => setShowSettingsModal(false)}>
+        <div className="modal-overlay">
           <div className="modal-content glass-card settings-modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '520px' }}>
             <div className="modal-header">
               <h2>{t('settings.title')}</h2>
