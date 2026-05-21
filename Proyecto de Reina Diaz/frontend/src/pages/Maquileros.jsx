@@ -293,33 +293,33 @@ export default function Maquileros() {
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.75rem', fontSize: '0.9rem' }}>
-                  <div style={{ background: '#f8fafc', padding: '0.75rem', borderRadius: '8px' }}>
-                    <strong style={{ color: '#64748b', fontSize: '0.75rem', display: 'block', textTransform: 'uppercase' }}>{t('maq.phoneLabel')}:</strong>
+                  <div className="profile-detail-item">
+                    <strong>{t('maq.phoneLabel')}:</strong>
                     <span>{selectedMaquilero.telefono || 'N/A'}</span>
                   </div>
-                  <div style={{ background: '#f8fafc', padding: '0.75rem', borderRadius: '8px' }}>
-                    <strong style={{ color: '#64748b', fontSize: '0.75rem', display: 'block', textTransform: 'uppercase' }}>{t('maq.personalNo')}:</strong>
+                  <div className="profile-detail-item">
+                    <strong>{t('maq.personalNo')}:</strong>
                     <span>{selectedMaquilero.personal || 'N/A'} {t('maq.personalValue')}</span>
                   </div>
-                  <div style={{ background: '#f8fafc', padding: '0.75rem', borderRadius: '8px' }}>
-                    <strong style={{ color: '#64748b', fontSize: '0.75rem', display: 'block', textTransform: 'uppercase' }}>{t('maq.machinery')}:</strong>
+                  <div className="profile-detail-item">
+                    <strong>{t('maq.machinery')}:</strong>
                     <span>{selectedMaquilero.maquinaria || 'N/A'}</span>
                   </div>
-                  <div style={{ background: '#f8fafc', padding: '0.75rem', borderRadius: '8px' }}>
-                    <strong style={{ color: '#64748b', fontSize: '0.75rem', display: 'block', textTransform: 'uppercase' }}>{t('maq.domicilio')}:</strong>
+                  <div className="profile-detail-item">
+                    <strong>{t('maq.domicilio')}:</strong>
                     <span>{selectedMaquilero.domicilio || 'N/A'}, {t('maq.colonia')}: {selectedMaquilero.colonia || 'N/A'}, {t('maq.cp')}: {selectedMaquilero.codigo_postal || 'N/A'}</span>
                   </div>
                 </div>
 
-                <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'linear-gradient(135deg, #eff6ff, #dbeafe)', borderRadius: '12px' }}>
-                   <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', color: '#1e40af' }}>{t('maq.qualitySummary')}</h4>
+                <div className="quality-summary-card">
+                   <h4>{t('maq.qualitySummary')}</h4>
                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem', fontSize: '0.85rem' }}>
                       <span>{t('maq.punctuality')}</span>
-                      <span style={{ fontWeight: 600 }}>{selectedMaquilero.rating?.punctuality}%</span>
+                      <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{selectedMaquilero.rating?.punctuality}%</span>
                    </div>
                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
                       <span>{t('maq.fulfillment')}</span>
-                      <span style={{ fontWeight: 600 }}>{selectedMaquilero.rating?.fulfillment}%</span>
+                      <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{selectedMaquilero.rating?.fulfillment}%</span>
                    </div>
                 </div>
               </div>
