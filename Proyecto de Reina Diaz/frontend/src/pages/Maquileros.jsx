@@ -217,7 +217,7 @@ export default function Maquileros() {
 
       {/* Modal Perfil */}
       {selectedMaquilero && (
-        <div className="modal-overlay" onClick={() => setSelectedMaquilero(null)}>
+        <div className="modal-overlay">
             <div className="modal-content glass-card" style={{ maxWidth: '1350px', width: '95%', position: 'relative', padding: '2rem 3.5rem' }} onClick={e => e.stopPropagation()}>
               {/* Botones de Navegación (Dentro del modal para evitar scrollbars) */}
               <button 
