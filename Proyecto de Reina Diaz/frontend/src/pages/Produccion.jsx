@@ -249,11 +249,11 @@ export default function Produccion() {
                   const isCancelado = o.estado === 'Cancelado';
                   const isTerminado = o.estado === 'Terminado';
                   
-                  let rowBg = '#f0fdf4'; 
+                  let rowClass = 'row-normal'; 
                   let delayIcon = null;
                   
                   if (isCancelado) {
-                    rowBg = 'transparent';
+                    rowClass = 'row-cancelado';
                   } else if (!isTerminado && o.fecha_fin) {
                     // Normalizar fechas a medianoche UTC para cálculo exacto de días de diferencia
                     const now = new Date();
@@ -266,16 +266,16 @@ export default function Produccion() {
                     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
                     
                     if (diffDays >= 1 && diffDays <= 3) {
-                      rowBg = '#fef9c3'; // Amarillo (retraso 1-3 días)
+                      rowClass = 'row-warning'; // Amarillo (retraso 1-3 días)
                       delayIcon = <AlertTriangle size={16} color="#ca8a04" title={`Retraso: ${diffDays} día(s)`} />;
                     } else if (diffDays >= 4) {
-                      rowBg = '#fee2e2'; // Rojo (retraso 4+ días)
+                      rowClass = 'row-danger'; // Rojo (retraso 4+ días)
                       delayIcon = <AlertCircle size={16} color="#dc2626" title={`Retraso: ${diffDays} día(s)`} />;
                     }
                   }
                   
                   return (
-                    <tr key={o.id} style={{ opacity: isCancelado ? 0.6 : 1, backgroundColor: rowBg }}>
+                    <tr key={o.id} className={rowClass} style={{ opacity: isCancelado ? 0.6 : 1 }}>
                       <td>#{orders.length - index}</td>
                       <td style={{ fontWeight: 600 }}>{o.maquilero_nombre}</td>
                       <td>
@@ -319,7 +319,7 @@ export default function Produccion() {
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                           <span style={{ fontWeight: 700, fontSize: '1rem' }}>{formatCurrency(o.precio_total)}</span>
                           {o.ajuste_tipo && o.ajuste_tipo !== 'ninguno' && (
-                            <span style={{ fontSize: '10px', padding: '2px 4px', borderRadius: '4px', width: 'fit-content', background: o.ajuste_tipo === 'bono' ? '#dcfce7' : '#fee2e2', color: o.ajuste_tipo === 'bono' ? '#166534' : '#991b1b', fontWeight: 600 }}>
+                            <span style={{ fontSize: '10px', padding: '2px 4px', borderRadius: '4px', width: 'fit-content', background: o.ajuste_tipo === 'bono' ? 'var(--badge-bono-bg)' : 'var(--badge-desc-bg)', color: o.ajuste_tipo === 'bono' ? 'var(--badge-bono-text)' : 'var(--badge-desc-text)', fontWeight: 600 }}>
                               {o.ajuste_tipo === 'bono' ? (t('prod.bonuses') === 'Bonuses' ? 'BONUS' : 'BONO') : (t('prod.discounts') === 'Discounts' ? 'DISC' : 'DESC')} {o.ajuste_porcentaje}%
                             </span>
                           )}
