@@ -392,7 +392,7 @@ export default function Produccion() {
 
       {/* Modal Nueva / Editar Orden */}
       {(isModalOpen || isEditModalOpen) && (
-        <div className="modal-overlay" onClick={() => { setIsModalOpen(false); setIsEditModalOpen(false); }}>
+        <div className="modal-overlay">
           <div className="modal-content glass-card" style={{ maxWidth: '640px' }} onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h2>{isEditModalOpen ? (canEdit ? t('prod.modalEditOrder') : t('prod.modalOrderDetails')) : t('prod.modalNewOrder')}</h2>

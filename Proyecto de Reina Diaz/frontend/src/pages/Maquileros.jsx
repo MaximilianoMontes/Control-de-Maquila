@@ -402,7 +402,7 @@ export default function Maquileros() {
 
       {/* Modal Crear / Editar */}
       {isModalOpen && (
-        <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
+        <div className="modal-overlay">
           <div className="modal-content glass-card" style={{ maxWidth: '640px' }} onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h2>{editMode ? t('maq.modalEditMaq') : t('maq.modalNewMaq')}</h2>
