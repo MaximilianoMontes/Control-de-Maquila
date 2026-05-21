@@ -1509,4 +1509,13 @@ body.compact-mode .btn {
   font-size: 0.875rem;
 }
 
+/* Spin animation for sync button */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.animate-spin {
+  animation: spin 1.2s linear infinite;
+}
+
 
