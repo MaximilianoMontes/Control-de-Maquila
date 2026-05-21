@@ -121,6 +121,14 @@ const translations = {
     'settings.currencyDesc': 'Selecciona la divisa para mostrar los montos monetarios.',
     'settings.exchangeRateLabel': 'Tipo de Cambio (1 USD = X MXN)',
     'settings.exchangeRateDesc': 'Establece el tipo de cambio del dólar en pesos para las conversiones.',
+    'settings.exchangeRateApiLabel': 'Proveedor de Tipo de Cambio (API)',
+    'settings.exchangeRateApiDesc': 'URL de internet para actualizar automáticamente el tipo de cambio.',
+    'settings.exchangeRateSyncBtn': 'Sincronizar con Internet',
+    'settings.exchangeRateSyncing': 'Sincronizando...',
+    'settings.exchangeRateSyncSuccess': 'Tipo de cambio actualizado con éxito a {rate} MXN desde internet.',
+    'settings.exchangeRateSyncError': 'Error al conectar con la API. Verifica el enlace o conexión.',
+    'settings.exchangeRateOnlyAdmin': '⚠️ Solo los administradores pueden modificar la configuración cambiaria.',
+    'settings.exchangeRateVerify': 'Verificar tipo de cambio oficial:',
     'settings.autoArchiveLabel': 'Auto-Archivado de Órdenes',
     'settings.autoArchiveDesc': 'Archiva automáticamente órdenes de producción terminadas y 100% pagadas.',
     'settings.autoArchiveEnabled': 'Habilitado',
@@ -506,6 +514,14 @@ const translations = {
     'settings.currencyDesc': 'Select the currency to display monetary amounts.',
     'settings.exchangeRateLabel': 'Exchange Rate (1 USD = X MXN)',
     'settings.exchangeRateDesc': 'Set the dollar-to-peso exchange rate for conversions.',
+    'settings.exchangeRateApiLabel': 'Exchange Rate Provider (API)',
+    'settings.exchangeRateApiDesc': 'Internet URL to update the exchange rate automatically.',
+    'settings.exchangeRateSyncBtn': 'Sync with Internet',
+    'settings.exchangeRateSyncing': 'Syncing...',
+    'settings.exchangeRateSyncSuccess': 'Exchange rate updated successfully to {rate} MXN from internet.',
+    'settings.exchangeRateSyncError': 'Error connecting to API. Verify link or connection.',
+    'settings.exchangeRateOnlyAdmin': '⚠️ Only administrators can modify exchange rate settings.',
+    'settings.exchangeRateVerify': 'Verify official exchange rate:',
     'settings.autoArchiveLabel': 'Auto-Archive Orders',
     'settings.autoArchiveDesc': 'Automatically archive finished and 100% paid production orders.',
     'settings.autoArchiveEnabled': 'Enabled',
@@ -786,7 +802,8 @@ export const SettingsProvider = ({ children }) => {
       accentColor: 'blue',
       autoArchive: 'disabled',
       currency: 'mxn',
-      exchangeRate: 20
+      exchangeRate: 20,
+      exchangeRateApiUrl: 'https://open.er-api.com/v6/latest/USD'
     };
     if (saved) {
       try {
