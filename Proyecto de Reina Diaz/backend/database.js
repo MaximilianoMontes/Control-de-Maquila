@@ -226,6 +226,39 @@ async function initializeDatabase() {
       console.error('Error al migrar roles:', e);
     }
 
+    try {
+      console.log('--- MIGRACIÓN MANUAL: Eliminación de órdenes duplicadas/erróneas ---');
+      
+      const [rows] = await connection.query(`
+        SELECT p.id, p.cantidad, p.cantidad_recibida, m.nombre, i.modelo
+        FROM produccion p
+        JOIN maquileros m ON p.maquilero_id = m.id
+        JOIN inventario i ON p.inventario_id = i.id
+        WHERE (m.nombre LIKE '%Jaqueline Perez%' AND i.modelo = '723138' AND p.cantidad = 1 AND (p.cantidad_recibida IS NULL OR p.cantidad_recibida = 0))
+           OR (m.nombre LIKE '%Roberto Mendez%' AND i.modelo = '554303' AND p.cantidad = 161 AND (p.cantidad_recibida IS NULL OR p.cantidad_recibida = 0))
+      `);
+      
+      console.log('Órdenes candidatas para eliminar:', rows);
+      
+      for (const row of rows) {
+        console.log(`Eliminando orden ID: ${row.id} (${row.modelo} - Maquilero: ${row.nombre})`);
+        
+        const [pagos] = await connection.query("SELECT id FROM pagos WHERE produccion_id = ?", [row.id]);
+        for (const p of pagos) {
+          await connection.query("DELETE FROM descuentos_personales WHERE pago_id = ?", [p.id]);
+        }
+        
+        await connection.query("DELETE FROM pagos WHERE produccion_id = ?", [row.id]);
+        await connection.query("DELETE FROM produccion WHERE id = ?", [row.id]);
+        
+        console.log(`Orden ID: ${row.id} eliminada con éxito.`);
+      }
+      
+      console.log('--- FIN DE MIGRACIÓN MANUAL ---');
+    } catch (e) {
+      console.error('Error en migración manual de eliminación:', e);
+    }
+
     connection.release();
     console.log('Database initialization complete.');
   } catch (error) {
