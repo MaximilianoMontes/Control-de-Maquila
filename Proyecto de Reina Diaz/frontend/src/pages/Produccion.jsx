@@ -297,6 +297,7 @@ export default function Produccion() {
                             {delayIcon}
                           </div>
                         </div>
+                      </td>
                              <td style={{ minWidth: '130px' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                           <span style={{ fontWeight: 700, fontSize: '1rem' }}>${Number(o.precio_total).toFixed(2)}</span>
