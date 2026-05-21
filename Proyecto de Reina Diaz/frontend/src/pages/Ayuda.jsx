@@ -24,60 +24,61 @@ const guides_es = {
       title: '¿Cómo funciona el flujo completo del sistema?',
       content: (
         <div>
-          <p>El sistema Maquila ERP está diseñado para llevar el control absoluto de tus procesos de confección, desde que ingresa la materia prima hasta que se paga al maquilero. El flujo se divide en 4 grandes etapas:</p>
+          <p>El sistema Maquila ERP está diseñado para llevar el control absoluto de tus procesos de confección, desde el registro de un lote de prendas cortadas hasta el stock final de prendas listas y la nómina de tus maquileros. El flujo principal se divide en 4 etapas:</p>
           
-          <div className="workflow-container" style={{ marginTop: '15px' }}>
-            <div className="workflow-title">Flujo de Trabajo del Software</div>
+          <div className="workflow-container" style={{ marginTop: '15px', marginBottom: '15px' }}>
+            <div className="workflow-title">Flujo de Trabajo de Confección</div>
             <div className="workflow-steps-flex">
               <div className="workflow-step-box">
                 <span className="workflow-step-num">1</span>
-                <div className="workflow-step-name">Inventario</div>
-                <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Ingreso de Rollos de Tela</span>
+                <div className="workflow-step-name">Cortes</div>
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Diseño y Variantes</span>
               </div>
               <div className="workflow-step-arrow"><ArrowRight size={16} /></div>
               <div className="workflow-step-box">
                 <span className="workflow-step-num">2</span>
-                <div className="workflow-step-name">Cortes</div>
-                <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Diseño y Desglose de Rollos</span>
+                <div className="workflow-step-name">Producción</div>
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Asignación y Costura</span>
               </div>
               <div className="workflow-step-arrow"><ArrowRight size={16} /></div>
               <div className="workflow-step-box">
                 <span className="workflow-step-num">3</span>
-                <div className="workflow-step-name">Producción</div>
-                <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Asignación y Confección</span>
+                <div className="workflow-step-name">Pagos / Nómina</div>
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Liquidación de Deuda</span>
               </div>
               <div className="workflow-step-arrow"><ArrowRight size={16} /></div>
               <div className="workflow-step-box">
                 <span className="workflow-step-num">4</span>
-                <div className="workflow-step-name">Nómina y Pagos</div>
-                <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Abonos y Liquidación</span>
+                <div className="workflow-step-name">Inventario Real</div>
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Prendas en Stock</span>
               </div>
             </div>
           </div>
           
           <ol>
-            <li><strong>Registro de Rollos:</strong> Se introduce la tela disponible en el menú de <strong>Inventario</strong> indicando yardas, tipo de tela, color y costo.</li>
-            <li><strong>Generación de Cortes:</strong> En la sección de <strong>Cortes</strong>, se selecciona un rollo del inventario y se desglosa cuántas piezas (ej: Playeras, Pantalones) saldrán del mismo. El rollo descuenta yardas automáticamente.</li>
-            <li><strong>Asignación de Producción:</strong> En <strong>Producción</strong> se asignan esas piezas cortadas a un Maquilero específico. El estado se controla desde "Pendiente" hasta "Terminado".</li>
-            <li><strong>Nómina y Saldos:</strong> Al terminar un trabajo, el sistema genera automáticamente una deuda a favor del maquilero en la sección de <strong>Pagos</strong>, donde podrás abonarle en efectivo o transferencia.</li>
+            <li><strong>Ingreso de Cortes:</strong> En la sección de <strong>Cortes</strong>, se registra el modelo/código de la prenda, especificando sus variantes de color y la cantidad de piezas cortadas listas para costura. También se ingresa el cliente, número de orden y tarifa unitaria de maquila.</li>
+            <li><strong>Asignación en Producción:</strong> En la sección de <strong>Producción</strong>, seleccionas un maquilero y le asignas un corte que esté disponible. El sistema carga automáticamente las piezas y el precio unitario. Se definen las fechas límite y el estado inicial es "En proceso".</li>
+            <li><strong>Liquidación y Saldos:</strong> Conforme el maquilero avanza, se registran las piezas recibidas en buen estado en la misma sección de Producción. Al marcar la orden como Terminada, el saldo a su favor se refleja en <strong>Pagos</strong>, donde podrás registrar abonos o la liquidación total (efectivo o transferencia), aplicar multas si hubo piezas defectuosas y descargar el comprobante de pago.</li>
+            <li><strong>Inventario de Stock Real:</strong> Una vez que una orden de producción ha sido marcada como Terminada y está 100% Pagada, las prendas pasan automáticamente a formar parte del <strong>Inventario Real</strong>, donde se lleva el control exacto de stock disponible y su valor financiero.</li>
           </ol>
         </div>
       ),
-      keywords: 'flujo completo general etapas software maquila procesos de confeccion'
+      keywords: 'flujo completo general etapas software maquila procesos de confeccion cortes produccion pagos inventario'
     },
     {
       title: 'Roles de usuario y accesos permitidos',
       content: (
         <div>
-          <p>El sistema cuenta con niveles de seguridad basados en roles para proteger la información financiera:</p>
+          <p>El sistema cuenta con niveles de seguridad basados en roles para proteger la información financiera y operacional:</p>
           <ul>
-            <li><strong>Admin (Administrador):</strong> Acceso total sin restricciones a todos los módulos, incluyendo la edición/eliminación de datos, visualización del historial completo de auditoría, reportes financieros y control de nómina/pagos.</li>
-            <li><strong>Producción (produccion1, produccion2):</strong> Tienen permitido gestionar maquileros, inventario, cortes y registrar el progreso de producción. Tienen acceso a la pestaña de pagos y nómina para llevar el control de abonos en el taller.</li>
-            <li><strong>Operadores generales:</strong> Pueden visualizar inventarios y estatus de producción pero con restricciones de eliminación y edición de flujos monetarios directos para resguardar la seguridad del negocio.</li>
+            <li><strong>Admin (Administrador):</strong> Acceso total sin restricciones a todos los módulos, incluyendo la creación, edición y eliminación de datos, visualización del historial de auditoría, generación de reportes globales y control total de nóminas y pagos.</li>
+            <li><strong>Producción (produccion1, produccion2):</strong> Tienen permitido gestionar maquileros, cortes, órdenes de producción, registrar piezas recibidas y realizar el control de pagos/abonos. No tienen acceso a la eliminación crítica ni a reportes financieros de auditoría completa.</li>
+            <li><strong>Inventario (inventario1):</strong> Encargado de registrar los cortes de prendas y sus variantes de color/cantidad, así como consultar y administrar la salida del stock final en el inventario real. No tienen acceso a nóminas, pagos ni reportes financieros.</li>
+            <li><strong>Operadores generales:</strong> Pueden visualizar inventarios y estatus de producción pero con restricciones de eliminación y edición de flujos financieros directos para resguardar la seguridad del negocio.</li>
           </ul>
         </div>
       ),
-      keywords: 'roles administrador produccion operario permisos seguridad accesos admin'
+      keywords: 'roles administrador produccion operario permisos seguridad accesos admin inventario'
     }
   ],
   maquileros: [
@@ -85,124 +86,121 @@ const guides_es = {
       title: '¿Cómo agregar un nuevo maquilero al sistema?',
       content: (
         <div>
-          <p>Sigue estos pasos sencillos para dar de alta a un trabajador de maquila:</p>
+          <p>Sigue estos pasos para registrar un nuevo trabajador de maquila o taller externo:</p>
           <ol>
             <li>Dirígete a la sección de <strong>Maquileros</strong> en el menú lateral.</li>
-            <li>Haz clic en el botón azul superior <strong>+ Nuevo Maquilero</strong>.</li>
-            <li>Completa el formulario con los siguientes campos requeridos:
+            <li>Haz clic en el botón superior <strong>+ Nuevo Maquilero</strong>.</li>
+            <li>Completa el formulario con los datos requeridos:
               <ul>
-                <li><strong>Nombre Completo:</strong> Nombre del maquilero o del taller externo.</li>
-                <li><strong>Contacto / Teléfono:</strong> Para comunicación directa.</li>
-                <li><strong>Tarifa Base por Pieza:</strong> La tarifa por defecto que se le pagará por confeccionar cada pieza (este valor se usará de forma predeterminada, pero se puede personalizar en cada orden de producción).</li>
+                <li><strong>Nombre Completo:</strong> Nombre o razón del maquilero (solo letras y espacios).</li>
+                <li><strong>Contacto / Teléfono:</strong> Teléfono para la coordinación de entregas.</li>
+                <li><strong>Número de Personal:</strong> Cantidad de costureros/ayudantes que trabajan en su taller.</li>
+                <li><strong>Maquinaria:</strong> Descripción de las máquinas disponibles (ej. overlock, rectas, ojaladora).</li>
+                <li><strong>Domicilio, Colonia y CP:</strong> Dirección física del taller maquilador.</li>
+                <li><strong>Foto de Perfil:</strong> Puedes subir una foto local para identificarlo visualmente.</li>
               </ul>
             </li>
-            <li>Presiona <strong>Guardar Maquilero</strong>. ¡Listo! El maquilero estará activo inmediatamente para recibir asignaciones en Producción.</li>
+            <li>Presiona <strong>Guardar</strong>. El maquilero estará activo inmediatamente para recibir órdenes en Producción.</li>
           </ol>
           <div className="step-alert">
-            <strong>💡 Consejo:</strong> Asegúrate de ingresar un teléfono de contacto correcto para poder coordinar las entregas y retiros de prendas eficientemente.
+            <strong>💡 Consejo:</strong> Mantener completos los datos de maquinaria y personal te ayudará a distribuir mejor las órdenes según la capacidad de cada taller.
           </div>
         </div>
       ),
-      keywords: 'agregar nuevo maquilero crear alta registrar tarifa base telefono'
+      keywords: 'agregar nuevo maquilero crear alta registrar maquinaria personal telefono'
     },
     {
       title: 'Entender el perfil y reporte de desempeño del maquilero',
       content: (
         <div>
-          <p>Cada maquilero cuenta con una hoja de perfil dedicada para auditar su efectividad:</p>
+          <p>Cada maquilero cuenta con una pantalla de perfil dedicada para auditar su desempeño operativo y su historial:</p>
           <ul>
             <li>Haz clic en la fila de cualquier maquilero en la tabla principal para abrir su <strong>Perfil de Desempeño</strong>.</li>
-            <li><strong>Métricas Clave del Perfil:</strong>
+            <li><strong>Métricas de Desempeño:</strong>
               <ul>
-                <li><strong>Eficiencia de Entrega:</strong> Porcentaje de órdenes terminadas a tiempo vs órdenes retrasadas.</li>
-                <li><strong>Total de Piezas Confeccionadas:</strong> Acumulado histórico de prendas entregadas con éxito.</li>
-                <li><strong>Balance de Deuda:</strong> Saldo pendiente por pagarle. Se actualiza en tiempo real al finalizar órdenes y registrar abonos.</li>
+                <li><strong>Calificación General:</strong> Puntuación calculada según su historial de cumplimiento.</li>
+                <li><strong>Puntualidad:</strong> Evalúa la cantidad de entregas a tiempo versus las órdenes que presentaron retrasos.</li>
+                <li><strong>Cumplimiento:</strong> Evalúa la integridad de las piezas terminadas entregadas.</li>
               </ul>
             </li>
-            <li><strong>Gráfica de Desempeño:</strong> Muestra de forma visual cuántas prendas ha terminado mes con mes para medir la capacidad productiva del taller.</li>
+            <li><strong>Historial de Maquila:</strong> Muestra la bitácora completa de trabajos que le han sido asignados, indicando el modelo, piezas enviadas versus piezas recibidas, total de nómina de la orden, multas aplicadas por costuras defectuosas, el neto resultante y la fecha de entrega.</li>
           </ul>
         </div>
       ),
-      keywords: 'perfil desempeño eficiencia entrega piezas confeccionadas balance deuda graficas'
+      keywords: 'perfil desempeño eficiencia entrega piezas historial saldo deudor calificacion puntualidad'
     }
   ],
   inventario: [
     {
-      title: 'Registrar un nuevo Rollo de Tela',
+      title: 'Control de Inventario Real (Prendas en Stock)',
       content: (
         <div>
-          <p>La tela es el punto de partida de toda la operación. Para ingresar nuevos rollos:</p>
-          <ol>
-            <li>Ingresa a la sección de <strong>Inventario</strong> en el menú lateral.</li>
-            <li>Haz clic en el botón superior <strong>+ Registrar Rollo</strong>.</li>
-            <li>Proporciona los datos del rollo:
-              <ul>
-                <li><strong>Código de Barras/Identificador:</strong> Un código único para el rollo (ej: ROLLO-MEZ-01).</li>
-                <li><strong>Tipo de Tela:</strong> Ej: Mezclilla, Algodón, Licra, Chifón.</li>
-                <li><strong>Color:</strong> Color específico del textil.</li>
-                <li><strong>Yardas Iniciales:</strong> Longitud total del rollo al llegar del proveedor.</li>
-                <li><strong>Costo por Yarda:</strong> Precio de compra unitario (ayuda a calcular los costos de fabricación automáticamente).</li>
-              </ul>
-            </li>
-            <li>Haz clic en <strong>Guardar Rollo</strong>.</li>
-          </ol>
-          <div className="step-alert">
-            <strong>💡 Importante:</strong> El sistema descontará yardas de este rollo cada vez que crees un <strong>Corte</strong> asociado. Si el rollo se queda sin yardas disponibles, se marcará automáticamente como agotado.
-          </div>
-        </div>
-      ),
-      keywords: 'registrar nuevo rollo tela yardas codigo color costo guardar rollo'
-    },
-    {
-      title: 'Gestionar el consumo de tela y retazos',
-      content: (
-        <div>
-          <p>El sistema lleva un control milimétrico del rendimiento de la tela:</p>
+          <p>El módulo de <strong>Inventario</strong> representa el stock físico final de prendas totalmente confeccionadas que ya han sido terminadas y pagadas al 100% en la sección de producción. Cada fila representa un lote de stock:</p>
           <ul>
-            <li><strong>Consumo en Cortes:</strong> Al crear un corte, especificas cuántas yardas se utilizaron. El sistema resta ese valor del total del rollo.</li>
-            <li><strong>Administrar Retazos:</strong> Si de un rollo queda un tramo pequeño que no completa una prenda completa pero es utilizable, el sistema permite registrarlo como retazo.</li>
-            <li><strong>Agotado Automático:</strong> Cuando el saldo de yardas disponibles en un rollo llega a 0, el rollo cambia su estatus a <strong>Agotado</strong> y ya no se mostrará como opción seleccionable para nuevos cortes, evitando errores operativos.</li>
+            <li><strong>Métricas de Stock:</strong> Visualiza la foto de la prenda, el código del modelo, el desglose de variantes de color con su cantidad exacta de piezas disponibles y el número de orden de procedencia.</li>
+            <li><strong>Valor Financiero:</strong> El sistema calcula en tiempo real el valor estimado del lote (Precio unitario × Piezas en stock) y muestra KPIs globales en la parte superior con la cantidad de modelos diferentes, el total acumulado de piezas en stock y el valor total financiero estimado de toda la mercancía.</li>
           </ul>
         </div>
       ),
-      keywords: 'consumo tela retazos yardas sobrantes agotado automatico'
+      keywords: 'inventario real stock prendas terminadas valor piezas total modelo color'
+    },
+    {
+      title: 'Registrar salidas y limpieza de Stock',
+      content: (
+        <div>
+          <p>Para mantener el inventario de stock exacto conforme vendes o despachas la mercancía terminada:</p>
+          <ol>
+            <li>Identifica el lote del modelo que ha sido vendido o retirado del stock general.</li>
+            <li>Haz clic en el botón de <strong>Eliminar</strong> (icono de papelera de color rojo) en la columna de acciones.</li>
+            <li>Confirma la eliminación. Las piezas y el valor financiero de ese lote se descontarán al instante de los KPI del inventario.</li>
+          </ol>
+          <div className="step-alert">
+            <strong>💡 Consejo:</strong> Realiza esta eliminación de stock periódicamente al entregar las prendas terminadas a tus clientes finales para que tus reportes financieros siempre coincidan con la realidad.
+          </div>
+        </div>
+      ),
+      keywords: 'salidas limpieza eliminar stock venta despacho actualizar piezas'
     }
   ],
   cortes: [
     {
-      title: '¿Cómo crear y registrar un nuevo Corte?',
+      title: '¿Cómo registrar un nuevo Corte?',
       content: (
         <div>
-          <p>El módulo de cortes asocia la materia prima con los diseños de prendas a fabricar. Pasos para realizar un corte:</p>
+          <p>El módulo de <strong>Cortes</strong> sirve para dar de alta nuevos lotes de diseño y las piezas que se han cortado y están listas para coser:</p>
           <ol>
-            <li>Dirígete a la sección de <strong>Cortes</strong>.</li>
-            <li>Haz clic en <strong>+ Nuevo Corte</strong>.</li>
-            <li>Selecciona el <strong>Rollo de Tela</strong> del cual vas a recortar las piezas. El sistema te mostrará cuántas yardas libres tiene ese rollo.</li>
-            <li>Introduce los detalles específicos del corte:
+            <li>Dirígete a la sección de <strong>Cortes</strong> en el menú lateral.</li>
+            <li>Haz clic en el botón superior <strong>+ Nuevo Ingreso</strong>. También puedes hacer clic en <strong>Importar Excel</strong> para cargar lotes masivamente desde un archivo `.xlsx`.</li>
+            <li>Introduce los datos del lote en el formulario:
               <ul>
-                <li><strong>Diseño / Modelo:</strong> Ej: Playera Polo Caballero, Jeans Slim Fit.</li>
-                <li><strong>Yardas Utilizadas:</strong> Cantidad exacta de tela consumida en el tendido y corte.</li>
-                <li><strong>Total de Piezas Resultantes:</strong> La cantidad de prendas físicas listas para coser que salieron del corte.</li>
+                <li><strong>Código del Producto / Modelo:</strong> El código único de diseño o modelo de la prenda.</li>
+                <li><strong>Colores y Cantidades (Variantes):</strong> Haz clic en <strong>+ Agregar Color</strong> para añadir dinámicamente cada color y especificar el número exacto de piezas resultantes del corte listas para confección.</li>
+                <li><strong>Cliente y No. Orden:</strong> Información de control comercial para rastrear a quién le pertenece el lote.</li>
+                <li><strong>Precio de Maquila:</strong> La tarifa unitaria base que se pagará al maquilero por confeccionar cada prenda.</li>
+                <li><strong>Imagen del Producto:</strong> Puedes subir un archivo local de imagen o ingresar una URL directa de internet.</li>
+                <li><strong>Observaciones / Notas:</strong> Detalles técnicos para costura, cierres, hilos, etc.</li>
               </ul>
             </li>
-            <li>Presiona <strong>Registrar Corte</strong>. En este momento, las yardas se descuentan del rollo de tela, y las piezas resultantes quedan en la lista de espera para ser asignadas a un maquilero en Producción.</li>
+            <li>Presiona <strong>Guardar Producto</strong>. El corte se registrará en el sistema y aparecerá con el estatus "Disponible" en color rojo.</li>
           </ol>
         </div>
       ),
-      keywords: 'crear registrar nuevo corte modelo diseño yardas piezas resultantes'
+      keywords: 'crear registrar nuevo corte modelo variantes color piezas precio maquila'
     },
     {
-      title: 'Estados de un Corte y Asignación',
+      title: 'Estados de un Corte, Reprogramación e Inicio de Producción',
       content: (
         <div>
-          <p>Los cortes pasan por dos estados clave:</p>
+          <p>Los lotes de corte tienen un ciclo de control transparente y acciones rápidas:</p>
           <ul>
-            <li><span className="badge badge-info">Disponible:</span> El corte ha sido registrado y sus piezas están en el taller listas para ser enviadas a costura. En el menú de asignación de producción, solo verás los cortes que estén en este estado.</li>
-            <li><span className="badge badge-success">Asignado:</span> El corte ya fue entregado a un maquilero y está actualmente en proceso de confección. Una vez asignado, se oculta de la lista de selección de nuevos trabajos para evitar doble asignación accidental.</li>
+            <li><strong>Disponible (Punto Rojo):</strong> El corte ha sido registrado y sus piezas están listas en el taller para costura, en espera de ser asignadas a un maquilero.</li>
+            <li><strong>Asignado (Punto Verde):</strong> El lote ya fue asignado a un maquilero y está en proceso de confección. Al asignarse, se oculta automáticamente de la pantalla de cortes libres para evitar dobles asignaciones.</li>
+            <li><strong>Iniciar Producción (Icono Verde de +):</strong> En la columna de acciones de un corte disponible, puedes hacer clic en este icono para ir directamente a la pantalla de Producción con el producto preseleccionado de forma automática.</li>
+            <li><strong>Reprogramar Producción (Icono Morado de Refrescar):</strong> Si necesitas realizar una nueva corrida de producción del mismo modelo, haz clic en el icono morado. El sistema mantendrá los datos base (modelo, precio de maquila, cliente, observaciones) pero te permitirá ingresar una nueva orden y nuevas variantes de color para un lote nuevo de forma ágil.</li>
           </ul>
         </div>
       ),
-      keywords: 'estados corte disponible asignado produccion piezas costura'
+      keywords: 'estados corte disponible asignado reprogramacion reprogramar corrida produccion'
     }
   ],
   produccion: [
@@ -210,86 +208,80 @@ const guides_es = {
       title: 'Asignar una Orden de Producción a un Maquilero',
       content: (
         <div>
-          <p>Una vez que tienes piezas cortadas, es hora de enviarlas a confeccionar:</p>
+          <p>Para enviar un lote de corte disponible a confección con un maquilero:</p>
           <ol>
-            <li>Ingresa a la sección de <strong>Producción</strong>.</li>
-            <li>Haz clic en <strong>+ Nueva Orden de Producción</strong>.</li>
-            <li>Selecciona el <strong>Maquilero</strong> que realizará el trabajo.</li>
-            <li>Selecciona el <strong>Corte Disponible</strong>. El sistema llenará automáticamente los campos de cantidad de piezas y tarifa base cargados previamente.</li>
-            <li>Personaliza si es necesario:
-              <ul>
-                <li><strong>Tarifa Específica:</strong> Puedes subir o bajar el costo de pago por pieza para esta orden en particular (ej: si es una prenda más compleja de lo normal).</li>
-                <li><strong>Fecha de Entrega Prometida:</strong> Para medir la puntualidad del maquilero.</li>
-              </ul>
-            </li>
-            <li>Presiona <strong>Asignar Orden</strong>. El estatus inicial será <span className="badge badge-warning">En Proceso</span>.</li>
+            <li>Ingresa a la sección de <strong>Producción</strong> en el menú lateral.</li>
+            <li>Haz clic en el botón superior <strong>+ Nueva Orden</strong>.</li>
+            <li>Selecciona el <strong>Maquilero</strong> responsable de la costura.</li>
+            <li>Selecciona el <strong>Producto del Inventario</strong> (corte disponible). El sistema cargará de inmediato la cantidad total de piezas y el precio unitario del corte.</li>
+            <li>Ingresa la <strong>Fecha Inicio</strong> y la <strong>Fecha Entrega Est.</strong> (fecha de entrega prometida).</li>
+            <li><strong>Ajustes del Precio:</strong> Si lo deseas, puedes aplicar un ajuste inicial (Bono o Descuento) que altere la tarifa unitaria en un porcentaje específico.</li>
+            <li>Presiona <strong>Crear Orden</strong>. El estatus inicial de la orden será <strong>En proceso</strong>.</li>
           </ol>
         </div>
       ),
-      keywords: 'asignar orden produccion maquilero corte disponible tarifa especifica fecha entrega'
+      keywords: 'asignar orden produccion maquilero corte disponible fecha inicio fecha entrega'
     },
     {
-      title: 'Control de Estados y Lógica de Archivado Automático',
+      title: 'Seguimiento, Ajustes, Recibo de Piezas y Archivado',
       content: (
         <div>
-          <p>Las órdenes de producción tienen un ciclo de vida controlado. La transición de estados es muy sencilla:</p>
-          <ol>
-            <li><strong>En Proceso:</strong> El maquilero tiene el material en su taller y lo está trabajando.</li>
-            <li><strong>Terminado (Entrega):</strong> Cuando el maquilero regresa las prendas cosidas, buscas la orden en la tabla de producción y haces clic en <strong>Finalizar Orden</strong>.
-              <ul>
-                <li>Introduce la cantidad de piezas recibidas en buen estado.</li>
-                <li>El sistema calcula el <strong>Monto Total a Pagar</strong> (Piezas recibidas × Tarifa de la orden).</li>
-                <li>Este monto se suma automáticamente a la deuda a favor del maquilero en la sección de nómina.</li>
-              </ul>
-            </li>
-          </ol>
-          <div className="step-alert" style={{ borderLeftColor: 'var(--success-color)', background: 'rgba(16, 185, 129, 0.05)' }}>
-            <strong>⚡ Lógica de Archivado Automático:</strong> Para mantener tu pantalla de producción limpia y ágil, el sistema cuenta con un archivado automático inmediato. Tan pronto como una orden es marcada como <strong>Terminado</strong> y su saldo queda <strong>Completamente Pagado</strong>, la orden se mueve inmediatamente al módulo de <strong>Historial</strong> de forma definitiva, liberando espacio en tu panel de control de producción del día a día.
-          </div>
+          <p>Las órdenes de producción cuentan con herramientas dinámicas de seguimiento e inline:</p>
+          <ul>
+            <li><strong>Piezas Recibidas (Recibidas):</strong> Conforme el maquilero entregue prendas terminadas, puedes ingresar de forma directa (inline) la cantidad de piezas aprobadas en la columna "Recibidas" de la tabla. Esto actualizará el balance final de la nómina de la orden.</li>
+            <li><strong>Bonos y Descuentos:</strong> Puedes seleccionar ajustes en la columna correspondiente para aplicar un <strong>Bono</strong> (+5%, +10%, +15%, +20%) sobre el costo por costura excelente o entrega anticipada, o bien un <strong>Descuento</strong> (-5%, -10%, -15%, -20%) por costuras defectuosas u otros motivos.</li>
+            <li><strong>Agregar Prórrogas (Icono de Calendario):</strong> Si el maquilero solicita más tiempo, puedes hacer clic en el icono de calendario e ingresar la cantidad de días adicionales para extender la fecha de entrega original.</li>
+            <li><strong>Terminar Orden (Icono de Check):</strong> Finaliza el trabajo. Esto acumula automáticamente el saldo de la nómina a favor del maquilero (Piezas recibidas × Tarifa con ajustes aplicados) en la sección de Pagos.</li>
+            <li><strong>Archivado Automático:</strong> Tan pronto como una orden de producción es marcada como <strong>Terminado</strong> y su saldo queda <strong>Completamente Pagado</strong>, el sistema la mueve de forma automática e inmediata al Historial para mantener la pantalla de producción despejada.</li>
+          </ul>
         </div>
       ),
-      keywords: 'control estados en proceso terminado finalizado orden archivado automatico inmediato'
+      keywords: 'seguimiento terminado cancelar archivado automatico bonos descuentos prórroga piezas recibidas'
     }
   ],
   pagos: [
     {
-      title: 'Registrar un Pago o Abono a un Maquilero',
+      title: 'Registrar un Pago o Abono de Nómina',
       content: (
         <div>
-          <p>El control financiero es crucial. Para liquidar las deudas de nómina de tus maquileros:</p>
+          <p>El control financiero de las nóminas de maquila se realiza de forma transparente:</p>
           <ol>
             <li>Ingresa a la sección de <strong>Pagos</strong> en el menú lateral.</li>
-            <li>Verás la lista de maquileros con su deuda acumulada en tiempo real.</li>
-            <li>Haz clic en el botón <strong>Registrar Pago / Abono</strong> al lado del nombre del maquilero correspondiente.</li>
-            <li>Completa los datos del abono:
+            <li>En la sección superior <strong>Generar Pago</strong>, selecciona la <strong>Orden</strong> (orden de producción) correspondiente del maquilero.</li>
+            <li>El sistema desplegará de inmediato:
               <ul>
-                <li><strong>Monto a Pagar:</strong> La cantidad de dinero entregada.</li>
-                <li><strong>Método de Pago:</strong> Selecciona entre <strong>Efectivo</strong> (caja del taller) o <strong>Depósito/Transferencia Bancaria</strong>.</li>
-                <li><strong>Referencia:</strong> Si es depósito bancario, anota el número de folio o código de rastreo SPEI.</li>
+                <li><strong>Costo Total de Orden:</strong> El costo calculado (Piezas recibidas × Tarifa ajustada).</li>
+                <li><strong>Ya Pagado:</strong> La suma de los abonos que ya se han registrado para esta orden.</li>
+                <li><strong>Multas Pendientes:</strong> Descuentos personales pendientes por prendas defectuosas registradas a este maquilero.</li>
+                <li><strong>A Pagar (Neto):</strong> El monto neto a entregar al maquilero en tiempo real (Costo Total - Ya Pagado - Multas Pendientes).</li>
               </ul>
             </li>
-            <li>Haz clic en <strong>Confirmar Pago</strong>. El sistema descontará el monto del saldo total del maquilero al instante, actualizará su balance y guardará el comprobante digital en el historial.</li>
+            <li>Selecciona el tipo de pago: <strong>Abono</strong> (pago parcial) o <strong>Pago Completo (Liquidación)</strong>.</li>
+            <li>Ingresa la cantidad entregada en <strong>Monto a Entregar ($)</strong> y presiona <strong>Registrar Pago</strong>.</li>
+            <li><strong>Imprimir Comprobante:</strong> En la tabla inferior "Historial de Pagos de la Orden", haz clic en el icono de la impresora en la fila del pago para descargar e imprimir el comprobante oficial físico o en PDF.</li>
           </ol>
         </div>
       ),
-      keywords: 'registrar pago abono maquilero metodo efectivo deposito transferencia saldo balance'
+      keywords: 'registrar pago abono maquilero liquidacion neto a pagar imprimir comprobante recibo'
     },
     {
-      title: 'Cálculo de Nómina y Saldo Acumulado',
+      title: 'Descuentos Personales por Prendas Defectuosas (Multas)',
       content: (
         <div>
-          <p>¿Cómo se calcula el dinero exacto que se le debe a cada maquilero?</p>
-          <p>El sistema utiliza una fórmula matemática transparente basada en eventos reales:</p>
-          <div style={{ background: '#f1f5f9', padding: '12px 18px', borderRadius: '8px', fontFamily: 'monospace', fontSize: '0.85rem', margin: '10px 0', borderLeft: '3px solid var(--primary-color)' }}>
-            Saldo Pendiente = (Suma de Órdenes Terminadas × Tarifa Pactada) - (Suma de Pagos y Abonos Registrados)
+          <p>Si un maquilero entrega prendas dañadas, rotas o mal confeccionadas, puedes registrar un cargo en la sección inferior de <strong>Descuento Personal</strong>:</p>
+          <ol>
+            <li>Selecciona el <strong>Maquilero</strong> afectado.</li>
+            <li>Selecciona el <strong>Modelo / Producto</strong> de corte asociado al daño.</li>
+            <li>Ingresa el <strong>Motivo del Error / Hallazgo</strong> (ej. costura rota en mangas, tela rota).</li>
+            <li>Indica la cantidad de <strong>Piezas Malas</strong> y el <strong>Monto Total ($)</strong> del descuento monetario.</li>
+            <li>Presiona <strong>Registrar Descuento</strong>.</li>
+          </ol>
+          <div className="step-alert" style={{ borderLeftColor: 'var(--danger-color)', background: 'rgba(239, 68, 68, 0.05)' }}>
+            <strong>⚠️ Descuento Automático Transparente:</strong> El descuento quedará registrado con el estado "Pendiente" y se restará automáticamente del neto a pagar la próxima vez que registres un abono o liquidación para cualquier orden de ese maquilero. Una vez cobrado en el pago, su estatus cambiará automáticamente a "Cobrado".
           </div>
-          <ul>
-            <li><strong>Órdenes en proceso:</strong> No generan saldo a pagar hasta que el maquilero entrega las prendas confeccionadas y son aprobadas en el sistema.</li>
-            <li><strong>Auditoría de Cuenta:</strong> En la misma sección de pagos, puedes desplegar el estado de cuenta completo del maquilero para mostrarle el desglose transparente de qué órdenes se le están pagando y qué abonos ha recibido a la fecha.</li>
-          </ul>
         </div>
       ),
-      keywords: 'calculo nomina saldo acumulado formula estado de cuenta auditoria'
+      keywords: 'descuentos personales prendas defectuosas multas piezas malas motivo cargo saldo'
     }
   ]
 };
@@ -300,60 +292,61 @@ const guides_en = {
       title: 'How does the complete system workflow work?',
       content: (
         <div>
-          <p>The Maquila ERP system is designed to give you absolute control of your garment production processes, from the entry of raw materials to paying the tailors. The workflow is divided into 4 major stages:</p>
+          <p>The Maquila ERP system is designed to give you absolute control of your garment production processes, from the initial cut registration to the final stock of ready garments and tailors\' payroll. The workflow is divided into 4 main stages:</p>
           
-          <div className="workflow-container" style={{ marginTop: '15px' }}>
-            <div className="workflow-title">Software Workflow</div>
+          <div className="workflow-container" style={{ marginTop: '15px', marginBottom: '15px' }}>
+            <div className="workflow-title">Garment Production Workflow</div>
             <div className="workflow-steps-flex">
               <div className="workflow-step-box">
                 <span className="workflow-step-num">1</span>
-                <div className="workflow-step-name">Inventory</div>
-                <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Fabric Roll Entry</span>
+                <div className="workflow-step-name">Cuts</div>
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Design & Variants</span>
               </div>
               <div className="workflow-step-arrow"><ArrowRight size={16} /></div>
               <div className="workflow-step-box">
                 <span className="workflow-step-num">2</span>
-                <div className="workflow-step-name">Cuts</div>
-                <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Design & Roll Breakdown</span>
+                <div className="workflow-step-name">Production</div>
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Assignment & Sewing</span>
               </div>
               <div className="workflow-step-arrow"><ArrowRight size={16} /></div>
               <div className="workflow-step-box">
                 <span className="workflow-step-num">3</span>
-                <div className="workflow-step-name">Production</div>
-                <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Assignment & Assembly</span>
+                <div className="workflow-step-name">Payments / Payroll</div>
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Debt Settlement</span>
               </div>
               <div className="workflow-step-arrow"><ArrowRight size={16} /></div>
               <div className="workflow-step-box">
                 <span className="workflow-step-num">4</span>
-                <div className="workflow-step-name">Payroll & Payments</div>
-                <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Deposits & Settlement</span>
+                <div className="workflow-step-name">Real Inventory</div>
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Garments in Stock</span>
               </div>
             </div>
           </div>
           
           <ol>
-            <li><strong>Register Rolls:</strong> Available fabric is entered in the <strong>Inventory</strong> menu, indicating yards, fabric type, color, and cost.</li>
-            <li><strong>Generate Cuts:</strong> In the <strong>Cuts</strong> section, a fabric roll is selected from inventory and broken down into how many pieces (e.g., T-shirts, Pants) will be produced from it. Yards are deducted from the roll automatically.</li>
-            <li><strong>Production Assignment:</strong> In <strong>Production</strong>, these cut pieces are assigned to a specific Tailor. The status is managed from "Pending" to "Finished".</li>
-            <li><strong>Payroll and Balances:</strong> Upon completing a job, the system automatically generates a debt in favor of the tailor in the <strong>Payments</strong> section, where you can pay them via cash or transfer.</li>
+            <li><strong>Register Cuts:</strong> In the <strong>Cuts</strong> section, register the design model/code of the garment, specifying its color variants and the exact number of pieces cut for assembly. You also input the client, order number, and unit maquila piece rate.</li>
+            <li><strong>Production Assignment:</strong> In <strong>Production</strong>, select a tailor and assign them an available cut. The system automatically loads the pieces and unit rate. Set deadlines and the initial status is "In Progress".</li>
+            <li><strong>Settlement & Balances:</strong> As the tailor works, record the number of pieces received in good condition in the same Production section. Upon marking the order as Finished, their pending wage balance is updated in the <strong>Payments</strong> section, where you can register deposits (Partial or Full Settlement), apply penalties for defective pieces, and download/print the payment receipt.</li>
+            <li><strong>Real Stock Inventory:</strong> Once a production order is marked as Finished and is 100% Paid, the finished garments automatically move to <strong>Real Inventory</strong>, where you keep exact track of available stock and its total financial value.</li>
           </ol>
         </div>
       ),
-      keywords: 'complete workflow general stages software maquila garment processes'
+      keywords: 'complete workflow general stages software maquila garment processes cuts production payments inventory'
     },
     {
       title: 'User roles and allowed access',
       content: (
         <div>
-          <p>The system has role-based security levels to protect financial information:</p>
+          <p>The system has role-based security levels to protect financial and operational information:</p>
           <ul>
-            <li><strong>Admin (Administrator):</strong> Total unrestricted access to all modules, including editing/deleting data, viewing the complete audit history, financial reports, and payroll/payment controls.</li>
-            <li><strong>Production (produccion1, produccion2):</strong> Allowed to manage tailors, inventory, cuts, and register production progress. They have access to the payments and payroll tab to keep track of deposits in the workshop.</li>
-            <li><strong>General Operators:</strong> Can view inventory and production status but with restrictions on deleting and editing direct monetary flows to safeguard the business.</li>
+            <li><strong>Admin (Administrator):</strong> Total unrestricted access to all modules, including creating, editing, and deleting data, viewing audit logs, global financial reports, and complete control over payroll, payments, and discounts.</li>
+            <li><strong>Production (produccion1, produccion2):</strong> Allowed to manage tailors, cuts, production orders, record received pieces, and manage payments/deposits. They do not have access to critical deletions or full financial audit logs.</li>
+            <li><strong>Inventory (inventario1):</strong> Responsible for registering garment cuts and color/quantity variants, as well as consulting and managing finished physical stock outputs in the real inventory. No access to payroll, payments, or financial reports.</li>
+            <li><strong>General Operators:</strong> Can view inventory and production status but with restrictions on deleting and editing direct financial flows to safeguard the business.</li>
           </ul>
         </div>
       ),
-      keywords: 'roles administrator production operator permissions security access admin'
+      keywords: 'roles administrator production operator permissions security access admin inventory'
     }
   ],
   maquileros: [
@@ -361,124 +354,121 @@ const guides_en = {
       title: 'How to add a new tailor to the system?',
       content: (
         <div>
-          <p>Follow these simple steps to register a new maquila worker:</p>
+          <p>Follow these steps to register a new tailor or external workshop:</p>
           <ol>
             <li>Go to the <strong>Tailors</strong> section in the sidebar menu.</li>
-            <li>Click the blue top button <strong>+ New Tailor</strong>.</li>
-            <li>Complete the form with the following required fields:
+            <li>Click the top button <strong>+ New Tailor</strong>.</li>
+            <li>Complete the form with the required fields:
               <ul>
-                <li><strong>Full Name:</strong> Name of the tailor or external workshop.</li>
-                <li><strong>Contact / Phone:</strong> For direct communication.</li>
-                <li><strong>Base Rate per Piece:</strong> The default rate to be paid for assembling each piece (this value will be used by default but can be customized in each production order).</li>
+                <li><strong>Full Name:</strong> Name or business name of the tailor (letters and spaces only).</li>
+                <li><strong>Contact / Phone:</strong> Phone number for direct logistics and delivery coordination.</li>
+                <li><strong>Staff Members:</strong> Number of tailors/assistants working in their workshop.</li>
+                <li><strong>Machinery:</strong> Description of available machines (e.g., overlock, straight, buttonhole).</li>
+                <li><strong>Address, Colonia, and CP:</strong> Physical address details of the workshop.</li>
+                <li><strong>Profile Photo:</strong> Upload a local image file of the tailor for quick visual identification.</li>
               </ul>
             </li>
-            <li>Press <strong>Save Tailor</strong>. Done! The tailor will be active immediately to receive production assignments.</li>
+            <li>Press <strong>Save</strong>. The tailor will be active immediately to receive orders in Production.</li>
           </ol>
           <div className="step-alert">
-            <strong>💡 Tip:</strong> Make sure to enter a correct contact phone number to coordinate garment deliveries and pickups efficiently.
+            <strong>💡 Tip:</strong> Keeping machinery and staff data complete helps you distribute orders better according to the capacity of each workshop.
           </div>
         </div>
       ),
-      keywords: 'add new tailor create register base rate phone number'
+      keywords: 'add new tailor create register machinery staff phone contact'
     },
     {
       title: "Understanding the tailor's profile and performance report",
       content: (
         <div>
-          <p>Each tailor has a dedicated profile page to audit their effectiveness:</p>
+          <p>Each tailor has a dedicated profile screen to audit their operational performance and history:</p>
           <ul>
             <li>Click on any tailor's row in the main table to open their <strong>Performance Profile</strong>.</li>
-            <li><strong>Key Profile Metrics:</strong>
+            <li><strong>Performance Metrics:</strong>
               <ul>
-                <li><strong>Delivery Efficiency:</strong> Percentage of orders completed on time vs delayed orders.</li>
-                <li><strong>Total Pieces Assembled:</strong> Historical accumulated total of successfully delivered garments.</li>
-                <li><strong>Debt Balance:</strong> Pending balance to be paid to them. It updates in real time when completing orders and registering payments.</li>
+                <li><strong>General Rating:</strong> Calculated score based on their history of quality and punctuality.</li>
+                <li><strong>Punctuality:</strong> Evaluates on-time deliveries versus delayed orders.</li>
+                <li><strong>Fulfillment:</strong> Tracks the integrity of finished pieces delivered.</li>
               </ul>
             </li>
-            <li><strong>Performance Graph:</strong> Visually displays how many garments they have completed month-by-month to measure the workshop's productive capacity.</li>
+            <li><strong>Maquila History:</strong> Displays a complete log of assigned orders, indicating model, sent vs received pieces, total payroll cost, discounts applied for defective garments, net payout, and delivery date.</li>
           </ul>
         </div>
       ),
-      keywords: 'profile performance delivery efficiency pieces assembled debt balance graphs'
+      keywords: 'profile performance efficiency delivery pieces history debt balance rating punctuality'
     }
   ],
   inventario: [
     {
-      title: 'Register a new Fabric Roll',
+      title: 'Real Inventory Control (Garments in Stock)',
       content: (
         <div>
-          <p>Fabric is the starting point of the whole operation. To enter new rolls:</p>
-          <ol>
-            <li>Go to the <strong>Inventory</strong> section in the sidebar menu.</li>
-            <li>Click the top button <strong>+ Register Roll</strong>.</li>
-            <li>Provide the roll details:
-              <ul>
-                <li><strong>Barcode/Identifier:</strong> A unique code for the roll (e.g., ROLLO-MEZ-01).</li>
-                <li><strong>Fabric Type:</strong> e.g., Denim, Cotton, Lycra, Chiffon.</li>
-                <li><strong>Color:</strong> Specific color of the textile.</li>
-                <li><strong>Initial Yards:</strong> Total length of the roll upon delivery from the supplier.</li>
-                <li><strong>Cost per Yard:</strong> Unit purchase price (helps calculate manufacturing costs automatically).</li>
-              </ul>
-            </li>
-            <li>Click <strong>Save Roll</strong>.</li>
-          </ol>
-          <div className="step-alert">
-            <strong>⚠️ Important:</strong> The system will deduct yards from this roll every time you create an associated <strong>Cut</strong>. If the roll runs out of available yards, it will be automatically marked as out of stock.
-          </div>
-        </div>
-      ),
-      keywords: 'register new fabric roll yards barcode color cost save roll'
-    },
-    {
-      title: 'Managing fabric consumption and scraps',
-      content: (
-        <div>
-          <p>The system keeps a precise track of fabric yield:</p>
+          <p>The **Inventory** module represents the final physical stock of fully assembled garments that have been completed and 100% paid in the production section. Each row represents a stock batch:</p>
           <ul>
-            <li><strong>Consumption in Cuts:</strong> When creating a cut, you specify how many yards were used. The system subtracts that value from the roll total.</li>
-            <li><strong>Manage Scraps:</strong> If a small piece remains from a roll that doesn't make a full garment but is still usable, the system allows you to register it as scrap.</li>
-            <li><strong>Automatic Out of Stock:</strong> When the balance of available yards in a roll reaches 0, the roll status changes to <strong>Out of Stock</strong> and will no longer appear as a selectable option for new cuts, preventing operational errors.</li>
+            <li><strong>Stock Metrics:</strong> View the garment photo, model code, detailed color variants with their exact available pieces, and the original order number of origin.</li>
+            <li><strong>Financial Value:</strong> The system calculates the estimated value of the batch (Unit Price × Pieces in stock) in real time and displays global KPIs at the top with different models, total accumulated stock items, and estimated total financial value of all merchandise.</li>
           </ul>
         </div>
       ),
-      keywords: 'fabric consumption scraps yards remaining automatic out of stock'
+      keywords: 'real inventory stock garments ready value total pieces model color'
+    },
+    {
+      title: 'Registering outputs and stock cleanup',
+      content: (
+        <div>
+          <p>To keep the stock inventory exact as you sell or dispatch finished merchandise:</p>
+          <ol>
+            <li>Identify the batch model that has been sold or removed from general stock.</li>
+            <li>Click the **Delete** button (red trash icon) in the actions column.</li>
+            <li>Confirm deletion. The pieces and total financial value will be immediately deducted from global KPIs.</li>
+          </ol>
+          <div className="step-alert">
+            <strong>💡 Tip:</strong> It is recommended to perform this stock cleanup periodically when delivering finished garments to final customers to keep reports accurate.
+          </div>
+        </div>
+      ),
+      keywords: 'outputs cleanup delete stock sales dispatch update pieces'
     }
   ],
   cortes: [
     {
-      title: 'How to create and register a new Cut?',
+      title: 'How to register a new Cut?',
       content: (
         <div>
-          <p>The cuts module associates raw material with the garment designs to be manufactured. Steps to perform a cut:</p>
+          <p>The cuts module is used to register new design batches and the pieces that have been cut and are ready for sewing:</p>
           <ol>
-            <li>Go to the <strong>Cuts</strong> section.</li>
-            <li>Click <strong>+ New Cut</strong>.</li>
-            <li>Select the <strong>Fabric Roll</strong> from which you will cut the pieces. The system will show you how many free yards that roll has.</li>
-            <li>Enter the specific details of the cut:
+            <li>Go to the <strong>Cuts</strong> section in the sidebar menu.</li>
+            <li>Click the top button <strong>+ New Entry</strong>. You can also click <strong>Import Excel</strong> to batch load cuts from a `.xlsx` file.</li>
+            <li>Enter the details in the form:
               <ul>
-                <li><strong>Design / Model:</strong> e.g., Men's Polo Shirt, Slim Fit Jeans.</li>
-                <li><strong>Yards Used:</strong> Exact amount of fabric consumed during spreading and cutting.</li>
-                <li><strong>Total Resulting Pieces:</strong> The quantity of physical ready-to-sew garments that came out of the cut.</li>
+                <li><strong>Product Code / Model:</strong> The unique design or model code of the garment.</li>
+                <li><strong>Colors & Quantities (Variants):</strong> Click <strong>+ Add Color</strong> to dynamically add each color and specify the exact number of pieces ready for sewing.</li>
+                <li><strong>Client & Order No.:</strong> Commercial tracking information to identify the owner of the batch.</li>
+                <li><strong>Maquila Price:</strong> The suggested base unit piece rate to pay the tailor for sewing each garment.</li>
+                <li><strong>Product Image:</strong> Upload a local image file or enter a direct internet URL link.</li>
+                <li><strong>Notes / Comments:</strong> Technical details for sewing, zippers, threads, etc.</li>
               </ul>
             </li>
-            <li>Press <strong>Register Cut</strong>. At this point, the yards are deducted from the fabric roll, and the resulting pieces remain on the waiting list to be assigned to a tailor in Production.</li>
+            <li>Press <strong>Save Product</strong>. The cut will be registered and marked as "Available" in red.</li>
           </ol>
         </div>
       ),
-      keywords: 'create register new cut model design yards resulting pieces'
+      keywords: 'create register new cut model variants color pieces maquila rate'
     },
     {
-      title: 'States of a Cut and Assignment',
+      title: 'States of a Cut, Reprogramming, and Starting Production',
       content: (
         <div>
-          <p>Cuts go through two key states:</p>
+          <p>Cut batches have a transparent control cycle and quick actions:</p>
           <ul>
-            <li><span className="badge badge-info">Available:</span> The cut has been registered and its pieces are in the workshop ready to be sent to sewing. In the production assignment menu, you will only see cuts that are in this state.</li>
-            <li><span className="badge badge-success">Assigned:</span> The cut has already been delivered to a tailor and is currently in the assembly process. Once assigned, it is hidden from the selection list for new jobs to avoid accidental double assignment.</li>
+            <li><strong>Available (Red Dot):</strong> The cut has been registered and its pieces are in the workshop ready to be assigned to a tailor.</li>
+            <li><strong>Assigned (Green Dot):</strong> The batch has already been delivered to a tailor and is in assembly. Once assigned, it is automatically hidden from the open cuts screen to prevent duplicate assignments.</li>
+            <li><strong>Start Production (Green + Icon):</strong> In the actions column of an available cut, click this icon to go directly to the Production screen with the product automatically preselected.</li>
+            <li><strong>Reprogram Production (Purple Refresh Icon):</strong> If you need to perform a new production run of the same model, click the purple icon. The system will keep base data (model, maquila price, client, notes) but let you enter a new order number and new color variants for a new batch quickly.</li>
           </ul>
         </div>
       ),
-      keywords: 'cut states available assigned production pieces sewing'
+      keywords: 'cut states available assigned reprogramming reprogram production run'
     }
   ],
   produccion: [
@@ -486,86 +476,80 @@ const guides_en = {
       title: 'Assign a Production Order to a Tailor',
       content: (
         <div>
-          <p>Once you have cut pieces, it's time to send them to be assembled:</p>
+          <p>To send an available cut batch to be assembled by a tailor:</p>
           <ol>
-            <li>Go to the <strong>Production</strong> section.</li>
-            <li>Click <strong>+ New Production Order</strong>.</li>
-            <li>Select the <strong>Tailor</strong> who will perform the work.</li>
-            <li>Select the <strong>Available Cut</strong>. The system will automatically fill in the number of pieces and the base rate loaded previously.</li>
-            <li>Customize if necessary:
-              <ul>
-                <li><strong>Specific Rate:</strong> You can raise or lower the pay rate per piece for this particular order (e.g., if it's a more complex garment than normal).</li>
-                <li><strong>Promised Delivery Date:</strong> To measure the tailor's punctuality.</li>
-              </ul>
-            </li>
-            <li>Press <strong>Assign Order</strong>. The initial status will be <span className="badge badge-warning">In Process</span>.</li>
+            <li>Go to the <strong>Production</strong> section in the sidebar.</li>
+            <li>Click the top button <strong>+ New Order</strong>.</li>
+            <li>Select the <strong>Tailor</strong> responsible for the work.</li>
+            <li>Select the <strong>Inventory Product</strong> (available cut). The system will load the total pieces and unit price automatically.</li>
+            <li>Enter the <strong>Start Date</strong> and the <strong>Est. Delivery Date</strong> (promised delivery date).</li>
+            <li><strong>Rate Adjustments:</strong> If desired, apply an initial adjustment (Bonus or Discount) to alter the unit piece rate by a specific percentage.</li>
+            <li>Press <strong>Create Order</strong>. The initial status will be <strong>In Progress</strong>.</li>
           </ol>
         </div>
       ),
-      keywords: 'assign production order tailor available cut specific rate delivery date'
+      keywords: 'assign production order tailor available cut start date delivery date'
     },
     {
-      title: 'Status Control and Automatic Archiving Logic',
+      title: 'Monitoring, Adjustments, Receiving Pieces, and Archiving',
       content: (
         <div>
-          <p>Production orders have a controlled lifecycle. The status transition is very simple:</p>
-          <ol>
-            <li><strong>In Process:</strong> The tailor has the material in their workshop and is working on it.</li>
-            <li><strong>Finished (Delivery):</strong> When the tailor returns the sewn garments, you find the order in the production table and click <strong>Finish Order</strong>.
-              <ul>
-                <li>Enter the number of pieces received in good condition.</li>
-                <li>The system calculates the <strong>Total Amount to Pay</strong> (Received pieces × Order rate).</li>
-                <li>This amount is automatically added to the debt in favor of the tailor in the payroll section.</li>
-              </ul>
-            </li>
-          </ol>
-          <div className="step-alert" style={{ borderLeftColor: 'var(--success-color)', background: 'rgba(16, 185, 129, 0.05)' }}>
-            <strong>⚡ Automatic Archiving Logic:</strong> To keep your production screen clean and agile, the system features immediate automatic archiving. As soon as an order is marked as <strong>Finished</strong> and its balance is <strong>Fully Paid</strong>, the order is immediately moved to the <strong>History</strong> module permanently, freeing up space in your day-to-day production control panel.
-          </div>
+          <p>Production orders have a dynamic lifecycle with inline and monitoring tools:</p>
+          <ul>
+            <li><strong>Received Pieces (Received):</strong> As the tailor delivers finished garments, you can enter the amount of approved pieces directly (inline) in the "Received" input column of the table. This updates the payroll balance.</li>
+            <li><strong>Bonuses & Discounts:</strong> You can select adjustments in the corresponding column to apply a <strong>Bonus</strong> (+5%, +10%, +15%, +20%) to the rate for excellent costura or early delivery, or a <strong>Discount</strong> (-5%, -10%, -15%, -20%) for minor flaws or delays.</li>
+            <li><strong>Add Extensions (Calendar Icon):</strong> If the tailor requests more time, click the calendar icon and enter the number of additional days to extend the original deadline.</li>
+            <li><strong>Finish Order (Check Icon):</strong> Concludes the job. This automatically registers the payroll balance in favor of the tailor (Received pieces × Rate with adjustments) in the Payments screen.</li>
+            <li><strong>Automatic Archiving:</strong> As soon as a production order is marked as <strong>Finished</strong> and its balance is <strong>Fully Paid</strong>, the system immediately moves it automatically to the History section to keep the active panel clean.</li>
+          </ul>
         </div>
       ),
-      keywords: 'status control in process finished completed order immediate automatic archiving'
+      keywords: 'monitoring finished cancel automatic archiving bonuses discounts extensions received pieces'
     }
   ],
   pagos: [
     {
-      title: 'Register a Payment or Deposit to a Tailor',
+      title: 'Register a Payroll Payment or Deposit',
       content: (
         <div>
-          <p>Financial control is crucial. To settle your tailors' payroll debts:</p>
+          <p>Financial control of tailor payroll is managed transparently:</p>
           <ol>
             <li>Go to the <strong>Payments</strong> section in the sidebar menu.</li>
-            <li>You will see the list of tailors with their accumulated debt in real time.</li>
-            <li>Click on the <strong>Register Payment / Deposit</strong> button next to the corresponding tailor's name.</li>
-            <li>Complete the deposit details:
+            <li>In the top <strong>Generate Payment</strong> section, select the corresponding **Order** (production order) of the tailor.</li>
+            <li>The system will display:
               <ul>
-                <li><strong>Amount to Pay:</strong> The sum of money delivered.</li>
-                <li><strong>Payment Method:</strong> Select between <strong>Cash</strong> (workshop cash register) or <strong>Bank Deposit/Transfer</strong>.</li>
-                <li><strong>Reference:</strong> If it is a bank deposit, write down the receipt number or SPEI tracking code.</li>
+                <li><strong>Total Order Cost:</strong> The calculated cost (Received pieces × Adjusted rate).</li>
+                <li><strong>Already Paid:</strong> The sum of all deposits/abonos already registered for this order.</li>
+                <li><strong>Pending Fines:</strong> Pending personal discounts for defective garments registered for this tailor.</li>
+                <li><strong>To Pay (Net):</strong> The real net amount to deliver to the tailor in real time (Total Cost - Already Paid - Pending Fines).</li>
               </ul>
             </li>
-            <li>Click <strong>Confirm Payment</strong>. The system will deduct the amount from the tailor's total balance instantly, update their balance, and save the digital receipt in the history.</li>
+            <li>Select the payment type: <strong>Partial Payment (Abono)</strong> or <strong>Full Payment (Settlement)</strong>.</li>
+            <li>Enter the delivered sum in <strong>Amount to Deliver ($)</strong> and press <strong>Register Payment</strong>.</li>
+            <li><strong>Print Receipt:</strong> In the bottom "Order Payment History" table, click the printer icon in the payment row to download and print the official physical or PDF payment voucher.</li>
           </ol>
         </div>
       ),
-      keywords: 'register payment deposit tailor method cash bank transfer balance'
+      keywords: 'register payment deposit tailor settlement net to pay print receipt voucher'
     },
     {
-      title: 'Payroll Calculation and Accumulated Balance',
+      title: 'Personal Discounts for Defective Garments (Fines)',
       content: (
         <div>
-          <p>How is the exact money owed to each tailor calculated?</p>
-          <p>The system uses a transparent formula based on real events:</p>
-          <div style={{ background: '#f1f5f9', padding: '12px 18px', borderRadius: '8px', fontFamily: 'monospace', fontSize: '0.85rem', margin: '10px 0', borderLeft: '3px solid var(--primary-color)' }}>
-            Pending Balance = (Sum of Completed Orders × Agreed Rate) - (Sum of Registered Payments & Deposits)
+          <p>If a tailor delivers damaged, broken, or poorly assembled garments, you can register a charge in the lower <strong>Personal Discount</strong> section:</p>
+          <ol>
+            <li>Select the affected <strong>Tailor</strong>.</li>
+            <li>Select the <strong>Model / Product</strong> cut associated with the damage.</li>
+            <li>Enter the detailed <strong>Error / Finding Reason</strong> (e.g., broken sleeve seams, torn fabric).</li>
+            <li>Indicate the number of <strong>Defective Pieces</strong> and the total <strong>Total Amount ($)</strong> of the discount.</li>
+            <li>Press <strong>Register Discount</strong>.</li>
+          </ol>
+          <div className="step-alert" style={{ borderLeftColor: 'var(--danger-color)', background: 'rgba(239, 68, 68, 0.05)' }}>
+            <strong>⚠️ Transparent Automatic Payout Deduction:</strong> The discount will be registered with the status "Pending" and will be automatically subtracted from the net amount the next time you register an abono or full settlement for any order of that tailor. Once charged, its status changes to "Charged".
           </div>
-          <ul>
-            <li><strong>Orders in progress:</strong> They do not generate a payable balance until the tailor delivers the assembled garments and they are approved in the system.</li>
-            <li><strong>Account Audit:</strong> In the same payments section, you can expand the tailor's complete statement of account to show them a transparent breakdown of which orders are being paid and which deposits they have received to date.</li>
-          </ul>
         </div>
       ),
-      keywords: 'payroll calculation accumulated balance formula account statement audit'
+      keywords: 'personal discounts defective garments fines bad pieces reason charge balance'
     }
   ]
 };
