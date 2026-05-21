@@ -291,9 +291,9 @@ export default function Produccion() {
                       </td>
                       <td>
                         <div style={{ display: 'flex', flexDirection: 'column', fontSize: '0.75rem', gap: '2px' }}>
-                          <span>Inicio: {displayDate(o.fecha_inicio)}</span>
+                          <span>{t('prod.startPrefix')}: {displayDate(o.fecha_inicio)}</span>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                            <span style={{ fontWeight: 700 }}>Entrega: {displayDate(o.fecha_fin)}</span>
+                            <span style={{ fontWeight: 700 }}>{t('prod.endPrefix')}: {displayDate(o.fecha_fin)}</span>
                             {delayIcon}
                           </div>
                         </div>
