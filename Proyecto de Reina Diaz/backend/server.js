@@ -664,7 +664,15 @@ app.put('/api/produccion/:id', authenticateToken, async (req, res) => {
 
     let finalPrecioTotal = precio_total !== undefined ? precio_total : old.precio_total;
     
-    const currentCant = cantidad_recibida !== undefined ? cantidad_recibida : old.cantidad_recibida;
+    let dbCantidadRecibida = old.cantidad_recibida;
+    if (cantidad_recibida === null || cantidad_recibida === '') {
+      dbCantidadRecibida = null;
+    } else if (cantidad_recibida !== undefined) {
+      dbCantidadRecibida = parseInt(cantidad_recibida);
+      if (isNaN(dbCantidadRecibida)) dbCantidadRecibida = null;
+    }
+
+    const currentCant = dbCantidadRecibida;
     const effectiveCant = (currentCant !== null && currentCant !== undefined) ? currentCant : (cantidad !== undefined ? cantidad : old.cantidad);
     const up = old.unit_price || (old.precio_total / old.cantidad) || 0;
     
@@ -717,7 +725,7 @@ app.put('/api/produccion/:id', authenticateToken, async (req, res) => {
       estado || null, 
       finalPrecioTotal, 
       cantidad || null, 
-      cantidad_recibida !== undefined && cantidad_recibida !== '' ? cantidad_recibida : old.cantidad_recibida, 
+      dbCantidadRecibida, 
       retrasos !== undefined && retrasos !== '' ? retrasos : old.retrasos, 
       curAjusteTipo, 
       curAjustePorc, 
@@ -772,7 +780,7 @@ app.put('/api/produccion/:id/ajuste', authenticateToken, async (req, res) => {
 
     const [invs] = await db.query("SELECT precio FROM inventario WHERE id = ?", [old.inventario_id]);
     const unitPrice = invs[0]?.precio || (old.precio_total / old.cantidad);
-    const subtotal = (old.cantidad_recibida || old.cantidad) * unitPrice;
+    const subtotal = (old.cantidad_recibida !== null ? old.cantidad_recibida : old.cantidad) * unitPrice;
     
     let adjustmentAmount = subtotal * (porcentaje / 100);
     let finalTotal = (tipo === 'bono') ? (subtotal + adjustmentAmount) : (subtotal - adjustmentAmount);
