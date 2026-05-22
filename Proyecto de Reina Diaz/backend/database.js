@@ -316,19 +316,21 @@ async function initializeDatabase() {
         await connection.query("DELETE FROM pagos WHERE produccion_id = ?", [orderId]);
         console.log(`Pagos de orden ID ${orderId} eliminados.`);
 
-        // 4. Revertir y corregir la orden de producción a 'En proceso', archivado = 0, cantidad = 40, cantidad_recibida = 40, precio_total = 3520.00, ajuste_monto = 320.00
+        // 4. Revertir y corregir la orden de producción a 'En proceso', archivado = 0, cantidad = 80, cantidad_recibida = 40, precio_total = 3520.00, ajuste_monto = 320.00, ajuste_tipo = 'bono', ajuste_porcentaje = 10
         await connection.query(`
           UPDATE produccion 
           SET estado = 'En proceso', 
               archivado = 0, 
-              cantidad = 40, 
+              cantidad = 80, 
               cantidad_recibida = 40, 
+              ajuste_tipo = 'bono',
+              ajuste_porcentaje = 10,
               precio_total = 3520.00, 
               ajuste_monto = 320.00,
               fecha_terminado = NULL
           WHERE id = ?
         `, [orderId]);
-        console.log(`Orden ID ${orderId} corregida a 40 piezas y restaurada a 'En proceso'.`);
+        console.log(`Orden ID ${orderId} corregida a 80 piezas enviadas / 40 piezas recibidas (con bono 10%) y restaurada a 'En proceso'.`);
 
         // 5. Limpiar historial de actividades general relativo a la finalización o pagos de esta orden
         await connection.query(`
