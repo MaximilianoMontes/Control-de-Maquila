@@ -288,6 +288,48 @@ async function initializeDatabase() {
       console.error('Error al eliminar orden 39:', e);
     }
 
+    try {
+      console.log('--- MIGRACIÓN MANUAL: Reversión de orden 3 y corrección de cantidad ---');
+      
+      // 1. Restaurar descuentos personales vinculados a pagos de la orden 3
+      await connection.query(`
+        UPDATE descuentos_personales 
+        SET aplicado = 0, pago_id = NULL 
+        WHERE pago_id IN (SELECT id FROM pagos WHERE produccion_id = 3)
+      `);
+      console.log("Descuentos personales de pagos de orden 3 restaurados.");
+
+      // 2. Eliminar los pagos correspondientes a la orden 3
+      await connection.query("DELETE FROM pagos WHERE produccion_id = 3");
+      console.log("Pagos de orden 3 eliminados.");
+
+      // 3. Revertir y corregir la orden de producción a 'En proceso', archivado = 0, cantidad = 40, cantidad_recibida = 40, precio_total = 3520.00, ajuste_monto = 320.00
+      await connection.query(`
+        UPDATE produccion 
+        SET estado = 'En proceso', 
+            archivado = 0, 
+            cantidad = 40, 
+            cantidad_recibida = 40, 
+            precio_total = 3520.00, 
+            ajuste_monto = 320.00,
+            fecha_terminado = NULL
+        WHERE id = 3
+      `);
+      console.log("Orden 3 corregida a 40 piezas y restaurada a 'En proceso'.");
+
+      // 4. Limpiar historial de actividades general relativo a la finalización o pagos de la orden 3 para mantener consistencia
+      await connection.query(`
+        DELETE FROM historial 
+        WHERE target = 'PRODUCCION' 
+          AND (description LIKE '%orden 3 %' OR description LIKE '%orden #3%' OR description LIKE '%ID 3 %' OR description LIKE '%ID #3%')
+      `);
+      console.log("Historial general de orden 3 depurado.");
+      
+      console.log('--- FIN DE MIGRACIÓN MANUAL ORDEN 3 ---');
+    } catch (e) {
+      console.error('Error al revertir orden 3:', e);
+    }
+
     connection.release();
     console.log('Database initialization complete.');
   } catch (error) {
