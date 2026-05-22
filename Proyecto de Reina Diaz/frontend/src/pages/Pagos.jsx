@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useSearchParams } from 'react-router-dom';
-import { Printer, AlertCircle, History as HistoryIcon } from 'lucide-react';
+import { Printer, AlertCircle, History as HistoryIcon, Trash2 } from 'lucide-react';
 import { useSettings } from '../context/SettingsContext';
 import API_URL from '../config';
 
@@ -154,6 +154,23 @@ export default function Pagos() {
     }
   };
 
+  const handleDeletePago = async (pagoId) => {
+    const confirmMsg = t('pay.confirmDeletePago') || '¿Estás seguro de que deseas cancelar o eliminar este pago? Los descuentos personales cobrados en este pago volverán a estar pendientes.';
+    if (!window.confirm(confirmMsg)) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(`${API_URL}/api/pagos/${pagoId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      fetchPagos(selectedOrden);
+      fetchOrders();
+    } catch (e) {
+      console.error("Error al eliminar pago:", e);
+      alert(e.response?.data?.error || 'Error al eliminar pago');
+    }
+  };
+
   const handleDescuento = async (e) => {
     e.preventDefault();
     try {
@@ -285,9 +302,14 @@ export default function Pagos() {
                           <td><span className="badge badge-info" style={{ textTransform: 'uppercase' }}>{p.tipo_pago}</span></td>
                           <td style={{ color: '#34d399', fontWeight: 'bold' }}>{formatCurrency(p.monto)}</td>
                           <td>
-                            <button className="btn-icon" onClick={() => handlePrintComprobante(p.id)} style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#60a5fa', border: 'none', padding: '6px', borderRadius: '4px', cursor: 'pointer' }}>
-                              <Printer size={18} />
-                            </button>
+                            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
+                              <button className="btn-icon" onClick={() => handlePrintComprobante(p.id)} style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#60a5fa', border: 'none', padding: '6px', borderRadius: '4px', cursor: 'pointer' }} title="Imprimir">
+                                <Printer size={18} />
+                              </button>
+                              <button className="btn-icon" onClick={() => handleDeletePago(p.id)} style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: 'none', padding: '6px', borderRadius: '4px', cursor: 'pointer' }} title="Eliminar">
+                                <Trash2 size={18} />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))

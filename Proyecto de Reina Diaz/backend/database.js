@@ -259,6 +259,24 @@ async function initializeDatabase() {
       console.error('Error en migración manual de eliminación:', e);
     }
 
+    try {
+      console.log('--- MIGRACIÓN MANUAL: Eliminación de orden 39 ---');
+      const [p39] = await connection.query("SELECT id FROM produccion WHERE id = 39");
+      if (p39.length > 0) {
+        const [pagos] = await connection.query("SELECT id FROM pagos WHERE produccion_id = 39");
+        for (const p of pagos) {
+          await connection.query("DELETE FROM descuentos_personales WHERE pago_id = ?", [p.id]);
+        }
+        await connection.query("DELETE FROM pagos WHERE produccion_id = 39");
+        await connection.query("DELETE FROM produccion WHERE id = 39");
+        console.log("Orden 39 eliminada con éxito.");
+      } else {
+        console.log("Orden 39 ya no existe.");
+      }
+    } catch (e) {
+      console.error('Error al eliminar orden 39:', e);
+    }
+
     connection.release();
     console.log('Database initialization complete.');
   } catch (error) {
