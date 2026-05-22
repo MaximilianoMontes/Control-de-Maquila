@@ -170,9 +170,9 @@ export default function Produccion() {
   };
 
   const handleRecibidasBlur = async (id, val) => {
-    if (val === '') return;
     try {
-      await axios.put(`${API}/api/produccion/${id}`, { cantidad_recibida: parseInt(val) });
+      const cantidad_recibida = val === '' ? null : parseInt(val);
+      await axios.put(`${API}/api/produccion/${id}`, { cantidad_recibida });
       fetchOrders();
     } catch (e) { console.error(e); }
   };
@@ -298,6 +298,7 @@ export default function Produccion() {
                       <td style={{ textAlign: 'center' }}>{o.cantidad}</td>
                       <td>
                         <input 
+                          key={`${o.id}-${o.cantidad_recibida}`}
                           type="number" 
                           className="form-input" 
                           style={{ width: '80px', padding: '0.25rem 0.5rem', textAlign: 'center' }}
