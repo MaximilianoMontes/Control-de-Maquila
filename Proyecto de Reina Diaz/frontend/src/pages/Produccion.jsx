@@ -116,7 +116,12 @@ export default function Produccion() {
       setFormData({ maquilero_id: '', inventario_id: '', fecha_inicio: '', fecha_fin: '' });
       fetchOrders();
     } catch (e) { 
-      alert(t('prod.alertCreateError') + (e.response?.data?.error || e.message)); 
+      const errorMsg = e.response?.data?.error;
+      if (errorMsg === 'errorDuplicate') {
+        alert(t('prod.errorDuplicate'));
+      } else {
+        alert(t('prod.alertCreateError') + (errorMsg || e.message));
+      }
     }
   };
 
@@ -132,7 +137,12 @@ export default function Produccion() {
       setEditingOrder(null);
       fetchOrders();
     } catch (e) { 
-      alert(t('prod.alertUpdateError') + (e.response?.data?.error || e.message)); 
+      const errorMsg = e.response?.data?.error;
+      if (errorMsg === 'errorDuplicate') {
+        alert(t('prod.errorDuplicate'));
+      } else {
+        alert(t('prod.alertUpdateError') + (errorMsg || e.message));
+      }
     }
   };
 
@@ -233,6 +243,7 @@ export default function Produccion() {
                 <th>{t('prod.pieces')} ({t('dash.status') === 'Status' ? 'Sent' : 'Env.'})</th>
                 <th>{t('prod.pieces')} ({t('dash.status') === 'Status' ? 'Recv.' : 'Rec.'})</th>
                 <th>{t('prod.startDate')} / {t('prod.endDate')}</th>
+                <th>{t('prod.maquilaCost')}</th>
                 <th>Costo Est.</th>
                 <th>{t('prod.paid')}</th>
                 <th>{t('prod.status')}</th>
@@ -241,7 +252,7 @@ export default function Produccion() {
             </thead>
             <tbody>
               {filteredOrders.length === 0 ? (
-                <tr><td colSpan="10" style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>{t('prod.noResults')}</td></tr>
+                <tr><td colSpan="11" style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>{t('prod.noResults')}</td></tr>
               ) : (
                 filteredOrders.map((o, index) => {
                   const pagado = o.pagado || 0;
@@ -316,6 +327,7 @@ export default function Produccion() {
                           </div>
                         </div>
                       </td>
+                      <td style={{ textAlign: 'center', fontWeight: 600 }}>{formatCurrency(o.precio_unitario)}</td>
                       <td style={{ minWidth: '130px' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                           <span style={{ fontWeight: 700, fontSize: '1rem' }}>{formatCurrency(o.precio_total)}</span>

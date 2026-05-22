@@ -586,6 +586,7 @@ app.delete('/api/inventario_real/:id', authenticateToken, async (req, res) => {
 
 const autoArchiveOrders = async () => {
   try {
+    // 1. Auto-archive orders that are Terminado AND fully paid
     await db.query(`
       UPDATE produccion p
       SET p.archivado = 1
@@ -596,6 +597,22 @@ const autoArchiveOrders = async () => {
           FROM pagos pg
           LEFT JOIN descuentos_personales dp ON dp.pago_id = pg.id
           WHERE pg.produccion_id = p.id
+        )
+    `);
+
+    // 2. Auto-unarchive orders that are NOT Terminado OR NOT fully paid
+    await db.query(`
+      UPDATE produccion p
+      SET p.archivado = 0
+      WHERE p.archivado = 1
+        AND (
+          p.estado != 'Terminado'
+          OR p.precio_total > (
+            SELECT COALESCE(SUM(pg.monto), 0) + COALESCE(SUM(dp.monto_total), 0)
+            FROM pagos pg
+            LEFT JOIN descuentos_personales dp ON dp.pago_id = pg.id
+            WHERE pg.produccion_id = p.id
+          )
         )
     `);
   } catch (error) {
@@ -632,6 +649,16 @@ app.get('/api/produccion', async (req, res) => {
 app.post('/api/produccion', authenticateToken, async (req, res) => {
   const { maquilero_id, fecha_inicio, fecha_fin, estado, precio_total, inventario_id, cantidad } = req.body;
   try {
+    if (inventario_id) {
+      const [existing] = await db.query(
+        "SELECT id FROM produccion WHERE inventario_id = ? AND estado != 'Cancelado'",
+        [inventario_id]
+      );
+      if (existing.length > 0) {
+        return res.status(400).json({ error: 'errorDuplicate' });
+      }
+    }
+
     const [maqs] = await db.query("SELECT nombre FROM maquileros WHERE id = ?", [maquilero_id]);
     const maq = maqs[0];
     const [invs] = await db.query("SELECT modelo FROM inventario WHERE id = ?", [inventario_id]);
@@ -661,6 +688,16 @@ app.put('/api/produccion/:id', authenticateToken, async (req, res) => {
     `, [req.params.id]);
     const old = olds[0];
     if (!old) return res.status(404).json({ error: 'Producción no encontrada' });
+
+    if (inventario_id && inventario_id !== old.inventario_id) {
+      const [existing] = await db.query(
+        "SELECT id FROM produccion WHERE inventario_id = ? AND estado != 'Cancelado'",
+        [inventario_id]
+      );
+      if (existing.length > 0) {
+        return res.status(400).json({ error: 'errorDuplicate' });
+      }
+    }
 
     let finalPrecioTotal = precio_total !== undefined ? precio_total : old.precio_total;
     
@@ -917,6 +954,51 @@ app.post('/api/pagos', authenticateToken, async (req, res) => {
     await checkAndMoveToInventory(produccion_id, req.user.id);
 
     res.json({ id: pagoId, success: true });
+  } catch (error) {
+    await connection.rollback();
+    res.status(500).json({ error: error.message });
+  } finally {
+    connection.release();
+  }
+});
+
+app.delete('/api/pagos/:id', authenticateToken, async (req, res) => {
+  const pagoId = req.params.id;
+  const connection = await db.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    // 1. Get payment details
+    const [pagos] = await connection.query("SELECT * FROM pagos WHERE id = ?", [pagoId]);
+    const pago = pagos[0];
+    if (!pago) {
+      await connection.rollback();
+      return res.status(404).json({ error: 'Pago no encontrado' });
+    }
+
+    // 2. Unlink/restore any discounts associated with this payment
+    await connection.query(
+      "UPDATE descuentos_personales SET aplicado = 0, pago_id = NULL WHERE pago_id = ?",
+      [pagoId]
+    );
+
+    // 3. Delete the payment
+    await connection.query("DELETE FROM pagos WHERE id = ?", [pagoId]);
+
+    // 4. Log the activity
+    const [prods] = await connection.query("SELECT i.modelo FROM produccion p JOIN inventario i ON p.inventario_id = i.id WHERE p.id = ?", [pago.produccion_id]);
+    const prod = prods[0];
+    await connection.query(
+      "INSERT INTO historial (user_id, action, target, description) VALUES (?, ?, ?, ?)",
+      [req.user.id, 'BAJA', 'PAGO', `Eliminó pago ID #${pagoId} de $${pago.monto} para ${prod ? prod.modelo : 'Orden '+pago.produccion_id} (Descuentos desvinculados)`]
+    );
+
+    await connection.commit();
+
+    // 5. Update archiving status dynamically
+    await autoArchiveOrders();
+
+    res.json({ success: true, message: 'Pago eliminado y descuentos restaurados' });
   } catch (error) {
     await connection.rollback();
     res.status(500).json({ error: error.message });
