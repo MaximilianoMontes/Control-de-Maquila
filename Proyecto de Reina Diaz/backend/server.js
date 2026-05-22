@@ -932,7 +932,7 @@ app.get('/api/pagos/:id/comprobante', async (req, res) => {
       SELECT pg.*, p.id as orden_id, p.maquilero_id, p.inventario_id, 
              p.cantidad, p.cantidad_recibida, p.ajuste_tipo, p.ajuste_porcentaje, p.ajuste_monto,
              m.nombre as maquilero_nombre,
-             i.modelo as producto_modelo, i.precio as precio_unitario
+             i.modelo as producto_modelo, i.precio as precio_unitario, i.no_orden as no_orden
       FROM pagos pg
       JOIN produccion p ON pg.produccion_id = p.id
       JOIN maquileros m ON p.maquilero_id = m.id
@@ -978,7 +978,7 @@ app.get('/api/pagos/:id/comprobante', async (req, res) => {
 
     doc.fontSize(14).font('Helvetica-Bold').text('DETALLE DEL TRABAJO');
     doc.fontSize(12).font('Helvetica').text(`Producto / Modelo: ${pago.producto_modelo || 'N/A'}`);
-    doc.text(`Orden de Producción: #${pago.orden_id}`);
+    doc.text(`Número de Orden: ${pago.no_orden || 'N/A'}`);
     
     const cantFinal = pago.cantidad_recibida !== null ? pago.cantidad_recibida : pago.cantidad;
     doc.text(`Cantidad Maquilada: ${cantFinal} piezas`);
