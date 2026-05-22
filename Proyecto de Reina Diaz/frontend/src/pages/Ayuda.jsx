@@ -15,8 +15,10 @@ import {
   ArrowRight,
   TrendingUp,
   CheckCircle2,
-  FileText
+  FileText,
+  Sparkles
 } from 'lucide-react';
+
 
 const guides_es = {
   general: [
@@ -299,8 +301,62 @@ const guides_es = {
       ),
       keywords: 'descuentos personales prendas defectuosas multas piezas malas motivo cargo saldo'
     }
+  ],
+  extras: [
+    {
+      title: '¿Qué son los Trabajos Extras y cuándo usarlos?',
+      content: (
+        <div>
+          <p>La sección de <strong>Extras</strong> está diseñada para registrar y controlar tareas o servicios auxiliares asociados a un corte de prendas, de manera separada de la confección principal. Algunos ejemplos comunes de trabajos extras incluyen:</p>
+          <ul>
+            <li>Pegado de etiquetas o marquillas especiales.</li>
+            <li>Costura de botones, broches o cierres específicos.</li>
+            <li>Planchado, deshebrado, empaquetado o control de calidad manual.</li>
+            <li>Cualquier labor secundaria cobrada como excedente o tarifa adicional.</li>
+          </ul>
+          <p><strong>Diferencia clave con Producción estándar:</strong></p>
+          <ul>
+            <li><strong>Múltiple Asignación:</strong> A diferencia de las órdenes de producción normales (donde se restringe asignar un mismo corte a varios maquileros a la vez para evitar duplicar existencias), los Trabajos Extras permiten registrar múltiples tareas auxiliares asociadas al mismo lote de corte con diferentes maquileros y diferentes tarifas.</li>
+            <li><strong>Sin duplicación de Inventario:</strong> Los extras son cargos financieros de mano de obra y servicios adicionales. Por ello, al completarse o terminarse un extra, <strong>no se duplica ni se crea una nueva fila física en el Inventario Real</strong>, evitando alterar el stock físico real y manteniendo limpias tus valoraciones monetarias del almacén.</li>
+          </ul>
+        </div>
+      ),
+      keywords: 'extras que son cuando usar trabajo extra tareas auxiliares botones etiquetas planchado empaquetado inventario mano de obra'
+    },
+    {
+      title: 'Crear Trabajos Extras desde Producción (Atajo de Sparkles/Destello)',
+      content: (
+        <div>
+          <p>Para agilizar el flujo de trabajo, puedes iniciar la creación de un extra directamente desde el panel principal de Producción activa:</p>
+          <ol>
+            <li>Ve al panel de <strong>Producción</strong> y localiza la orden en proceso correspondiente en la tabla.</li>
+            <li>En la columna de acciones de esa fila, haz clic en el icono premium de <strong>Destello (Sparkles)</strong> con un degradado rosa-violeta.</li>
+            <li>El ERP te redirigirá automáticamente a la pantalla de <strong>Extras</strong> y abrirá el formulario de <strong>+ Nueva Orden Extra</strong> de forma automática.</li>
+            <li>Notarás que el <strong>Producto del Inventario</strong>, la <strong>Cantidad de Piezas</strong>, el <strong>Cliente</strong> y las <strong>Fechas de entrega</strong> ya estarán preseleccionados y bloqueados (en modo de solo lectura) para evitar errores manuales, garantizando que el extra se asocie exactamente al lote correcto.</li>
+            <li>Solo tendrás que seleccionar al nuevo maquilero encargado del extra y capturar el costo por pieza en el campo de precio.</li>
+          </ol>
+        </div>
+      ),
+      keywords: 'atajo sparkles destello crear extra produccion autollenado automatizar preseleccionado bloqueado'
+    },
+    {
+      title: 'Llenado Manual de Precios y Liquidación de Extras en Pagos',
+      content: (
+        <div>
+          <p>El registro económico y la nómina de los trabajos extras funcionan bajo un esquema flexible:</p>
+          <ul>
+            <li><strong>Precio Extra Manual:</strong> Al crear un extra, debes ingresar manualmente el <strong>Precio Extra ($)</strong> por pieza en el formulario. Esto permite una total flexibilidad operacional para establecer tarifas a la medida (por ejemplo, $3.50 por pegar etiquetas o $5.00 por costura de botones).</li>
+            <li><strong>Cálculo Automático de Nómina:</strong> El sistema calculará en tiempo real el costo total de la orden multiplicando las piezas recibidas por el precio unitario del extra configurado, actualizándose al instante.</li>
+            <li><strong>Liquidación en Nómina (Pagos):</strong> Cuando marcas el Trabajo Extra como "Terminado", el saldo resultante se envía al módulo de <strong>Pagos</strong>.</li>
+            <li>En el dropdown de selección de órdenes para generar un pago al maquilero, identificarás claramente los trabajos extras gracias al sufijo de color de realce **(EXTRA)** que se añade al final del código del producto (ej: <em>MD-2030 (EXTRA)</em>). De esta manera, sabrás exactamente qué pagos corresponden a costura base y cuáles a tareas auxiliares.</li>
+          </ul>
+        </div>
+      ),
+      keywords: 'precio extra manual calculo automatico nomina pagos liquidacion dropdown extra sufijo'
+    }
   ]
 };
+
 
 const guides_en = {
   general: [
@@ -567,8 +623,62 @@ const guides_en = {
       ),
       keywords: 'personal discounts defective garments fines bad pieces reason charge balance'
     }
+  ],
+  extras: [
+    {
+      title: 'What are Extras and when should they be used?',
+      content: (
+        <div>
+          <p>The <strong>Extras</strong> section is designed to register and control auxiliary tasks or services associated with a cut of garments, separately from the main assembly line. Common examples of extra jobs include:</p>
+          <ul>
+            <li>Sewing specialized labels or brand tags.</li>
+            <li>Stitching specific buttons, snaps, or zippers.</li>
+            <li>Ironing, thread-trimming, packaging, or manual quality control.</li>
+            <li>Any secondary labor billed as a surplus or auxiliary piece rate.</li>
+          </ul>
+          <p><strong>Key difference from standard Production:</strong></p>
+          <ul>
+            <li><strong>Multiple Assignment:</strong> Unlike regular production orders (which restrict assigning a single cut to multiple tailors simultaneously to avoid physical stock duplication), Extras allow you to register multiple auxiliary tasks for the exact same cut using different tailors and rates.</li>
+            <li><strong>No Stock Duplication:</strong> Extras represent financial labor and service charges. Therefore, when an extra is completed, <strong>it does not duplicate or create a new physical row in Real Inventory</strong>, preventing any distortion of your real physical stock values.</li>
+          </ul>
+        </div>
+      ),
+      keywords: 'extras what are when to use extra work auxiliary tasks buttons labels ironing packaging inventory labor'
+    },
+    {
+      title: 'Creating Extras from Production (Sparkles Shortcut)',
+      content: (
+        <div>
+          <p>To speed up your workflow, you can launch an extra order directly from the active Production panel:</p>
+          <ol>
+            <li>Go to the <strong>Production</strong> board and find the in-progress order in the table.</li>
+            <li>In the actions column of that row, click the premium <strong>Sparkles</strong> icon with a pink-violet gradient.</li>
+            <li>The ERP will automatically redirect you to the <strong>Extras</strong> screen and open the <strong>+ New Extra Order</strong> modal.</li>
+            <li>You will notice that the <strong>Inventory Product</strong>, <strong>Piece Count</strong>, <strong>Client</strong>, and <strong>Dates</strong> are already pre-filled and locked (read-only) to prevent manual input errors, ensuring the extra is correctly linked.</li>
+            <li>You only need to select the tailor responsible for the extra and enter the unit cost in the price field.</li>
+          </ol>
+        </div>
+      ),
+      keywords: 'shortcut sparkles launch create extra production prefilled read only lock'
+    },
+    {
+      title: 'Manual Pricing and Settling Extras in Payments',
+      content: (
+        <div>
+          <p>The financial record and payroll tracking for extra jobs follow a flexible scheme:</p>
+          <ul>
+            <li><strong>Manual Extra Price:</strong> When creating an extra, you must manually input the <strong>Extra Price ($)</strong> per piece. This offers complete operational freedom to set tailored rates (e.g., $3.50 for label sewing or $5.00 for buttons).</li>
+            <li><strong>Automatic Payroll Computation:</strong> The system computes the total order cost in real time by multiplying the received pieces by the unit extra price configured.</li>
+            <li><strong>Payroll Settlement (Payments):</strong> When you mark the Extra job as "Finished", the pending wage balance is sent to the <strong>Payments</strong> module.</li>
+            <li>In the order selection dropdown to generate a tailor payment, extra tasks are clearly identified by the highlight suffix **(EXTRA)** appended to the end of the product code (e.g., <em>MD-2030 (EXTRA)</em>). This allows you to distinguish basic sewing from auxiliary services instantly.</li>
+          </ul>
+        </div>
+      ),
+      keywords: 'manual price extra automatic calculation payroll payments settlement dropdown extra suffix'
+    }
   ]
 };
+
 
 export default function Ayuda() {
   const { t, settings } = useSettings();
@@ -604,8 +714,10 @@ export default function Ayuda() {
     { id: 'inventario', name: t('nav.inventario'), icon: <Package size={18} /> },
     { id: 'cortes', name: t('header.cutsDesign'), icon: <Scissors size={18} /> },
     { id: 'produccion', name: t('nav.produccion'), icon: <Factory size={18} /> },
+    { id: 'extras', name: t('nav.extras'), icon: <Sparkles size={18} /> },
     { id: 'pagos', name: t('nav.pagos'), icon: <Wallet size={18} /> },
   ];
+
 
   // Pick language guides
   const guides = settings.language === 'en' ? guides_en : guides_es;
