@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { ArrowRight, PlusCircle, Edit3, Trash2, AlertTriangle, Info, X } from 'lucide-react';
 import { useSettings } from '../context/SettingsContext';
@@ -10,7 +10,7 @@ export default function KillFeed() {
   const { settings, t, translateLog } = useSettings();
   const [logs, setLogs] = useState([]);
   const [visibleLogs, setVisibleLogs] = useState([]);
-  const [lastId, setLastId] = useState(0);
+  const lastIdRef = useRef(0);
   const [floats, setFloats] = useState([]); // Array of { id, x, y, emoji }
 
   const alertsEnabled = settings.alerts !== 'disabled';
@@ -26,7 +26,7 @@ export default function KillFeed() {
       try {
         const res = await axios.get(`${API}/api/historial?limit=5`);
         if (res.data.length > 0) {
-          setLastId(res.data[0].id);
+          lastIdRef.current = res.data[0].id;
         }
       } catch (e) {
         console.error("Error fetching initial history", e);
@@ -38,10 +38,11 @@ export default function KillFeed() {
     const interval = setInterval(async () => {
       try {
         const res = await axios.get(`${API}/api/historial?recent=true`);
+        const currentLastId = lastIdRef.current;
         // Filtrar solo los nuevos
-        const newLogs = res.data.filter(l => l.id > lastId).reverse();
+        const newLogs = res.data.filter(l => l.id > currentLastId).reverse();
         if (newLogs.length > 0) {
-          setLastId(newLogs[newLogs.length - 1].id);
+          lastIdRef.current = newLogs[newLogs.length - 1].id;
           newLogs.forEach(log => {
             addNotification(log);
           });
@@ -52,22 +53,30 @@ export default function KillFeed() {
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [lastId, alertsEnabled]);
+  }, [alertsEnabled]);
 
   const addNotification = (log) => {
-    const id = Math.random().toString(36).substr(2, 9);
-    const newNotif = { ...log, tempId: id, fading: false };
-    
-    setVisibleLogs(prev => [...prev, newNotif]);
+    setVisibleLogs(prev => {
+      // Prevent duplicates by ID or identical description/target/action within the active visible logs
+      if (prev.some(n => n.id === log.id || (n.description === log.description && n.target === log.target && n.action === log.action))) {
+        return prev;
+      }
+      
+      const id = Math.random().toString(36).substr(2, 9);
+      const newNotif = { ...log, tempId: id, fading: false };
+      
+      // Start fade out after 8.5s
+      setTimeout(() => {
+        setVisibleLogs(curr => curr.map(n => n.tempId === id ? { ...n, fading: true } : n));
+      }, 8500);
 
-    // Empezar a desvanecer a los 8.5s, quitar a los 9s para dar tiempo de interacción!
-    setTimeout(() => {
-      setVisibleLogs(prev => prev.map(n => n.tempId === id ? { ...n, fading: true } : n));
-    }, 8500);
+      // Remove after 9s
+      setTimeout(() => {
+        setVisibleLogs(curr => curr.filter(n => n.tempId !== id));
+      }, 9000);
 
-    setTimeout(() => {
-      setVisibleLogs(prev => prev.filter(n => n.tempId !== id));
-    }, 9000);
+      return [...prev, newNotif];
+    });
   };
 
   const handleDismiss = (tempId) => {
