@@ -12,6 +12,7 @@ import API_URL from '../config';
 const API = API_URL;
 
 const getImgSrc = (img) => img ? (img.startsWith('http') ? img : `${API}${img}`) : null;
+
 const formatDate = (date) => {
   if (!date) return '';
   const d = new Date(date);
@@ -21,6 +22,7 @@ const formatDate = (date) => {
   const day = String(d.getUTCDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 };
+
 const displayDate = (date) => {
   if (!date) return 'N/A';
   const d = new Date(date);
@@ -28,12 +30,13 @@ const displayDate = (date) => {
   return `${d.getUTCDate()}/${d.getUTCMonth() + 1}/${d.getUTCFullYear()}`;
 };
 
-export default function Produccion() {
+export default function Extras() {
   const { user } = useAuth();
   const { settings, t, formatCurrency } = useSettings();
   const location = useLocation();
   const userRole = (user?.role || user?.rol || '').toString().toLowerCase().trim();
   const canEdit = userRole === 'admin' || userRole === 'produccion1' || userRole === 'produccion2';
+  
   const [orders, setOrders] = useState([]);
   const [maquileros, setMaquileros] = useState([]);
   const [inventario, setInventario] = useState([]);
@@ -43,7 +46,16 @@ export default function Produccion() {
   const [verArchivados, setVerArchivados] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   
-  const [formData, setFormData] = useState({ maquilero_id: '', inventario_id: '', fecha_inicio: '', fecha_fin: '' });
+  const [formData, setFormData] = useState({ 
+    maquilero_id: '', 
+    inventario_id: '', 
+    cantidad: '', 
+    precio_extra: '', 
+    fecha_inicio: '', 
+    fecha_fin: '' 
+  });
+  
+  const [isShortcutMode, setIsShortcutMode] = useState(false);
   const [editingOrder, setEditingOrder] = useState(null);
 
   useEffect(() => {
@@ -51,28 +63,44 @@ export default function Produccion() {
     fetchMaquileros();
     fetchInventario();
 
-    // Lógica para el atajo desde Inventario
+    // Lógica para el atajo desde Producción (Sparkles)
     const queryParams = new URLSearchParams(location.search);
-    const productId = queryParams.get('productId');
-    if (productId && canEdit) {
-      setFormData(prev => ({ ...prev, inventario_id: productId, fecha_inicio: new Date().toISOString().split('T')[0] }));
+    const isNewExtra = queryParams.get('newExtra') === 'true';
+    if (isNewExtra && canEdit) {
+      const inventarioId = queryParams.get('inventario_id') || '';
+      const cantidad = queryParams.get('cantidad') || '';
+      const fechaInicio = queryParams.get('fecha_inicio') || new Date().toISOString().split('T')[0];
+      const fechaFin = queryParams.get('fecha_fin') || '';
+      
+      setFormData({
+        maquilero_id: '',
+        inventario_id: inventarioId,
+        cantidad: cantidad,
+        precio_extra: '',
+        fecha_inicio: fechaInicio,
+        fecha_fin: fechaFin
+      });
+      setIsShortcutMode(true);
       setIsModalOpen(true);
-      // Limpiar la URL para evitar que se abra de nuevo al recargar
-      window.history.replaceState({}, document.title, "/produccion");
+      
+      // Limpiar la URL para evitar que se vuelva a abrir al recargar
+      window.history.replaceState({}, document.title, "/extras");
+    } else {
+      setIsShortcutMode(false);
     }
 
     const interval = setInterval(() => {
       fetchOrders();
       fetchMaquileros();
       fetchInventario();
-    }, 15000); // Auto-refresca cada 15 segundos en segundo plano
+    }, 15000); // Auto-refresca cada 15 segundos
 
     return () => clearInterval(interval);
-  }, [verArchivados, location]);
+  }, [verArchivados, location, canEdit]);
 
   const fetchOrders = async () => {
     try {
-      const res = await axios.get(`${API}/api/produccion?verArchivados=${verArchivados}`);
+      const res = await axios.get(`${API}/api/extras?verArchivados=${verArchivados}`);
       setOrders(res.data);
 
       // Auto-archive check
@@ -86,8 +114,8 @@ export default function Produccion() {
           await Promise.all(toArchive.map(o => 
             axios.put(`${API}/api/produccion/${o.id}/archivo`, { archivado: true })
           ));
-          // Refresh after auto-archiving
-          const refreshed = await axios.get(`${API}/api/produccion?verArchivados=${verArchivados}`);
+          // Refresh
+          const refreshed = await axios.get(`${API}/api/extras?verArchivados=${verArchivados}`);
           setOrders(refreshed.data);
         }
       }
@@ -95,54 +123,61 @@ export default function Produccion() {
   };
 
   const fetchMaquileros = async () => {
-    const res = await axios.get(`${API}/api/maquileros`);
-    setMaquileros(res.data);
+    try {
+      const res = await axios.get(`${API}/api/maquileros`);
+      setMaquileros(res.data);
+    } catch (e) { console.error(e); }
   };
 
   const fetchInventario = async () => {
-    const res = await axios.get(`${API}/api/inventario`);
-    setInventario(res.data);
+    try {
+      const res = await axios.get(`${API}/api/inventario`);
+      setInventario(res.data);
+    } catch (e) { console.error(e); }
+  };
+
+  const handleSelectProduct = (e) => {
+    const invId = e.target.value;
+    const item = inventario.find(i => i.id === parseInt(invId));
+    setFormData(prev => ({
+      ...prev,
+      inventario_id: invId,
+      cantidad: item ? (item.piezas_en_proceso || 0) : ''
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const item = inventario.find(i => i.id === parseInt(formData.inventario_id));
-    const cantidadFinal = item?.piezas_en_proceso || 0;
-    const total = (item?.precio || 0) * cantidadFinal;
-    
     try {
-      await axios.post(`${API}/api/produccion`, { ...formData, cantidad: cantidadFinal, precio_total: total });
+      await axios.post(`${API}/api/extras`, formData);
       setIsModalOpen(false);
-      setFormData({ maquilero_id: '', inventario_id: '', fecha_inicio: '', fecha_fin: '' });
+      setFormData({ 
+        maquilero_id: '', 
+        inventario_id: '', 
+        cantidad: '', 
+        precio_extra: '', 
+        fecha_inicio: '', 
+        fecha_fin: '' 
+      });
+      setIsShortcutMode(false);
       fetchOrders();
-    } catch (e) { 
+    } catch (e) {
       const errorMsg = e.response?.data?.error;
-      if (errorMsg === 'errorDuplicate') {
-        alert(t('prod.errorDuplicate'));
-      } else {
-        alert(t('prod.alertCreateError') + (errorMsg || e.message));
-      }
+      alert(t('prod.alertCreateError') + (errorMsg || e.message));
     }
   };
 
   const handleEditSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Al editar, NO recalculamos cantidad ni precio desde el inventario, 
-      // ya que esos datos son para órdenes NUEVAS.
-      // Solo enviamos lo que está en el formulario (maquilero, fechas, etc)
       await axios.put(`${API}/api/produccion/${editingOrder.id}`, formData);
       alert(t('prod.alertUpdateSuccess'));
       setIsEditModalOpen(false);
       setEditingOrder(null);
       fetchOrders();
-    } catch (e) { 
+    } catch (e) {
       const errorMsg = e.response?.data?.error;
-      if (errorMsg === 'errorDuplicate') {
-        alert(t('prod.errorDuplicate'));
-      } else {
-        alert(t('prod.alertUpdateError') + (errorMsg || e.message));
-      }
+      alert(t('prod.alertUpdateError') + (errorMsg || e.message));
     }
   };
 
@@ -174,8 +209,8 @@ export default function Produccion() {
     try {
       await axios.delete(`${API}/api/produccion/${id}`);
       fetchOrders();
-    } catch (e) { 
-      alert(e.response?.data?.error || t('prod.alertDeleteError')); 
+    } catch (e) {
+      alert(e.response?.data?.error || t('prod.alertDeleteError'));
     }
   };
 
@@ -210,17 +245,27 @@ export default function Produccion() {
     (o.producto_modelo || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const cantValue = parseFloat(formData.cantidad) || 0;
+  const priceValue = parseFloat(formData.precio_extra) || 0;
+  const calculatedTotal = cantValue * priceValue;
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-        <h1 className="gradient-text" style={{ fontSize: '2.5rem', margin: 0 }}>{t('prod.title')}
+        <h1 className="gradient-text" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '2.5rem', margin: 0 }}>
+          <Sparkles size={32} className="text-pink-500 animate-pulse" />
+          {t('nav.extras')}
         </h1>
         <div style={{ display: 'flex', gap: '1rem' }}>
           <button className="btn btn-secondary" onClick={() => setVerArchivados(!verArchivados)}>
-            {verArchivados ? t('nav.produccion') + ' (Activos)' : t('nav.historial') + ' (Archivados)'}
+            {verArchivados ? t('nav.extras') + ' (Activos)' : t('nav.historial') + ' (Archivados)'}
           </button>
           {canEdit && (
-            <button className="btn btn-primary" onClick={() => setIsModalOpen(true)}>
+            <button className="btn btn-primary" onClick={() => {
+              setFormData({ maquilero_id: '', inventario_id: '', cantidad: '', precio_extra: '', fecha_inicio: new Date().toISOString().split('T')[0], fecha_fin: '' });
+              setIsShortcutMode(false);
+              setIsModalOpen(true);
+            }}>
               <Plus size={20} /> {t('prod.new')}
             </button>
           )}
@@ -229,7 +274,14 @@ export default function Produccion() {
 
       <div className="glass-card" style={{ padding: '1rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
         <Search size={20} color="#94a3b8" />
-        <input type="text" className="form-input" style={{ border: 'none', background: 'transparent', padding: '0.5rem' }} placeholder={t('prod.search')} value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+        <input 
+          type="text" 
+          className="form-input" 
+          style={{ border: 'none', background: 'transparent', padding: '0.5rem' }} 
+          placeholder={t('prod.search')} 
+          value={searchTerm} 
+          onChange={e => setSearchTerm(e.target.value)} 
+        />
       </div>
 
       <div className="glass-card">
@@ -243,8 +295,8 @@ export default function Produccion() {
                 <th>{t('prod.pieces')} ({t('dash.status') === 'Status' ? 'Sent' : 'Env.'})</th>
                 <th>{t('prod.pieces')} ({t('dash.status') === 'Status' ? 'Recv.' : 'Rec.'})</th>
                 <th>{t('prod.startDate')} / {t('prod.endDate')}</th>
-                <th>{t('prod.maquilaCost')}</th>
-                <th>Costo Est.</th>
+                <th>Costo Extra Unit.</th>
+                <th>Pago Total Extra</th>
                 <th>{t('prod.paid')}</th>
                 <th>{t('prod.status')}</th>
                 <th>{t('prod.actions')}</th>
@@ -266,10 +318,8 @@ export default function Produccion() {
                   if (isCancelado) {
                     rowClass = 'row-cancelado';
                   } else if (!isTerminado && o.fecha_fin) {
-                    // Normalizar fechas a medianoche UTC para cálculo exacto de días de diferencia
                     const now = new Date();
                     const today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
-                    
                     const dDate = new Date(o.fecha_fin);
                     const deliveryDate = Date.UTC(dDate.getUTCFullYear(), dDate.getUTCMonth(), dDate.getUTCDate());
                     
@@ -277,10 +327,10 @@ export default function Produccion() {
                     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
                     
                     if (diffDays >= 1 && diffDays <= 3) {
-                      rowClass = 'row-warning'; // Amarillo (retraso 1-3 días)
+                      rowClass = 'row-warning';
                       delayIcon = <AlertTriangle size={16} color="#ca8a04" title={`Retraso: ${diffDays} día(s)`} />;
                     } else if (diffDays >= 4) {
-                      rowClass = 'row-danger'; // Rojo (retraso 4+ días)
+                      rowClass = 'row-danger';
                       delayIcon = <AlertCircle size={16} color="#dc2626" title={`Retraso: ${diffDays} día(s)`} />;
                     }
                   }
@@ -370,7 +420,6 @@ export default function Produccion() {
                               <button className="btn" style={{ padding: '0.4rem', background: '#8b5cf6', color: 'white' }} onClick={() => handleAddDay(o.id)} title="Agregar Prórroga (Días)"><Calendar size={16} /></button>
                               <button className="btn btn-danger" style={{ padding: '0.4rem' }} onClick={() => handleCancelar(o.id)} title="Cancelar Orden"><XCircle size={16} /></button>
                               <Link to={`/pagos?orden=${o.id}`} className="btn btn-primary" style={{ padding: '0.4rem', display: 'flex', alignItems: 'center' }} title="Registrar Pago"><DollarSign size={16} /></Link>
-                              <Link to={`/extras?newExtra=true&inventario_id=${o.inventario_id}&cantidad=${o.cantidad}&fecha_inicio=${formatDate(o.fecha_inicio)}&fecha_fin=${formatDate(o.fecha_fin)}`} className="btn" style={{ padding: '0.4rem', background: 'linear-gradient(135deg, #ec4899, #8b5cf6)', color: 'white', display: 'flex', alignItems: 'center' }} title="Crear Extra"><Sparkles size={16} /></Link>
                             </>
                           )}
                           {canEdit ? (
@@ -379,7 +428,9 @@ export default function Produccion() {
                                 setEditingOrder(o); 
                                 setFormData({ 
                                   maquilero_id: o.maquilero_id, 
-                                  inventario_id: o.inventario_id, 
+                                  inventario_id: o.inventario_id || '', 
+                                  cantidad: o.cantidad,
+                                  precio_extra: o.precio_extra || '',
                                   fecha_inicio: formatDate(o.fecha_inicio), 
                                   fecha_fin: formatDate(o.fecha_fin) 
                                 }); 
@@ -404,13 +455,16 @@ export default function Produccion() {
         </div>
       </div>
 
-      {/* Modal Nueva / Editar Orden */}
+      {/* Modal Nueva / Editar Orden Extra */}
       {(isModalOpen || isEditModalOpen) && (
         <div className="modal-overlay">
           <div className="modal-content glass-card" style={{ maxWidth: '640px' }} onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>{isEditModalOpen ? (canEdit ? t('prod.modalEditOrder') : t('prod.modalOrderDetails')) : t('prod.modalNewOrder')}</h2>
-              <button className="btn-icon" onClick={() => { setIsModalOpen(false); setIsEditModalOpen(false); }}><X size={24} /></button>
+              <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Sparkles size={20} className="text-pink-500 animate-pulse" />
+                {isEditModalOpen ? (canEdit ? 'Editar Trabajo Extra' : 'Detalles de Extra') : 'Nuevo Trabajo Extra'}
+              </h2>
+              <button className="btn-icon" onClick={() => { setIsModalOpen(false); setIsEditModalOpen(false); setIsShortcutMode(false); }}><X size={24} /></button>
             </div>
             <form onSubmit={isEditModalOpen ? handleEditSubmit : handleSubmit}>
               <div className="form-group">
@@ -428,34 +482,56 @@ export default function Produccion() {
                   ))}
                 </select>
               </div>
+
               <div className="form-group">
                 <label className="form-label">{t('prod.selectProduct')}</label>
                 <select 
                   required 
                   className="form-input" 
                   value={formData.inventario_id} 
-                  onChange={e => setFormData({...formData, inventario_id: e.target.value})}
-                  disabled={!canEdit && isEditModalOpen}
+                  onChange={handleSelectProduct}
+                  disabled={(!canEdit && isEditModalOpen) || (isShortcutMode && isModalOpen)}
                 >
                   <option value="">{t('prod.selectDefault')}</option>
                   {[...inventario]
-                    .filter(i => {
-                      if (isModalOpen) {
-                        return i.producciones_count === 0;
-                      }
-                      if (isEditModalOpen && editingOrder) {
-                        return i.producciones_count === 0 || i.id === editingOrder.inventario_id;
-                      }
-                      return true;
-                    })
                     .sort((a,b) => (a.modelo || '').localeCompare(b.modelo || '', undefined, {numeric: true}))
                     .map(i => (
                       <option key={i.id} value={i.id}>
-                        {i.modelo} - {i.numero} {i.es_reprogramacion === 1 ? t('prod.reprogrammedLabel') : ''}
+                        {i.modelo} - {i.numero} {i.es_reprogramacion === 1 ? t('prod.reprogrammedLabel') : ''} ({i.piezas_en_proceso} pzas)
                       </option>
                     ))}
                 </select>
               </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div className="form-group">
+                  <label className="form-label">{t('prod.pieces')} Env.</label>
+                  <input 
+                    type="number" 
+                    required 
+                    className="form-input" 
+                    value={formData.cantidad} 
+                    onChange={e => setFormData({...formData, cantidad: e.target.value})}
+                    disabled={(!canEdit && isEditModalOpen) || (isShortcutMode && isModalOpen)}
+                    placeholder="Cantidad de piezas"
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Precio Extra por Pieza ($) *</label>
+                  <input 
+                    type="number" 
+                    step="0.01" 
+                    min="0"
+                    required 
+                    className="form-input" 
+                    value={formData.precio_extra} 
+                    onChange={e => setFormData({...formData, precio_extra: e.target.value})}
+                    disabled={!canEdit && isEditModalOpen}
+                    placeholder="Tarifa extra ej: 5.00"
+                  />
+                </div>
+              </div>
+
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div className="form-group">
                   <label className="form-label">{t('prod.startDateLabel')}</label>
@@ -481,10 +557,20 @@ export default function Produccion() {
                 </div>
               </div>
 
+              {/* Cálculo en vivo de Pago Total Estimado */}
+              {formData.cantidad && formData.precio_extra && (
+                <div className="glass-card" style={{ marginTop: '1.5rem', background: 'rgba(236, 72, 153, 0.05)', border: '1px solid rgba(236, 72, 153, 0.2)', padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Pago total de extra estimado:</span>
+                  <span style={{ fontSize: '1.3rem', fontWeight: 'bold', color: '#ec4899' }}>{formatCurrency(calculatedTotal)}</span>
+                </div>
+              )}
+
               {canEdit && (
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1.5rem' }}>
-                  <button type="button" className="btn btn-secondary" onClick={() => { setIsModalOpen(false); setIsEditModalOpen(false); }}>{t('prod.modalCancel')}</button>
-                  <button type="submit" className="btn btn-primary">{isEditModalOpen ? t('prod.modalUpdate') : t('prod.modalCreate')}</button>
+                  <button type="button" className="btn btn-secondary" onClick={() => { setIsModalOpen(false); setIsEditModalOpen(false); setIsShortcutMode(false); }}>{t('prod.modalCancel')}</button>
+                  <button type="submit" className="btn btn-primary" style={{ background: 'linear-gradient(135deg, #ec4899, #8b5cf6)', border: 'none' }}>
+                    {isEditModalOpen ? t('prod.modalUpdate') : t('prod.modalCreate')}
+                  </button>
                 </div>
               )}
             </form>

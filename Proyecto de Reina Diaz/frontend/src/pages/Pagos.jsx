@@ -77,7 +77,7 @@ export default function Pagos() {
 
   const fetchOrders = async () => {
     try {
-      const res = await axios.get(`${API_URL}/api/produccion`);
+      const res = await axios.get(`${API_URL}/api/produccion?incluirExtras=true`);
       setOrders(res.data);
 
       // Auto-archive check
@@ -92,7 +92,7 @@ export default function Pagos() {
             axios.put(`${API_URL}/api/produccion/${o.id}/archivo`, { archivado: true })
           ));
           // Refresh after auto-archiving
-          const refreshed = await axios.get(`${API_URL}/api/produccion`);
+          const refreshed = await axios.get(`${API_URL}/api/produccion?incluirExtras=true`);
           setOrders(refreshed.data);
         }
       }
@@ -219,7 +219,7 @@ export default function Pagos() {
                   <option value="">{t('pay.chooseOrder')}</option>
                   {orders.map((o, index) => (
                     <option key={o.id} value={o.id}>
-                      {t('pay.order')} #{orders.length - index} - {o.maquilero_nombre}
+                      {t('pay.order')} #{orders.length - index} - {o.maquilero_nombre}{o.es_extra === 1 || o.es_extra ? ' (EXTRA)' : ''}
                     </option>
                   ))}
                 </select>

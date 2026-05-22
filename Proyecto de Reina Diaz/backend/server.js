@@ -100,6 +100,12 @@ const checkAndMoveToInventory = async (produccionId, userId) => {
       return;
     }
 
+    // If it is an extra order, do not move to real inventory or mark cut as en_inventario = 1
+    if (prod.es_extra === 1) {
+      await connection.rollback();
+      return;
+    }
+
     // If there is no associated cut, or if it has already been moved to the real inventory
     if (!prod.cut_id || prod.en_inventario === 1) {
       await connection.rollback();
@@ -362,7 +368,7 @@ app.get('/api/inventario', async (req, res) => {
   try {
     const [items] = await db.query(`
       SELECT i.*, 
-        (SELECT COUNT(id) FROM produccion WHERE inventario_id = i.id AND archivado = 0) as producciones_count
+        (SELECT COUNT(id) FROM produccion WHERE inventario_id = i.id AND archivado = 0 AND es_extra = 0) as producciones_count
       FROM inventario i
       WHERE i.en_inventario = 0 OR i.en_inventario IS NULL
       ORDER BY i.id DESC
@@ -621,14 +627,16 @@ const autoArchiveOrders = async () => {
 };
 
 app.get('/api/produccion', async (req, res) => {
-  const { verArchivados } = req.query;
+  const { verArchivados, incluirExtras } = req.query;
   const whereArchivado = verArchivados === 'true' ? 'p.archivado = 1' : 'p.archivado = 0';
+  const whereExtra = incluirExtras === 'true' ? '' : 'AND p.es_extra = 0';
   try {
     await autoArchiveOrders();
 
     const [orders] = await db.query(`
       SELECT p.*, m.nombre as maquilero_nombre,
-      i.modelo as producto_modelo, i.imagen as producto_imagen, i.precio as precio_unitario,
+      i.modelo as producto_modelo, i.imagen as producto_imagen, 
+      COALESCE(p.precio_extra, i.precio) as precio_unitario,
       (SELECT COALESCE(SUM(monto), 0) FROM pagos WHERE produccion_id = p.id) as pagado_efectivo,
       (SELECT COALESCE(SUM(monto), 0) FROM pagos WHERE produccion_id = p.id) + 
       (SELECT COALESCE(SUM(dp.monto_total), 0) FROM descuentos_personales dp 
@@ -637,11 +645,64 @@ app.get('/api/produccion', async (req, res) => {
       FROM produccion p 
       JOIN maquileros m ON p.maquilero_id = m.id
       LEFT JOIN inventario i ON p.inventario_id = i.id
-      WHERE ${whereArchivado}
+      WHERE ${whereArchivado} ${whereExtra}
       ORDER BY p.id DESC
     `);
     res.json(orders);
   } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/extras', async (req, res) => {
+  const { verArchivados } = req.query;
+  const whereArchivado = verArchivados === 'true' ? 'p.archivado = 1' : 'p.archivado = 0';
+  try {
+    await autoArchiveOrders();
+
+    const [orders] = await db.query(`
+      SELECT p.*, m.nombre as maquilero_nombre,
+      i.modelo as producto_modelo, i.imagen as producto_imagen, 
+      COALESCE(p.precio_extra, i.precio) as precio_unitario,
+      (SELECT COALESCE(SUM(monto), 0) FROM pagos WHERE produccion_id = p.id) as pagado_efectivo,
+      (SELECT COALESCE(SUM(monto), 0) FROM pagos WHERE produccion_id = p.id) + 
+      (SELECT COALESCE(SUM(dp.monto_total), 0) FROM descuentos_personales dp 
+       JOIN pagos pg ON dp.pago_id = pg.id 
+       WHERE pg.produccion_id = p.id) as pagado
+      FROM produccion p 
+      JOIN maquileros m ON p.maquilero_id = m.id
+      LEFT JOIN inventario i ON p.inventario_id = i.id
+      WHERE ${whereArchivado} AND p.es_extra = 1
+      ORDER BY p.id DESC
+    `);
+    res.json(orders);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/extras', authenticateToken, async (req, res) => {
+  const { maquilero_id, inventario_id, cantidad, precio_extra, fecha_inicio, fecha_fin } = req.body;
+  try {
+    const [maqs] = await db.query("SELECT nombre FROM maquileros WHERE id = ?", [maquilero_id]);
+    const maq = maqs[0];
+    const [invs] = await db.query("SELECT modelo FROM inventario WHERE id = ?", [inventario_id]);
+    const inv = invs[0];
+
+    const qty = parseInt(cantidad) || 0;
+    const priceUnit = parseFloat(precio_extra) || 0;
+    const finalPrecioTotal = qty * priceUnit;
+
+    const [result] = await db.query(
+      "INSERT INTO produccion (maquilero_id, inventario_id, cantidad, precio_extra, precio_total, fecha_inicio, fecha_fin, es_extra, estado) VALUES (?, ?, ?, ?, ?, ?, ?, 1, 'En proceso')",
+      [maquilero_id, inventario_id || null, qty, priceUnit, finalPrecioTotal, fecha_inicio, fecha_fin]
+    );
+
+    await logActivity(req.user.id, 'ALTA', 'PRODUCCION', `Nuevo EXTRA para ${maq ? maq.nombre : 'ID '+maquilero_id} (${inv ? inv.modelo : 'ID '+inventario_id}) - Precio Extra: $${priceUnit}`);
+
+    res.json({ id: result.insertId, success: true });
+  } catch (error) {
+    console.error("Error en POST /api/extras:", error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -677,7 +738,7 @@ app.post('/api/produccion', authenticateToken, async (req, res) => {
 });
 
 app.put('/api/produccion/:id', authenticateToken, async (req, res) => {
-  const { maquilero_id, inventario_id, fecha_inicio, fecha_fin, estado, precio_total, cantidad, cantidad_recibida, retrasos, ajuste_tipo, ajuste_porcentaje } = req.body;
+  const { maquilero_id, inventario_id, fecha_inicio, fecha_fin, estado, precio_total, cantidad, cantidad_recibida, retrasos, ajuste_tipo, ajuste_porcentaje, precio_extra } = req.body;
   try {
     const [olds] = await db.query(`
       SELECT p.*, i.precio as unit_price, i.modelo as inv_m, m.nombre as maq_n
@@ -711,7 +772,11 @@ app.put('/api/produccion/:id', authenticateToken, async (req, res) => {
 
     const currentCant = dbCantidadRecibida;
     const effectiveCant = (currentCant !== null && currentCant !== undefined) ? currentCant : (cantidad !== undefined ? cantidad : old.cantidad);
-    const up = old.unit_price || (old.precio_total / old.cantidad) || 0;
+    
+    const curPrecioExtra = precio_extra !== undefined ? precio_extra : old.precio_extra;
+    const up = old.es_extra === 1
+      ? (curPrecioExtra !== null ? parseFloat(curPrecioExtra) : 0)
+      : (old.unit_price || (old.precio_total / old.cantidad) || 0);
     
     let subtotal = effectiveCant * up;
     
@@ -752,7 +817,8 @@ app.put('/api/produccion/:id', authenticateToken, async (req, res) => {
       ajuste_tipo = ?,
       ajuste_porcentaje = ?,
       ajuste_monto = ?,
-      fecha_terminado = ?
+      fecha_terminado = ?,
+      precio_extra = COALESCE(?, precio_extra)
       WHERE id = ?
     `, [
       maquilero_id || null, 
@@ -768,6 +834,7 @@ app.put('/api/produccion/:id', authenticateToken, async (req, res) => {
       curAjustePorc, 
       adjustmentAmount,
       finalFechaTerminado,
+      precio_extra !== undefined ? precio_extra : null,
       req.params.id
     ]);
 
@@ -815,8 +882,11 @@ app.put('/api/produccion/:id/ajuste', authenticateToken, async (req, res) => {
     const old = olds[0];
     if (!old) return res.status(404).json({ error: 'Orden no encontrada' });
 
-    const [invs] = await db.query("SELECT precio FROM inventario WHERE id = ?", [old.inventario_id]);
-    const unitPrice = invs[0]?.precio || (old.precio_total / old.cantidad);
+    let unitPrice = old.precio_extra;
+    if (old.es_extra !== 1) {
+      const [invs] = await db.query("SELECT precio FROM inventario WHERE id = ?", [old.inventario_id]);
+      unitPrice = invs[0]?.precio || (old.precio_total / old.cantidad);
+    }
     const subtotal = (old.cantidad_recibida !== null ? old.cantidad_recibida : old.cantidad) * unitPrice;
     
     let adjustmentAmount = subtotal * (porcentaje / 100);
@@ -1123,7 +1193,7 @@ app.get('/api/reportes/produccion', async (req, res) => {
         FROM produccion p 
         JOIN maquileros m ON p.maquilero_id = m.id 
         LEFT JOIN inventario i ON p.inventario_id = i.id
-        WHERE p.estado = 'Terminado' AND p.archivado = 0
+        WHERE p.estado = 'Terminado' AND p.archivado = 0 AND p.es_extra = 0
       `;
       const params = [];
       let subtitleDate = "Detalle completo de órdenes terminadas";

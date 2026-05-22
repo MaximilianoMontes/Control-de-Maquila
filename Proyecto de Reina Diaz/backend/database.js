@@ -176,6 +176,20 @@ async function initializeDatabase() {
       // Si ya existe, ignoramos el error
     }
 
+    try {
+      await connection.query("ALTER TABLE produccion ADD COLUMN es_extra TINYINT(1) DEFAULT 0");
+      console.log("Migration: es_extra column added to produccion");
+    } catch (e) {
+      // Si ya existe, ignoramos el error
+    }
+
+    try {
+      await connection.query("ALTER TABLE produccion ADD COLUMN precio_extra DECIMAL(10, 2) DEFAULT NULL");
+      console.log("Migration: precio_extra column added to produccion");
+    } catch (e) {
+      // Si ya existe, ignoramos el error
+    }
+
     // Migration: Backfill fecha_creacion for existing cuts using historial records
     try {
       const [cuts] = await connection.query("SELECT id, modelo, fecha_creacion FROM inventario");
