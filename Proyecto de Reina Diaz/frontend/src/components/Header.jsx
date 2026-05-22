@@ -51,9 +51,7 @@ export default function Header() {
   const [commandQuery, setCommandQuery] = useState('');
   const [selectedCommandIndex, setSelectedCommandIndex] = useState(0);
 
-  // Dynamic exchange rate sync state
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [syncMessage, setSyncMessage] = useState(null); // { text: '', type: 'success' | 'error' }
+
 
   // Dynamic movements notifications state
   const [logs, setLogs] = useState([]);
@@ -231,45 +229,7 @@ export default function Header() {
     updateSetting(key, value);
   };
 
-  const handleSyncExchangeRate = async () => {
-    setIsSyncing(true);
-    setSyncMessage(null);
-    try {
-      const url = settings.exchangeRateApiUrl || 'https://open.er-api.com/v6/latest/USD';
-      const res = await axios.get(url);
-      
-      let rate = null;
-      if (res.data && res.data.rates && typeof res.data.rates.MXN === 'number') {
-        rate = res.data.rates.MXN;
-      } else if (res.data && res.data.conversion_rates && typeof res.data.conversion_rates.MXN === 'number') {
-        rate = res.data.conversion_rates.MXN;
-      } else if (res.data && typeof res.data.MXN === 'number') {
-        rate = res.data.MXN;
-      }
-      
-      if (rate) {
-        const roundedRate = Math.round(rate * 10000) / 10000;
-        updateSetting('exchangeRate', roundedRate);
-        setSyncMessage({
-          text: t('settings.exchangeRateSyncSuccess', { rate: roundedRate.toFixed(2) }),
-          type: 'success'
-        });
-      } else {
-        setSyncMessage({
-          text: t('settings.exchangeRateSyncError'),
-          type: 'error'
-        });
-      }
-    } catch (error) {
-      console.error('Error syncing exchange rate:', error);
-      setSyncMessage({
-        text: t('settings.exchangeRateSyncError'),
-        type: 'error'
-      });
-    } finally {
-      setIsSyncing(false);
-    }
-  };
+
 
   return (
     <>
@@ -662,155 +622,6 @@ export default function Header() {
                   >
                     {settings.currency === 'usd' && <Check size={14} />} USD ($ USD)
                   </button>
-                </div>
-              </div>
-
-              {/* Exchange Rate */}
-              <div className="settings-item exchange-rate-settings" style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem', marginBottom: '1rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span className="settings-item-label">{t('settings.exchangeRateLabel')}</span>
-                  {!isAdmin && (
-                    <span style={{ 
-                      display: 'inline-flex', 
-                      alignItems: 'center', 
-                      gap: '4px', 
-                      fontSize: '0.75rem', 
-                      backgroundColor: 'rgba(239, 68, 68, 0.1)', 
-                      color: 'var(--danger-color)', 
-                      padding: '2px 8px', 
-                      borderRadius: '12px',
-                      fontWeight: 600
-                    }}>
-                      <Lock size={12} /> {settings.language === 'en' ? 'Locked' : 'Bloqueado'}
-                    </span>
-                  )}
-                </div>
-                <span className="settings-item-desc">{t('settings.exchangeRateDesc')}</span>
-                
-                {/* Manual input and base badge */}
-                <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={{ position: 'relative', display: 'flex', alignItems: 'center', flex: 1, maxWidth: '140px' }}>
-                    <span style={{ position: 'absolute', left: '12px', color: 'var(--text-secondary)', fontWeight: 500 }}>$</span>
-                    <input
-                      type="number"
-                      step="0.01"
-                      className="form-input"
-                      style={{ paddingLeft: '24px', width: '100%', opacity: isAdmin ? 1 : 0.7 }}
-                      value={settings.exchangeRate || 20}
-                      disabled={!isAdmin}
-                      onChange={(e) => toggleSetting('exchangeRate', parseFloat(e.target.value) || 20)}
-                    />
-                  </div>
-                  <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>MXN</span>
-                  
-                  {/* Sync button for Admins */}
-                  {isAdmin && (
-                    <button 
-                      className={`btn btn-secondary ${isSyncing ? 'loading' : ''}`}
-                      style={{ 
-                        display: 'inline-flex', 
-                        alignItems: 'center', 
-                        gap: '6px', 
-                        fontSize: '0.8rem', 
-                        padding: '6px 12px',
-                        height: '38px',
-                        borderRadius: '6px',
-                        cursor: 'pointer'
-                      }}
-                      onClick={handleSyncExchangeRate}
-                      disabled={isSyncing}
-                    >
-                      <Globe size={14} className={isSyncing ? 'animate-spin' : ''} />
-                      {isSyncing ? t('settings.exchangeRateSyncing') : t('settings.exchangeRateSyncBtn')}
-                    </button>
-                  )}
-                </div>
-
-                {/* API Endpoint configuration - only for Admins */}
-                {isAdmin && (
-                  <div style={{ marginTop: '12px', borderLeft: '3px solid var(--primary-color)', paddingLeft: '10px' }}>
-                    <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'block' }}>
-                      {t('settings.exchangeRateApiLabel')}
-                    </span>
-                    <input
-                      type="text"
-                      className="form-input"
-                      style={{ fontSize: '0.75rem', padding: '6px 10px', marginTop: '4px', width: '100%' }}
-                      placeholder="https://..."
-                      value={settings.exchangeRateApiUrl || 'https://open.er-api.com/v6/latest/USD'}
-                      onChange={(e) => toggleSetting('exchangeRateApiUrl', e.target.value)}
-                    />
-                    <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', display: 'block', marginTop: '2px' }}>
-                      {t('settings.exchangeRateApiDesc')}
-                    </span>
-                  </div>
-                )}
-
-                {/* Only Admin Warning Info Badge for Operator */}
-                {!isAdmin && (
-                  <div style={{ 
-                    marginTop: '10px', 
-                    padding: '8px 12px', 
-                    borderRadius: '6px', 
-                    backgroundColor: 'rgba(249, 115, 22, 0.08)', 
-                    borderLeft: '3px solid #f97316',
-                    fontSize: '0.75rem',
-                    color: 'var(--text-secondary)'
-                  }}>
-                    {t('settings.exchangeRateOnlyAdmin')}
-                  </div>
-                )}
-
-                {/* Synchronization Success/Error Alert feedback */}
-                {syncMessage && (
-                  <div style={{ 
-                    marginTop: '8px', 
-                    padding: '8px 12px', 
-                    borderRadius: '6px', 
-                    fontSize: '0.75rem',
-                    fontWeight: 500,
-                    backgroundColor: syncMessage.type === 'success' ? 'rgba(16, 185, 129, 0.08)' : 'rgba(239, 68, 68, 0.08)',
-                    borderLeft: `3px solid ${syncMessage.type === 'success' ? 'var(--primary-color)' : 'var(--danger-color)'}`,
-                    color: syncMessage.type === 'success' ? 'var(--primary-color)' : 'var(--danger-color)'
-                  }}>
-                    {syncMessage.text}
-                  </div>
-                )}
-
-                {/* Reference Outbound Official Links */}
-                <div style={{ marginTop: '12px', fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <span style={{ fontWeight: 600 }}>{t('settings.exchangeRateVerify')}</span>
-                  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                    <a 
-                      href="https://www.dof.gob.mx/" 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      style={{ color: 'var(--primary-color)', display: 'inline-flex', alignItems: 'center', gap: '2px', textDecoration: 'none' }}
-                      className="hover-underline"
-                    >
-                      DOF <ExternalLink size={10} />
-                    </a>
-                    <span style={{ color: 'var(--border-color)' }}>|</span>
-                    <a 
-                      href="https://www.banxico.org.mx/" 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      style={{ color: 'var(--primary-color)', display: 'inline-flex', alignItems: 'center', gap: '2px', textDecoration: 'none' }}
-                      className="hover-underline"
-                    >
-                      Banxico <ExternalLink size={10} />
-                    </a>
-                    <span style={{ color: 'var(--border-color)' }}>|</span>
-                    <a 
-                      href="https://www.google.com/finance/quote/USD-MXN" 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      style={{ color: 'var(--primary-color)', display: 'inline-flex', alignItems: 'center', gap: '2px', textDecoration: 'none' }}
-                      className="hover-underline"
-                    >
-                      Google Finance <ExternalLink size={10} />
-                    </a>
-                  </div>
                 </div>
               </div>
 
