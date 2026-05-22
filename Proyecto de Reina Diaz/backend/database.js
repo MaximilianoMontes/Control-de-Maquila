@@ -289,45 +289,61 @@ async function initializeDatabase() {
     }
 
     try {
-      console.log('--- MIGRACIÓN MANUAL: Reversión de orden 3 y corrección de cantidad ---');
+      console.log('--- MIGRACIÓN MANUAL: Reversión de orden 740990 para Jose Luis Hernandez Cantu ---');
       
-      // 1. Restaurar descuentos personales vinculados a pagos de la orden 3
-      await connection.query(`
-        UPDATE descuentos_personales 
-        SET aplicado = 0, pago_id = NULL 
-        WHERE pago_id IN (SELECT id FROM pagos WHERE produccion_id = 3)
+      // 1. Encontrar el ID real de la orden de producción
+      const [orderRows] = await connection.query(`
+        SELECT p.id 
+        FROM produccion p
+        JOIN maquileros m ON p.maquilero_id = m.id
+        JOIN inventario i ON p.inventario_id = i.id
+        WHERE i.modelo = '740990' AND m.nombre LIKE '%Jose Luis%'
       `);
-      console.log("Descuentos personales de pagos de orden 3 restaurados.");
-
-      // 2. Eliminar los pagos correspondientes a la orden 3
-      await connection.query("DELETE FROM pagos WHERE produccion_id = 3");
-      console.log("Pagos de orden 3 eliminados.");
-
-      // 3. Revertir y corregir la orden de producción a 'En proceso', archivado = 0, cantidad = 40, cantidad_recibida = 40, precio_total = 3520.00, ajuste_monto = 320.00
-      await connection.query(`
-        UPDATE produccion 
-        SET estado = 'En proceso', 
-            archivado = 0, 
-            cantidad = 40, 
-            cantidad_recibida = 40, 
-            precio_total = 3520.00, 
-            ajuste_monto = 320.00,
-            fecha_terminado = NULL
-        WHERE id = 3
-      `);
-      console.log("Orden 3 corregida a 40 piezas y restaurada a 'En proceso'.");
-
-      // 4. Limpiar historial de actividades general relativo a la finalización o pagos de la orden 3 para mantener consistencia
-      await connection.query(`
-        DELETE FROM historial 
-        WHERE target = 'PRODUCCION' 
-          AND (description LIKE '%orden 3 %' OR description LIKE '%orden #3%' OR description LIKE '%ID 3 %' OR description LIKE '%ID #3%')
-      `);
-      console.log("Historial general de orden 3 depurado.");
       
-      console.log('--- FIN DE MIGRACIÓN MANUAL ORDEN 3 ---');
+      if (orderRows.length > 0) {
+        const orderId = orderRows[0].id;
+        console.log(`Orden encontrada en la base de datos con ID Real: ${orderId}`);
+        
+        // 2. Restaurar descuentos personales vinculados a pagos de esta orden
+        await connection.query(`
+          UPDATE descuentos_personales 
+          SET aplicado = 0, pago_id = NULL 
+          WHERE pago_id IN (SELECT id FROM pagos WHERE produccion_id = ?)
+        `, [orderId]);
+        console.log(`Descuentos personales de pagos de orden ID ${orderId} restaurados.`);
+
+        // 3. Eliminar los pagos correspondientes a esta orden
+        await connection.query("DELETE FROM pagos WHERE produccion_id = ?", [orderId]);
+        console.log(`Pagos de orden ID ${orderId} eliminados.`);
+
+        // 4. Revertir y corregir la orden de producción a 'En proceso', archivado = 0, cantidad = 40, cantidad_recibida = 40, precio_total = 3520.00, ajuste_monto = 320.00
+        await connection.query(`
+          UPDATE produccion 
+          SET estado = 'En proceso', 
+              archivado = 0, 
+              cantidad = 40, 
+              cantidad_recibida = 40, 
+              precio_total = 3520.00, 
+              ajuste_monto = 320.00,
+              fecha_terminado = NULL
+          WHERE id = ?
+        `, [orderId]);
+        console.log(`Orden ID ${orderId} corregida a 40 piezas y restaurada a 'En proceso'.`);
+
+        // 5. Limpiar historial de actividades general relativo a la finalización o pagos de esta orden
+        await connection.query(`
+          DELETE FROM historial 
+          WHERE target = 'PRODUCCION' 
+            AND (description LIKE ? OR description LIKE ? OR description LIKE ? OR description LIKE ?)
+        `, [`%orden ${orderId} %`, `%ID ${orderId} %`, `%orden #${orderId}%`, `%ID #${orderId}%`]);
+        console.log(`Historial general de orden ID ${orderId} depurado.`);
+      } else {
+        console.log("No se encontró ninguna orden para el modelo 740990 y Jose Luis.");
+      }
+      
+      console.log('--- FIN DE MIGRACIÓN MANUAL ORDEN 740990 ---');
     } catch (e) {
-      console.error('Error al revertir orden 3:', e);
+      console.error('Error al revertir orden de Jose Luis:', e);
     }
 
     connection.release();
