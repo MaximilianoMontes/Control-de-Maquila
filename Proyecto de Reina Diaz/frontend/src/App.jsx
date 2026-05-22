@@ -10,6 +10,7 @@ import Maquileros from './pages/Maquileros';
 import Inventario from './pages/Inventario';
 import Cortes from './pages/Cortes';
 import Produccion from './pages/Produccion';
+import Extras from './pages/Extras';
 import Pagos from './pages/Pagos';
 import Reportes from './pages/Reportes';
 import Historial from './pages/Historial';
@@ -56,6 +57,7 @@ function App() {
       <Route path="/inventario" element={<ProtectedRoute><MainLayout><Inventario /></MainLayout></ProtectedRoute>} />
       <Route path="/cortes" element={<ProtectedRoute><MainLayout><Cortes /></MainLayout></ProtectedRoute>} />
       <Route path="/produccion" element={<ProtectedRoute><MainLayout><Produccion /></MainLayout></ProtectedRoute>} />
+      <Route path="/extras" element={<ProtectedRoute><MainLayout><Extras /></MainLayout></ProtectedRoute>} />
       <Route path="/pagos" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2']}><MainLayout><Pagos /></MainLayout></ProtectedRoute>} />
       <Route path="/reportes" element={<ProtectedRoute><MainLayout><Reportes /></MainLayout></ProtectedRoute>} />
       <Route path="/historial" element={<ProtectedRoute><MainLayout><Historial /></MainLayout></ProtectedRoute>} />
