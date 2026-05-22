@@ -261,6 +261,17 @@ async function initializeDatabase() {
 
     try {
       console.log('--- MIGRACIÓN MANUAL: Eliminación de orden 39 ---');
+      
+      // Eliminar registros de historial general que hagan referencia a la orden 39 o sus pagos
+      await connection.query(`
+        DELETE FROM historial 
+        WHERE description LIKE '%orden 39%' 
+           OR description LIKE '%ID #39%' 
+           OR description LIKE '%ID 39%' 
+           OR (target = 'PRODUCCION' AND description LIKE '%39%')
+      `);
+      console.log("Historial general de orden 39 depurado.");
+
       const [p39] = await connection.query("SELECT id FROM produccion WHERE id = 39");
       if (p39.length > 0) {
         const [pagos] = await connection.query("SELECT id FROM pagos WHERE produccion_id = 39");
