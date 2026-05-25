@@ -5,6 +5,7 @@ import { useAuth } from './context/AuthContext';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import Login from './pages/Login';
+import Launcher from './pages/Launcher';
 import Dashboard from './pages/Dashboard';
 import Maquileros from './pages/Maquileros';
 import Inventario from './pages/Inventario';
@@ -52,7 +53,8 @@ function App() {
   return (
     <Routes>
       <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
-      <Route path="/" element={<ProtectedRoute><MainLayout><Dashboard /></MainLayout></ProtectedRoute>} />
+      <Route path="/" element={<ProtectedRoute><Launcher /></ProtectedRoute>} />
+      <Route path="/dashboard" element={<ProtectedRoute><MainLayout><Dashboard /></MainLayout></ProtectedRoute>} />
       <Route path="/maquileros" element={<ProtectedRoute><MainLayout><Maquileros /></MainLayout></ProtectedRoute>} />
       <Route path="/inventario" element={<ProtectedRoute><MainLayout><Inventario /></MainLayout></ProtectedRoute>} />
       <Route path="/cortes" element={<ProtectedRoute><MainLayout><Cortes /></MainLayout></ProtectedRoute>} />
