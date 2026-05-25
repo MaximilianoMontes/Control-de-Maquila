@@ -2,7 +2,6 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import { 
-  MessageSquare, 
   Calendar, 
   Bell, 
   Settings, 
@@ -10,6 +9,7 @@ import {
   Moon,
   Sun
 } from 'lucide-react';
+
 
 // Custom high-aesthetic SVGs for app icons (Odoo claymorphism-flat style)
 const MaquilaIcon = () => (
@@ -31,23 +31,24 @@ const MaquilaIcon = () => (
   </svg>
 );
 
-const CorteIcon = () => (
+const PlanchaIcon = () => (
   <svg width="56" height="56" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
     <defs>
-      <linearGradient id="gradCorte" x1="0%" y1="0%" x2="100%" y2="100%">
+      <linearGradient id="gradPlancha" x1="0%" y1="0%" x2="100%" y2="100%">
         <stop offset="0%" stopColor="#0ea5e9" />
         <stop offset="100%" stopColor="#22d3ee" />
       </linearGradient>
-      <filter id="shadowCorte" x="-10%" y="-10%" width="120%" height="120%">
+      <filter id="shadowPlancha" x="-10%" y="-10%" width="120%" height="120%">
         <feDropShadow dx="0" dy="4" stdDeviation="4" floodOpacity="0.15" />
       </filter>
     </defs>
-    <rect width="64" height="64" rx="20" fill="url(#gradCorte)" filter="url(#shadowCorte)" />
-    {/* Premium scissors and cutting path lines */}
-    <circle cx="25" cy="25" r="5" stroke="white" strokeWidth="3" />
-    <circle cx="25" cy="39" r="5" stroke="white" strokeWidth="3" />
-    <path d="M30 27L43 37" stroke="white" strokeWidth="3" strokeLinecap="round" />
-    <path d="M30 37L43 27" stroke="white" strokeWidth="3" strokeLinecap="round" />
+    <rect width="64" height="64" rx="20" fill="url(#gradPlancha)" filter="url(#shadowPlancha)" />
+    {/* High-end Clothes Iron Vector Graphic */}
+    <path d="M18 44H46C46 35 42 27 33 27H22" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M24 27V21H38V27" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+    <circle cx="30" cy="36" r="2" fill="white" />
+    <circle cx="36" cy="36" r="2" fill="white" />
+    <line x1="18" y1="44" x2="46" y2="44" stroke="white" strokeWidth="4" strokeLinecap="round" />
   </svg>
 );
 
@@ -70,14 +71,14 @@ export default function Launcher() {
   const text = settings.language === 'en' ? {
     company: "My Company (San Francisco)",
     maquila: "Maquila ERP",
-    corte: "Cuts Module",
+    plancha: "Pressing Module",
     soon: "Coming soon",
     logout: "Log Out",
     theme: "Toggle Theme"
   } : {
     company: "Mi Empresa (San Francisco)",
     maquila: "Maquila ERP",
-    corte: "Módulo de Corte",
+    plancha: "Módulo de Plancha",
     soon: "Próximamente",
     logout: "Cerrar Sesión",
     theme: "Cambiar Tema"
@@ -92,11 +93,6 @@ export default function Launcher() {
           <div className="launcher-status-dot" title="Servicios del ERP Activos"></div>
           
           {/* Action Quick Icons */}
-          <button className="launcher-header-btn" title="Mensajes">
-            <MessageSquare size={16} />
-            <span className="launcher-header-badge">7</span>
-          </button>
-          
           <button className="launcher-header-btn" title="Calendario / Citas">
             <Calendar size={16} />
             <span className="launcher-header-badge">2</span>
@@ -143,13 +139,13 @@ export default function Launcher() {
             <span className="launcher-app-name">{text.maquila}</span>
           </Link>
 
-          {/* App 2: Corte (Disabled / Coming Soon) */}
+          {/* App 2: Plancha (Disabled / Coming Soon) */}
           <div className="launcher-app-item disabled" title={text.soon}>
             <div className="launcher-app-icon" style={{ filter: 'grayscale(0.65) opacity(0.8)' }}>
-              <CorteIcon />
+              <PlanchaIcon />
               <span className="launcher-app-badge">{text.soon}</span>
             </div>
-            <span className="launcher-app-name">{text.corte}</span>
+            <span className="launcher-app-name">{text.plancha}</span>
           </div>
         </div>
       </main>
