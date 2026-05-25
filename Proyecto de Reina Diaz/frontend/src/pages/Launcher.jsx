@@ -69,14 +69,14 @@ export default function Launcher() {
 
   // Multi-language text support
   const text = settings.language === 'en' ? {
-    company: "My Company (San Francisco)",
+    company: "Maquila Reina Diaz (Colima)",
     maquila: "Maquila ERP",
     plancha: "Pressing Module",
     soon: "Coming soon",
     logout: "Log Out",
     theme: "Toggle Theme"
   } : {
-    company: "Mi Empresa (San Francisco)",
+    company: "Maquila Reina Diaz (Colima)",
     maquila: "Maquila ERP",
     plancha: "Módulo de Plancha",
     soon: "Próximamente",
