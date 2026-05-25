@@ -1193,7 +1193,7 @@ app.get('/api/reportes/produccion', async (req, res) => {
         FROM produccion p 
         JOIN maquileros m ON p.maquilero_id = m.id 
         LEFT JOIN inventario i ON p.inventario_id = i.id
-        WHERE p.estado = 'Terminado' AND p.archivado = 0 AND p.es_extra = 0
+        WHERE p.estado = 'Terminado' AND p.es_extra = 0
       `;
       const params = [];
       let subtitleDate = "Detalle completo de órdenes terminadas";
