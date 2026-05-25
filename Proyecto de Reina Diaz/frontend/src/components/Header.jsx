@@ -29,7 +29,8 @@ import {
   Lock,
   Plus,
   Trash2,
-  AlertTriangle
+  AlertTriangle,
+  LayoutGrid
 } from 'lucide-react';
 
 export default function Header() {
@@ -234,6 +235,15 @@ export default function Header() {
   return (
     <>
       <header className="main-header">
+        {/* Return to Launcher / Apps Menu */}
+        <Link 
+          to="/" 
+          className="header-launcher-btn" 
+          title={settings.language === 'en' ? "App Launcher" : "Menú de Aplicaciones"}
+        >
+          <LayoutGrid size={18} />
+        </Link>
+
         {/* Search bar/Command search button */}
         <div className="header-search-container" onClick={() => setShowCommandPalette(true)}>
           <Search size={18} color="var(--text-secondary)" />

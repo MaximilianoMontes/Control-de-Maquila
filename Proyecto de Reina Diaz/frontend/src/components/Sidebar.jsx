@@ -26,7 +26,7 @@ export default function Sidebar() {
   const puedeVerPagos = ['admin', 'produccion1', 'produccion2'].includes(userRole);
 
   const navItems = [
-    { path: '/',           name: t('nav.dashboard'),   icon: <LayoutDashboard size={20} /> },
+    { path: '/dashboard',  name: t('nav.dashboard'),   icon: <LayoutDashboard size={20} /> },
     { path: '/maquileros', name: t('nav.maquileros'),  icon: <Users size={20} /> },
     { path: '/inventario', name: t('nav.inventario'),  icon: <Package size={20} /> },
     { path: '/cortes',     name: t('nav.cortes'),      icon: <Scissors size={20} /> },
@@ -41,7 +41,7 @@ export default function Sidebar() {
 
   return (
     <aside className="sidebar">
-      <Link to="/" className="sidebar-logo">
+      <Link to="/dashboard" className="sidebar-logo">
         <img src="/logo.png" alt="Logo Maquila" className="logo-img" />
         <span className="gradient-text">Maquila ERP</span>
       </Link>
