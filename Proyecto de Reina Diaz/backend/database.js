@@ -362,6 +362,50 @@ async function initializeDatabase() {
       console.error('Error al revertir orden de Jose Luis:', e);
     }
 
+    // Retroactive migration to sync all cuts to physical inventory (inventario_real)
+    try {
+      console.log('--- MIGRACIÓN MANUAL: Sincronización retroactiva de todos los cortes a inventario_real ---');
+      const [cuts] = await connection.query("SELECT * FROM inventario");
+      let syncedCount = 0;
+      for (const cut of cuts) {
+        if (!cut.modelo) continue;
+
+        // Check if it already exists in inventario_real
+        const [existing] = await connection.query(
+          "SELECT id FROM inventario_real WHERE no_orden = ? AND modelo = ?",
+          [cut.no_orden || '', cut.modelo]
+        );
+
+        if (existing.length === 0) {
+          await connection.query(`
+            INSERT INTO inventario_real (numero, temporada, modelo, precio, color, cliente, no_orden, piezas, imagen, observaciones, fecha_ingreso)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `, [
+            cut.numero,
+            cut.temporada,
+            cut.modelo,
+            cut.precio,
+            cut.color,
+            cut.cliente,
+            cut.no_orden,
+            cut.piezas_en_proceso,
+            cut.imagen,
+            cut.observaciones,
+            cut.fecha_creacion
+          ]);
+          syncedCount++;
+        }
+
+        // Always make sure en_inventario is set to 1
+        if (cut.en_inventario !== 1) {
+          await connection.query("UPDATE inventario SET en_inventario = 1 WHERE id = ?", [cut.id]);
+        }
+      }
+      console.log(`Sincronización retroactiva completada. ${syncedCount} cortes nuevos añadidos a inventario_real.`);
+    } catch (e) {
+      console.error('Error en migración de sincronización retroactiva de inventario:', e);
+    }
+
     connection.release();
     console.log('Database initialization complete.');
   } catch (error) {

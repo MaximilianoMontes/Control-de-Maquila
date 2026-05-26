@@ -82,116 +82,9 @@ const processImage = async (file) => {
 
 // Helper to check production conditions and transfer to inventory
 const checkAndMoveToInventory = async (produccionId, userId) => {
-  const connection = await db.getConnection();
-  try {
-    await connection.beginTransaction();
-
-    // 1. Get the production order details and associated cut
-    const [prods] = await connection.query(`
-      SELECT p.*, i.id as cut_id, i.numero, i.temporada, i.modelo, i.precio, i.color, i.cliente, i.no_orden, i.imagen, i.observaciones, i.en_inventario, i.fecha_creacion
-      FROM produccion p
-      LEFT JOIN inventario i ON p.inventario_id = i.id
-      WHERE p.id = ? FOR UPDATE
-    `, [produccionId]);
-
-    const prod = prods[0];
-    if (!prod) {
-      await connection.rollback();
-      return;
-    }
-
-    // If it is an extra order, do not move to real inventory or mark cut as en_inventario = 1
-    if (prod.es_extra === 1) {
-      await connection.rollback();
-      return;
-    }
-
-    // If there is no associated cut
-    if (!prod.cut_id) {
-      await connection.rollback();
-      return;
-    }
-
-    // 2. Check if the production order is Terminado and fully paid
-    const [pagosRows] = await connection.query("SELECT COALESCE(SUM(monto), 0) as total_monto FROM pagos WHERE produccion_id = ?", [produccionId]);
-    const [descuentosRows] = await connection.query(`
-      SELECT COALESCE(SUM(dp.monto_total), 0) as total_descuento 
-      FROM descuentos_personales dp 
-      JOIN pagos pg ON dp.pago_id = pg.id 
-      WHERE pg.produccion_id = ?
-    `, [produccionId]);
-
-    const totalPaid = parseFloat(pagosRows[0].total_monto || 0) + parseFloat(descuentosRows[0].total_descuento || 0);
-    const precioTotal = parseFloat(prod.precio_total || 0);
-
-    const isTerminado = prod.estado === 'Terminado';
-    const isFullyPaid = totalPaid >= (precioTotal - 0.05);
-
-    if (isTerminado && isFullyPaid) {
-      // Move to inventario_real ONLY if it has not already been moved
-      if (prod.en_inventario !== 1) {
-        const piezasFinal = prod.cantidad_recibida !== null ? prod.cantidad_recibida : prod.cantidad;
-
-        // 3. Move to inventario_real
-        await connection.query(`
-          INSERT INTO inventario_real (numero, temporada, modelo, precio, color, cliente, no_orden, piezas, imagen, observaciones, fecha_ingreso)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `, [
-          prod.numero,
-          prod.temporada,
-          prod.modelo,
-          prod.precio,
-          prod.color,
-          prod.cliente,
-          prod.no_orden,
-          piezasFinal,
-          prod.imagen,
-          prod.observaciones,
-          prod.fecha_creacion
-        ]);
-
-        // 4. Mark the cut as en_inventario = 1
-        await connection.query("UPDATE inventario SET en_inventario = 1 WHERE id = ?", [prod.cut_id]);
-
-        // 5. Log the activity
-        const desc = `Movió el modelo ${prod.modelo} (${piezasFinal} piezas) de Cortes a Inventario por liquidación y entrega de Orden #${produccionId}`;
-        await connection.query(
-          "INSERT INTO historial (user_id, action, target, description) VALUES (?, 'ALTA', 'INVENTARIO', ?)",
-          [userId || 1, desc]
-        );
-      }
-    } else {
-      // Reversal: If it's already marked as en_inventario = 1, we must remove it from real inventory
-      if (prod.en_inventario === 1) {
-        // Delete matching record from inventario_real
-        await connection.query(`
-          DELETE FROM inventario_real 
-          WHERE no_orden = ? AND modelo = ?
-          LIMIT 1
-        `, [
-          prod.no_orden,
-          prod.modelo
-        ]);
-
-        // Mark the cut as en_inventario = 0
-        await connection.query("UPDATE inventario SET en_inventario = 0 WHERE id = ?", [prod.cut_id]);
-
-        // Log the activity
-        const desc = `Retiró el modelo ${prod.modelo} de Inventario y lo regresó a Cortes debido a cambio en estado/pago de la Orden #${produccionId}`;
-        await connection.query(
-          "INSERT INTO historial (user_id, action, target, description) VALUES (?, 'BAJA', 'INVENTARIO', ?)",
-          [userId || 1, desc]
-        );
-      }
-    }
-
-    await connection.commit();
-  } catch (error) {
-    await connection.rollback();
-    console.error("Error in checkAndMoveToInventory:", error);
-  } finally {
-    connection.release();
-  }
+  // Physical inventory (inventario_real) is now synced immediately when cuts are created,
+  // modified, or deleted in Cortes, independent of production order completion.
+  return;
 };
 
 // Auth Endpoint
@@ -446,6 +339,26 @@ app.post('/api/inventario', authenticateToken, upload.single('imagenBtn'), async
     const logTag = isReprog ? 'REPROGRAMACION' : 'ALTA';
     await logActivity(req.user.id, logTag, 'INVENTARIO', `${isReprog ? 'Reprogramó' : 'Agregó'} ${modelo} (${piezas_en_proceso} piezas)`);
     
+    // Automatically mirror the new cut in inventario_real
+    await db.query(`
+      INSERT INTO inventario_real (numero, temporada, modelo, precio, color, cliente, no_orden, piezas, imagen, observaciones, fecha_ingreso)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+    `, [
+      numero ? String(numero) : null,
+      req.body.temporada ? String(req.body.temporada) : null,
+      modelo ? String(modelo) : null,
+      parseFloat(String(precio).replace(/[^0-9.-]+/g,"")) || 0,
+      color ? String(color) : null,
+      cliente ? String(cliente) : null,
+      no_orden ? String(no_orden) : null,
+      parseInt(piezas_en_proceso) || 0,
+      finalImageUrl ? String(finalImageUrl) : null,
+      observaciones ? String(observaciones) : null
+    ]);
+
+    // Update en_inventario = 1 on the cut
+    await db.query("UPDATE inventario SET en_inventario = 1 WHERE id = ?", [result.insertId]);
+
     res.json({ id: result.insertId, success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -510,6 +423,43 @@ app.put('/api/inventario/:id', authenticateToken, upload.single('imagenBtn'), as
     const desc = changes.length > 0 ? `Editó ${modelo}: ${changes.join(', ')}` : `Actualizó datos de ${modelo}`;
     await logActivity(req.user.id, 'EDIT', 'INVENTARIO', desc);
 
+    // Automatically update the mirrored record in inventario_real
+    const [updateResult] = await db.query(`
+      UPDATE inventario_real 
+      SET numero=?, modelo=?, precio=?, color=?, cliente=?, no_orden=?, piezas=?, imagen=?, observaciones=?
+      WHERE no_orden=? AND modelo=?
+    `, [
+      numero ? String(numero) : null,
+      modelo ? String(modelo) : null,
+      parseFloat(String(precio).replace(/[^0-9.-]+/g,"")) || 0,
+      color ? String(color) : null,
+      cliente ? String(cliente) : null,
+      no_orden ? String(no_orden) : null,
+      parseInt(piezas_en_proceso) || 0,
+      imagen ? String(imagen) : null,
+      observaciones ? String(observaciones) : null,
+      old.no_orden || '',
+      old.modelo
+    ]);
+
+    if (updateResult.affectedRows === 0) {
+      await db.query(`
+        INSERT INTO inventario_real (numero, modelo, precio, color, cliente, no_orden, piezas, imagen, observaciones, fecha_ingreso)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+      `, [
+        numero ? String(numero) : null,
+        modelo ? String(modelo) : null,
+        parseFloat(String(precio).replace(/[^0-9.-]+/g,"")) || 0,
+        color ? String(color) : null,
+        cliente ? String(cliente) : null,
+        no_orden ? String(no_orden) : null,
+        parseInt(piezas_en_proceso) || 0,
+        imagen ? String(imagen) : null,
+        observaciones ? String(observaciones) : null
+      ]);
+      await db.query("UPDATE inventario SET en_inventario = 1 WHERE id = ?", [req.params.id]);
+    }
+
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -518,12 +468,16 @@ app.put('/api/inventario/:id', authenticateToken, upload.single('imagenBtn'), as
 
 app.delete('/api/inventario/:id', authenticateToken, async (req, res) => {
   try {
-    const [olds] = await db.query("SELECT modelo FROM inventario WHERE id = ?", [req.params.id]);
+    const [olds] = await db.query("SELECT modelo, no_orden FROM inventario WHERE id = ?", [req.params.id]);
     const old = olds[0];
+    if (!old) return res.status(404).json({ error: 'Producto no encontrado' });
+
     await db.query("DELETE FROM inventario WHERE id = ?", [req.params.id]);
-    if (old) {
-      await logActivity(req.user.id, 'BAJA', 'INVENTARIO', `Eliminó del inventario: ${old.modelo}`);
-    }
+
+    // Automatically delete the mirrored record in inventario_real
+    await db.query("DELETE FROM inventario_real WHERE no_orden = ? AND modelo = ?", [old.no_orden || '', old.modelo]);
+
+    await logActivity(req.user.id, 'BAJA', 'INVENTARIO', `Eliminó del inventario: ${old.modelo}`);
     res.json({ success: true });
   } catch (error) {
     if (error.code === 'ER_ROW_IS_REFERENCED_2' || error.code === 'ER_ROW_IS_REFERENCED') {
