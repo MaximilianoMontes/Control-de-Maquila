@@ -362,6 +362,23 @@ async function initializeDatabase() {
       console.error('Error al revertir orden de Jose Luis:', e);
     }
 
+    try {
+      console.log('--- MIGRACIÓN MANUAL: Asignar 145 en recibidos para Eliazar Anacleto Romero ---');
+      const [updateResult] = await connection.query(`
+        UPDATE produccion p
+        JOIN maquileros m ON p.maquilero_id = m.id
+        JOIN inventario i ON p.inventario_id = i.id
+        SET p.cantidad_recibida = 145
+        WHERE i.modelo = '526134' 
+          AND m.nombre LIKE '%Eliazar%'
+          AND p.cantidad = 145
+      `);
+      console.log(`Orden de Eliazar corregida. Filas afectadas: ${updateResult.affectedRows}`);
+      console.log('--- FIN DE MIGRACIÓN MANUAL ELIAZAR ---');
+    } catch (e) {
+      console.error('Error al actualizar la orden de Eliazar:', e);
+    }
+
     // Retroactive migration to sync all cuts to physical inventory (inventario_real)
     try {
       console.log('--- MIGRACIÓN MANUAL: Sincronización retroactiva de todos los cortes a inventario_real ---');
