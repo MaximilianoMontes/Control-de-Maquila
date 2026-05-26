@@ -13,6 +13,12 @@ const API = API_URL;
 const getImgSrc = (img) => img ? (img.startsWith('http') ? img : `${API}${img}`) : null;
 const formatCurrency = (val) => new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(val);
 
+const SIZES = ["05", "07", "09", "11", "13", "15"];
+const parseColors = (colorStr) => {
+  if (!colorStr) return ['N/A'];
+  return colorStr.split(',').map(c => c.trim()).filter(Boolean);
+};
+
 export default function Camion() {
   const { t } = useSettings();
   const { user } = useAuth();
@@ -33,9 +39,7 @@ export default function Camion() {
   const [selectedStockItem, setSelectedStockItem] = useState(null);
   const [editIndex, setEditIndex] = useState(null); // If editing cargo instead of adding new
   const [cargoQty, setCargoQty] = useState(0);
-  const [tallas, setTallas] = useState({
-    "05": 0, "07": 0, "09": 0, "11": 0, "13": 0, "15": 0
-  });
+  const [tallas, setTallas] = useState({});
 
   // Accordion History State
   const [expandedTruckId, setExpandedTruckId] = useState(null);
@@ -71,17 +75,42 @@ export default function Camion() {
   const openCargoModal = (item, cargoIdx = null) => {
     setSelectedStockItem(item);
     setEditIndex(cargoIdx);
+    const colors = parseColors(item.color);
+
     if (cargoIdx !== null) {
       // Edit existing cargo
       const currentCargo = cargo[cargoIdx];
       setCargoQty(currentCargo.piezas);
-      setTallas({ ...currentCargo.tallas_cantidades });
+      
+      const initialTallas = {};
+      colors.forEach(col => {
+        initialTallas[col] = {
+          "05": 0, "07": 0, "09": 0, "11": 0, "13": 0, "15": 0
+        };
+        if (currentCargo.tallas_cantidades && typeof currentCargo.tallas_cantidades[col] === 'object') {
+          SIZES.forEach(sz => {
+            initialTallas[col][sz] = parseInt(currentCargo.tallas_cantidades[col][sz]) || 0;
+          });
+        } else if (currentCargo.tallas_cantidades && colors.length === 1) {
+          // If legacy flat format and only one color, map it
+          SIZES.forEach(sz => {
+            if (currentCargo.tallas_cantidades[sz] !== undefined) {
+              initialTallas[col][sz] = parseInt(currentCargo.tallas_cantidades[sz]) || 0;
+            }
+          });
+        }
+      });
+      setTallas(initialTallas);
     } else {
       // Add new cargo
       setCargoQty(item.piezas);
-      setTallas({
-        "05": 0, "07": 0, "09": 0, "11": 0, "13": 0, "15": 0
+      const initialTallas = {};
+      colors.forEach(col => {
+        initialTallas[col] = {
+          "05": 0, "07": 0, "09": 0, "11": 0, "13": 0, "15": 0
+        };
       });
+      setTallas(initialTallas);
     }
     setIsModalOpen(true);
   };
@@ -92,15 +121,23 @@ export default function Camion() {
     setEditIndex(null);
   };
 
-  const handleTallaChange = (size, value) => {
+  const handleTallaChange = (color, size, value) => {
     const val = parseInt(value) || 0;
     setTallas(prev => ({
       ...prev,
-      [size]: val >= 0 ? val : 0
+      [color]: {
+        ...(prev[color] || { "05": 0, "07": 0, "09": 0, "11": 0, "13": 0, "15": 0 }),
+        [size]: val >= 0 ? val : 0
+      }
     }));
   };
 
-  const tallasSum = Object.values(tallas).reduce((sum, current) => sum + current, 0);
+  const tallasSum = Object.values(tallas).reduce((sum, colorObj) => {
+    if (typeof colorObj === 'object' && colorObj !== null) {
+      return sum + Object.values(colorObj).reduce((subSum, val) => subSum + (parseInt(val) || 0), 0);
+    }
+    return sum + (parseInt(colorObj) || 0);
+  }, 0);
   const isTallaValid = tallasSum === cargoQty && cargoQty > 0;
 
   const handleConfirmCargo = () => {
@@ -408,14 +445,30 @@ export default function Camion() {
                     </div>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                      {Object.entries(item.tallas_cantidades).map(([talla, cant]) => (
-                        cant > 0 && (
-                          <span key={talla} style={{ fontSize: '0.7rem', padding: '2px 6px', background: 'rgba(255,255,255,0.08)', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                            T.{talla}: <strong>{cant}</strong>
-                          </span>
-                        )
-                      ))}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', width: '100%', flexGrow: 1 }}>
+                      {Object.entries(item.tallas_cantidades).map(([key, val]) => {
+                        if (typeof val === 'object' && val !== null) {
+                          const entries = Object.entries(val).filter(([_, qty]) => qty > 0);
+                          if (entries.length === 0) return null;
+                          return (
+                            <div key={key} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                              <span style={{ fontSize: '0.7rem', color: '#c084fc', fontWeight: 700 }}>{key}:</span>
+                              {entries.map(([sz, qty]) => (
+                                <span key={sz} style={{ fontSize: '0.7rem', padding: '1px 5px', background: 'rgba(255,255,255,0.08)', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                  T.{sz}: <strong>{qty}</strong>
+                                </span>
+                              ))}
+                            </div>
+                          );
+                        } else if (parseInt(val) > 0) {
+                          return (
+                            <span key={key} style={{ fontSize: '0.7rem', padding: '2px 6px', background: 'rgba(255,255,255,0.08)', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                              T.{key}: <strong>{val}</strong>
+                            </span>
+                          );
+                        }
+                        return null;
+                      })}
                     </div>
                     <span style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--text-primary)' }}>
                       {item.piezas} pzs
@@ -541,14 +594,30 @@ export default function Camion() {
                                 <td>{item.cliente || 'N/A'}</td>
                                 <td style={{ textAlign: 'center', fontWeight: 700 }}>{item.piezas}</td>
                                 <td>
-                                  <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-                                    {Object.entries(item.tallas_cantidades).map(([talla, cant]) => (
-                                      cant > 0 && (
-                                        <span key={`tdt-${talla}`} style={{ padding: '2px 6px', background: 'rgba(255,255,255,0.06)', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.05)', fontSize: '0.75rem' }}>
-                                          T.{talla}: <strong>{cant}</strong>
-                                        </span>
-                                      )
-                                    ))}
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                    {Object.entries(item.tallas_cantidades).map(([key, val]) => {
+                                      if (typeof val === 'object' && val !== null) {
+                                        const entries = Object.entries(val).filter(([_, qty]) => qty > 0);
+                                        if (entries.length === 0) return null;
+                                        return (
+                                          <div key={key} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                                            <span style={{ fontSize: '0.75rem', color: '#c084fc', fontWeight: 700 }}>{key}:</span>
+                                            {entries.map(([sz, qty]) => (
+                                              <span key={sz} style={{ padding: '1px 5px', background: 'rgba(255,255,255,0.04)', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.03)', fontSize: '0.75rem' }}>
+                                                T.{sz}: <strong>{qty}</strong>
+                                              </span>
+                                            ))}
+                                          </div>
+                                        );
+                                      } else if (parseInt(val) > 0) {
+                                        return (
+                                          <span key={key} style={{ padding: '1px 5px', background: 'rgba(255,255,255,0.04)', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.03)', fontSize: '0.75rem' }}>
+                                            T.{key}: <strong>{val}</strong>
+                                          </span>
+                                        );
+                                      }
+                                      return null;
+                                    })}
                                   </div>
                                 </td>
                               </tr>
@@ -568,7 +637,7 @@ export default function Camion() {
       {/* Tallas and quantity Modal */}
       {isModalOpen && selectedStockItem && (
         <div className="modal-overlay" style={{ zIndex: 1000 }}>
-          <div className="modal-content glass-card" style={{ width: '100%', maxWidth: '520px', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', animation: 'scaleUp 0.3s' }}>
+          <div className="modal-content glass-card" style={{ width: '90%', maxWidth: '680px', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', animation: 'scaleUp 0.3s' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800 }}>
                 {editIndex !== null ? 'Editar Carga del Modelo' : 'Subir Modelo al Camión'}: {selectedStockItem.modelo}
@@ -616,31 +685,58 @@ export default function Camion() {
                   {t('camion.sizeHelper')}
                 </p>
 
-                {/* Grid of size fields */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem' }}>
-                  {Object.keys(tallas).map(size => (
-                    <div 
-                      key={`field-${size}`} 
-                      style={{ 
-                        display: 'flex', 
-                        flexDirection: 'column', 
-                        gap: '0.2rem',
-                        background: 'rgba(255,255,255,0.02)',
-                        padding: '0.5rem',
-                        borderRadius: '6px',
-                        border: '1px solid rgba(255,255,255,0.06)'
-                      }}
-                    >
-                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#c084fc', textAlign: 'center' }}>Talla {size}</label>
-                      <input 
-                        type="number" 
-                        value={tallas[size] || ''}
-                        onChange={e => handleTallaChange(size, e.target.value)}
-                        style={{ border: 'none', background: 'transparent', color: 'var(--text-primary)', outline: 'none', fontWeight: 800, textAlign: 'center', fontSize: '1rem', width: '100%', borderBottom: '1px solid rgba(255,255,255,0.1)' }}
-                        placeholder="0"
-                      />
-                    </div>
-                  ))}
+                {/* Table Matrix instead of flat grid */}
+                <div style={{ overflowX: 'auto', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.08)', background: 'rgba(0, 0, 0, 0.2)' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
+                    <thead>
+                      <tr style={{ background: 'rgba(255, 255, 255, 0.05)', borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                        <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: 700, color: 'var(--text-secondary)', fontSize: '0.8rem', textTransform: 'uppercase' }}>Color</th>
+                        {SIZES.map(sz => (
+                          <th key={sz} style={{ padding: '0.75rem 0.5rem', textAlign: 'center', fontWeight: 700, color: '#c084fc', minWidth: '60px' }}>{sz}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Object.keys(tallas).map(color => (
+                        <tr key={color} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.04)', transition: 'background 0.2s' }}>
+                          <td style={{ padding: '0.75rem 1rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                            {color}
+                          </td>
+                          {SIZES.map(sz => (
+                            <td key={sz} style={{ padding: '0.5rem 0.25rem', textAlign: 'center' }}>
+                              <input 
+                                type="number" 
+                                value={tallas[color]?.[sz] || ''}
+                                onChange={e => handleTallaChange(color, sz, e.target.value)}
+                                placeholder="0"
+                                style={{
+                                  width: '50px',
+                                  padding: '0.4rem 0.25rem',
+                                  borderRadius: '6px',
+                                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                                  background: 'rgba(255, 255, 255, 0.03)',
+                                  color: 'var(--text-primary)',
+                                  fontWeight: 800,
+                                  textAlign: 'center',
+                                  outline: 'none',
+                                  transition: 'all 0.2s',
+                                }}
+                                onFocus={e => {
+                                  e.target.style.borderColor = 'var(--color-primary)';
+                                  e.target.style.background = 'rgba(139, 92, 246, 0.1)';
+                                  e.target.select();
+                                }}
+                                onBlur={e => {
+                                  e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                                  e.target.style.background = 'rgba(255, 255, 255, 0.03)';
+                                }}
+                              />
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
 
                 {!isTallaValid && cargoQty > 0 && (
