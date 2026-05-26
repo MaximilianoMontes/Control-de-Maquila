@@ -395,7 +395,8 @@ async function initializeDatabase() {
           (i.modelo = '532046' AND m.nombre LIKE '%Victoria Mora%') OR
           (i.modelo = '501476' AND m.nombre LIKE '%Marco Antonio%') OR
           (i.modelo = '731147' AND m.nombre LIKE '%Mas Procesos%') OR
-          (i.modelo = '532148' AND m.nombre LIKE '%Jose Enedino%')
+          (i.modelo = '532148' AND m.nombre LIKE '%Jose Enedino%') OR
+          (i.modelo = '752935' AND m.nombre LIKE '%Sergio Angel%' AND p.cantidad = 85)
         )
       `);
       console.log(`Órdenes de producción restauradas a 'En proceso'. Filas afectadas: ${updateResult.affectedRows}`);
@@ -406,7 +407,7 @@ async function initializeDatabase() {
         JOIN produccion p ON p.inventario_id = i.id
         JOIN maquileros m ON p.maquilero_id = m.id
         SET i.en_inventario = 0
-        WHERE i.modelo IN ('554232', '740987', '723119', '532046', '501476', '731147', '532148')
+        WHERE i.modelo IN ('554232', '740987', '723119', '532046', '501476', '731147', '532148', '752935')
           AND (
             (i.modelo = '554232' AND m.nombre LIKE '%Salvador Salazar%') OR
             (i.modelo = '740987' AND m.nombre LIKE '%Antonio Javier%') OR
@@ -414,7 +415,8 @@ async function initializeDatabase() {
             (i.modelo = '532046' AND m.nombre LIKE '%Victoria Mora%') OR
             (i.modelo = '501476' AND m.nombre LIKE '%Marco Antonio%') OR
             (i.modelo = '731147' AND m.nombre LIKE '%Mas Procesos%') OR
-            (i.modelo = '532148' AND m.nombre LIKE '%Jose Enedino%')
+            (i.modelo = '532148' AND m.nombre LIKE '%Jose Enedino%') OR
+            (i.modelo = '752935' AND m.nombre LIKE '%Sergio Angel%' AND p.cantidad = 85)
           )
       `);
       console.log(`Cortes vinculados reestablecidos a 'en_inventario = 0'. Filas afectadas: ${cutUpdateResult.affectedRows}`);
