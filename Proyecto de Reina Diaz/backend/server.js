@@ -106,19 +106,13 @@ const checkAndMoveToInventory = async (produccionId, userId) => {
       return;
     }
 
-    // If there is no associated cut, or if it has already been moved to the real inventory
-    if (!prod.cut_id || prod.en_inventario === 1) {
+    // If there is no associated cut
+    if (!prod.cut_id) {
       await connection.rollback();
       return;
     }
 
-    // 2. Check if the production order is Terminado
-    if (prod.estado !== 'Terminado') {
-      await connection.rollback();
-      return;
-    }
-
-    // 3. Check if the order is fully paid
+    // 2. Check if the production order is Terminado and fully paid
     const [pagosRows] = await connection.query("SELECT COALESCE(SUM(monto), 0) as total_monto FROM pagos WHERE produccion_id = ?", [produccionId]);
     const [descuentosRows] = await connection.query(`
       SELECT COALESCE(SUM(dp.monto_total), 0) as total_descuento 
@@ -130,37 +124,65 @@ const checkAndMoveToInventory = async (produccionId, userId) => {
     const totalPaid = parseFloat(pagosRows[0].total_monto || 0) + parseFloat(descuentosRows[0].total_descuento || 0);
     const precioTotal = parseFloat(prod.precio_total || 0);
 
-    // If fully paid (allow small rounding margin)
-    if (totalPaid >= (precioTotal - 0.05)) {
-      const piezasFinal = prod.cantidad_recibida !== null ? prod.cantidad_recibida : prod.cantidad;
+    const isTerminado = prod.estado === 'Terminado';
+    const isFullyPaid = totalPaid >= (precioTotal - 0.05);
 
-      // 4. Move to inventario_real
-      await connection.query(`
-        INSERT INTO inventario_real (numero, temporada, modelo, precio, color, cliente, no_orden, piezas, imagen, observaciones, fecha_ingreso)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `, [
-        prod.numero,
-        prod.temporada,
-        prod.modelo,
-        prod.precio,
-        prod.color,
-        prod.cliente,
-        prod.no_orden,
-        piezasFinal,
-        prod.imagen,
-        prod.observaciones,
-        prod.fecha_creacion
-      ]);
+    if (isTerminado && isFullyPaid) {
+      // Move to inventario_real ONLY if it has not already been moved
+      if (prod.en_inventario !== 1) {
+        const piezasFinal = prod.cantidad_recibida !== null ? prod.cantidad_recibida : prod.cantidad;
 
-      // 5. Mark the cut as en_inventario = 1
-      await connection.query("UPDATE inventario SET en_inventario = 1 WHERE id = ?", [prod.cut_id]);
+        // 3. Move to inventario_real
+        await connection.query(`
+          INSERT INTO inventario_real (numero, temporada, modelo, precio, color, cliente, no_orden, piezas, imagen, observaciones, fecha_ingreso)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [
+          prod.numero,
+          prod.temporada,
+          prod.modelo,
+          prod.precio,
+          prod.color,
+          prod.cliente,
+          prod.no_orden,
+          piezasFinal,
+          prod.imagen,
+          prod.observaciones,
+          prod.fecha_creacion
+        ]);
 
-      // 6. Log the activity
-      const desc = `Movió el modelo ${prod.modelo} (${piezasFinal} piezas) de Cortes a Inventario por liquidación y entrega de Orden #${produccionId}`;
-      await connection.query(
-        "INSERT INTO historial (user_id, action, target, description) VALUES (?, 'ALTA', 'INVENTARIO', ?)",
-        [userId || 1, desc]
-      );
+        // 4. Mark the cut as en_inventario = 1
+        await connection.query("UPDATE inventario SET en_inventario = 1 WHERE id = ?", [prod.cut_id]);
+
+        // 5. Log the activity
+        const desc = `Movió el modelo ${prod.modelo} (${piezasFinal} piezas) de Cortes a Inventario por liquidación y entrega de Orden #${produccionId}`;
+        await connection.query(
+          "INSERT INTO historial (user_id, action, target, description) VALUES (?, 'ALTA', 'INVENTARIO', ?)",
+          [userId || 1, desc]
+        );
+      }
+    } else {
+      // Reversal: If it's already marked as en_inventario = 1, we must remove it from real inventory
+      if (prod.en_inventario === 1) {
+        // Delete matching record from inventario_real
+        await connection.query(`
+          DELETE FROM inventario_real 
+          WHERE no_orden = ? AND modelo = ?
+          LIMIT 1
+        `, [
+          prod.no_orden,
+          prod.modelo
+        ]);
+
+        // Mark the cut as en_inventario = 0
+        await connection.query("UPDATE inventario SET en_inventario = 0 WHERE id = ?", [prod.cut_id]);
+
+        // Log the activity
+        const desc = `Retiró el modelo ${prod.modelo} de Inventario y lo regresó a Cortes debido a cambio en estado/pago de la Orden #${produccionId}`;
+        await connection.query(
+          "INSERT INTO historial (user_id, action, target, description) VALUES (?, 'BAJA', 'INVENTARIO', ?)",
+          [userId || 1, desc]
+        );
+      }
     }
 
     await connection.commit();
@@ -598,12 +620,12 @@ const autoArchiveOrders = async () => {
       SET p.archivado = 1
       WHERE p.archivado = 0
         AND p.estado = 'Terminado'
-        AND p.precio_total <= (
+        AND (
           SELECT COALESCE(SUM(pg.monto), 0) + COALESCE(SUM(dp.monto_total), 0)
           FROM pagos pg
           LEFT JOIN descuentos_personales dp ON dp.pago_id = pg.id
           WHERE pg.produccion_id = p.id
-        )
+        ) >= p.precio_total - 0.05
     `);
 
     // 2. Auto-unarchive orders that are NOT Terminado OR NOT fully paid
@@ -613,12 +635,12 @@ const autoArchiveOrders = async () => {
       WHERE p.archivado = 1
         AND (
           p.estado != 'Terminado'
-          OR p.precio_total > (
+          OR (
             SELECT COALESCE(SUM(pg.monto), 0) + COALESCE(SUM(dp.monto_total), 0)
             FROM pagos pg
             LEFT JOIN descuentos_personales dp ON dp.pago_id = pg.id
             WHERE pg.produccion_id = p.id
-          )
+          ) < p.precio_total - 0.05
         )
     `);
   } catch (error) {
@@ -867,6 +889,7 @@ app.put('/api/produccion/:id', authenticateToken, async (req, res) => {
 
     // Run checking logic for auto-transfer to inventory
     await checkAndMoveToInventory(req.params.id, req.user.id);
+    await autoArchiveOrders();
 
     res.json({ success: true });
   } catch (error) {
@@ -895,6 +918,10 @@ app.put('/api/produccion/:id/ajuste', authenticateToken, async (req, res) => {
     await db.query("UPDATE produccion SET ajuste_tipo = ?, ajuste_porcentaje = ?, ajuste_monto = ?, precio_total = ? WHERE id = ?", 
       [tipo, porcentaje, adjustmentAmount, finalTotal, req.params.id]);
     
+    // Check and update inventory and archiving status dynamically
+    await checkAndMoveToInventory(req.params.id, req.user.id);
+    await autoArchiveOrders();
+
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -1022,6 +1049,7 @@ app.post('/api/pagos', authenticateToken, async (req, res) => {
 
     // Check if the order is completed and fully paid, then move to finished inventory
     await checkAndMoveToInventory(produccion_id, req.user.id);
+    await autoArchiveOrders();
 
     res.json({ id: pagoId, success: true });
   } catch (error) {
@@ -1065,7 +1093,8 @@ app.delete('/api/pagos/:id', authenticateToken, async (req, res) => {
 
     await connection.commit();
 
-    // 5. Update archiving status dynamically
+    // 5. Update archiving and inventory status dynamically
+    await checkAndMoveToInventory(pago.produccion_id, req.user.id);
     await autoArchiveOrders();
 
     res.json({ success: true, message: 'Pago eliminado y descuentos restaurados' });
@@ -1655,6 +1684,10 @@ app.get('/api/descuentos/maquilero/:id', authenticateToken, async (req, res) => 
   }
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running on http://0.0.0.0:${PORT}`);
-});
+if (require.main === module) {
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server running on http://0.0.0.0:${PORT}`);
+  });
+}
+
+module.exports = { app, checkAndMoveToInventory, autoArchiveOrders };
