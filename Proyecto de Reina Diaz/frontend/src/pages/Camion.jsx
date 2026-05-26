@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { 
   Truck, ArrowRight, Trash2, Calendar, Edit3, Plus, 
-  ChevronDown, ChevronUp, AlertCircle, CheckCircle, Info, Search
+  ChevronDown, ChevronUp, AlertCircle, CheckCircle, Info, Search, XCircle
 } from 'lucide-react';
 import { useSettings } from '../context/SettingsContext';
 import { useAuth } from '../context/AuthContext';
