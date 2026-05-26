@@ -16,7 +16,12 @@ import {
   TrendingUp,
   CheckCircle2,
   FileText,
-  Sparkles
+  Sparkles,
+  AlertTriangle, 
+  AlertCircle, 
+  Calendar, 
+  X,
+  Truck
 } from 'lucide-react';
 
 
@@ -255,6 +260,21 @@ const guides_es = {
         </div>
       ),
       keywords: 'seguimiento terminado cancelar archivado automatico bonos descuentos prórroga piezas recibidas'
+    },
+    {
+      title: 'El nuevo Flujo de "Terminado Parcial" (Efecto en Pagos y Camión)',
+      content: (
+        <div>
+          <p>Para resolver la necesidad de recibir entregas de piezas de forma escalonada a lo largo del tiempo, se ha implementado el estado <strong>Terminado Parcial</strong>:</p>
+          <ul>
+            <li><strong>¿Qué es?:</strong> Es un estado intermedio que indica que el maquilero ha entregado una parte del lote, pero el trabajo de costura total aún no ha concluido.</li>
+            <li><strong>Acciones siempre Habilitadas:</strong> A diferencia de una orden completamente Terminada (que bloquea sus datos), una orden en "Terminado Parcial" mantiene <strong>completamente habilitados todos los controles operativos</strong>. Podrás seguir editando inline la cantidad de "Recibidas", aplicar bonos o descuentos y prorrogar la fecha de entrega.</li>
+            <li><strong>Control de Nómina Parcial:</strong> Puedes dirigirte al módulo de <strong>Pagos</strong> y registrar abonos y pagos sobre el saldo neto de las piezas recibidas hasta el momento. Esto te permite ir pagando al maquilero semanalmente conforme te entrega mercancía sin tener que esperar a que termine el lote completo.</li>
+            <li><strong>Cargar al Camión:</strong> Las prendas que has recibido de una orden en estado "Terminado Parcial" ingresan al stock activo de maquila y pueden ser cargadas al <strong>Camión</strong> de envío a Colima al instante, de manera parcial o total.</li>
+          </ul>
+        </div>
+      ),
+      keywords: 'terminado parcial flujo pagos abonos entregas parciales camion costura inline recibidas'
     }
   ],
   pagos: [
@@ -353,6 +373,43 @@ const guides_es = {
         </div>
       ),
       keywords: 'precio extra manual calculo automatico nomina pagos liquidacion dropdown extra sufijo'
+    }
+  ],
+  camion: [
+    {
+      title: '¿Cómo funciona la sección de Camión (Envíos a Colima)?',
+      content: (
+        <div>
+          <p>La sección <strong>Camión</strong> está diseñada para gestionar de forma inalterable y precisa los envíos de modelos terminados desde la maquila hacia la fábrica en Colima.</p>
+          <ol>
+            <li><strong>Modelos Disponibles:</strong> En la parte izquierda verás las prendas confeccionadas provenientes estrictamente de órdenes de producción cuyo estado sea <strong>"Terminado"</strong> o <strong>"Terminado Parcial"</strong> y que tengan saldo disponible para enviar.</li>
+            <li><strong>Identificación de Maquileros:</strong> Cada tarjeta de modelo cuenta con una insignia púrpura con el nombre del maquilero que la confeccionó, permitiendo identificar el origen de cada lote al instante.</li>
+            <li><strong>Cargar el Camión:</strong> Puedes arrastrar un modelo desde la lista izquierda y soltarlo en el área del camión virtual en la derecha, o simplemente hacer clic en el botón <strong>(+) Subir al Camión</strong>.</li>
+            <li><strong>Desglose por Tallas Obligatorio:</strong> Al subir un lote, se abrirá una ventana emergente donde debes ingresar las cantidades exactas para cada una de las tallas estándar (<strong>05, 07, 09, 11, 13 y 15</strong>). El sistema tiene un validador en tiempo real: el botón de confirmar solo se activará cuando la suma de las tallas coincida exactamente con la cantidad total cargada. Puedes optar por enviar el total del lote o realizar un <strong>envío parcial</strong> ingresando una cantidad menor.</li>
+            <li><strong>Despachar el Camión:</strong> Una vez cargados todos los modelos, selecciona la <strong>Fecha de Envío</strong>, agrega observaciones (ej. chofer, placas, etc.) y haz clic en <strong>Enviar Camión</strong>. Al despachar:
+              <ul>
+                <li>Las piezas se descuentan del balance de la orden de producción original.</li>
+                <li>Se restan automáticamente del stock de <strong>Inventario Físico Real</strong>.</li>
+                <li>Queda registrado un registro histórico inalterable en el Historial de Auditoría.</li>
+              </ul>
+            </li>
+          </ol>
+        </div>
+      ),
+      keywords: 'camion envios colima tallas distribucion piezas despachar chofer placas'
+    },
+    {
+      title: 'Historial de Camiones y Auditoría',
+      content: (
+        <div>
+          <p>Todos los camiones despachados quedan registrados de forma inalterable en la sección inferior de <strong>Historial de Camiones Enviados</strong>:</p>
+          <ul>
+            <li>Cada camión enviado se muestra en una tarjeta tipo acordeón que detalla el número de Camión, la Fecha de Envío y las observaciones registradas.</li>
+            <li>Al hacer clic en cualquier camión, se expandirá un panel mostrando la tabla completa con el desglose de modelos, colores, números de orden, piezas totales y la distribución exacta por tallas de cada prenda enviada.</li>
+          </ul>
+        </div>
+      ),
+      keywords: 'historial camiones bitacora desglose tallas auditoria consulta'
     }
   ]
 };
@@ -577,6 +634,21 @@ const guides_en = {
         </div>
       ),
       keywords: 'monitoring finished cancel automatic archiving bonuses discounts extensions received pieces'
+    },
+    {
+      title: 'The new "Partially Finished" Flow (Effect on Payments and Truck)',
+      content: (
+        <div>
+          <p>To support staggered garment deliveries from tailors over time, we introduced the <strong>Partially Finished</strong> order status:</p>
+          <ul>
+            <li><strong>What is it?:</strong> An intermediate status indicating that the tailor has delivered a portion of the lot, but the overall sewing task is still ongoing.</li>
+            <li><strong>Fully Enabled Actions:</strong> Unlike a fully "Finished" order (which locks all data), a "Partially Finished" order keeps <strong>all operational controls completely active</strong>. You can continue editing received pieces inline, applying bonuses or discounts, and extending delivery dates.</li>
+            <li><strong>Partial Payroll Control:</strong> You can head to the <strong>Payments</strong> module and register partial wage payouts based on the pieces received so far. This lets you pay the tailor weekly as they deliver finished items, without waiting for the entire lot to be completed.</li>
+            <li><strong>Truck Shipping integration:</strong> Garments received from a "Partially Finished" production order are added to the active maquila stock and can be loaded immediately to the Colima shipping **Truck** (fully or partially).</li>
+          </ul>
+        </div>
+      ),
+      keywords: 'partially finished flow payments partial deliveries truck sewing inline received'
     }
   ],
   pagos: [
@@ -676,6 +748,43 @@ const guides_en = {
       ),
       keywords: 'manual price extra automatic calculation payroll payments settlement dropdown extra suffix'
     }
+  ],
+  camion: [
+    {
+      title: 'How does the Truck Shipping section (Colima shipments) work?',
+      content: (
+        <div>
+          <p>The <strong>Truck</strong> section is designed to manage precise, unalterable shipments of finished garments from the maquila to the factory in Colima.</p>
+          <ol>
+            <li><strong>Available Models:</strong> On the left side, you will see finished garments coming strictly from production orders with a status of <strong>"Finished"</strong> or <strong>"Partially Finished"</strong> that have a balance available for shipping.</li>
+            <li><strong>Tailor Identification:</strong> Each model card features a purple badge displaying the name of the tailor who crafted the garments, instantly showing each lot\'s origin.</li>
+            <li><strong>Loading the Truck:</strong> You can drag a model from the left list and drop it onto the virtual truck area on the right, or simply click the <strong>(+) Load to Truck</strong> button.</li>
+            <li><strong>Mandatory Size Distribution:</strong> Upon loading a lot, a popup window will open where you must enter the exact quantities for the standard sizes (<strong>05, 07, 09, 11, 13, and 15</strong>). The system validates in real time: the confirm button will only activate when the sum of sizes matches the total cargo quantity exactly. You can send the full lot or make a <strong>partial shipment</strong> by entering a smaller amount.</li>
+            <li><strong>Shipping the Truck:</strong> Once all models are loaded, select the <strong>Shipping Date</strong>, add notes (e.g. driver, license plates, etc.), and click <strong>Ship Truck</strong>. When shipped:
+              <ul>
+                <li>The pieces are deducted from the balance of the original production order.</li>
+                <li>They are automatically subtracted from the <strong>Real Physical Inventory</strong>.</li>
+                <li>An unalterable record is logged in the Audit History.</li>
+              </ul>
+            </li>
+          </ol>
+        </div>
+      ),
+      keywords: 'truck shipping colima sizes distribution pieces ship driver plates'
+    },
+    {
+      title: 'Truck Shipping History and Audit',
+      content: (
+        <div>
+          <p>All dispatched trucks are recorded in an unalterable log in the <strong>Shipped Trucks History</strong> section below:</p>
+          <ul>
+            <li>Each shipped truck is displayed in an accordion card showing the Truck ID, Shipped Date, and notes.</li>
+            <li>Clicking any truck expands a panel showing the complete table with models, colors, order numbers, total pieces, and the exact size breakdown of each shipped garment.</li>
+          </ul>
+        </div>
+      ),
+      keywords: 'trucks history log sizes breakdown audit query'
+    }
   ]
 };
 
@@ -715,6 +824,7 @@ export default function Ayuda() {
     { id: 'cortes', name: t('header.cutsDesign'), icon: <Scissors size={18} /> },
     { id: 'produccion', name: t('nav.produccion'), icon: <Factory size={18} /> },
     { id: 'extras', name: t('nav.extras'), icon: <Sparkles size={18} /> },
+    { id: 'camion', name: t('nav.camion'), icon: <Truck size={18} /> },
     { id: 'pagos', name: t('nav.pagos'), icon: <Wallet size={18} /> },
   ];
 
@@ -737,23 +847,7 @@ export default function Ayuda() {
 
   return (
     <div className="help-page-container">
-      {/* Hero Banner */}
-      <div className="help-hero-banner">
-        <h1>{t('ayuda.title')}</h1>
-        <p>{t('ayuda.subtitle')}</p>
-        
-        {/* Search Bar */}
-        <div className="help-search-box">
-          <Search size={18} className="help-search-input-icon" />
-          <input 
-            type="text" 
-            className="help-search-input" 
-            placeholder={t('ayuda.searchPlaceholder')}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-      </div>
+
 
       {/* Navigation Tabs */}
       <div className="help-tabs-wrapper">
