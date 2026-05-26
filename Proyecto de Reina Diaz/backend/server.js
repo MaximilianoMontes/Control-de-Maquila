@@ -731,7 +731,12 @@ app.post('/api/camiones', authenticateToken, async (req, res) => {
 
       // Validate sizes sum
       const tallas_cantidades = item.tallas_cantidades || {};
-      const tallasSum = Object.values(tallas_cantidades).reduce((sum, val) => sum + (parseInt(val) || 0), 0);
+      const tallasSum = Object.values(tallas_cantidades).reduce((sum, val) => {
+        if (typeof val === 'object' && val !== null) {
+          return sum + Object.values(val).reduce((subSum, subVal) => subSum + (parseInt(subVal) || 0), 0);
+        }
+        return sum + (parseInt(val) || 0);
+      }, 0);
       if (tallasSum !== piezas) {
         throw new Error(`La suma de tallas (${tallasSum}) no coincide con las piezas (${piezas}) para el modelo ${item.modelo}`);
       }
