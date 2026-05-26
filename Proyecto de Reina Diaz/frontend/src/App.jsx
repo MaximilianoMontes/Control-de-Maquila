@@ -16,6 +16,7 @@ import Pagos from './pages/Pagos';
 import Reportes from './pages/Reportes';
 import Historial from './pages/Historial';
 import Ayuda from './pages/Ayuda';
+import Camion from './pages/Camion';
 import KillFeed from './components/KillFeed';
 
 function MainLayout({ children }) {
@@ -60,6 +61,7 @@ function App() {
       <Route path="/cortes" element={<ProtectedRoute><MainLayout><Cortes /></MainLayout></ProtectedRoute>} />
       <Route path="/produccion" element={<ProtectedRoute><MainLayout><Produccion /></MainLayout></ProtectedRoute>} />
       <Route path="/extras" element={<ProtectedRoute><MainLayout><Extras /></MainLayout></ProtectedRoute>} />
+      <Route path="/camion" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2']}><MainLayout><Camion /></MainLayout></ProtectedRoute>} />
       <Route path="/pagos" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2']}><MainLayout><Pagos /></MainLayout></ProtectedRoute>} />
       <Route path="/reportes" element={<ProtectedRoute><MainLayout><Reportes /></MainLayout></ProtectedRoute>} />
       <Route path="/historial" element={<ProtectedRoute><MainLayout><Historial /></MainLayout></ProtectedRoute>} />

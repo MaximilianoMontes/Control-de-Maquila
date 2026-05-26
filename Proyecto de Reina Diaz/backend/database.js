@@ -138,6 +138,32 @@ async function initializeDatabase() {
       );
     `);
 
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS camiones (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        fecha_envio DATE NOT NULL,
+        observaciones TEXT,
+        fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS camion_detalles (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        camion_id INT NOT NULL,
+        numero VARCHAR(100),
+        temporada VARCHAR(100),
+        modelo VARCHAR(255),
+        precio DECIMAL(10, 2),
+        color TEXT,
+        cliente VARCHAR(255),
+        no_orden VARCHAR(100),
+        piezas INT DEFAULT 0,
+        tallas_cantidades TEXT,
+        FOREIGN KEY(camion_id) REFERENCES camiones(id) ON DELETE CASCADE
+      );
+    `);
+
     // Migraciones
     try {
       await connection.query("ALTER TABLE descuentos_personales ADD COLUMN aplicado TINYINT(1) DEFAULT 0");

@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { 
   Plus, Search, Pencil, Trash2, CheckCircle, XCircle, DollarSign, 
-  Archive, ArchiveRestore, Image as ImageIcon, AlertTriangle, AlertCircle, Calendar, X, Sparkles
+  Archive, ArchiveRestore, Image as ImageIcon, AlertTriangle, AlertCircle, Calendar, X, Sparkles,
+  MinusCircle
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -150,6 +151,14 @@ export default function Produccion() {
     if (!confirm(t('prod.confirmFinish'))) return;
     try {
       await axios.put(`${API}/api/produccion/${id}`, { estado: 'Terminado', fecha_fin: new Date().toISOString().split('T')[0] });
+      fetchOrders();
+    } catch (e) { alert(t('prod.alertGenericError')); }
+  };
+
+  const handleTerminarParcial = async (id) => {
+    if (!confirm(t('prod.confirmPartial'))) return;
+    try {
+      await axios.put(`${API}/api/produccion/${id}`, { estado: 'Terminado Parcial' });
       fetchOrders();
     } catch (e) { alert(t('prod.alertGenericError')); }
   };
@@ -336,7 +345,7 @@ export default function Produccion() {
                               {o.ajuste_tipo === 'bono' ? (t('prod.bonuses') === 'Bonuses' ? 'BONUS' : 'BONO') : (t('prod.discounts') === 'Discounts' ? 'DISC' : 'DESC')} {o.ajuste_porcentaje}%
                             </span>
                           )}
-                          {canEdit && o.estado === 'En proceso' && (
+                          {canEdit && (o.estado === 'En proceso' || o.estado === 'Terminado Parcial') && (
                             <select className="form-input" style={{ width: '100%', padding: '2px', fontSize: '10px', height: '24px' }} value={o.ajuste_tipo === 'ninguno' ? '' : `${o.ajuste_tipo}-${o.ajuste_porcentaje}`} onChange={(e) => handleApplyAdjustment(o.id, e.target.value)}>
                               <option value="">{t('prod.adjust')}</option>
                               <option value="ninguno-0">{t('prod.noAdjust')}</option>
@@ -358,15 +367,24 @@ export default function Produccion() {
                       </td>
                       <td style={{ color: '#10b981', fontWeight: 600 }}>{formatCurrency(pagado)}</td>
                       <td>
-                        <span className={`badge ${o.estado === 'Terminado' ? 'badge-success' : o.estado === 'Cancelado' ? 'badge-danger' : 'badge-warning'}`}>
-                          {o.estado === 'Terminado' ? t('prod.statusFinished') : o.estado === 'Cancelado' ? t('prod.statusCanceled') : t('prod.statusInProgress')}
+                        <span className={`badge ${
+                          o.estado === 'Terminado' ? 'badge-success' : 
+                          o.estado === 'Terminado Parcial' ? 'badge-partial' : 
+                          o.estado === 'Cancelado' ? 'badge-danger' : 'badge-warning'
+                        }`}>
+                          {o.estado === 'Terminado' ? t('prod.statusFinished') : 
+                           o.estado === 'Terminado Parcial' ? t('prod.statusPartial') : 
+                           o.estado === 'Cancelado' ? t('prod.statusCanceled') : t('prod.statusInProgress')}
                         </span>
                       </td>
                       <td>
                         <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'center' }}>
-                          {canEdit && o.estado === 'En proceso' && (
+                          {canEdit && (o.estado === 'En proceso' || o.estado === 'Terminado Parcial') && (
                             <>
                               <button className="btn btn-success" style={{ padding: '0.4rem' }} onClick={() => handleTerminar(o.id)} title="Terminar Orden"><CheckCircle size={16} /></button>
+                              {o.estado === 'En proceso' && (
+                                <button className="btn" style={{ padding: '0.4rem', background: '#eab308', color: 'white' }} onClick={() => handleTerminarParcial(o.id)} title={t('prod.tooltipPartial')}><MinusCircle size={16} /></button>
+                              )}
                               <button className="btn" style={{ padding: '0.4rem', background: '#8b5cf6', color: 'white' }} onClick={() => handleAddDay(o.id)} title="Agregar Prórroga (Días)"><Calendar size={16} /></button>
                               <button className="btn btn-danger" style={{ padding: '0.4rem' }} onClick={() => handleCancelar(o.id)} title="Cancelar Orden"><XCircle size={16} /></button>
                               <Link to={`/pagos?orden=${o.id}`} className="btn btn-primary" style={{ padding: '0.4rem', display: 'flex', alignItems: 'center' }} title="Registrar Pago"><DollarSign size={16} /></Link>
