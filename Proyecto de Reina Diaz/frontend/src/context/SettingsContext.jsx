@@ -139,7 +139,7 @@ const translations = {
     // Dashboard
     'dash.loading': 'Cargando datos del sistema...',
     'dash.activeTailors': 'Maquileros Activos',
-    'dash.piecesInventory': 'Piezas en Inventario',
+    'dash.piecesInventory': 'Total Piezas en Stock',
     'dash.ordersProcess': 'Órdenes en Proceso',
     'dash.totalPaid': 'Total Pagado (Acumulado)',
     'dash.productionOrders': 'Órdenes de Producción',
@@ -536,7 +536,7 @@ const translations = {
     // Dashboard
     'dash.loading': 'Loading system data...',
     'dash.activeTailors': 'Active Tailors',
-    'dash.piecesInventory': 'Items in Inventory',
+    'dash.piecesInventory': 'Total Stock Items',
     'dash.ordersProcess': 'Orders in Process',
     'dash.totalPaid': 'Total Paid (Accumulated)',
     'dash.productionOrders': 'Production Orders',
