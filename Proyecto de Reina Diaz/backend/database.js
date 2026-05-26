@@ -379,6 +379,50 @@ async function initializeDatabase() {
       console.error('Error al actualizar la orden de Eliazar:', e);
     }
 
+    try {
+      console.log('--- MIGRACIÓN MANUAL: Restaurar órdenes terminadas de las imágenes a En proceso ---');
+      
+      // 1. Restaurar las órdenes de producción
+      const [updateResult] = await connection.query(`
+        UPDATE produccion p
+        JOIN maquileros m ON p.maquilero_id = m.id
+        JOIN inventario i ON p.inventario_id = i.id
+        SET p.estado = 'En proceso', p.fecha_terminado = NULL, p.archivado = 0
+        WHERE p.estado = 'Terminado' AND (
+          (i.modelo = '554232' AND m.nombre LIKE '%Salvador Salazar%') OR
+          (i.modelo = '740987' AND m.nombre LIKE '%Antonio Javier%') OR
+          (i.modelo = '723119' AND m.nombre LIKE '%Maria Maricela%') OR
+          (i.modelo = '532046' AND m.nombre LIKE '%Victoria Mora%') OR
+          (i.modelo = '501476' AND m.nombre LIKE '%Marco Antonio%') OR
+          (i.modelo = '731147' AND m.nombre LIKE '%Mas Procesos%') OR
+          (i.modelo = '532148' AND m.nombre LIKE '%Jose Enedino%')
+        )
+      `);
+      console.log(`Órdenes de producción restauradas a 'En proceso'. Filas afectadas: ${updateResult.affectedRows}`);
+
+      // 2. Restaurar los cortes correspondientes
+      const [cutUpdateResult] = await connection.query(`
+        UPDATE inventario i
+        JOIN produccion p ON p.inventario_id = i.id
+        JOIN maquileros m ON p.maquilero_id = m.id
+        SET i.en_inventario = 0
+        WHERE i.modelo IN ('554232', '740987', '723119', '532046', '501476', '731147', '532148')
+          AND (
+            (i.modelo = '554232' AND m.nombre LIKE '%Salvador Salazar%') OR
+            (i.modelo = '740987' AND m.nombre LIKE '%Antonio Javier%') OR
+            (i.modelo = '723119' AND m.nombre LIKE '%Maria Maricela%') OR
+            (i.modelo = '532046' AND m.nombre LIKE '%Victoria Mora%') OR
+            (i.modelo = '501476' AND m.nombre LIKE '%Marco Antonio%') OR
+            (i.modelo = '731147' AND m.nombre LIKE '%Mas Procesos%') OR
+            (i.modelo = '532148' AND m.nombre LIKE '%Jose Enedino%')
+          )
+      `);
+      console.log(`Cortes vinculados reestablecidos a 'en_inventario = 0'. Filas afectadas: ${cutUpdateResult.affectedRows}`);
+      console.log('--- FIN DE MIGRACIÓN MANUAL RESTAURACIÓN ---');
+    } catch (e) {
+      console.error('Error al restaurar las órdenes a En proceso:', e);
+    }
+
     // Retroactive migration to sync all cuts to physical inventory (inventario_real)
     try {
       console.log('--- MIGRACIÓN MANUAL: Sincronización retroactiva de todos los cortes a inventario_real ---');
