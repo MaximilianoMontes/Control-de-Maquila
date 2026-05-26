@@ -25,12 +25,12 @@ export default function Dashboard() {
       try {
         const [maqRes, invRes, prodRes] = await Promise.all([
           axios.get(`${API}/api/maquileros`),
-          axios.get(`${API}/api/inventario`),
+          axios.get(`${API}/api/inventario_real`),
           axios.get(`${API}/api/produccion`),
         ]);
 
         const maquileros = maqRes.data.length;
-        const inventario = invRes.data.reduce((sum, item) => sum + (item.piezas_en_proceso || 0), 0);
+        const inventario = invRes.data.reduce((sum, item) => sum + (parseInt(item.piezas) || 0), 0);
         const ordenes_proceso = prodRes.data.filter(o => o.estado === 'En proceso').length;
 
         // Pagos totales (solo efectivo real en dashboard)
