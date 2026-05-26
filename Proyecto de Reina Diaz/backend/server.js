@@ -621,6 +621,143 @@ app.delete('/api/inventario_real/:id', authenticateToken, async (req, res) => {
   }
 });
 
+// APIs Camiones
+app.get('/api/camiones', authenticateToken, async (req, res) => {
+  const allowedRoles = ['admin', 'produccion1', 'produccion2'];
+  if (!allowedRoles.includes(req.user.role)) {
+    return res.status(403).json({ error: 'No autorizado para esta sección' });
+  }
+
+  try {
+    const [camiones] = await db.query("SELECT * FROM camiones ORDER BY id DESC");
+    const [detalles] = await db.query("SELECT * FROM camion_detalles");
+    
+    // Group details by camion_id
+    const detallesMap = {};
+    for (const d of detalles) {
+      if (d.tallas_cantidades) {
+        try {
+          d.tallas_cantidades = JSON.parse(d.tallas_cantidades);
+        } catch (e) {
+          d.tallas_cantidades = {};
+        }
+      } else {
+        d.tallas_cantidades = {};
+      }
+      if (!detallesMap[d.camion_id]) {
+        detallesMap[d.camion_id] = [];
+      }
+      detallesMap[d.camion_id].push(d);
+    }
+
+    // Attach details to camiones
+    const result = camiones.map(c => ({
+      ...c,
+      items: detallesMap[c.id] || []
+    }));
+
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/camiones', authenticateToken, async (req, res) => {
+  const allowedRoles = ['admin', 'produccion1', 'produccion2'];
+  if (!allowedRoles.includes(req.user.role)) {
+    return res.status(403).json({ error: 'No autorizado para esta sección' });
+  }
+
+  const { fecha_envio, observaciones, items } = req.body;
+  if (!fecha_envio || !items || !Array.isArray(items) || items.length === 0) {
+    return res.status(400).json({ error: 'Datos de envío incompletos o inválidos' });
+  }
+
+  const connection = await db.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    // 1. Insert into camiones
+    const [camionResult] = await connection.query(
+      "INSERT INTO camiones (fecha_envio, observaciones) VALUES (?, ?)",
+      [fecha_envio, observaciones || '']
+    );
+    const camionId = camionResult.insertId;
+
+    // 2. Process each item
+    for (const item of items) {
+      const piezas = parseInt(item.piezas) || 0;
+      if (piezas <= 0) {
+        throw new Error(`Cantidad inválida para el modelo ${item.modelo}`);
+      }
+
+      // Validate sizes sum
+      const tallas_cantidades = item.tallas_cantidades || {};
+      const tallasSum = Object.values(tallas_cantidades).reduce((sum, val) => sum + (parseInt(val) || 0), 0);
+      if (tallasSum !== piezas) {
+        throw new Error(`La suma de tallas (${tallasSum}) no coincide con las piezas (${piezas}) para el modelo ${item.modelo}`);
+      }
+
+      // Check stock in inventario_real
+      const [stockRows] = await connection.query(
+        "SELECT piezas FROM inventario_real WHERE id = ?",
+        [item.id]
+      );
+      const stockRow = stockRows[0];
+      if (!stockRow) {
+        throw new Error(`El modelo ${item.modelo} no existe en el stock activo de maquila.`);
+      }
+      if (stockRow.piezas < piezas) {
+        throw new Error(`Stock insuficiente para el modelo ${item.modelo} (Disponible: ${stockRow.piezas}, Requerido: ${piezas}).`);
+      }
+
+      // Insert into camion_detalles
+      await connection.query(`
+        INSERT INTO camion_detalles (camion_id, numero, temporada, modelo, precio, color, cliente, no_orden, piezas, tallas_cantidades)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `, [
+        camionId,
+        item.numero || null,
+        item.temporada || null,
+        item.modelo || null,
+        parseFloat(item.precio) || 0,
+        item.color || null,
+        item.cliente || null,
+        item.no_orden || null,
+        piezas,
+        JSON.stringify(tallas_cantidades)
+      ]);
+
+      // Deduct from inventario_real
+      await connection.query(
+        "UPDATE inventario_real SET piezas = piezas - ? WHERE id = ?",
+        [piezas, item.id]
+      );
+
+      // Clean up if stock is 0
+      await connection.query(
+        "DELETE FROM inventario_real WHERE id = ? AND piezas = 0",
+        [item.id]
+      );
+
+      // Log activity
+      const descLog = `Subió al camión #${camionId} (${fecha_envio}) ${piezas} piezas del modelo ${item.modelo} (Tallas: ${JSON.stringify(tallas_cantidades)})`;
+      await connection.query(
+        "INSERT INTO historial (user_id, action, target, description) VALUES (?, 'EDIT', 'INVENTARIO_REAL', ?)",
+        [req.user.id, descLog]
+      );
+    }
+
+    await connection.commit();
+    res.json({ success: true, camionId });
+  } catch (error) {
+    await connection.rollback();
+    res.status(400).json({ error: error.message });
+  } finally {
+    connection.release();
+  }
+});
+
 const autoArchiveOrders = async () => {
   try {
     // 1. Get orders that should be archived but are not yet
