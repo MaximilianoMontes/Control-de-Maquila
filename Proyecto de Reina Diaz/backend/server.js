@@ -82,9 +82,55 @@ const processImage = async (file) => {
 
 // Helper to check production conditions and transfer to inventory
 const checkAndMoveToInventory = async (produccionId, userId) => {
-  // Physical inventory (inventario_real) is now synced immediately when cuts are created,
-  // modified, or deleted in Cortes, independent of production order completion.
-  return;
+  const connection = await db.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    // 1. Get the production order details and associated cut_id
+    const [prodRows] = await connection.query(`
+      SELECT p.*, i.en_inventario, i.id as cut_id, i.modelo
+      FROM produccion p
+      LEFT JOIN inventario i ON p.inventario_id = i.id
+      WHERE p.id = ?
+    `, [produccionId]);
+
+    const prod = prodRows[0];
+    if (!prod || !prod.cut_id) {
+      await connection.rollback();
+      return;
+    }
+
+    // If the production order is archived, we hide the cut from Cortes
+    if (prod.archivado === 1) {
+      if (prod.en_inventario !== 1) {
+        await connection.query("UPDATE inventario SET en_inventario = 1 WHERE id = ?", [prod.cut_id]);
+        
+        const desc = `Marcó el modelo ${prod.modelo} como completado (oculto en Cortes) por liquidación de Orden #${produccionId}`;
+        await connection.query(
+          "INSERT INTO historial (user_id, action, target, description) VALUES (?, 'EDIT', 'INVENTARIO', ?)",
+          [userId || 1, desc]
+        );
+      }
+    } else {
+      // If the production order is NOT archived, we make the cut visible in Cortes
+      if (prod.en_inventario === 1) {
+        await connection.query("UPDATE inventario SET en_inventario = 0 WHERE id = ?", [prod.cut_id]);
+
+        const desc = `Restauró el modelo ${prod.modelo} a Cortes debido a desarchivado de la Orden #${produccionId}`;
+        await connection.query(
+          "INSERT INTO historial (user_id, action, target, description) VALUES (?, 'EDIT', 'INVENTARIO', ?)",
+          [userId || 1, desc]
+        );
+      }
+    }
+
+    await connection.commit();
+  } catch (error) {
+    await connection.rollback();
+    console.error("Error in checkAndMoveToInventory:", error);
+  } finally {
+    connection.release();
+  }
 };
 
 // Auth Endpoint
@@ -356,9 +402,6 @@ app.post('/api/inventario', authenticateToken, upload.single('imagenBtn'), async
       observaciones ? String(observaciones) : null
     ]);
 
-    // Update en_inventario = 1 on the cut
-    await db.query("UPDATE inventario SET en_inventario = 1 WHERE id = ?", [result.insertId]);
-
     res.json({ id: result.insertId, success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -457,7 +500,6 @@ app.put('/api/inventario/:id', authenticateToken, upload.single('imagenBtn'), as
         imagen ? String(imagen) : null,
         observaciones ? String(observaciones) : null
       ]);
-      await db.query("UPDATE inventario SET en_inventario = 1 WHERE id = ?", [req.params.id]);
     }
 
     res.json({ success: true });
@@ -512,9 +554,10 @@ app.post('/api/inventario/import', upload.single('file'), async (req, res) => {
         const piezas_en_proceso = parseInt(String(piezasStr), 10) || 0;
         
         if (modelo) {
+          const m = String(modelo).trim();
           await connection.query(`
-            INSERT INTO inventario (numero, temporada, modelo, precio, color, cliente, no_orden, piezas_en_proceso) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO inventario (numero, temporada, modelo, precio, color, cliente, no_orden, piezas_en_proceso, en_inventario) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)
             ON DUPLICATE KEY UPDATE 
             piezas_en_proceso = piezas_en_proceso + VALUES(piezas_en_proceso),
             temporada = VALUES(temporada),
@@ -522,10 +565,22 @@ app.post('/api/inventario/import', upload.single('file'), async (req, res) => {
             color = VALUES(color),
             cliente = VALUES(cliente),
             no_orden = VALUES(no_orden)
-          `, [String(numero), temporada, String(modelo).trim(), precio, color, cliente, no_orden, piezas_en_proceso]);
-        } else {
-          await connection.query("INSERT INTO inventario (numero, temporada, modelo, precio, color, cliente, no_orden, piezas_en_proceso) VALUES (?, ?, NULL, ?, ?, ?, ?, ?)",
-            [String(numero), temporada, precio, color, cliente, no_orden, piezas_en_proceso]);
+          `, [String(numero), temporada, m, precio, color, cliente, no_orden, piezas_en_proceso]);
+
+          // Mirror immediately to inventario_real
+          const [existingReal] = await connection.query("SELECT id FROM inventario_real WHERE no_orden = ? AND modelo = ?", [no_orden, m]);
+          if (existingReal.length > 0) {
+            await connection.query(`
+              UPDATE inventario_real 
+              SET numero=?, temporada=?, precio=?, color=?, cliente=?, piezas=piezas + ?
+              WHERE no_orden=? AND modelo=?
+            `, [String(numero), temporada, precio, color, cliente, piezas_en_proceso, no_orden, m]);
+          } else {
+            await connection.query(`
+              INSERT INTO inventario_real (numero, temporada, modelo, precio, color, cliente, no_orden, piezas, fecha_ingreso)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+            `, [String(numero), temporada, m, precio, color, cliente, no_orden, piezas_en_proceso]);
+          }
         }
       }
       

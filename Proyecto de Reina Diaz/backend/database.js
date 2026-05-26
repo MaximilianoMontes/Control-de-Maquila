@@ -396,12 +396,28 @@ async function initializeDatabase() {
           syncedCount++;
         }
 
-        // Always make sure en_inventario is set to 1
-        if (cut.en_inventario !== 1) {
-          await connection.query("UPDATE inventario SET en_inventario = 1 WHERE id = ?", [cut.id]);
-        }
       }
-      console.log(`Sincronización retroactiva completada. ${syncedCount} cortes nuevos añadidos a inventario_real.`);
+      
+      // Correctly set en_inventario for all cuts:
+      // 1. Set en_inventario = 1 only for cuts that have an archived production order
+      await connection.query(`
+        UPDATE inventario i
+        JOIN produccion p ON p.inventario_id = i.id
+        SET i.en_inventario = 1
+        WHERE p.archivado = 1
+      `);
+
+      // 2. Set en_inventario = 0 for cuts that do NOT have any archived production orders
+      await connection.query(`
+        UPDATE inventario i
+        LEFT JOIN (
+          SELECT inventario_id FROM produccion WHERE archivado = 1
+        ) p_arch ON p_arch.inventario_id = i.id
+        SET i.en_inventario = 0
+        WHERE p_arch.inventario_id IS NULL
+      `);
+
+      console.log(`Sincronización retroactiva completada. ${syncedCount} cortes nuevos añadidos a inventario_real y estados en_inventario corregidos.`);
     } catch (e) {
       console.error('Error en migración de sincronización retroactiva de inventario:', e);
     }
