@@ -662,6 +662,44 @@ app.get('/api/camiones', authenticateToken, async (req, res) => {
   }
 });
 
+app.get('/api/camiones/disponibles', authenticateToken, async (req, res) => {
+  const allowedRoles = ['admin', 'produccion1', 'produccion2'];
+  if (!allowedRoles.includes(req.user.role)) {
+    return res.status(403).json({ error: 'No autorizado para esta sección' });
+  }
+
+  try {
+    const [rows] = await db.query(`
+      SELECT p.id as id, p.id as produccion_id, p.cantidad, p.cantidad_recibida, p.estado,
+             m.nombre as maquilero_nombre,
+             i.id as inventario_id, i.modelo, i.numero, i.temporada, i.color, i.cliente, i.no_orden, i.precio, i.imagen,
+             (
+               SELECT COALESCE(SUM(cd.piezas), 0)
+               FROM camion_detalles cd
+               WHERE cd.produccion_id = p.id
+             ) as piezas_enviadas
+      FROM produccion p
+      JOIN maquileros m ON p.maquilero_id = m.id
+      JOIN inventario i ON p.inventario_id = i.id
+      WHERE p.estado IN ('Terminado', 'Terminado Parcial')
+    `);
+
+    const available = rows.map(r => {
+      const piezas_producidas = r.cantidad_recibida !== null ? r.cantidad_recibida : r.cantidad;
+      const piezas_disponibles = piezas_producidas - r.piezas_enviadas;
+      return {
+        ...r,
+        piezas_producidas,
+        piezas: piezas_disponibles // Map to piezas for frontend compatibility
+      };
+    }).filter(item => item.piezas > 0);
+
+    res.json(available);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.post('/api/camiones', authenticateToken, async (req, res) => {
   const allowedRoles = ['admin', 'produccion1', 'produccion2'];
   if (!allowedRoles.includes(req.user.role)) {
@@ -698,23 +736,33 @@ app.post('/api/camiones', authenticateToken, async (req, res) => {
         throw new Error(`La suma de tallas (${tallasSum}) no coincide con las piezas (${piezas}) para el modelo ${item.modelo}`);
       }
 
-      // Check stock in inventario_real
-      const [stockRows] = await connection.query(
-        "SELECT piezas FROM inventario_real WHERE id = ?",
-        [item.id]
+      // Check stock in produccion order
+      const [prodRows] = await connection.query(
+        "SELECT cantidad, cantidad_recibida FROM produccion WHERE id = ?",
+        [item.produccion_id]
       );
-      const stockRow = stockRows[0];
-      if (!stockRow) {
-        throw new Error(`El modelo ${item.modelo} no existe en el stock activo de maquila.`);
-      }
-      if (stockRow.piezas < piezas) {
-        throw new Error(`Stock insuficiente para el modelo ${item.modelo} (Disponible: ${stockRow.piezas}, Requerido: ${piezas}).`);
+      const prodRow = prodRows[0];
+      if (!prodRow) {
+        throw new Error(`La orden de producción para el modelo ${item.modelo} no existe.`);
       }
 
-      // Insert into camion_detalles
+      const piezas_producidas = prodRow.cantidad_recibida !== null ? prodRow.cantidad_recibida : prodRow.cantidad;
+      
+      const [shippedRows] = await connection.query(
+        "SELECT COALESCE(SUM(piezas), 0) as total FROM camion_detalles WHERE produccion_id = ?",
+        [item.produccion_id]
+      );
+      const piezas_ya_enviadas = parseInt(shippedRows[0].total) || 0;
+      const disponible = piezas_producidas - piezas_ya_enviadas;
+
+      if (disponible < piezas) {
+        throw new Error(`Stock insuficiente para la orden del modelo ${item.modelo} (Disponible: ${disponible}, Requerido: ${piezas}).`);
+      }
+
+      // Insert into camion_detalles including produccion_id
       await connection.query(`
-        INSERT INTO camion_detalles (camion_id, numero, temporada, modelo, precio, color, cliente, no_orden, piezas, tallas_cantidades)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO camion_detalles (camion_id, numero, temporada, modelo, precio, color, cliente, no_orden, piezas, tallas_cantidades, produccion_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `, [
         camionId,
         item.numero || null,
@@ -725,19 +773,20 @@ app.post('/api/camiones', authenticateToken, async (req, res) => {
         item.cliente || null,
         item.no_orden || null,
         piezas,
-        JSON.stringify(tallas_cantidades)
+        JSON.stringify(tallas_cantidades),
+        item.produccion_id
       ]);
 
-      // Deduct from inventario_real
+      // Deduct from inventario_real by matching no_orden and modelo
       await connection.query(
-        "UPDATE inventario_real SET piezas = piezas - ? WHERE id = ?",
-        [piezas, item.id]
+        "UPDATE inventario_real SET piezas = piezas - ? WHERE no_orden = ? AND modelo = ?",
+        [piezas, item.no_orden || '', item.modelo || '']
       );
 
       // Clean up if stock is 0
       await connection.query(
-        "DELETE FROM inventario_real WHERE id = ? AND piezas = 0",
-        [item.id]
+        "DELETE FROM inventario_real WHERE no_orden = ? AND modelo = ? AND piezas <= 0",
+        [item.no_orden || '', item.modelo || '']
       );
 
       // Log activity

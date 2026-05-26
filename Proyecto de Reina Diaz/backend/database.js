@@ -160,11 +160,19 @@ async function initializeDatabase() {
         no_orden VARCHAR(100),
         piezas INT DEFAULT 0,
         tallas_cantidades TEXT,
+        produccion_id INT DEFAULT NULL,
         FOREIGN KEY(camion_id) REFERENCES camiones(id) ON DELETE CASCADE
       );
     `);
 
     // Migraciones
+    try {
+      await connection.query("ALTER TABLE camion_detalles ADD COLUMN produccion_id INT DEFAULT NULL");
+      console.log("Migration: produccion_id column added to camion_detalles");
+    } catch (e) {
+      // Si ya existe, ignoramos el error
+    }
+
     try {
       await connection.query("ALTER TABLE descuentos_personales ADD COLUMN aplicado TINYINT(1) DEFAULT 0");
       await connection.query("ALTER TABLE descuentos_personales ADD COLUMN pago_id INT DEFAULT NULL");
