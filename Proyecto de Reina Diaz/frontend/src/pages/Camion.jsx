@@ -16,7 +16,35 @@ const formatCurrency = (val) => new Intl.NumberFormat('es-MX', { style: 'currenc
 const SIZES = ["05", "07", "09", "11", "13", "15"];
 const parseColors = (colorStr) => {
   if (!colorStr) return ['N/A'];
+  const trimmed = colorStr.trim();
+  if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) {
+        return parsed.map(c => c.color || c.Color || c.name || c).filter(Boolean);
+      }
+    } catch (e) {
+      console.error("Error parsing color JSON:", e);
+    }
+  }
+  // Fallback to comma-separated string
   return colorStr.split(',').map(c => c.trim()).filter(Boolean);
+};
+
+const formatColorsDisplay = (colorStr) => {
+  if (!colorStr) return 'N/A';
+  const trimmed = colorStr.trim();
+  if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) {
+        return parsed.map(c => `${c.color || c.Color || c.name || c} (${c.cantidad || c.Cantidad || 0} pzs)`).join(', ');
+      }
+    } catch (e) {
+      // Fallback
+    }
+  }
+  return colorStr;
 };
 
 export default function Camion() {
@@ -342,7 +370,7 @@ export default function Camion() {
                           </span>
                         </div>
                         <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                          Orden: {item.no_orden || 'N/A'} | Color: {item.color || 'N/A'}
+                          Orden: {item.no_orden || 'N/A'} | Color: {formatColorsDisplay(item.color)}
                         </div>
                         <div style={{ fontSize: '0.75rem', color: 'var(--color-primary)', fontWeight: 600 }}>
                           Costo Unitario: {formatCurrency(item.precio)}
@@ -425,7 +453,7 @@ export default function Camion() {
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontWeight: 700, fontSize: '0.9rem', color: '#c084fc' }}>
-                      {item.modelo} ({item.color || 'N/A'})
+                      {item.modelo} ({formatColorsDisplay(item.color)})
                     </span>
                     <div style={{ display: 'flex', gap: '0.25rem' }}>
                       <button 
@@ -590,7 +618,7 @@ export default function Camion() {
                               <tr key={`truck-det-${truck.id}-${idx}`}>
                                 <td style={{ fontWeight: 700, color: '#c084fc' }}>{item.modelo}</td>
                                 <td>{item.no_orden || 'N/A'}</td>
-                                <td>{item.color || 'N/A'}</td>
+                                <td>{formatColorsDisplay(item.color)}</td>
                                 <td>{item.cliente || 'N/A'}</td>
                                 <td style={{ textAlign: 'center', fontWeight: 700 }}>{item.piezas}</td>
                                 <td>
