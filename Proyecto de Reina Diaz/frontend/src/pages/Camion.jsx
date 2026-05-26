@@ -48,9 +48,9 @@ export default function Camion() {
       const token = localStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
       
-      // Fetch active stock from inventario_real
-      const stockRes = await axios.get(`${API}/api/inventario_real`, { headers });
-      setStock(stockRes.data.filter(item => item.piezas > 0));
+      // Fetch active stock from finished / partially finished production orders
+      const stockRes = await axios.get(`${API}/api/camiones/disponibles`, { headers });
+      setStock(stockRes.data);
 
       // Fetch history of sent trucks
       const historyRes = await axios.get(`${API}/api/camiones`, { headers });
@@ -298,7 +298,12 @@ export default function Camion() {
                         </div>
                       )}
                       <div>
-                        <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>{item.modelo}</div>
+                        <div style={{ fontWeight: 700, fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                          {item.modelo}
+                          <span className="badge badge-partial" style={{ fontSize: '10px', padding: '2px 6px', fontWeight: 600, display: 'inline-block' }}>
+                            {item.maquilero_nombre}
+                          </span>
+                        </div>
                         <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                           Orden: {item.no_orden || 'N/A'} | Color: {item.color || 'N/A'}
                         </div>
