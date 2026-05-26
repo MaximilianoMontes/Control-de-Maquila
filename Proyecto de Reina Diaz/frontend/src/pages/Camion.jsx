@@ -372,9 +372,6 @@ export default function Camion() {
                         <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                           Orden: {item.no_orden || 'N/A'} | Color: {formatColorsDisplay(item.color)}
                         </div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--color-primary)', fontWeight: 600 }}>
-                          Costo Unitario: {formatCurrency(item.precio)}
-                        </div>
                       </div>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
