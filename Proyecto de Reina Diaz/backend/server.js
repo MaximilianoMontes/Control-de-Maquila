@@ -614,10 +614,10 @@ app.delete('/api/inventario_real/:id', authenticateToken, async (req, res) => {
 
 const autoArchiveOrders = async () => {
   try {
-    // 1. Auto-archive orders that are Terminado AND fully paid
-    await db.query(`
-      UPDATE produccion p
-      SET p.archivado = 1
+    // 1. Get orders that should be archived but are not yet
+    const [toArchive] = await db.query(`
+      SELECT p.id 
+      FROM produccion p
       WHERE p.archivado = 0
         AND p.estado = 'Terminado'
         AND (
@@ -628,10 +628,10 @@ const autoArchiveOrders = async () => {
         ) >= p.precio_total - 0.05
     `);
 
-    // 2. Auto-unarchive orders that are NOT Terminado OR NOT fully paid
-    await db.query(`
-      UPDATE produccion p
-      SET p.archivado = 0
+    // 2. Get orders that should be un-archived but are archived
+    const [toUnarchive] = await db.query(`
+      SELECT p.id 
+      FROM produccion p
       WHERE p.archivado = 1
         AND (
           p.estado != 'Terminado'
@@ -643,6 +643,18 @@ const autoArchiveOrders = async () => {
           ) < p.precio_total - 0.05
         )
     `);
+
+    // 3. Process archiving
+    for (const p of toArchive) {
+      await db.query("UPDATE produccion SET archivado = 1 WHERE id = ?", [p.id]);
+      await checkAndMoveToInventory(p.id, 1); // 1 = System user
+    }
+
+    // 4. Process un-archiving
+    for (const p of toUnarchive) {
+      await db.query("UPDATE produccion SET archivado = 0 WHERE id = ?", [p.id]);
+      await checkAndMoveToInventory(p.id, 1);
+    }
   } catch (error) {
     console.error("Error running auto-archive:", error);
   }
