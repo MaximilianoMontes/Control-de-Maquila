@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
-import { Users, Package, Factory, TrendingUp } from 'lucide-react';
+import { Users, Package, Factory, TrendingUp, Calendar } from 'lucide-react';
 import axios from 'axios';
 import API_URL from '../config';
 
@@ -62,10 +62,10 @@ export default function Dashboard() {
       style: {},
     },
     {
-      icon: <Package size={24} />,
+      icon: <Calendar size={24} />,
       value: stats.inventario.toLocaleString(),
       label: t('dash.piecesInventory'),
-      style: { background: 'rgba(16, 185, 129, 0.2)', color: '#34d399' },
+      style: { background: 'rgba(16, 185, 129, 0.1)', color: '#10b981' },
     },
     {
       icon: <Factory size={24} />,
