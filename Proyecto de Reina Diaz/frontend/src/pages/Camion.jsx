@@ -297,7 +297,7 @@ export default function Camion() {
             <Truck size={36} /> {t('camion.title')}
           </h1>
           <p style={{ color: 'var(--text-secondary)', margin: '0.25rem 0 0 0' }}>
-            Gestiona de forma inalterable los traslados y distribución de tallas de las prendas a fábrica (Colima)
+            {t('camion.subtitle')}
           </p>
         </div>
       </div>
@@ -309,7 +309,7 @@ export default function Camion() {
         <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', height: 'fit-content', minHeight: '500px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <h2 style={{ fontSize: '1.25rem', margin: 0, fontWeight: 700 }}>{t('camion.activeStock')}</h2>
-            <span className="badge badge-info" style={{ fontWeight: 700 }}>{filteredStock.length} Lotes</span>
+            <span className="badge badge-info" style={{ fontWeight: 700 }}>{filteredStock.length} {t('camion.lots') || 'Lotes'}</span>
           </div>
 
           {/* Search bar */}
@@ -370,20 +370,20 @@ export default function Camion() {
                           </span>
                         </div>
                         <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                          Orden: {item.no_orden || 'N/A'} | Color: {formatColorsDisplay(item.color)}
+                          {t('pay.order') || 'Orden'}: {item.no_orden || 'N/A'} | {t('cortes.color') || 'Color'}: {formatColorsDisplay(item.color)}
                         </div>
                       </div>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                       <div style={{ textAlign: 'right' }}>
                         <div style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--text-primary)' }}>{item.piezas}</div>
-                        <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Disponibles</div>
+                        <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>{t('cortes.available') || 'Disponibles'}</div>
                       </div>
                       <button 
                         className={`btn ${isLoaded ? 'btn-secondary' : 'btn-primary'}`} 
                         style={{ padding: '0.4rem', borderRadius: '6px' }}
                         onClick={() => openCargoModal(item)}
-                        title="Subir al Camión"
+                        title={t('camion.loadBtn') || 'Subir al Camión'}
                       >
                         <Plus size={16} />
                       </button>
@@ -419,7 +419,7 @@ export default function Camion() {
             </h2>
             {cargo.length > 0 && (
               <span className="badge badge-success" style={{ fontWeight: 700 }}>
-                {cargo.reduce((sum, item) => sum + item.piezas, 0)} Piezas en total
+                {cargo.reduce((sum, item) => sum + item.piezas, 0)} {t('camion.totalPieces') || 'Piezas en total'}
               </span>
             )}
           </div>
@@ -430,7 +430,7 @@ export default function Camion() {
               <div style={{ margin: 'auto', textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>
                 <Truck size={48} style={{ opacity: 0.3, marginBottom: '0.5rem', animation: 'pulse 2s infinite' }} />
                 <p style={{ margin: 0, fontSize: '0.9rem' }}>
-                  {dragOver ? '¡Suelta el modelo aquí!' : 'Arrastra modelos aquí o haz clic en (+) para cargarlos.'}
+                  {dragOver ? (t('settings.themeSystem') === 'System' ? 'Drop the model here!' : '¡Suelta el modelo aquí!') : t('camion.emptyCargo')}
                 </p>
               </div>
             ) : (
@@ -496,7 +496,7 @@ export default function Camion() {
                       })}
                     </div>
                     <span style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--text-primary)' }}>
-                      {item.piezas} pzs
+                      {item.piezas} {t('settings.themeSystem') === 'System' ? 'pcs' : 'pzs'}
                     </span>
                   </div>
                 </div>
@@ -507,7 +507,7 @@ export default function Camion() {
           {/* Form input: Shipping controls */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-              <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Fecha de Envío</label>
+              <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>{t('camion.shippingDate') || 'Fecha de Envío'}</label>
               <div style={{ display: 'flex', alignItems: 'center', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', padding: '0.5rem', border: '1px solid rgba(255,255,255,0.08)' }}>
                 <Calendar size={16} color="#c084fc" style={{ marginRight: '0.5rem' }} />
                 <input 
@@ -519,7 +519,7 @@ export default function Camion() {
               </div>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-              <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Observaciones del Chofer / Camión</label>
+              <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>{t('camion.observationsLabel') || 'Observaciones del Chofer / Camión'}</label>
               <input 
                 type="text" 
                 placeholder={t('camion.observations') || 'Chofer, placas...'}
@@ -551,7 +551,7 @@ export default function Camion() {
           {history.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
               <Info size={28} style={{ opacity: 0.5, marginBottom: '0.5rem' }} />
-              <p style={{ margin: 0 }}>No hay camiones registrados en el historial de despachos.</p>
+              <p style={{ margin: 0 }}>{t('camion.noHistory') || 'No hay camiones registrados en el historial de despachos.'}</p>
             </div>
           ) : (
             history.map(truck => {
@@ -576,7 +576,7 @@ export default function Camion() {
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
                       <span style={{ fontWeight: 800, color: 'var(--color-primary)', fontSize: '1.05rem' }}>
-                        Camión #{truck.id}
+                        {t('nav.camion') || 'Camión'} #{truck.id}
                       </span>
                       <span style={{ fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                         <Calendar size={14} color="#94a3b8" /> <strong>{t('camion.shippedOn')}:</strong> {new Date(truck.fecha_envio).toLocaleDateString('es-MX')}
@@ -589,7 +589,7 @@ export default function Camion() {
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                       <span className="badge badge-info" style={{ fontWeight: 700 }}>
-                        {totalPzs} Piezas enviadas
+                        {totalPzs} {t('camion.piecesShipped') || 'Piezas enviadas'}
                       </span>
                       {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                     </div>
@@ -602,11 +602,11 @@ export default function Camion() {
                         <table className="data-table" style={{ width: '100%', fontSize: '0.85rem' }}>
                           <thead>
                             <tr>
-                              <th>Modelo</th>
-                              <th>No. Orden</th>
-                              <th>Color</th>
-                              <th>Cliente</th>
-                              <th style={{ textAlign: 'center' }}>Total Piezas</th>
+                              <th>{t('prod.model') || 'Modelo'}</th>
+                              <th>{t('inv.orderNo') || 'No. Orden'}</th>
+                              <th>{t('cortes.color') || 'Color'}</th>
+                              <th>{t('inv.client') || 'Cliente'}</th>
+                              <th style={{ textAlign: 'center' }}>{t('camion.totalPieces') || 'Total Piezas'}</th>
                               <th>{t('camion.sizeDistribution')}</th>
                             </tr>
                           </thead>
@@ -665,7 +665,7 @@ export default function Camion() {
           <div className="modal-content glass-card" style={{ width: '90%', maxWidth: '680px', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', animation: 'scaleUp 0.3s' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800 }}>
-                {editIndex !== null ? 'Editar Carga del Modelo' : 'Subir Modelo al Camión'}: {selectedStockItem.modelo}
+                {editIndex !== null ? t('camion.editModelCargo') : t('camion.uploadModel')}: {selectedStockItem.modelo}
               </h3>
               <button 
                 onClick={closeCargoModal} 
@@ -680,7 +680,7 @@ export default function Camion() {
               {/* Total cargo quantity input */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                 <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-                  Cantidad total a enviar de este lote (Max: {selectedStockItem.piezas}):
+                  {t('camion.totalAmountToShip').replace('{max}', selectedStockItem.piezas)}
                 </label>
                 <input 
                   type="number" 
@@ -702,7 +702,7 @@ export default function Camion() {
                   </label>
                   <span style={{ fontSize: '0.8rem', color: isTallaValid ? '#34d399' : '#f87171', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                     {isTallaValid ? <CheckCircle size={14} /> : <AlertCircle size={14} />}
-                    Suma: {tallasSum} / {cargoQty} pzs
+                    {t('settings.themeSystem') === 'System' ? 'Sum' : 'Suma'}: {tallasSum} / {cargoQty} {t('settings.themeSystem') === 'System' ? 'pcs' : 'pzs'}
                   </span>
                 </div>
                 
@@ -715,7 +715,7 @@ export default function Camion() {
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
                     <thead>
                       <tr style={{ background: 'rgba(255, 255, 255, 0.05)', borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
-                        <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: 700, color: 'var(--text-secondary)', fontSize: '0.8rem', textTransform: 'uppercase' }}>Color</th>
+                        <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: 700, color: 'var(--text-secondary)', fontSize: '0.8rem', textTransform: 'uppercase' }}>{t('cortes.color') || 'Color'}</th>
                         {SIZES.map(sz => (
                           <th key={sz} style={{ padding: '0.75rem 0.5rem', textAlign: 'center', fontWeight: 700, color: '#c084fc', minWidth: '60px' }}>{sz}</th>
                         ))}
@@ -789,7 +789,7 @@ export default function Camion() {
                 disabled={!isTallaValid}
                 onClick={handleConfirmCargo}
               >
-                Confirmar
+                {t('camion.confirm') || 'Confirmar'}
               </button>
             </div>
 
