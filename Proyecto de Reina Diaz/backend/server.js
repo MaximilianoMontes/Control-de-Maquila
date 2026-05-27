@@ -101,7 +101,7 @@ const checkAndMoveToInventory = async (produccionId, userId) => {
     }
 
     // If the production order is archived, we hide the cut from Cortes
-    if (prod.archivado === 1) {
+    if (prod.archivado === 1 || prod.archivado === 2) {
       if (prod.en_inventario !== 1) {
         await connection.query("UPDATE inventario SET en_inventario = 1 WHERE id = ?", [prod.cut_id]);
         
@@ -669,6 +669,8 @@ app.get('/api/camiones/disponibles', authenticateToken, async (req, res) => {
   }
 
   try {
+    await autoArchiveOrders();
+
     const [rows] = await db.query(`
       SELECT p.id as id, p.id as produccion_id, p.cantidad, p.cantidad_recibida, p.estado,
              m.nombre as maquilero_nombre,
@@ -681,7 +683,7 @@ app.get('/api/camiones/disponibles', authenticateToken, async (req, res) => {
       FROM produccion p
       JOIN maquileros m ON p.maquilero_id = m.id
       JOIN inventario i ON p.inventario_id = i.id
-      WHERE p.estado IN ('Terminado', 'Terminado Parcial')
+      WHERE p.estado IN ('Terminado', 'Terminado Parcial') AND p.archivado < 2
     `);
 
     const available = rows.map(r => {
@@ -814,11 +816,11 @@ app.post('/api/camiones', authenticateToken, async (req, res) => {
 
 const autoArchiveOrders = async () => {
   try {
-    // 1. Get orders that should be archived but are not yet
+    // 1. Get orders that should be archived but are not yet (archivado < 2)
     const [toArchive] = await db.query(`
       SELECT p.id 
       FROM produccion p
-      WHERE p.archivado = 0
+      WHERE p.archivado < 2
         AND p.estado = 'Terminado'
         AND (
           SELECT COALESCE(SUM(pg.monto), 0) + COALESCE(SUM(dp.monto_total), 0)
@@ -828,11 +830,11 @@ const autoArchiveOrders = async () => {
         ) >= p.precio_total - 0.05
     `);
 
-    // 2. Get orders that should be un-archived but are archived
+    // 2. Get orders that should be un-archived but are archived (archivado >= 1)
     const [toUnarchive] = await db.query(`
       SELECT p.id 
       FROM produccion p
-      WHERE p.archivado = 1
+      WHERE p.archivado >= 1
         AND (
           p.estado != 'Terminado'
           OR (
@@ -844,13 +846,13 @@ const autoArchiveOrders = async () => {
         )
     `);
 
-    // 3. Process archiving
+    // 3. Process archiving to state 2 (Factory Delivered / Permanent Hide)
     for (const p of toArchive) {
-      await db.query("UPDATE produccion SET archivado = 1 WHERE id = ?", [p.id]);
+      await db.query("UPDATE produccion SET archivado = 2 WHERE id = ?", [p.id]);
       await checkAndMoveToInventory(p.id, 1); // 1 = System user
     }
 
-    // 4. Process un-archiving
+    // 4. Process un-archiving back to state 0 (Active)
     for (const p of toUnarchive) {
       await db.query("UPDATE produccion SET archivado = 0 WHERE id = ?", [p.id]);
       await checkAndMoveToInventory(p.id, 1);
@@ -1191,8 +1193,8 @@ app.delete('/api/produccion/:id', authenticateToken, async (req, res) => {
     if (!old) return res.status(404).json({ error: 'Producción no encontrada' });
 
     if (old.estado === 'Terminado') {
-      await db.query("UPDATE produccion SET archivado = 1 WHERE id = ?", [req.params.id]);
-      await logActivity(req.user.id, 'EDIT', 'PRODUCCION', `Archivó orden terminada de ${old.modelo || 'ID '+req.params.id} (evitó borrado de historial)`);
+      await db.query("UPDATE produccion SET archivado = 2 WHERE id = ?", [req.params.id]);
+      await logActivity(req.user.id, 'EDIT', 'PRODUCCION', `Ocultó orden terminada de ${old.modelo || 'ID '+req.params.id} (evitó borrado de historial)`);
       return res.json({ success: true, archived: true });
     }
 
