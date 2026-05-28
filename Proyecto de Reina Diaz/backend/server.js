@@ -329,7 +329,7 @@ app.get('/api/inventario', async (req, res) => {
   try {
     const [items] = await db.query(`
       SELECT i.*, 
-        (SELECT COUNT(id) FROM produccion WHERE inventario_id = i.id AND archivado = 0 AND es_extra = 0) as producciones_count
+        (SELECT COUNT(id) FROM produccion WHERE inventario_id = i.id) as producciones_count
       FROM inventario i
       WHERE i.en_inventario = 0 OR i.en_inventario IS NULL
       ORDER BY i.id DESC
@@ -683,7 +683,7 @@ app.get('/api/camiones/disponibles', authenticateToken, async (req, res) => {
       FROM produccion p
       JOIN maquileros m ON p.maquilero_id = m.id
       JOIN inventario i ON p.inventario_id = i.id
-      WHERE p.estado IN ('Terminado', 'Terminado Parcial') AND p.archivado < 2
+      WHERE p.estado IN ('Terminado', 'Terminado Parcial') AND p.archivado = 0
     `);
 
     const available = rows.map(r => {
@@ -1180,6 +1180,8 @@ app.put('/api/produccion/:id/archivo', authenticateToken, async (req, res) => {
     
     await logActivity(req.user.id, 'EDIT', 'PRODUCCION', `${archivado ? 'Archivó' : 'Desarchivó'} orden de ${old ? old.modelo : req.params.id}`);
     
+    await checkAndMoveToInventory(req.params.id, req.user.id);
+    
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -1192,8 +1194,9 @@ app.delete('/api/produccion/:id', authenticateToken, async (req, res) => {
     const old = olds[0];
     if (!old) return res.status(404).json({ error: 'Producción no encontrada' });
 
-    if (old.estado === 'Terminado') {
+    if (old.estado === 'Terminado' || old.estado === 'Terminado Parcial') {
       await db.query("UPDATE produccion SET archivado = 2 WHERE id = ?", [req.params.id]);
+      await checkAndMoveToInventory(req.params.id, req.user.id);
       await logActivity(req.user.id, 'EDIT', 'PRODUCCION', `Ocultó orden terminada de ${old.modelo || 'ID '+req.params.id} (evitó borrado de historial)`);
       return res.json({ success: true, archived: true });
     }
