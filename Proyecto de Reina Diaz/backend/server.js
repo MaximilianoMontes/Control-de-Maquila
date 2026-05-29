@@ -683,7 +683,7 @@ app.get('/api/camiones/disponibles', authenticateToken, async (req, res) => {
       FROM produccion p
       JOIN maquileros m ON p.maquilero_id = m.id
       JOIN inventario i ON p.inventario_id = i.id
-      WHERE p.estado IN ('Terminado', 'Terminado Parcial') AND p.archivado = 0
+      WHERE p.estado IN ('Terminado', 'Terminado Parcial')
     `);
 
     const available = rows.map(r => {
