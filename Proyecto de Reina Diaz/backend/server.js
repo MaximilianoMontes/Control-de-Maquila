@@ -683,7 +683,7 @@ app.get('/api/camiones/disponibles', authenticateToken, async (req, res) => {
       FROM produccion p
       JOIN maquileros m ON p.maquilero_id = m.id
       JOIN inventario i ON p.inventario_id = i.id
-      WHERE p.estado IN ('Terminado', 'Terminado Parcial')
+      WHERE p.estado IN ('Terminado', 'Terminado Parcial') AND p.archivado = 0
     `);
 
     const available = rows.map(r => {
@@ -821,7 +821,7 @@ const autoArchiveOrders = async () => {
       SELECT p.id 
       FROM produccion p
       WHERE p.archivado < 2
-        AND p.id < 42
+        AND p.id <= 42
         AND p.estado = 'Terminado'
         AND (
           SELECT COALESCE(SUM(pg.monto), 0) + COALESCE(SUM(dp.monto_total), 0)
@@ -836,7 +836,7 @@ const autoArchiveOrders = async () => {
       SELECT p.id 
       FROM produccion p
       WHERE p.archivado >= 1
-        AND p.id < 42
+        AND p.id <= 42
         AND (
           p.estado != 'Terminado'
           OR (
