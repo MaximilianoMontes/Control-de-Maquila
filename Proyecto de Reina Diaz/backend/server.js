@@ -2421,6 +2421,8 @@ app.post('/api/plancha/pagos', authenticateToken, async (req, res) => {
   } finally {
     connection.release();
   }
+});
+
 // 11. HISTORIAL GENERAL DE PLANCHADO
 app.get('/api/plancha/historial', authenticateToken, async (req, res) => {
   try {
