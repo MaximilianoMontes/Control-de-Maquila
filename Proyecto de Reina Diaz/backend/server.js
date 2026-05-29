@@ -1951,20 +1951,20 @@ app.get('/api/admin/restore-models', async (req, res) => {
           cutActions.productionRowsBefore = prodRows.map(p => ({ id: p.id, estado: p.estado, archivado: p.archivado }));
 
           if (prodRows.length > 0) {
-            // Update existing production rows
+            // Update existing production rows to 'Terminado' and archived = 2 (so they disappear from Maquila active list)
             const [updateResult] = await db.query(
-              "UPDATE produccion SET estado = 'En proceso', archivado = 0, fecha_terminado = NULL WHERE inventario_id = ?",
+              "UPDATE produccion SET estado = 'Terminado', archivado = 2, fecha_terminado = NOW() WHERE inventario_id = ?",
               [cut.id]
             );
-            cutActions.actionPerformed = `Updated ${updateResult.affectedRows} existing production rows to En proceso / Active`;
+            cutActions.actionPerformed = `Updated ${updateResult.affectedRows} existing production rows to Terminado / Archived`;
           } else {
-            // No production rows! Let's insert a new one so it displays in production
+            // No production rows! Let's insert a completed one so it is in history
             if (defaultMaquilero) {
               const [insertResult] = await db.query(
-                "INSERT INTO produccion (maquilero_id, inventario_id, cantidad, precio_total, fecha_inicio, estado, archivado) VALUES (?, ?, 100, 0, CURRENT_DATE(), 'En proceso', 0)",
+                "INSERT INTO produccion (maquilero_id, inventario_id, cantidad, precio_total, fecha_inicio, fecha_fin, estado, archivado) VALUES (?, ?, 100, 0, CURRENT_DATE(), CURRENT_DATE(), 'Terminado', 2)",
                 [defaultMaquilero.id, cut.id]
               );
-              cutActions.actionPerformed = `Created new production row ID ${insertResult.insertId} with En proceso / Active state for maquilero: ${defaultMaquilero.nombre}`;
+              cutActions.actionPerformed = `Created new production row ID ${insertResult.insertId} with Terminado / Archived state for maquilero: ${defaultMaquilero.nombre}`;
             } else {
               cutActions.actionPerformed = `Could not create production row because no maquileros exist in the database. Please create a maquilero first!`;
             }
@@ -1974,7 +1974,7 @@ app.get('/api/admin/restore-models', async (req, res) => {
         modelResult.status = 'Processed and Restored';
       } else {
         // Model not found in inventario at all!
-        // Let's create it in inventario and then create its production order!
+        // Let's create it in inventario and then create its production order as completed!
         if (defaultMaquilero) {
           // Create cut in inventario
           const [invInsert] = await db.query(
@@ -1983,18 +1983,18 @@ app.get('/api/admin/restore-models', async (req, res) => {
           );
           const newCutId = invInsert.insertId;
           
-          // Create production order
+          // Create production order as completed
           const [prodInsert] = await db.query(
-            "INSERT INTO produccion (maquilero_id, inventario_id, cantidad, precio_total, fecha_inicio, estado, archivado) VALUES (?, ?, 100, 0, CURRENT_DATE(), 'En proceso', 0)",
+            "INSERT INTO produccion (maquilero_id, inventario_id, cantidad, precio_total, fecha_inicio, fecha_fin, estado, archivado) VALUES (?, ?, 100, 0, CURRENT_DATE(), CURRENT_DATE(), 'Terminado', 2)",
             [defaultMaquilero.id, newCutId]
           );
           
-          modelResult.status = 'Created brand new cut and production row';
+          modelResult.status = 'Created brand new cut and completed production row';
           modelResult.actions = [{
             cutId: newCutId,
             modelo: model,
             cutStatusUpdated: 'Created new cut in inventario',
-            actionPerformed: `Created new production row ID ${prodInsert.insertId} with En proceso / Active state for maquilero: ${defaultMaquilero.nombre}`
+            actionPerformed: `Created new production row ID ${prodInsert.insertId} with Terminado / Archived state for maquilero: ${defaultMaquilero.nombre}`
           }];
         } else {
           modelResult.status = 'Failed to create because no default maquilero exists';
@@ -2420,6 +2420,22 @@ app.post('/api/plancha/pagos', authenticateToken, async (req, res) => {
     res.status(400).json({ error: error.message });
   } finally {
     connection.release();
+  }
+// 11. HISTORIAL GENERAL DE PLANCHADO
+app.get('/api/plancha/historial', authenticateToken, async (req, res) => {
+  try {
+    const [rows] = await db.query(`
+      SELECT pt.*, p.nombre as planchador_nombre,
+             cd.modelo as modelo_nombre, cd.color, cd.no_orden, cd.precio_plancha,
+             (SELECT imagen FROM inventario WHERE modelo = cd.modelo LIMIT 1) as modelo_imagen
+      FROM plancha_trabajos pt
+      JOIN planchadores p ON pt.planchador_id = p.id
+      JOIN camion_detalles cd ON pt.camion_detalles_id = cd.id
+      ORDER BY pt.fecha_terminado DESC, pt.id DESC
+    `);
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 });
 

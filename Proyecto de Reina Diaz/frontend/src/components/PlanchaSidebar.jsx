@@ -6,7 +6,8 @@ import {
   Wallet, 
   Home, 
   LogOut,
-  Shirt
+  Shirt,
+  History
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
@@ -20,6 +21,7 @@ export default function PlanchaSidebar({ activeTab, setActiveTab }) {
     { id: 'modelos', name: 'Modelos Camión', icon: <Layers size={20} /> },
     { id: 'planchadores', name: 'Planchadores', icon: <Users size={20} /> },
     { id: 'pagos', name: 'Pagos Plancha', icon: <Wallet size={20} /> },
+    { id: 'historial', name: 'Historial Plancha', icon: <History size={20} /> },
   ];
 
   return (
