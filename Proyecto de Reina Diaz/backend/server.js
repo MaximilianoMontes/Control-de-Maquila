@@ -828,6 +828,13 @@ const autoArchiveOrders = async () => {
           LEFT JOIN descuentos_personales dp ON dp.pago_id = pg.id
           WHERE pg.produccion_id = p.id
         ) >= p.precio_total - 0.05
+        AND (
+          SELECT COALESCE(SUM(cd.piezas), 0)
+          FROM camion_detalles cd
+          WHERE cd.produccion_id = p.id
+        ) >= (
+          CASE WHEN p.cantidad_recibida IS NOT NULL THEN p.cantidad_recibida ELSE p.cantidad END
+        )
     `);
 
     // 2. Get orders that should be un-archived but are archived (archivado >= 1)
@@ -843,6 +850,13 @@ const autoArchiveOrders = async () => {
             LEFT JOIN descuentos_personales dp ON dp.pago_id = pg.id
             WHERE pg.produccion_id = p.id
           ) < p.precio_total - 0.05
+          OR (
+            SELECT COALESCE(SUM(cd.piezas), 0)
+            FROM camion_detalles cd
+            WHERE cd.produccion_id = p.id
+          ) < (
+            CASE WHEN p.cantidad_recibida IS NOT NULL THEN p.cantidad_recibida ELSE p.cantidad END
+          )
         )
     `);
 
