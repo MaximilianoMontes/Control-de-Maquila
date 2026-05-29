@@ -592,11 +592,11 @@ async function initializeDatabase() {
     try {
       console.log('--- MIGRACIÓN: Restaurando modelos solicitados (554258, 554296, 526260, 554223) ---');
       
-      // 1. Restaurar órdenes de producción a 'Terminado' y archivado = 0 (Activo)
+      // 1. Restaurar órdenes de producción a 'En proceso' y archivado = 0 (Activo)
       const [restoredProd] = await connection.query(`
         UPDATE produccion p
         JOIN inventario i ON p.inventario_id = i.id
-        SET p.archivado = 0, p.estado = 'Terminado'
+        SET p.archivado = 0, p.estado = 'En proceso', p.fecha_terminado = NULL
         WHERE i.modelo IN ('554258', '554296', '526260', '554223')
       `);
       
