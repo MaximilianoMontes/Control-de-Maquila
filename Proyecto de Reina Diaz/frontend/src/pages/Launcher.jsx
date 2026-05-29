@@ -139,14 +139,13 @@ export default function Launcher() {
             <span className="launcher-app-name">{text.maquila}</span>
           </Link>
 
-          {/* App 2: Plancha (Disabled / Coming Soon) */}
-          <div className="launcher-app-item disabled" title={text.soon}>
-            <div className="launcher-app-icon" style={{ filter: 'grayscale(0.65) opacity(0.8)' }}>
+          {/* App 2: Plancha (Active) */}
+          <Link to="/plancha" className="launcher-app-item">
+            <div className="launcher-app-icon">
               <PlanchaIcon />
-              <span className="launcher-app-badge">{text.soon}</span>
             </div>
             <span className="launcher-app-name">{text.plancha}</span>
-          </div>
+          </Link>
         </div>
       </main>
     </div>
