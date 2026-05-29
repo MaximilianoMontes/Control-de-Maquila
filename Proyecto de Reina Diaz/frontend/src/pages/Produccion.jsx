@@ -225,9 +225,6 @@ export default function Produccion() {
         <h1 className="gradient-text" style={{ fontSize: '2.5rem', margin: 0 }}>{t('prod.title')}
         </h1>
         <div style={{ display: 'flex', gap: '1rem' }}>
-          <button className="btn btn-secondary" onClick={() => setVerArchivados(!verArchivados)}>
-            {verArchivados ? t('nav.produccion') + ' (Activos)' : t('nav.historial') + ' (Archivados)'}
-          </button>
           {canEdit && (
             <button className="btn btn-primary" onClick={() => setIsModalOpen(true)}>
               <Plus size={20} /> {t('prod.new')}
@@ -403,9 +400,6 @@ export default function Produccion() {
                                 }); 
                                 setIsEditModalOpen(true); 
                               }} title="Editar"><Pencil size={16} /></button>
-                              <button className="btn btn-secondary" style={{ padding: '0.4rem' }} onClick={() => handleArchivar(o.id, o.archivado)} title={o.archivado ? "Restaurar" : "Archivar"}>
-                                {o.archivado ? <ArchiveRestore size={16} /> : <Archive size={16} />}
-                              </button>
                               <button className="btn btn-danger" style={{ padding: '0.4rem' }} onClick={() => handleDelete(o.id)} title="Eliminar"><Trash2 size={16} /></button>
                             </>
                           ) : (

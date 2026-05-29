@@ -266,9 +266,6 @@ export default function Extras() {
           {t('nav.extras')}
         </h1>
         <div style={{ display: 'flex', gap: '1rem' }}>
-          <button className="btn btn-secondary" onClick={() => setVerArchivados(!verArchivados)}>
-            {verArchivados ? t('nav.extras') + ' (Activos)' : t('nav.historial') + ' (Archivados)'}
-          </button>
           {canEdit && (
             <button className="btn btn-primary" onClick={() => {
               setFormData({ maquilero_id: '', inventario_id: '', cantidad: '', precio_extra: '', fecha_inicio: new Date().toISOString().split('T')[0], fecha_fin: '' });
@@ -454,9 +451,6 @@ export default function Extras() {
                                 }); 
                                 setIsEditModalOpen(true); 
                               }} title="Editar"><Pencil size={16} /></button>
-                              <button className="btn btn-secondary" style={{ padding: '0.4rem' }} onClick={() => handleArchivar(o.id, o.archivado)} title={o.archivado ? "Restaurar" : "Archivar"}>
-                                {o.archivado ? <ArchiveRestore size={16} /> : <Archive size={16} />}
-                              </button>
                               <button className="btn btn-danger" style={{ padding: '0.4rem' }} onClick={() => handleDelete(o.id)} title="Eliminar"><Trash2 size={16} /></button>
                             </>
                           ) : (
