@@ -588,6 +588,31 @@ async function initializeDatabase() {
       console.error('Error al migrar tablas del módulo de plancha:', e);
     }
 
+    // --- RESTAURACIÓN DE MODELOS SOLICITADOS ---
+    try {
+      console.log('--- MIGRACIÓN: Restaurando modelos solicitados (554258, 554296, 526260, 554223) ---');
+      
+      // 1. Restaurar órdenes de producción a 'Terminado' y archivado = 0 (Activo)
+      const [restoredProd] = await connection.query(`
+        UPDATE produccion p
+        JOIN inventario i ON p.inventario_id = i.id
+        SET p.archivado = 0, p.estado = 'Terminado'
+        WHERE i.modelo IN ('554258', '554296', '526260', '554223')
+      `);
+      
+      // 2. Asegurar que los cortes correspondientes estén visibles (en_inventario = 0)
+      const [restoredCuts] = await connection.query(`
+        UPDATE inventario
+        SET en_inventario = 0
+        WHERE modelo IN ('554258', '554296', '526260', '554223')
+      `);
+
+      console.log(`Modelos restaurados. Órdenes actualizadas: ${restoredProd.affectedRows}, Cortes actualizados: ${restoredCuts.affectedRows}`);
+      console.log('--- FIN MIGRACIÓN RESTAURACIÓN ---');
+    } catch (e) {
+      console.error('Error al restaurar los modelos solicitados:', e);
+    }
+
     connection.release();
     console.log('Database initialization complete.');
   } catch (error) {
