@@ -2004,9 +2004,90 @@ app.get('/api/admin/restore-models', async (req, res) => {
       diagnostics.results.push(modelResult);
     }
 
+    // --- INTEGRACIÓN CON MÓDULO PLANCHA (HISTORIAL) ---
+    const planchaResults = [];
+    
+    // 1. Get or create a default truck
+    let [trucks] = await db.query("SELECT id FROM camiones ORDER BY id DESC LIMIT 1");
+    let truckId;
+    let truckStatus = "Found existing truck";
+    if (trucks.length > 0) {
+      truckId = trucks[0].id;
+    } else {
+      const [tInsert] = await db.query(
+        "INSERT INTO camiones (fecha_envio, observaciones) VALUES (CURRENT_DATE(), 'Camion de recuperacion automatica')"
+      );
+      truckId = tInsert.insertId;
+      truckStatus = "Created new truck";
+    }
+
+    // 2. Get or create a default planchador
+    let [planchadores] = await db.query("SELECT id, nombre FROM planchadores LIMIT 1");
+    let planchadorId;
+    let planchadorNombre;
+    let planchadorStatus = "Found existing planchador";
+    if (planchadores.length > 0) {
+      planchadorId = planchadores[0].id;
+      planchadorNombre = planchadores[0].nombre;
+    } else {
+      const [pInsert] = await db.query(
+        "INSERT INTO planchadores (nombre, telefono) VALUES ('Hernàndez Bravo Olga', '3121234567')"
+      );
+      planchadorId = pInsert.insertId;
+      planchadorNombre = 'Hernàndez Bravo Olga';
+      planchadorStatus = "Created default planchador (Hernàndez Bravo Olga)";
+    }
+
+    diagnostics.planchaSetup = {
+      truckId,
+      truckStatus,
+      planchadorId,
+      planchadorNombre,
+      planchadorStatus
+    };
+
+    // 3. Process each model for plancha history
+    for (const model of targetModels) {
+      const planchaItem = { model };
+
+      // A. Get or create camion_detalles for this model
+      let [cdRows] = await db.query("SELECT id, piezas, precio_plancha FROM camion_detalles WHERE modelo = ? AND camion_id = ?", [model, truckId]);
+      let camionDetallesId;
+      if (cdRows.length > 0) {
+        camionDetallesId = cdRows[0].id;
+        planchaItem.camionDetalles = { id: camionDetallesId, status: "Found existing" };
+      } else {
+        const [cdInsert] = await db.query(
+          `INSERT INTO camion_detalles 
+           (camion_id, modelo, piezas, tallas_cantidades, precio_plancha, no_orden, color, cliente, temporada, numero)
+           VALUES (?, ?, 100, '{"U": 100}', 5.00, 'CD-RESTORED', 'Único', 'General', '2026', 'RESTORED')`,
+          [truckId, model]
+        );
+        camionDetallesId = cdInsert.insertId;
+        planchaItem.camionDetalles = { id: camionDetallesId, status: "Created new" };
+      }
+
+      // B. Get or create plancha_trabajos for this planchador and camion_detalles_id
+      let [ptRows] = await db.query("SELECT id, piezas, estado FROM plancha_trabajos WHERE camion_detalles_id = ? AND planchador_id = ?", [camionDetallesId, planchadorId]);
+      if (ptRows.length > 0) {
+        planchaItem.planchaTrabajo = { id: ptRows[0].id, status: "Found existing, already in history" };
+      } else {
+        const [ptInsert] = await db.query(
+          `INSERT INTO plancha_trabajos 
+           (planchador_id, camion_detalles_id, talla, piezas, burro_numero, estado, precio_unitario, neto, total, fecha_terminado)
+           VALUES (?, ?, 'U', 100, 1, 'terminado', 5.00, 500.00, 500.00, NOW())`,
+          [planchadorId, camionDetallesId]
+        );
+        planchaItem.planchaTrabajo = { id: ptInsert.insertId, status: "Created new completed job in history" };
+      }
+
+      planchaResults.push(planchaItem);
+    }
+    diagnostics.planchaResults = planchaResults;
+
     res.json({
       success: true,
-      message: "Diagnostics and recovery run successfully.",
+      message: "Diagnostics, Maquila, and Plancha recovery run successfully.",
       diagnostics
     });
   } catch (error) {
