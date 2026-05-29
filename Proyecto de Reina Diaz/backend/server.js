@@ -101,7 +101,7 @@ const checkAndMoveToInventory = async (produccionId, userId) => {
     }
 
     // If the production order is archived, we hide the cut from Cortes
-    if (prod.archivado === 1 || prod.archivado === 2) {
+    if (prod.archivado >= 1) {
       if (prod.en_inventario !== 1) {
         await connection.query("UPDATE inventario SET en_inventario = 1 WHERE id = ?", [prod.cut_id]);
         
@@ -817,11 +817,11 @@ app.post('/api/camiones', authenticateToken, async (req, res) => {
 const autoArchiveOrders = async () => {
   try {
     // 1. Get orders that should be archived but are not yet (archivado < 2)
+    // Condition: state is 'Terminado', fully paid (>= price_total - 0.05), and fully shipped on the truck in the system
     const [toArchive] = await db.query(`
       SELECT p.id 
       FROM produccion p
       WHERE p.archivado < 2
-        AND p.id <= 42
         AND p.estado = 'Terminado'
         AND (
           SELECT COALESCE(SUM(pg.monto), 0) + COALESCE(SUM(dp.monto_total), 0)
@@ -829,14 +829,19 @@ const autoArchiveOrders = async () => {
           LEFT JOIN descuentos_personales dp ON dp.pago_id = pg.id
           WHERE pg.produccion_id = p.id
         ) >= p.precio_total - 0.05
+        AND (
+          SELECT COALESCE(SUM(cd.piezas), 0)
+          FROM camion_detalles cd
+          WHERE cd.produccion_id = p.id
+        ) >= COALESCE(p.cantidad_recibida, p.cantidad)
     `);
 
-    // 2. Get orders that should be un-archived but are archived (archivado >= 1)
+    // 2. Get orders that are currently auto-archived (archivado = 2) but no longer meet the criteria to be archived
+    // (e.g. they were edited, unpaid, or the truck details changed)
     const [toUnarchive] = await db.query(`
       SELECT p.id 
       FROM produccion p
-      WHERE p.archivado >= 1
-        AND p.id <= 42
+      WHERE p.archivado = 2
         AND (
           p.estado != 'Terminado'
           OR (
@@ -845,6 +850,11 @@ const autoArchiveOrders = async () => {
             LEFT JOIN descuentos_personales dp ON dp.pago_id = pg.id
             WHERE pg.produccion_id = p.id
           ) < p.precio_total - 0.05
+          OR (
+            SELECT COALESCE(SUM(cd.piezas), 0)
+            FROM camion_detalles cd
+            WHERE cd.produccion_id = p.id
+          ) < COALESCE(p.cantidad_recibida, p.cantidad)
         )
     `);
 
@@ -1197,7 +1207,7 @@ app.delete('/api/produccion/:id', authenticateToken, async (req, res) => {
     if (!old) return res.status(404).json({ error: 'Producción no encontrada' });
 
     if (old.estado === 'Terminado' || old.estado === 'Terminado Parcial') {
-      await db.query("UPDATE produccion SET archivado = 2 WHERE id = ?", [req.params.id]);
+      await db.query("UPDATE produccion SET archivado = 3 WHERE id = ?", [req.params.id]);
       await checkAndMoveToInventory(req.params.id, req.user.id);
       await logActivity(req.user.id, 'EDIT', 'PRODUCCION', `Ocultó orden terminada de ${old.modelo || 'ID '+req.params.id} (evitó borrado de historial)`);
       return res.json({ success: true, archived: true });
