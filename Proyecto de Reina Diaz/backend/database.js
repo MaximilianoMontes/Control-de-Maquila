@@ -519,6 +519,75 @@ async function initializeDatabase() {
       console.error('Error en migración de sincronización retroactiva de inventario:', e);
     }
 
+    // --- NUEVO MÓDULO: PLANCHA ---
+    try {
+      console.log('--- MIGRACIÓN: Creando tablas para el Módulo de Plancha ---');
+      
+      // 1. Tabla planchadores
+      await connection.query(`
+        CREATE TABLE IF NOT EXISTS planchadores (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          nombre VARCHAR(255) NOT NULL,
+          telefono VARCHAR(50),
+          fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+      
+      // 2. Columnas en camion_detalles
+      try {
+        await connection.query("ALTER TABLE camion_detalles ADD COLUMN verificado TINYINT(1) DEFAULT 0");
+        console.log("Migration: verificado column added to camion_detalles");
+      } catch (e) {
+        // Ignorar si ya existe
+      }
+
+      try {
+        await connection.query("ALTER TABLE camion_detalles ADD COLUMN precio_plancha DECIMAL(10, 2) DEFAULT 0.00");
+        console.log("Migration: precio_plancha column added to camion_detalles");
+      } catch (e) {
+        // Ignorar si ya existe
+      }
+
+      // 3. Tabla planchador_pagos
+      await connection.query(`
+        CREATE TABLE IF NOT EXISTS planchador_pagos (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          planchador_id INT NOT NULL,
+          monto DECIMAL(10, 2) NOT NULL,
+          fecha DATE NOT NULL,
+          tipo_pago VARCHAR(50) DEFAULT 'completo',
+          FOREIGN KEY(planchador_id) REFERENCES planchadores(id) ON DELETE CASCADE
+        );
+      `);
+
+      // 4. Tabla plancha_trabajos
+      await connection.query(`
+        CREATE TABLE IF NOT EXISTS plancha_trabajos (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          planchador_id INT NOT NULL,
+          camion_detalles_id INT NOT NULL,
+          talla VARCHAR(10) NOT NULL,
+          piezas INT DEFAULT 0,
+          burro_numero INT NOT NULL,
+          estado VARCHAR(50) DEFAULT 'en_proceso',
+          precio_unitario DECIMAL(10, 2) DEFAULT 0,
+          neto DECIMAL(10, 2) DEFAULT 0,
+          ajuste DECIMAL(10, 2) DEFAULT 0,
+          total DECIMAL(10, 2) DEFAULT 0,
+          pago_id INT DEFAULT NULL,
+          fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          fecha_terminado TIMESTAMP NULL DEFAULT NULL,
+          FOREIGN KEY(planchador_id) REFERENCES planchadores(id) ON DELETE CASCADE,
+          FOREIGN KEY(camion_detalles_id) REFERENCES camion_detalles(id) ON DELETE CASCADE,
+          FOREIGN KEY(pago_id) REFERENCES planchador_pagos(id) ON DELETE SET NULL
+        );
+      `);
+      
+      console.log('--- FIN MIGRACIÓN MÓDULO PLANCHA ---');
+    } catch (e) {
+      console.error('Error al migrar tablas del módulo de plancha:', e);
+    }
+
     connection.release();
     console.log('Database initialization complete.');
   } catch (error) {
