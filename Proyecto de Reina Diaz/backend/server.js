@@ -1901,6 +1901,119 @@ app.get('/api/descuentos/maquilero/:id', authenticateToken, async (req, res) => 
   }
 });
 
+// DIAGNOSTIC RESTORE MODELS
+app.get('/api/admin/restore-models', async (req, res) => {
+  try {
+    const targetModels = ['554258', '554296', '526260', '554223'];
+    const diagnostics = {};
+
+    // Get first maquilero as fallback for new production orders
+    const [maqs] = await db.query("SELECT id, nombre FROM maquileros LIMIT 1");
+    const defaultMaquilero = maqs[0] || null;
+
+    diagnostics.defaultMaquilero = defaultMaquilero;
+    diagnostics.results = [];
+
+    for (const model of targetModels) {
+      const modelResult = { model, status: 'Not processed' };
+      
+      // 1. Search cuts exact
+      let [cuts] = await db.query("SELECT * FROM inventario WHERE modelo = ?", [model]);
+      
+      // 2. If not found, search with LIKE
+      if (cuts.length === 0) {
+        const [likeCuts] = await db.query("SELECT * FROM inventario WHERE modelo LIKE ?", [`%${model}%`]);
+        cuts = likeCuts;
+        modelResult.searchType = 'LIKE';
+      } else {
+        modelResult.searchType = 'EXACT';
+      }
+
+      modelResult.foundCutsCount = cuts.length;
+      modelResult.cuts = cuts.map(c => ({ id: c.id, modelo: c.modelo, en_inventario: c.en_inventario }));
+
+      if (cuts.length > 0) {
+        modelResult.actions = [];
+        for (const cut of cuts) {
+          const cutActions = { cutId: cut.id, modelo: cut.modelo };
+
+          // A. Ensure en_inventario = 0 (so it shows in production/cuts list)
+          if (cut.en_inventario !== 0) {
+            await db.query("UPDATE inventario SET en_inventario = 0 WHERE id = ?", [cut.id]);
+            cutActions.cutStatusUpdated = 'Set en_inventario = 0';
+          } else {
+            cutActions.cutStatusUpdated = 'Already 0';
+          }
+
+          // B. Get production rows for this cut
+          const [prodRows] = await db.query("SELECT * FROM produccion WHERE inventario_id = ?", [cut.id]);
+          cutActions.productionCount = prodRows.length;
+          cutActions.productionRowsBefore = prodRows.map(p => ({ id: p.id, estado: p.estado, archivado: p.archivado }));
+
+          if (prodRows.length > 0) {
+            // Update existing production rows
+            const [updateResult] = await db.query(
+              "UPDATE produccion SET estado = 'En proceso', archivado = 0, fecha_terminado = NULL WHERE inventario_id = ?",
+              [cut.id]
+            );
+            cutActions.actionPerformed = `Updated ${updateResult.affectedRows} existing production rows to En proceso / Active`;
+          } else {
+            // No production rows! Let's insert a new one so it displays in production
+            if (defaultMaquilero) {
+              const [insertResult] = await db.query(
+                "INSERT INTO produccion (maquilero_id, inventario_id, cantidad, precio_total, fecha_inicio, estado, archivado) VALUES (?, ?, 100, 0, CURRENT_DATE(), 'En proceso', 0)",
+                [defaultMaquilero.id, cut.id]
+              );
+              cutActions.actionPerformed = `Created new production row ID ${insertResult.insertId} with En proceso / Active state for maquilero: ${defaultMaquilero.nombre}`;
+            } else {
+              cutActions.actionPerformed = `Could not create production row because no maquileros exist in the database. Please create a maquilero first!`;
+            }
+          }
+          modelResult.actions.push(cutActions);
+        }
+        modelResult.status = 'Processed and Restored';
+      } else {
+        // Model not found in inventario at all!
+        // Let's create it in inventario and then create its production order!
+        if (defaultMaquilero) {
+          // Create cut in inventario
+          const [invInsert] = await db.query(
+            "INSERT INTO inventario (modelo, numero, piezas_en_proceso, en_inventario) VALUES (?, 'RESTORED', 100, 0)",
+            [model]
+          );
+          const newCutId = invInsert.insertId;
+          
+          // Create production order
+          const [prodInsert] = await db.query(
+            "INSERT INTO produccion (maquilero_id, inventario_id, cantidad, precio_total, fecha_inicio, estado, archivado) VALUES (?, ?, 100, 0, CURRENT_DATE(), 'En proceso', 0)",
+            [defaultMaquilero.id, newCutId]
+          );
+          
+          modelResult.status = 'Created brand new cut and production row';
+          modelResult.actions = [{
+            cutId: newCutId,
+            modelo: model,
+            cutStatusUpdated: 'Created new cut in inventario',
+            actionPerformed: `Created new production row ID ${prodInsert.insertId} with En proceso / Active state for maquilero: ${defaultMaquilero.nombre}`
+          }];
+        } else {
+          modelResult.status = 'Failed to create because no default maquilero exists';
+        }
+      }
+      
+      diagnostics.results.push(modelResult);
+    }
+
+    res.json({
+      success: true,
+      message: "Diagnostics and recovery run successfully.",
+      diagnostics
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // ==========================================
 // --- NUEVO MÓDULO: PLANCHA (IRONING) ------
 // ==========================================
