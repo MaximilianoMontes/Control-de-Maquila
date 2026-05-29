@@ -821,6 +821,7 @@ const autoArchiveOrders = async () => {
       SELECT p.id 
       FROM produccion p
       WHERE p.archivado < 2
+        AND p.id < 42
         AND p.estado = 'Terminado'
         AND (
           SELECT COALESCE(SUM(pg.monto), 0) + COALESCE(SUM(dp.monto_total), 0)
@@ -828,16 +829,6 @@ const autoArchiveOrders = async () => {
           LEFT JOIN descuentos_personales dp ON dp.pago_id = pg.id
           WHERE pg.produccion_id = p.id
         ) >= p.precio_total - 0.05
-        AND (
-          p.id < 42
-          OR (
-            SELECT COALESCE(SUM(cd.piezas), 0)
-            FROM camion_detalles cd
-            WHERE cd.produccion_id = p.id
-          ) >= (
-            CASE WHEN p.cantidad_recibida IS NOT NULL THEN p.cantidad_recibida ELSE p.cantidad END
-          )
-        )
     `);
 
     // 2. Get orders that should be un-archived but are archived (archivado >= 1)
@@ -845,6 +836,7 @@ const autoArchiveOrders = async () => {
       SELECT p.id 
       FROM produccion p
       WHERE p.archivado >= 1
+        AND p.id < 42
         AND (
           p.estado != 'Terminado'
           OR (
