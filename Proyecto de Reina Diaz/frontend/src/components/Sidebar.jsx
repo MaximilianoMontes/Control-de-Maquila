@@ -10,7 +10,8 @@ import {
   History,
   Scissors,
   Sparkles,
-  Truck
+  Truck,
+  Shirt
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
@@ -26,6 +27,7 @@ export default function Sidebar() {
   // Solo admin y produccion pueden ver Pagos
   const puedeVerPagos = ['admin', 'produccion1', 'produccion2'].includes(userRole);
   const puedeVerCamion = ['admin', 'produccion1', 'produccion2'].includes(userRole);
+  const puedeVerPlancha = ['admin', 'produccion1', 'produccion2'].includes(userRole);
 
   const navItems = [
     { path: '/dashboard',  name: t('nav.dashboard'),   icon: <LayoutDashboard size={20} /> },
@@ -35,6 +37,7 @@ export default function Sidebar() {
     { path: '/produccion', name: t('nav.produccion'),  icon: <Factory size={20} /> },
     { path: '/extras',     name: t('nav.extras'),      icon: <Sparkles size={20} /> },
     ...(puedeVerCamion ? [{ path: '/camion', name: t('nav.camion'), icon: <Truck size={20} /> }] : []),
+    ...(puedeVerPlancha ? [{ path: '/plancha', name: t('nav.plancha') || 'Plancha', icon: <Shirt size={20} /> }] : []),
     { path: '/reportes',   name: t('nav.reportes'),    icon: <FileText size={20} /> },
     ...(puedeVerPagos ? [{ path: '/pagos', name: t('nav.pagos'), icon: <Wallet size={20} /> }] : []),
     { path: '/historial',  name: t('nav.historial'),   icon: <History size={20} /> },

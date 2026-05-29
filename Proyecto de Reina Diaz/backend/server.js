@@ -1901,6 +1901,334 @@ app.get('/api/descuentos/maquilero/:id', authenticateToken, async (req, res) => 
   }
 });
 
+// ==========================================
+// --- NUEVO MÓDULO: PLANCHA (IRONING) ------
+// ==========================================
+
+// 1. OBTENER LISTA DE PLANCHADORES
+app.get('/api/planchadores', authenticateToken, async (req, res) => {
+  try {
+    const [rows] = await db.query("SELECT * FROM planchadores ORDER BY nombre ASC");
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 2. OBTENER DETALLE E HISTORIAL DEL PLANCHADOR
+app.get('/api/planchadores/:id', authenticateToken, async (req, res) => {
+  try {
+    const [planchadores] = await db.query("SELECT * FROM planchadores WHERE id = ?", [req.params.id]);
+    const planchador = planchadores[0];
+    if (!planchador) return res.status(404).json({ error: 'Planchador no encontrado' });
+
+    // Historial de trabajos terminados
+    const [historial] = await db.query(`
+      SELECT pt.*, cd.modelo as modelo_nombre, cd.imagen as modelo_imagen, cd.no_orden, cd.color
+      FROM plancha_trabajos pt
+      LEFT JOIN camion_detalles cd ON pt.camion_detalles_id = cd.id
+      WHERE pt.planchador_id = ?
+      ORDER BY pt.id DESC
+    `, [req.params.id]);
+
+    planchador.historial = historial;
+    res.json(planchador);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 3. REGISTRAR PLANCHADOR
+app.post('/api/planchadores', authenticateToken, async (req, res) => {
+  const { nombre, telefono } = req.body;
+  if (!nombre) return res.status(400).json({ error: 'El nombre es obligatorio' });
+  try {
+    const [result] = await db.query(
+      "INSERT INTO planchadores (nombre, telefono) VALUES (?, ?)",
+      [nombre, telefono || '']
+    );
+    await logActivity(req.user.id, 'ADD', 'PLANCHADORES', `Registró al planchador ${nombre}`);
+    res.status(201).json({ success: true, id: result.insertId });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 4. ELIMINAR PLANCHADOR
+app.delete('/api/planchadores/:id', authenticateToken, async (req, res) => {
+  try {
+    const [planchadores] = await db.query("SELECT nombre FROM planchadores WHERE id = ?", [req.params.id]);
+    const planchador = planchadores[0];
+    if (!planchador) return res.status(404).json({ error: 'Planchador no encontrado' });
+    
+    await db.query("DELETE FROM planchadores WHERE id = ?", [req.params.id]);
+    await logActivity(req.user.id, 'DELETE', 'PLANCHADORES', `Eliminó al planchador ${planchador.nombre}`);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 5. OBTENER MODELOS DE LOS CAMIONES
+app.get('/api/plancha/modelos', authenticateToken, async (req, res) => {
+  try {
+    const [rows] = await db.query(`
+      SELECT cd.*, c.fecha_envio, c.observaciones as camion_observaciones
+      FROM camion_detalles cd
+      JOIN camiones c ON cd.camion_id = c.id
+      ORDER BY c.fecha_envio DESC, cd.id DESC
+    `);
+    
+    const processed = rows.map(r => {
+      try {
+        r.tallas_cantidades = r.tallas_cantidades ? JSON.parse(r.tallas_cantidades) : {};
+      } catch (e) {
+        r.tallas_cantidades = {};
+      }
+      return r;
+    });
+
+    res.json(processed);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 6. VERIFICAR LLEGADA DE MODELO A COLIMA
+app.post('/api/plancha/modelos/:id/verificar', authenticateToken, async (req, res) => {
+  const { precio_plancha } = req.body;
+  if (precio_plancha === undefined || precio_plancha < 0) {
+    return res.status(400).json({ error: 'El precio de plancha es requerido y debe ser positivo o cero' });
+  }
+  try {
+    const [olds] = await db.query("SELECT modelo FROM camion_detalles WHERE id = ?", [req.params.id]);
+    const old = olds[0];
+    if (!old) return res.status(404).json({ error: 'Modelo no encontrado' });
+
+    await db.query(
+      "UPDATE camion_detalles SET verificado = 1, precio_plancha = ? WHERE id = ?",
+      [precio_plancha, req.params.id]
+    );
+
+    await logActivity(req.user.id, 'EDIT', 'PLANCHA_MODELO', `Verificó llegada completa y asignó precio de plancha $${precio_plancha} al modelo ${old.modelo}`);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 7. OBTENER STOCK DISPONIBLE POR TALLA PARA PLANCHAR
+app.get('/api/plancha/disponibles', authenticateToken, async (req, res) => {
+  try {
+    const [models] = await db.query(`
+      SELECT cd.*, c.fecha_envio
+      FROM camion_detalles cd
+      JOIN camiones c ON cd.camion_id = c.id
+      WHERE cd.verificado = 1
+      ORDER BY c.fecha_envio DESC, cd.id DESC
+    `);
+
+    const [assigned] = await db.query(`
+      SELECT pt.camion_detalles_id, pt.talla, SUM(pt.piezas) as total_piezas
+      FROM plancha_trabajos pt
+      GROUP BY pt.camion_detalles_id, pt.talla
+    `);
+
+    const assignedLookup = {};
+    assigned.forEach(a => {
+      const key = `${a.camion_detalles_id}_${a.talla}`;
+      assignedLookup[key] = parseInt(a.total_piezas) || 0;
+    });
+
+    const result = models.map(m => {
+      let originalTallas = {};
+      try {
+        originalTallas = m.tallas_cantidades ? JSON.parse(m.tallas_cantidades) : {};
+      } catch (e) {
+        originalTallas = {};
+      }
+
+      const disponiblesTallas = {};
+      let totalDisponible = 0;
+
+      Object.entries(originalTallas).forEach(([talla, cantidad]) => {
+        const key = `${m.id}_${talla}`;
+        const gastado = assignedLookup[key] || 0;
+        const disp = Math.max(0, parseInt(cantidad) - gastado);
+        disponiblesTallas[talla] = disp;
+        totalDisponible += disp;
+      });
+
+      return {
+        ...m,
+        tallas_cantidades: originalTallas,
+        tallas_disponibles: disponiblesTallas,
+        piezas_disponibles_total: totalDisponible
+      };
+    }).filter(m => m.piezas_disponibles_total > 0);
+
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 8. ASIGNAR Y FINALIZAR TRABAJOS DE PLANCHA
+app.post('/api/plancha/asignar', authenticateToken, async (req, res) => {
+  const { planchador_id, burro_numero, talla, modelos } = req.body;
+  if (!planchador_id || !burro_numero || !talla || !modelos || !Array.isArray(modelos)) {
+    return res.status(400).json({ error: 'Faltan parámetros requeridos o formato inválido' });
+  }
+
+  const connection = await db.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    const [planchadores] = await connection.query("SELECT nombre FROM planchadores WHERE id = ?", [planchador_id]);
+    const planchador = planchadores[0];
+    if (!planchador) throw new Error('Planchador no encontrado');
+
+    for (const m of modelos) {
+      const { camion_detalles_id, piezas } = m;
+      if (!camion_detalles_id || piezas <= 0) continue;
+
+      const [models] = await connection.query(
+        "SELECT precio_plancha, modelo, tallas_cantidades FROM camion_detalles WHERE id = ?", 
+        [camion_detalles_id]
+      );
+      const model = models[0];
+      if (!model) throw new Error(`Modelo con ID ${camion_detalles_id} no encontrado`);
+
+      let tallasOriginales = {};
+      try {
+        tallasOriginales = model.tallas_cantidades ? JSON.parse(model.tallas_cantidades) : {};
+      } catch (e) {
+        tallasOriginales = {};
+      }
+
+      const maxPiezas = tallasOriginales[talla] || 0;
+
+      const [alreadyIroned] = await connection.query(
+        "SELECT COALESCE(SUM(piezas), 0) as total FROM plancha_trabajos WHERE camion_detalles_id = ? AND talla = ?",
+        [camion_detalles_id, talla]
+      );
+      const ironedCount = alreadyIroned[0].total || 0;
+      const disponible = maxPiezas - ironedCount;
+
+      if (piezas > disponible) {
+        throw new Error(`Cantidad insuficiente. Talla ${talla} del modelo ${model.modelo} solo tiene ${disponible} piezas disponibles (solicitado: ${piezas}).`);
+      }
+
+      const precio_unitario = model.precio_plancha || 0;
+      const neto = piezas * precio_unitario;
+      const total = neto;
+
+      await connection.query(`
+        INSERT INTO plancha_trabajos 
+        (planchador_id, camion_detalles_id, talla, piezas, burro_numero, estado, precio_unitario, neto, total, fecha_terminado)
+        VALUES (?, ?, ?, ?, ?, 'terminado', ?, ?, ?, NOW())
+      `, [
+        planchador_id,
+        camion_detalles_id,
+        talla,
+        piezas,
+        burro_numero,
+        precio_unitario,
+        neto,
+        total
+      ]);
+    }
+
+    await connection.commit();
+    await logActivity(req.user.id, 'ADD', 'PLANCHA_ASIGNACION', `Asignó y completó planchado en burro #${burro_numero} (Talla ${talla}) para el planchador ${planchador.nombre}`);
+    res.json({ success: true });
+  } catch (error) {
+    await connection.rollback();
+    res.status(400).json({ error: error.message });
+  } finally {
+    connection.release();
+  }
+});
+
+// 9. HISTORIAL DE PAGOS DE UN PLANCHADOR
+app.get('/api/planchadores/:id/pagos', authenticateToken, async (req, res) => {
+  try {
+    const [pagos] = await db.query(
+      "SELECT * FROM planchador_pagos WHERE planchador_id = ? ORDER BY fecha DESC, id DESC",
+      [req.params.id]
+    );
+
+    const [earningsResult] = await db.query(
+      "SELECT COALESCE(SUM(total), 0) as ganado FROM plancha_trabajos WHERE planchador_id = ? AND estado = 'terminado'",
+      [req.params.id]
+    );
+    const ganado = parseFloat(earningsResult[0].ganado) || 0;
+
+    const [paymentsResult] = await db.query(
+      "SELECT COALESCE(SUM(monto), 0) as pagado FROM planchador_pagos WHERE planchador_id = ?",
+      [req.params.id]
+    );
+    const pagado = parseFloat(paymentsResult[0].pagado) || 0;
+
+    const [trabajosPendientes] = await db.query(`
+      SELECT pt.*, cd.modelo as modelo_nombre, cd.imagen as modelo_imagen
+      FROM plancha_trabajos pt
+      LEFT JOIN camion_detalles cd ON pt.camion_detalles_id = cd.id
+      WHERE pt.planchador_id = ? AND pt.estado = 'terminado' AND pt.pago_id IS NULL
+      ORDER BY pt.fecha_creacion DESC
+    `, [req.params.id]);
+
+    const pendiente = Math.max(0, ganado - pagado);
+
+    res.json({
+      ganado,
+      pagado,
+      pendiente,
+      pagos,
+      trabajosPendientes
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 10. REGISTRAR PAGO A PLANCHADOR
+app.post('/api/plancha/pagos', authenticateToken, async (req, res) => {
+  const { planchador_id, monto, tipo_pago } = req.body;
+  if (!planchador_id || !monto || monto <= 0) {
+    return res.status(400).json({ error: 'Parámetros requeridos inválidos' });
+  }
+
+  const connection = await db.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    const [planchadores] = await connection.query("SELECT nombre FROM planchadores WHERE id = ?", [planchador_id]);
+    const planchador = planchadores[0];
+    if (!planchador) throw new Error('Planchador no encontrado');
+
+    const [paymentResult] = await connection.query(`
+      INSERT INTO planchador_pagos (planchador_id, monto, fecha, tipo_pago)
+      VALUES (?, ?, CURDATE(), ?)
+    `, [planchador_id, monto, tipo_pago || 'completo']);
+    const pagoId = paymentResult.insertId;
+
+    await connection.query(
+      "UPDATE plancha_trabajos SET pago_id = ? WHERE planchador_id = ? AND estado = 'terminado' AND pago_id IS NULL",
+      [pagoId, planchador_id]
+    );
+
+    await connection.commit();
+    await logActivity(req.user.id, 'ADD', 'PLANCHA_PAGO', `Registró pago de $${monto} al planchador ${planchador.nombre}`);
+    res.json({ success: true, pagoId });
+  } catch (error) {
+    await connection.rollback();
+    res.status(400).json({ error: error.message });
+  } finally {
+    connection.release();
+  }
+});
+
 if (require.main === module) {
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on http://0.0.0.0:${PORT}`);
