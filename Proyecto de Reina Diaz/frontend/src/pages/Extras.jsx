@@ -103,23 +103,6 @@ export default function Extras() {
     try {
       const res = await axios.get(`${API}/api/extras?verArchivados=${verArchivados}`);
       setOrders(res.data);
-
-      // Auto-archive check
-      if (settings.autoArchive === 'enabled') {
-        const toArchive = res.data.filter(o => 
-          o.estado === 'Terminado' && 
-          parseFloat(o.pagado || 0) >= parseFloat(o.precio_total || 0) && 
-          !o.archivado
-        );
-        if (toArchive.length > 0) {
-          await Promise.all(toArchive.map(o => 
-            axios.put(`${API}/api/produccion/${o.id}/archivo`, { archivado: true })
-          ));
-          // Refresh
-          const refreshed = await axios.get(`${API}/api/extras?verArchivados=${verArchivados}`);
-          setOrders(refreshed.data);
-        }
-      }
     } catch (e) { console.error(e); }
   };
 

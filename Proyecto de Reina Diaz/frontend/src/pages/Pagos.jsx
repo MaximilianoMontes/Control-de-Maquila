@@ -79,23 +79,6 @@ export default function Pagos() {
     try {
       const res = await axios.get(`${API_URL}/api/produccion?incluirExtras=true`);
       setOrders(res.data);
-
-      // Auto-archive check
-      if (settings.autoArchive === 'enabled') {
-        const toArchive = res.data.filter(o => 
-          o.estado === 'Terminado' && 
-          parseFloat(o.pagado || 0) >= parseFloat(o.precio_total || 0) && 
-          !o.archivado
-        );
-        if (toArchive.length > 0) {
-          await Promise.all(toArchive.map(o => 
-            axios.put(`${API_URL}/api/produccion/${o.id}/archivo`, { archivado: true })
-          ));
-          // Refresh after auto-archiving
-          const refreshed = await axios.get(`${API_URL}/api/produccion?incluirExtras=true`);
-          setOrders(refreshed.data);
-        }
-      }
     } catch (e) { console.error(e); }
   };
 
