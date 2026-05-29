@@ -817,18 +817,12 @@ app.post('/api/camiones', authenticateToken, async (req, res) => {
 const autoArchiveOrders = async () => {
   try {
     // 1. Get orders that should be archived but are not yet (archivado < 2)
-    // Condition: state is 'Terminado', fully paid (>= price_total - 0.05), and fully shipped on the truck in the system
+    // Condition: state is 'Terminado' or 'Terminado Parcial', and fully loaded/shipped on the truck in the system
     const [toArchive] = await db.query(`
       SELECT p.id 
       FROM produccion p
       WHERE p.archivado < 2
-        AND p.estado = 'Terminado'
-        AND (
-          SELECT COALESCE(SUM(pg.monto), 0) + COALESCE(SUM(dp.monto_total), 0)
-          FROM pagos pg
-          LEFT JOIN descuentos_personales dp ON dp.pago_id = pg.id
-          WHERE pg.produccion_id = p.id
-        ) >= p.precio_total - 0.05
+        AND p.estado IN ('Terminado', 'Terminado Parcial')
         AND (
           SELECT COALESCE(SUM(cd.piezas), 0)
           FROM camion_detalles cd
@@ -837,19 +831,13 @@ const autoArchiveOrders = async () => {
     `);
 
     // 2. Get orders that are currently auto-archived (archivado = 2) but no longer meet the criteria to be archived
-    // (e.g. they were edited, unpaid, or the truck details changed)
+    // (e.g. they were edited, the state changed, or the truck details changed)
     const [toUnarchive] = await db.query(`
       SELECT p.id 
       FROM produccion p
       WHERE p.archivado = 2
         AND (
-          p.estado != 'Terminado'
-          OR (
-            SELECT COALESCE(SUM(pg.monto), 0) + COALESCE(SUM(dp.monto_total), 0)
-            FROM pagos pg
-            LEFT JOIN descuentos_personales dp ON dp.pago_id = pg.id
-            WHERE pg.produccion_id = p.id
-          ) < p.precio_total - 0.05
+          p.estado NOT IN ('Terminado', 'Terminado Parcial')
           OR (
             SELECT COALESCE(SUM(cd.piezas), 0)
             FROM camion_detalles cd
