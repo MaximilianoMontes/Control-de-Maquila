@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { useSettings } from '../context/SettingsContext';
 import API_URL from '../config';
+import PlanchaSidebar from '../components/PlanchaSidebar';
 
 // Tallas asociadas a cada burro (1 al 10)
 const BURROS_TALLAS = {
@@ -329,59 +330,26 @@ export default function Plancha() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', paddingBottom: '3rem' }}>
+    <div className="app-layout">
+      {/* Sidebar exclusiva de Plancha */}
+      <PlanchaSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
       
-      {/* CABECERA Y SELECTOR DE PESTAÑAS */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-        <div>
-          <h1 className="gradient-text" style={{ fontSize: '2.2rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-            <Flame color="#ef4444" size={32} /> Módulo de Plancha
-          </h1>
-          <p style={{ color: '#94a3b8', margin: '0.3rem 0 0 0' }}>Administración de planchadores, control de cargas y burros de plancha</p>
-        </div>
+      <div className="main-container">
+        {/* Header exclusivo */}
+        <header className="launcher-header" style={{ padding: '1.2rem 2rem', borderBottom: '1px solid rgba(14, 165, 233, 0.15)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <h1 className="gradient-text" style={{ fontSize: '1.25rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'linear-gradient(135deg, #0ea5e9, #22d3ee)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              <Flame color="#0ea5e9" size={20} /> Módulo de Plancha
+            </h1>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <span style={{ fontSize: '0.85rem', color: '#64748b' }}>
+              Compañía: <strong>Reina Diaz</strong>
+            </span>
+          </div>
+        </header>
 
-        <div className="glass-card" style={{ display: 'flex', padding: '4px', gap: '4px', borderRadius: '12px' }}>
-          <button 
-            className={`btn ${activeTab === 'plancha' ? 'btn-primary' : ''}`} 
-            style={{ borderRadius: '8px', border: 'none', background: activeTab === 'plancha' ? '' : 'transparent' }}
-            onClick={() => setActiveTab('plancha')}
-          >
-            <Layers size={16} style={{ marginRight: '6px' }} /> Burros
-          </button>
-          <button 
-            className={`btn ${activeTab === 'modelos' ? 'btn-primary' : ''}`}
-            style={{ borderRadius: '8px', border: 'none', background: activeTab === 'modelos' ? '' : 'transparent' }}
-            onClick={() => {
-              setActiveTab('modelos');
-              fetchModelosCamion();
-            }}
-          >
-            <ShieldCheck size={16} style={{ marginRight: '6px' }} /> Modelos Camión
-          </button>
-          <button 
-            className={`btn ${activeTab === 'planchadores' ? 'btn-primary' : ''}`}
-            style={{ borderRadius: '8px', border: 'none', background: activeTab === 'planchadores' ? '' : 'transparent' }}
-            onClick={() => {
-              setActiveTab('planchadores');
-              fetchPlanchadores();
-            }}
-          >
-            <Users size={16} style={{ marginRight: '6px' }} /> Planchadores
-          </button>
-          <button 
-            className={`btn ${activeTab === 'pagos' ? 'btn-primary' : ''}`}
-            style={{ borderRadius: '8px', border: 'none', background: activeTab === 'pagos' ? '' : 'transparent' }}
-            onClick={() => {
-              setActiveTab('pagos');
-              fetchPlanchadores();
-              setPagoPlanchadorId('');
-              setPlanchadorPagoDetalle(null);
-            }}
-          >
-            <Wallet size={16} style={{ marginRight: '6px' }} /> Pagos
-          </button>
-        </div>
-      </div>
+        <main className="main-content" style={{ padding: '2rem' }}>
 
       {/* CONTENIDO PESTAÑA 1: PLANCHADORES */}
       {activeTab === 'planchadores' && (
@@ -1256,6 +1224,8 @@ export default function Plancha() {
         </div>
       )}
 
+        </main>
+      </div>
     </div>
   );
 }

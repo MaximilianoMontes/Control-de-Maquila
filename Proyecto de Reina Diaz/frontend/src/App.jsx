@@ -64,7 +64,7 @@ function App() {
       <Route path="/extras" element={<ProtectedRoute><MainLayout><Extras /></MainLayout></ProtectedRoute>} />
       <Route path="/camion" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2']}><MainLayout><Camion /></MainLayout></ProtectedRoute>} />
       <Route path="/pagos" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2']}><MainLayout><Pagos /></MainLayout></ProtectedRoute>} />
-      <Route path="/plancha" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2']}><MainLayout><Plancha /></MainLayout></ProtectedRoute>} />
+      <Route path="/plancha" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2']}><Plancha /></ProtectedRoute>} />
       <Route path="/reportes" element={<ProtectedRoute><MainLayout><Reportes /></MainLayout></ProtectedRoute>} />
       <Route path="/historial" element={<ProtectedRoute><MainLayout><Historial /></MainLayout></ProtectedRoute>} />
       <Route path="/ayuda" element={<ProtectedRoute><MainLayout><Ayuda /></MainLayout></ProtectedRoute>} />
