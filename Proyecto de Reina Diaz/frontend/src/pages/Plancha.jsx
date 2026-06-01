@@ -36,6 +36,12 @@ const BURROS_TALLAS = {
   10: '13'
 };
 
+const normalizeTalla = (t) => {
+  if (!t) return "";
+  const num = parseInt(t, 10);
+  return isNaN(num) ? t.trim() : num.toString();
+};
+
 export default function Plancha() {
   const { settings, t, formatCurrency } = useSettings();
   const [activeTab, setActiveTab] = useState('plancha');
@@ -234,26 +240,39 @@ export default function Plancha() {
     } else if (draggedItem.type === 'modelo') {
       const model = draggedItem.data;
       const talla = burro.talla;
+      const normTalla = normalizeTalla(talla);
 
-      // Validar si el modelo tiene stock disponible en la talla de este burro
-      const disp = model.tallas_disponibles[talla] || 0;
+      // Validar si el modelo tiene stock disponible en la talla de este burro (normalizado)
+      const matchingTallaKey = Object.keys(model.tallas_disponibles || {}).find(
+        k => normalizeTalla(k) === normTalla
+      );
+      const disp = matchingTallaKey ? (model.tallas_disponibles[matchingTallaKey] || 0) : 0;
       if (disp <= 0) {
         alert(`El modelo ${model.modelo} no tiene piezas disponibles para la Talla ${talla}`);
         setDraggedItem(null);
         return;
       }
 
-      // Buscar el primer color disponible con stock > 0 para esta talla
+      // Buscar el primer color disponible con stock > 0 para esta talla (normalizado)
       let selectedColor = "";
       let stockDeEseColorYTalla = 0;
 
       if (model.tallas_colores_disponibles) {
         const foundColorEntry = Object.entries(model.tallas_colores_disponibles).find(
-          ([color, tallasObj]) => (tallasObj[talla] || 0) > 0
+          ([color, tallasObj]) => {
+            const matchingColorTallaKey = Object.keys(tallasObj || {}).find(
+              k => normalizeTalla(k) === normTalla
+            );
+            return matchingColorTallaKey && (tallasObj[matchingColorTallaKey] || 0) > 0;
+          }
         );
         if (foundColorEntry) {
           selectedColor = foundColorEntry[0];
-          stockDeEseColorYTalla = foundColorEntry[1][talla] || 0;
+          const colorTallasObj = foundColorEntry[1];
+          const matchingColorTallaKey = Object.keys(colorTallasObj || {}).find(
+            k => normalizeTalla(k) === normTalla
+          );
+          stockDeEseColorYTalla = matchingColorTallaKey ? (colorTallasObj[matchingColorTallaKey] || 0) : 0;
         }
       }
 
@@ -292,6 +311,7 @@ export default function Plancha() {
     const newBurros = [...burrosState];
     const burro = newBurros[burroIndex];
     const talla = burro.talla;
+    const normTalla = normalizeTalla(talla);
 
     // Verificar si el modelo con el nuevo color ya está en este burro
     const duplicate = burro.modelos.some(m => m.id === modelId && m.color === newColor);
@@ -302,7 +322,15 @@ export default function Plancha() {
 
     const model = burro.modelos.find(m => m.id === modelId && m.color === oldColor);
     if (model) {
-      const stockDeEseColorYTalla = (model.tallas_colores_disponibles && model.tallas_colores_disponibles[newColor] && model.tallas_colores_disponibles[newColor][talla]) || 0;
+      let stockDeEseColorYTalla = 0;
+      if (model.tallas_colores_disponibles && model.tallas_colores_disponibles[newColor]) {
+        const colorTallasObj = model.tallas_colores_disponibles[newColor];
+        const matchingColorTallaKey = Object.keys(colorTallasObj || {}).find(
+          k => normalizeTalla(k) === normTalla
+        );
+        stockDeEseColorYTalla = matchingColorTallaKey ? (colorTallasObj[matchingColorTallaKey] || 0) : 0;
+      }
+
       model.color = newColor;
       model.maxPiezas = stockDeEseColorYTalla;
       if (model.piezas > stockDeEseColorYTalla) {
@@ -707,24 +735,50 @@ export default function Plancha() {
                         </div>
                       </div>
 
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                        {Object.entries(m.tallas_disponibles).map(([talla, qty]) => (
-                          qty > 0 && (
-                            <span 
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                        {Object.entries(m.tallas_disponibles).map(([talla, qty]) => {
+                          if (qty <= 0) return null;
+
+                          // Calcular desglose de colores para esta talla (normalizado)
+                          const normT = normalizeTalla(talla);
+                          const colorPieces = [];
+                          if (m.tallas_colores_disponibles) {
+                            Object.entries(m.tallas_colores_disponibles).forEach(([col, tallasObj]) => {
+                              const matchingKey = Object.keys(tallasObj || {}).find(k => normalizeTalla(k) === normT);
+                              const cQty = matchingKey ? (tallasObj[matchingKey] || 0) : 0;
+                              if (cQty > 0) {
+                                colorPieces.push(`${col || 'Único'}: ${cQty}`);
+                              }
+                            });
+                          }
+
+                          return (
+                            <div 
                               key={talla} 
                               style={{ 
-                                fontSize: '0.75rem', 
-                                background: 'rgba(255,255,255,0.03)', 
+                                display: 'flex',
+                                flexDirection: 'column',
+                                background: 'rgba(255,255,255,0.02)', 
                                 border: '1px solid rgba(255,255,255,0.05)',
-                                padding: '1px 5px',
-                                borderRadius: '4px',
-                                color: '#10b981'
+                                padding: '4px 8px',
+                                borderRadius: '6px',
+                                fontSize: '0.75rem',
+                                minWidth: '85px',
+                                gap: '2px'
                               }}
                             >
-                              T{talla}: <strong>{qty}</strong>
-                            </span>
-                          )
-                        ))}
+                              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '2px', marginBottom: '2px' }}>
+                                <span style={{ color: '#64748b', fontWeight: 'bold' }}>T{talla}</span>
+                                <strong style={{ color: '#10b981' }}>{qty}</strong>
+                              </div>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', fontSize: '0.65rem', color: '#94a3b8' }}>
+                                {colorPieces.map(cp => (
+                                  <span key={cp}>{cp}</span>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   ))
@@ -838,12 +892,22 @@ export default function Plancha() {
                         </div>
                       ) : (
                         burro.modelos.map(m => {
-                          const availableColors = Object.entries(m.tallas_colores_disponibles || {})
-                            .filter(([col, tallasObj]) => (tallasObj[burro.talla] || 0) > 0 || col === m.color)
-                            .map(([col, tallasObj]) => ({
-                              color: col,
-                              qty: tallasObj[burro.talla] || 0
-                            }));
+                          const normTalla = normalizeTalla(burro.talla);
+                          const availableColors = [];
+                          if (m.tallas_colores_disponibles) {
+                            Object.entries(m.tallas_colores_disponibles).forEach(([col, tallasObj]) => {
+                              const matchingColorTallaKey = Object.keys(tallasObj || {}).find(
+                                k => normalizeTalla(k) === normTalla
+                              );
+                              const qty = matchingColorTallaKey ? (tallasObj[matchingColorTallaKey] || 0) : 0;
+                              if (qty > 0 || col === m.color) {
+                                availableColors.push({
+                                  color: col,
+                                  qty: qty
+                                });
+                              }
+                            });
+                          }
 
                           return (
                             <div 
