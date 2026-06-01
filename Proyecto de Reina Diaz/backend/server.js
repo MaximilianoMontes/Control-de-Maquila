@@ -2119,7 +2119,8 @@ app.get('/api/planchadores/:id', authenticateToken, async (req, res) => {
 
     // Historial de trabajos terminados
     const [historial] = await db.query(`
-      SELECT pt.*, cd.modelo as modelo_nombre, cd.imagen as modelo_imagen, cd.no_orden, cd.color
+      SELECT pt.*, cd.modelo as modelo_nombre, cd.imagen as modelo_imagen, cd.no_orden,
+             COALESCE(pt.color, cd.color, 'Único') as color
       FROM plancha_trabajos pt
       LEFT JOIN camion_detalles cd ON pt.camion_detalles_id = cd.id
       WHERE pt.planchador_id = ?
@@ -2226,14 +2227,15 @@ app.get('/api/plancha/disponibles', authenticateToken, async (req, res) => {
     `);
 
     const [assigned] = await db.query(`
-      SELECT pt.camion_detalles_id, pt.talla, SUM(pt.piezas) as total_piezas
+      SELECT pt.camion_detalles_id, pt.talla, pt.color, SUM(pt.piezas) as total_piezas
       FROM plancha_trabajos pt
-      GROUP BY pt.camion_detalles_id, pt.talla
+      GROUP BY pt.camion_detalles_id, pt.talla, pt.color
     `);
 
     const assignedLookup = {};
     assigned.forEach(a => {
-      const key = `${a.camion_detalles_id}_${a.talla}`;
+      const colorKey = a.color || "";
+      const key = `${a.camion_detalles_id}_${a.talla}_${colorKey}`;
       assignedLookup[key] = parseInt(a.total_piezas) || 0;
     });
 
@@ -2245,33 +2247,44 @@ app.get('/api/plancha/disponibles', authenticateToken, async (req, res) => {
         originalTallas = {};
       }
 
-      // If originalTallas is nested (multi-color), flatten sizes across colors for Plancha module
       const firstVal = Object.values(originalTallas)[0];
-      if (typeof firstVal === 'object' && firstVal !== null) {
-        const flatTallas = {};
-        Object.values(originalTallas).forEach(colorObj => {
-          Object.entries(colorObj).forEach(([sz, qty]) => {
-            flatTallas[sz] = (flatTallas[sz] || 0) + (parseInt(qty) || 0);
-          });
-        });
-        originalTallas = flatTallas;
-      }
+      const isNested = (typeof firstVal === 'object' && firstVal !== null);
 
-      const disponiblesTallas = {};
+      const flatTallasDisponibles = {};
+      const tallasColoresDisponibles = {};
       let totalDisponible = 0;
 
-      Object.entries(originalTallas).forEach(([talla, cantidad]) => {
-        const key = `${m.id}_${talla}`;
-        const gastado = assignedLookup[key] || 0;
-        const disp = Math.max(0, parseInt(cantidad) - gastado);
-        disponiblesTallas[talla] = disp;
-        totalDisponible += disp;
-      });
+      if (isNested) {
+        Object.entries(originalTallas).forEach(([color, tallasObj]) => {
+          tallasColoresDisponibles[color] = {};
+          Object.entries(tallasObj).forEach(([talla, cantidad]) => {
+            const key = `${m.id}_${talla}_${color}`;
+            const gastado = assignedLookup[key] || 0;
+            const disp = Math.max(0, parseInt(cantidad) - gastado);
+            
+            tallasColoresDisponibles[color][talla] = disp;
+            flatTallasDisponibles[talla] = (flatTallasDisponibles[talla] || 0) + disp;
+            totalDisponible += disp;
+          });
+        });
+      } else {
+        tallasColoresDisponibles[""] = {};
+        Object.entries(originalTallas).forEach(([talla, cantidad]) => {
+          const key = `${m.id}_${talla}_`;
+          const gastado = assignedLookup[key] || 0;
+          const disp = Math.max(0, parseInt(cantidad) - gastado);
+          
+          tallasColoresDisponibles[""][talla] = disp;
+          flatTallasDisponibles[talla] = disp;
+          totalDisponible += disp;
+        });
+      }
 
       return {
         ...m,
         tallas_cantidades: originalTallas,
-        tallas_disponibles: disponiblesTallas,
+        tallas_disponibles: flatTallasDisponibles,
+        tallas_colores_disponibles: tallasColoresDisponibles,
         piezas_disponibles_total: totalDisponible
       };
     }).filter(m => m.piezas_disponibles_total > 0);
@@ -2298,7 +2311,7 @@ app.post('/api/plancha/asignar', authenticateToken, async (req, res) => {
     if (!planchador) throw new Error('Planchador no encontrado');
 
     for (const m of modelos) {
-      const { camion_detalles_id, piezas } = m;
+      const { camion_detalles_id, piezas, color } = m;
       if (!camion_detalles_id || piezas <= 0) continue;
 
       const [models] = await connection.query(
@@ -2315,17 +2328,26 @@ app.post('/api/plancha/asignar', authenticateToken, async (req, res) => {
         tallasOriginales = {};
       }
 
-      const maxPiezas = tallasOriginales[talla] || 0;
+      const firstVal = Object.values(tallasOriginales)[0];
+      const isNested = (typeof firstVal === 'object' && firstVal !== null);
+      const selectedColor = color || "";
+
+      let maxPiezas = 0;
+      if (isNested) {
+        maxPiezas = (tallasOriginales[selectedColor] && tallasOriginales[selectedColor][talla]) || 0;
+      } else {
+        maxPiezas = tallasOriginales[talla] || 0;
+      }
 
       const [alreadyIroned] = await connection.query(
-        "SELECT COALESCE(SUM(piezas), 0) as total FROM plancha_trabajos WHERE camion_detalles_id = ? AND talla = ?",
-        [camion_detalles_id, talla]
+        "SELECT COALESCE(SUM(piezas), 0) as total FROM plancha_trabajos WHERE camion_detalles_id = ? AND talla = ? AND (color = ? OR (? = '' AND color IS NULL))",
+        [camion_detalles_id, talla, selectedColor, selectedColor]
       );
       const ironedCount = alreadyIroned[0].total || 0;
       const disponible = maxPiezas - ironedCount;
 
       if (piezas > disponible) {
-        throw new Error(`Cantidad insuficiente. Talla ${talla} del modelo ${model.modelo} solo tiene ${disponible} piezas disponibles (solicitado: ${piezas}).`);
+        throw new Error(`Cantidad insuficiente. Talla ${talla} del modelo ${model.modelo} (Color: ${selectedColor || 'Único'}) solo tiene ${disponible} piezas disponibles (solicitado: ${piezas}).`);
       }
 
       const precio_unitario = model.precio_plancha || 0;
@@ -2334,8 +2356,8 @@ app.post('/api/plancha/asignar', authenticateToken, async (req, res) => {
 
       await connection.query(`
         INSERT INTO plancha_trabajos 
-        (planchador_id, camion_detalles_id, talla, piezas, burro_numero, estado, precio_unitario, neto, total, fecha_terminado)
-        VALUES (?, ?, ?, ?, ?, 'terminado', ?, ?, ?, NOW())
+        (planchador_id, camion_detalles_id, talla, piezas, burro_numero, estado, precio_unitario, neto, total, color, fecha_terminado)
+        VALUES (?, ?, ?, ?, ?, 'terminado', ?, ?, ?, ?, NOW())
       `, [
         planchador_id,
         camion_detalles_id,
@@ -2344,7 +2366,8 @@ app.post('/api/plancha/asignar', authenticateToken, async (req, res) => {
         burro_numero,
         precio_unitario,
         neto,
-        total
+        total,
+        selectedColor || null
       ]);
     }
 
@@ -2443,7 +2466,7 @@ app.get('/api/plancha/historial', authenticateToken, async (req, res) => {
   try {
     const [rows] = await db.query(`
       SELECT pt.*, p.nombre as planchador_nombre,
-             cd.modelo as modelo_nombre, cd.color, cd.no_orden, cd.precio_plancha,
+             cd.modelo as modelo_nombre, COALESCE(pt.color, cd.color, 'Único') as color, cd.no_orden, cd.precio_plancha,
              (SELECT imagen FROM inventario WHERE modelo = cd.modelo LIMIT 1) as modelo_imagen
       FROM plancha_trabajos pt
       JOIN planchadores p ON pt.planchador_id = p.id

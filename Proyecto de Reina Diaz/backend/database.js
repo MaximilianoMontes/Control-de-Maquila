@@ -563,6 +563,7 @@ async function initializeDatabase() {
           ajuste DECIMAL(10, 2) DEFAULT 0,
           total DECIMAL(10, 2) DEFAULT 0,
           pago_id INT DEFAULT NULL,
+          color VARCHAR(100) DEFAULT NULL,
           fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           fecha_terminado TIMESTAMP NULL DEFAULT NULL,
           FOREIGN KEY(planchador_id) REFERENCES planchadores(id) ON DELETE CASCADE,
@@ -570,6 +571,14 @@ async function initializeDatabase() {
           FOREIGN KEY(pago_id) REFERENCES planchador_pagos(id) ON DELETE SET NULL
         );
       `);
+
+      // 5. Add color column to plancha_trabajos
+      try {
+        await connection.query("ALTER TABLE plancha_trabajos ADD COLUMN color VARCHAR(100) DEFAULT NULL");
+        console.log("Migration: color column added to plancha_trabajos");
+      } catch (e) {
+        // Ignorar si ya existe
+      }
       
       console.log('--- FIN MIGRACIÓN MÓDULO PLANCHA ---');
     } catch (e) {

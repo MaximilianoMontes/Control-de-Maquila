@@ -243,10 +243,30 @@ export default function Plancha() {
         return;
       }
 
-      // Validar si el modelo ya está asignado en este burro
-      const existing = burro.modelos.find(m => m.id === model.id);
+      // Buscar el primer color disponible con stock > 0 para esta talla
+      let selectedColor = "";
+      let stockDeEseColorYTalla = 0;
+
+      if (model.tallas_colores_disponibles) {
+        const foundColorEntry = Object.entries(model.tallas_colores_disponibles).find(
+          ([color, tallasObj]) => (tallasObj[talla] || 0) > 0
+        );
+        if (foundColorEntry) {
+          selectedColor = foundColorEntry[0];
+          stockDeEseColorYTalla = foundColorEntry[1][talla] || 0;
+        }
+      }
+
+      if (stockDeEseColorYTalla <= 0) {
+        alert(`No hay stock disponible para ninguna variante de color del modelo ${model.modelo} en la Talla ${talla}`);
+        setDraggedItem(null);
+        return;
+      }
+
+      // Validar si el modelo con ese mismo color ya está asignado en este burro
+      const existing = burro.modelos.find(m => m.id === model.id && m.color === selectedColor);
       if (existing) {
-        alert('Este modelo ya está en la lista de este burro');
+        alert(`La variante de color "${selectedColor || 'Único'}" del modelo ${model.modelo} ya está en la lista de este burro`);
         setDraggedItem(null);
         return;
       }
@@ -256,13 +276,40 @@ export default function Plancha() {
         id: model.id,
         modelo: model.modelo,
         imagen: model.imagen,
+        color: selectedColor,
         piezas: 1,
-        maxPiezas: disp
+        maxPiezas: stockDeEseColorYTalla,
+        tallas_colores_disponibles: model.tallas_colores_disponibles
       });
     }
 
     setBurrosState(newBurros);
     setDraggedItem(null);
+  };
+
+  const handleChangeModeloColor = (burroIndex, modelId, oldColor, newColor) => {
+    if (oldColor === newColor) return;
+    const newBurros = [...burrosState];
+    const burro = newBurros[burroIndex];
+    const talla = burro.talla;
+
+    // Verificar si el modelo con el nuevo color ya está en este burro
+    const duplicate = burro.modelos.some(m => m.id === modelId && m.color === newColor);
+    if (duplicate) {
+      alert(`La variante de color "${newColor || 'Único'}" ya está en la lista de este burro.`);
+      return;
+    }
+
+    const model = burro.modelos.find(m => m.id === modelId && m.color === oldColor);
+    if (model) {
+      const stockDeEseColorYTalla = (model.tallas_colores_disponibles && model.tallas_colores_disponibles[newColor] && model.tallas_colores_disponibles[newColor][talla]) || 0;
+      model.color = newColor;
+      model.maxPiezas = stockDeEseColorYTalla;
+      if (model.piezas > stockDeEseColorYTalla) {
+        model.piezas = stockDeEseColorYTalla > 0 ? stockDeEseColorYTalla : 1;
+      }
+      setBurrosState(newBurros);
+    }
   };
 
   const handleRemovePlanchadorFromBurro = (index) => {
@@ -271,15 +318,15 @@ export default function Plancha() {
     setBurrosState(newBurros);
   };
 
-  const handleRemoveModeloFromBurro = (burroIndex, modelId) => {
+  const handleRemoveModeloFromBurro = (burroIndex, modelId, color) => {
     const newBurros = [...burrosState];
-    newBurros[burroIndex].modelos = newBurros[burroIndex].modelos.filter(m => m.id !== modelId);
+    newBurros[burroIndex].modelos = newBurros[burroIndex].modelos.filter(m => !(m.id === modelId && m.color === color));
     setBurrosState(newBurros);
   };
 
-  const handleUpdatePiezas = (burroIndex, modelId, delta) => {
+  const handleUpdatePiezas = (burroIndex, modelId, color, delta) => {
     const newBurros = [...burrosState];
-    const model = newBurros[burroIndex].modelos.find(m => m.id === modelId);
+    const model = newBurros[burroIndex].modelos.find(m => m.id === modelId && m.color === color);
     if (model) {
       const newVal = model.piezas + delta;
       if (newVal >= 1 && newVal <= model.maxPiezas) {
@@ -308,7 +355,8 @@ export default function Plancha() {
         talla: burro.talla,
         modelos: burro.modelos.map(m => ({
           camion_detalles_id: m.id,
-          piezas: m.piezas
+          piezas: m.piezas,
+          color: m.color
         }))
       }, { headers: { Authorization: `Bearer ${token}` } });
 
@@ -789,67 +837,108 @@ export default function Plancha() {
                           Arrastra un modelo de Talla {burro.talla} aquí
                         </div>
                       ) : (
-                        burro.modelos.map(m => (
-                          <div 
-                            key={m.id} 
-                            style={{ 
-                              display: 'flex', 
-                              alignItems: 'center', 
-                              gap: '8px', 
-                              background: 'rgba(255,255,255,0.02)',
-                              padding: '6px 8px',
-                              borderRadius: '8px',
-                              border: '1px solid rgba(255,255,255,0.04)'
-                            }}
-                          >
-                            {m.imagen ? (
-                              <img 
-                                src={`${API_URL}${m.imagen}`} 
-                                alt={m.modelo} 
-                                style={{ width: '32px', height: '32px', borderRadius: '4px', objectFit: 'cover', background: '#000' }} 
-                              />
-                            ) : (
-                              <div style={{ width: '32px', height: '32px', borderRadius: '4px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <Layers size={14} color="#64748b" />
-                              </div>
-                            )}
+                        burro.modelos.map(m => {
+                          const availableColors = Object.entries(m.tallas_colores_disponibles || {})
+                            .filter(([col, tallasObj]) => (tallasObj[burro.talla] || 0) > 0 || col === m.color)
+                            .map(([col, tallasObj]) => ({
+                              color: col,
+                              qty: tallasObj[burro.talla] || 0
+                            }));
 
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <strong style={{ fontSize: '0.85rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Mod {m.modelo}</strong>
-                                <button 
-                                  onClick={() => handleRemoveModeloFromBurro(index, m.id)}
-                                  style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '2px' }}
-                                >
-                                  <X size={14} />
-                                </button>
-                              </div>
+                          return (
+                            <div 
+                              key={`${m.id}_${m.color}`} 
+                              style={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: '8px', 
+                                background: 'rgba(255,255,255,0.02)',
+                                padding: '6px 8px',
+                                borderRadius: '8px',
+                                border: '1px solid rgba(255,255,255,0.04)'
+                              }}
+                            >
+                              {m.imagen ? (
+                                <img 
+                                  src={`${API_URL}${m.imagen}`} 
+                                  alt={m.modelo} 
+                                  style={{ width: '32px', height: '32px', borderRadius: '4px', objectFit: 'cover', background: '#000' }} 
+                                />
+                              ) : (
+                                <div style={{ width: '32px', height: '32px', borderRadius: '4px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                  <Layers size={14} color="#64748b" />
+                                </div>
+                              )}
 
-                              {/* Controles de más y menos */}
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
-                                <button 
-                                  onClick={() => handleUpdatePiezas(index, m.id, -1)}
-                                  className="btn"
-                                  style={{ padding: '2px 8px', minWidth: 0, fontSize: '0.75rem', background: 'rgba(255,255,255,0.05)', border: 'none' }}
-                                  disabled={m.piezas <= 1}
-                                >
-                                  -
-                                </button>
-                                <span style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>
-                                  {m.piezas} <span style={{ fontWeight: 'normal', color: '#64748b', fontSize: '0.75rem' }}>/ {m.maxPiezas}</span>
-                                </span>
-                                <button 
-                                  onClick={() => handleUpdatePiezas(index, m.id, 1)}
-                                  className="btn"
-                                  style={{ padding: '2px 8px', minWidth: 0, fontSize: '0.75rem', background: 'rgba(255,255,255,0.05)', border: 'none' }}
-                                  disabled={m.piezas >= m.maxPiezas}
-                                >
-                                  +
-                                </button>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                  <strong style={{ fontSize: '0.85rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Mod {m.modelo}</strong>
+                                  <button 
+                                    onClick={() => handleRemoveModeloFromBurro(index, m.id, m.color)}
+                                    style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '2px' }}
+                                  >
+                                    <X size={14} />
+                                  </button>
+                                </div>
+
+                                {/* Selector o Tag de Color */}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
+                                  <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Color:</span>
+                                  {availableColors.length <= 1 ? (
+                                    <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#a78bfa' }}>
+                                      {m.color || 'Único'}
+                                    </span>
+                                  ) : (
+                                    <select
+                                      value={m.color}
+                                      onChange={(e) => handleChangeModeloColor(index, m.id, m.color, e.target.value)}
+                                      style={{
+                                        background: 'rgba(0, 0, 0, 0.4)',
+                                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                                        color: '#a78bfa',
+                                        borderRadius: '4px',
+                                        fontSize: '0.8rem',
+                                        fontWeight: 'bold',
+                                        padding: '1px 4px',
+                                        outline: 'none',
+                                        cursor: 'pointer'
+                                      }}
+                                    >
+                                      {availableColors.map(c => (
+                                        <option key={c.color} value={c.color} style={{ background: '#1e293b', color: '#fff' }}>
+                                          {c.color || 'Único'} ({c.qty} pzs)
+                                        </option>
+                                      ))}
+                                    </select>
+                                  )}
+                                </div>
+
+                                {/* Controles de más y menos */}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
+                                  <button 
+                                    onClick={() => handleUpdatePiezas(index, m.id, m.color, -1)}
+                                    className="btn"
+                                    style={{ padding: '2px 8px', minWidth: 0, fontSize: '0.75rem', background: 'rgba(255,255,255,0.05)', border: 'none' }}
+                                    disabled={m.piezas <= 1}
+                                  >
+                                    -
+                                  </button>
+                                  <span style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>
+                                    {m.piezas} <span style={{ fontWeight: 'normal', color: '#64748b', fontSize: '0.75rem' }}>/ {m.maxPiezas}</span>
+                                  </span>
+                                  <button 
+                                    onClick={() => handleUpdatePiezas(index, m.id, m.color, 1)}
+                                    className="btn"
+                                    style={{ padding: '2px 8px', minWidth: 0, fontSize: '0.75rem', background: 'rgba(255,255,255,0.05)', border: 'none' }}
+                                    disabled={m.piezas >= m.maxPiezas}
+                                  >
+                                    +
+                                  </button>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        ))
+                          );
+                        })
                       )}
                     </div>
 
