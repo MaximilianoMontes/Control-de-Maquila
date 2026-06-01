@@ -2245,6 +2245,18 @@ app.get('/api/plancha/disponibles', authenticateToken, async (req, res) => {
         originalTallas = {};
       }
 
+      // If originalTallas is nested (multi-color), flatten sizes across colors for Plancha module
+      const firstVal = Object.values(originalTallas)[0];
+      if (typeof firstVal === 'object' && firstVal !== null) {
+        const flatTallas = {};
+        Object.values(originalTallas).forEach(colorObj => {
+          Object.entries(colorObj).forEach(([sz, qty]) => {
+            flatTallas[sz] = (flatTallas[sz] || 0) + (parseInt(qty) || 0);
+          });
+        });
+        originalTallas = flatTallas;
+      }
+
       const disponiblesTallas = {};
       let totalDisponible = 0;
 
