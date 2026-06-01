@@ -743,10 +743,11 @@ app.post('/api/camiones', authenticateToken, async (req, res) => {
         throw new Error(`La suma de tallas (${tallasSum}) no coincide con las piezas (${piezas}) para el modelo ${item.modelo}`);
       }
 
-      // Check stock in produccion order
+      // Check stock in produccion order (fallback to item.id if item.produccion_id is not provided)
+      const prodId = item.produccion_id || item.id;
       const [prodRows] = await connection.query(
         "SELECT cantidad, cantidad_recibida FROM produccion WHERE id = ?",
-        [item.produccion_id]
+        [prodId]
       );
       const prodRow = prodRows[0];
       if (!prodRow) {
@@ -757,7 +758,7 @@ app.post('/api/camiones', authenticateToken, async (req, res) => {
       
       const [shippedRows] = await connection.query(
         "SELECT COALESCE(SUM(piezas), 0) as total FROM camion_detalles WHERE produccion_id = ?",
-        [item.produccion_id]
+        [prodId]
       );
       const piezas_ya_enviadas = parseInt(shippedRows[0].total) || 0;
       const disponible = piezas_producidas - piezas_ya_enviadas;
@@ -781,7 +782,7 @@ app.post('/api/camiones', authenticateToken, async (req, res) => {
         item.no_orden || null,
         piezas,
         JSON.stringify(tallas_cantidades),
-        item.produccion_id
+        prodId
       ]);
 
       // Deduct from inventario_real by matching no_orden and modelo

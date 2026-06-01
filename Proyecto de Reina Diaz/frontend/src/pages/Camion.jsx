@@ -247,6 +247,7 @@ export default function Camion() {
         observaciones,
         items: cargo.map(c => ({
           id: c.id,
+          produccion_id: c.produccion_id || c.id,
           numero: c.numero,
           temporada: c.temporada,
           modelo: c.modelo,
