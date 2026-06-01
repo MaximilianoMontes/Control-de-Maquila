@@ -2168,7 +2168,8 @@ app.delete('/api/planchadores/:id', authenticateToken, async (req, res) => {
 app.get('/api/plancha/modelos', authenticateToken, async (req, res) => {
   try {
     const [rows] = await db.query(`
-      SELECT cd.*, c.fecha_envio, c.observaciones as camion_observaciones
+      SELECT cd.*, c.fecha_envio, c.observaciones as camion_observaciones,
+             (SELECT imagen FROM inventario WHERE modelo = cd.modelo LIMIT 1) as imagen
       FROM camion_detalles cd
       JOIN camiones c ON cd.camion_id = c.id
       ORDER BY c.fecha_envio DESC, cd.id DESC
@@ -2216,7 +2217,8 @@ app.post('/api/plancha/modelos/:id/verificar', authenticateToken, async (req, re
 app.get('/api/plancha/disponibles', authenticateToken, async (req, res) => {
   try {
     const [models] = await db.query(`
-      SELECT cd.*, c.fecha_envio
+      SELECT cd.*, c.fecha_envio,
+             (SELECT imagen FROM inventario WHERE modelo = cd.modelo LIMIT 1) as imagen
       FROM camion_detalles cd
       JOIN camiones c ON cd.camion_id = c.id
       WHERE cd.verificado = 1
