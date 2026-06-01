@@ -2119,8 +2119,9 @@ app.get('/api/planchadores/:id', authenticateToken, async (req, res) => {
 
     // Historial de trabajos terminados
     const [historial] = await db.query(`
-      SELECT pt.*, cd.modelo as modelo_nombre, cd.imagen as modelo_imagen, cd.no_orden,
-             COALESCE(pt.color, cd.color, 'Único') as color
+      SELECT pt.*, cd.modelo as modelo_nombre,
+             (SELECT imagen FROM inventario WHERE modelo = cd.modelo LIMIT 1) as modelo_imagen,
+             cd.no_orden, COALESCE(pt.color, cd.color, 'Único') as color
       FROM plancha_trabajos pt
       LEFT JOIN camion_detalles cd ON pt.camion_detalles_id = cd.id
       WHERE pt.planchador_id = ?
@@ -2420,7 +2421,8 @@ app.get('/api/planchadores/:id/pagos', authenticateToken, async (req, res) => {
     const pagado = parseFloat(paymentsResult[0].pagado) || 0;
 
     const [trabajosPendientes] = await db.query(`
-      SELECT pt.*, cd.modelo as modelo_nombre, cd.imagen as modelo_imagen
+      SELECT pt.*, cd.modelo as modelo_nombre,
+             (SELECT imagen FROM inventario WHERE modelo = cd.modelo LIMIT 1) as modelo_imagen
       FROM plancha_trabajos pt
       LEFT JOIN camion_detalles cd ON pt.camion_detalles_id = cd.id
       WHERE pt.planchador_id = ? AND pt.estado = 'terminado' AND pt.pago_id IS NULL
