@@ -548,21 +548,48 @@ export default function Plancha() {
                   {/* Tallas Enviadas */}
                   <div>
                     <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', color: '#94a3b8' }}>Cantidades enviadas en Camión:</h4>
-                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                      {Object.entries(m.tallas_cantidades).map(([talla, cant]) => (
-                        <span 
-                          key={talla} 
-                          style={{ 
-                            background: 'rgba(255,255,255,0.03)', 
-                            border: '1px solid rgba(255,255,255,0.05)', 
-                            padding: '3px 8px', 
-                            borderRadius: '6px',
-                            fontSize: '0.8rem'
-                          }}
-                        >
-                          T{talla}: <strong>{cant}</strong>
-                        </span>
-                      ))}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                      {Object.entries(m.tallas_cantidades).map(([key, val]) => {
+                        if (typeof val === 'object' && val !== null) {
+                          const entries = Object.entries(val).filter(([_, qty]) => qty > 0);
+                          if (entries.length === 0) return null;
+                          return (
+                            <div key={key} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                              <span style={{ fontSize: '0.8rem', color: '#c084fc', fontWeight: 700 }}>{key}:</span>
+                              {entries.map(([sz, qty]) => (
+                                <span 
+                                  key={sz} 
+                                  style={{ 
+                                    background: 'rgba(255,255,255,0.03)', 
+                                    border: '1px solid rgba(255,255,255,0.05)', 
+                                    padding: '3px 8px', 
+                                    borderRadius: '6px',
+                                    fontSize: '0.8rem'
+                                  }}
+                                >
+                                  T{sz}: <strong>{qty}</strong>
+                                </span>
+                              ))}
+                            </div>
+                          );
+                        } else if (parseInt(val) > 0) {
+                          return (
+                            <span 
+                              key={key} 
+                              style={{ 
+                                background: 'rgba(255,255,255,0.03)', 
+                                border: '1px solid rgba(255,255,255,0.05)', 
+                                padding: '3px 8px', 
+                                borderRadius: '6px',
+                                fontSize: '0.8rem'
+                              }}
+                            >
+                              T{key}: <strong>{val}</strong>
+                            </span>
+                          );
+                        }
+                        return null;
+                      })}
                     </div>
                   </div>
 
@@ -1268,22 +1295,52 @@ export default function Plancha() {
 
             <div style={{ marginBottom: '1.5rem' }}>
               <p style={{ fontSize: '0.9rem', color: '#94a3b8', margin: '0 0 0.8rem 0' }}>Confirma que las siguientes cantidades de piezas por talla llegaron completas a Colima:</p>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.6rem' }}>
-                {Object.entries(modeloAVerificar.tallas_cantidades).map(([talla, cant]) => (
-                  <div 
-                    key={talla} 
-                    style={{ 
-                      background: 'rgba(255,255,255,0.03)', 
-                      border: '1px solid rgba(255,255,255,0.05)', 
-                      padding: '8px', 
-                      borderRadius: '8px', 
-                      textAlign: 'center',
-                      fontSize: '0.85rem'
-                    }}
-                  >
-                    Talla {talla}: <br /><strong>{cant} pzas</strong>
-                  </div>
-                ))}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {Object.entries(modeloAVerificar.tallas_cantidades).map(([key, val]) => {
+                  if (typeof val === 'object' && val !== null) {
+                    const entries = Object.entries(val).filter(([_, qty]) => qty > 0);
+                    if (entries.length === 0) return null;
+                    return (
+                      <div key={key} style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', background: 'rgba(255,255,255,0.01)', padding: '8px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.04)' }}>
+                        <span style={{ fontSize: '0.85rem', color: '#c084fc', fontWeight: 700 }}>Color: {key}</span>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
+                          {entries.map(([sz, qty]) => (
+                            <div 
+                              key={sz} 
+                              style={{ 
+                                background: 'rgba(255,255,255,0.03)', 
+                                border: '1px solid rgba(255,255,255,0.05)', 
+                                padding: '6px', 
+                                borderRadius: '6px', 
+                                textAlign: 'center',
+                                fontSize: '0.8rem'
+                              }}
+                            >
+                              Talla {sz}: <br /><strong>{qty} pzas</strong>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  } else if (parseInt(val) > 0) {
+                    return (
+                      <div 
+                        key={key} 
+                        style={{ 
+                          background: 'rgba(255,255,255,0.03)', 
+                          border: '1px solid rgba(255,255,255,0.05)', 
+                          padding: '8px', 
+                          borderRadius: '8px', 
+                          textAlign: 'center',
+                          fontSize: '0.85rem'
+                        }}
+                      >
+                        Talla {key}: <br /><strong>{val} pzas</strong>
+                      </div>
+                    );
+                  }
+                  return null;
+                })}
               </div>
             </div>
 
