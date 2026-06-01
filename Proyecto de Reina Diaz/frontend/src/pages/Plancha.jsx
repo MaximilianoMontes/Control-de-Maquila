@@ -523,7 +523,7 @@ export default function Plancha() {
                     )}
                   </div>
 
-                  {/* Imagen y Detalles del modelo */}
+                  {/* Imagen y Detalles del modelo (Versión Simplificada) */}
                   <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
                     {m.imagen ? (
                       <img 
@@ -538,58 +538,6 @@ export default function Plancha() {
                     )}
                     <div>
                       <h3 style={{ margin: 0, fontSize: '1.3rem' }}>Modelo {m.modelo}</h3>
-                      <p style={{ margin: '0.1rem 0 0 0', color: '#94a3b8', fontSize: '0.85rem' }}>No. Orden: {m.no_orden || 'N/A'}</p>
-                      <p style={{ margin: '0.1rem 0 0 0', color: '#64748b', fontSize: '0.85rem' }}>Color: {m.color || 'N/A'}</p>
-                    </div>
-                  </div>
-
-                  <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,0.05)', margin: 0 }} />
-
-                  {/* Tallas Enviadas */}
-                  <div>
-                    <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', color: '#94a3b8' }}>Cantidades enviadas en Camión:</h4>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                      {Object.entries(m.tallas_cantidades).map(([key, val]) => {
-                        if (typeof val === 'object' && val !== null) {
-                          const entries = Object.entries(val).filter(([_, qty]) => qty > 0);
-                          if (entries.length === 0) return null;
-                          return (
-                            <div key={key} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
-                              <span style={{ fontSize: '0.8rem', color: '#c084fc', fontWeight: 700 }}>{key}:</span>
-                              {entries.map(([sz, qty]) => (
-                                <span 
-                                  key={sz} 
-                                  style={{ 
-                                    background: 'rgba(255,255,255,0.03)', 
-                                    border: '1px solid rgba(255,255,255,0.05)', 
-                                    padding: '3px 8px', 
-                                    borderRadius: '6px',
-                                    fontSize: '0.8rem'
-                                  }}
-                                >
-                                  T{sz}: <strong>{qty}</strong>
-                                </span>
-                              ))}
-                            </div>
-                          );
-                        } else if (parseInt(val) > 0) {
-                          return (
-                            <span 
-                              key={key} 
-                              style={{ 
-                                background: 'rgba(255,255,255,0.03)', 
-                                border: '1px solid rgba(255,255,255,0.05)', 
-                                padding: '3px 8px', 
-                                borderRadius: '6px',
-                                fontSize: '0.8rem'
-                              }}
-                            >
-                              T{key}: <strong>{val}</strong>
-                            </span>
-                          );
-                        }
-                        return null;
-                      })}
                     </div>
                   </div>
 
