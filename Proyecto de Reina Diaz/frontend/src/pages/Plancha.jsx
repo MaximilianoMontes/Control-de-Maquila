@@ -83,7 +83,10 @@ export default function Plancha() {
 
   const fetchPlanchadores = async () => {
     try {
-      const res = await axios.get(`${API_URL}/api/planchadores`);
+      const token = localStorage.getItem('token');
+      const res = await axios.get(`${API_URL}/api/planchadores`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setPlanchadores(res.data);
     } catch (e) {
       console.error("Error al obtener planchadores:", e);
@@ -92,7 +95,10 @@ export default function Plancha() {
 
   const fetchModelosCamion = async () => {
     try {
-      const res = await axios.get(`${API_URL}/api/plancha/modelos`);
+      const token = localStorage.getItem('token');
+      const res = await axios.get(`${API_URL}/api/plancha/modelos`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setModelosCamion(res.data);
     } catch (e) {
       console.error("Error al obtener modelos de camión:", e);
@@ -101,7 +107,10 @@ export default function Plancha() {
 
   const fetchModelosDisponibles = async () => {
     try {
-      const res = await axios.get(`${API_URL}/api/plancha/disponibles`);
+      const token = localStorage.getItem('token');
+      const res = await axios.get(`${API_URL}/api/plancha/disponibles`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setModelosDisponibles(res.data);
     } catch (e) {
       console.error("Error al obtener modelos disponibles:", e);
@@ -163,7 +172,10 @@ export default function Plancha() {
 
   const handleVerHistorialPlanchador = async (id) => {
     try {
-      const res = await axios.get(`${API_URL}/api/planchadores/${id}`);
+      const token = localStorage.getItem('token');
+      const res = await axios.get(`${API_URL}/api/planchadores/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setPlanchadorDetalle(res.data);
       setMostrarDetalleModal(true);
     } catch (e) {
@@ -322,7 +334,10 @@ export default function Plancha() {
       return;
     }
     try {
-      const res = await axios.get(`${API_URL}/api/planchadores/${id}/pagos`);
+      const token = localStorage.getItem('token');
+      const res = await axios.get(`${API_URL}/api/planchadores/${id}/pagos`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setPlanchadorPagoDetalle(res.data);
     } catch (e) {
       console.error(e);
