@@ -253,7 +253,7 @@ export default function Plancha() {
         return;
       }
 
-      // Buscar el primer color disponible con stock > 0 para esta talla (normalizado)
+      // Buscar el primer color disponible con stock > 0 para esta talla que NO esté ya asignado en este burro (normalizado)
       let selectedColor = "";
       let stockDeEseColorYTalla = 0;
 
@@ -263,7 +263,14 @@ export default function Plancha() {
             const matchingColorTallaKey = Object.keys(tallasObj || {}).find(
               k => normalizeTalla(k) === normTalla
             );
-            return matchingColorTallaKey && (tallasObj[matchingColorTallaKey] || 0) > 0;
+            const stockVal = matchingColorTallaKey ? (tallasObj[matchingColorTallaKey] || 0) : 0;
+
+            // Verificar que tenga stock y que no esté ya asignado en este burro
+            const alreadyAssigned = burro.modelos.some(
+              m => m.id === model.id && m.color === color
+            );
+
+            return stockVal > 0 && !alreadyAssigned;
           }
         );
         if (foundColorEntry) {
@@ -277,12 +284,12 @@ export default function Plancha() {
       }
 
       if (stockDeEseColorYTalla <= 0) {
-        alert(`No hay stock disponible para ninguna variante de color del modelo ${model.modelo} en la Talla ${talla}`);
+        alert(`Todas las variantes de color disponibles del modelo ${model.modelo} para la Talla ${talla} ya han sido agregadas a este burro.`);
         setDraggedItem(null);
         return;
       }
 
-      // Validar si el modelo con ese mismo color ya está asignado en este burro
+      // Validar si el modelo con ese mismo color ya está asignado en este burro (seguridad secundaria)
       const existing = burro.modelos.find(m => m.id === model.id && m.color === selectedColor);
       if (existing) {
         alert(`La variante de color "${selectedColor || 'Único'}" del modelo ${model.modelo} ya está en la lista de este burro`);
