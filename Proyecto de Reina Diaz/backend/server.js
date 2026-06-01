@@ -2295,6 +2295,12 @@ app.get('/api/plancha/disponibles', authenticateToken, async (req, res) => {
   }
 });
 
+const normalizeTalla = (t) => {
+  if (!t) return "";
+  const num = parseInt(t, 10);
+  return isNaN(num) ? t.trim() : num.toString();
+};
+
 // 8. ASIGNAR Y FINALIZAR TRABAJOS DE PLANCHA
 app.post('/api/plancha/asignar', authenticateToken, async (req, res) => {
   const { planchador_id, burro_numero, talla, modelos } = req.body;
@@ -2309,6 +2315,8 @@ app.post('/api/plancha/asignar', authenticateToken, async (req, res) => {
     const [planchadores] = await connection.query("SELECT nombre FROM planchadores WHERE id = ?", [planchador_id]);
     const planchador = planchadores[0];
     if (!planchador) throw new Error('Planchador no encontrado');
+
+    const normTalla = normalizeTalla(talla);
 
     for (const m of modelos) {
       const { camion_detalles_id, piezas, color } = m;
@@ -2332,22 +2340,31 @@ app.post('/api/plancha/asignar', authenticateToken, async (req, res) => {
       const isNested = (typeof firstVal === 'object' && firstVal !== null);
       const selectedColor = color || "";
 
+      // Encontrar la clave original de talla que coincida con normTalla (por ejemplo, "05")
+      let matchingTallaKey = talla;
+      if (isNested) {
+        const colorObj = tallasOriginales[selectedColor] || {};
+        matchingTallaKey = Object.keys(colorObj).find(k => normalizeTalla(k) === normTalla) || talla;
+      } else {
+        matchingTallaKey = Object.keys(tallasOriginales).find(k => normalizeTalla(k) === normTalla) || talla;
+      }
+
       let maxPiezas = 0;
       if (isNested) {
-        maxPiezas = (tallasOriginales[selectedColor] && tallasOriginales[selectedColor][talla]) || 0;
+        maxPiezas = (tallasOriginales[selectedColor] && tallasOriginales[selectedColor][matchingTallaKey]) || 0;
       } else {
-        maxPiezas = tallasOriginales[talla] || 0;
+        maxPiezas = tallasOriginales[matchingTallaKey] || 0;
       }
 
       const [alreadyIroned] = await connection.query(
         "SELECT COALESCE(SUM(piezas), 0) as total FROM plancha_trabajos WHERE camion_detalles_id = ? AND talla = ? AND (color = ? OR (? = '' AND color IS NULL))",
-        [camion_detalles_id, talla, selectedColor, selectedColor]
+        [camion_detalles_id, matchingTallaKey, selectedColor, selectedColor]
       );
       const ironedCount = alreadyIroned[0].total || 0;
       const disponible = maxPiezas - ironedCount;
 
       if (piezas > disponible) {
-        throw new Error(`Cantidad insuficiente. Talla ${talla} del modelo ${model.modelo} (Color: ${selectedColor || 'Único'}) solo tiene ${disponible} piezas disponibles (solicitado: ${piezas}).`);
+        throw new Error(`Cantidad insuficiente. Talla ${matchingTallaKey} del modelo ${model.modelo} (Color: ${selectedColor || 'Único'}) solo tiene ${disponible} piezas disponibles (solicitado: ${piezas}).`);
       }
 
       const precio_unitario = model.precio_plancha || 0;
@@ -2361,7 +2378,7 @@ app.post('/api/plancha/asignar', authenticateToken, async (req, res) => {
       `, [
         planchador_id,
         camion_detalles_id,
-        talla,
+        matchingTallaKey,
         piezas,
         burro_numero,
         precio_unitario,
