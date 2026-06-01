@@ -416,21 +416,15 @@ async function initializeDatabase() {
     try {
       console.log('--- MIGRACIÓN MANUAL: Restaurar órdenes terminadas de las imágenes a En proceso ---');
       
-      // 1. Restaurar las órdenes de producción
+      // 1. Restaurar las órdenes de producción (sólo para modelos que no se envían en camión)
       const [updateResult] = await connection.query(`
         UPDATE produccion p
         JOIN maquileros m ON p.maquilero_id = m.id
         JOIN inventario i ON p.inventario_id = i.id
         SET p.estado = 'En proceso', p.fecha_terminado = NULL, p.archivado = 0
         WHERE p.estado = 'Terminado' AND (
-          (i.modelo = '554232' AND m.nombre LIKE '%Salvador Salazar%') OR
           (i.modelo = '740987' AND m.nombre LIKE '%Antonio Javier%') OR
-          (i.modelo = '723119' AND m.nombre LIKE '%Maria Maricela%') OR
-          (i.modelo = '532046' AND m.nombre LIKE '%Victoria Mora%') OR
-          (i.modelo = '501476' AND m.nombre LIKE '%Marco Antonio%') OR
-          (i.modelo = '731147' AND m.nombre LIKE '%Mas Procesos%') OR
-          (i.modelo = '532148' AND m.nombre LIKE '%Jose Enedino%') OR
-          (i.modelo = '752935' AND m.nombre LIKE '%Sergio Angel%' AND p.cantidad = 85)
+          (i.modelo = '731147' AND m.nombre LIKE '%Mas Procesos%')
         )
       `);
       console.log(`Órdenes de producción restauradas a 'En proceso'. Filas afectadas: ${updateResult.affectedRows}`);
@@ -441,16 +435,10 @@ async function initializeDatabase() {
         JOIN produccion p ON p.inventario_id = i.id
         JOIN maquileros m ON p.maquilero_id = m.id
         SET i.en_inventario = 0
-        WHERE i.modelo IN ('554232', '740987', '723119', '532046', '501476', '731147', '532148', '752935')
+        WHERE i.modelo IN ('740987', '731147')
           AND (
-            (i.modelo = '554232' AND m.nombre LIKE '%Salvador Salazar%') OR
             (i.modelo = '740987' AND m.nombre LIKE '%Antonio Javier%') OR
-            (i.modelo = '723119' AND m.nombre LIKE '%Maria Maricela%') OR
-            (i.modelo = '532046' AND m.nombre LIKE '%Victoria Mora%') OR
-            (i.modelo = '501476' AND m.nombre LIKE '%Marco Antonio%') OR
-            (i.modelo = '731147' AND m.nombre LIKE '%Mas Procesos%') OR
-            (i.modelo = '532148' AND m.nombre LIKE '%Jose Enedino%') OR
-            (i.modelo = '752935' AND m.nombre LIKE '%Sergio Angel%' AND p.cantidad = 85)
+            (i.modelo = '731147' AND m.nombre LIKE '%Mas Procesos%')
           )
       `);
       console.log(`Cortes vinculados reestablecidos a 'en_inventario = 0'. Filas afectadas: ${cutUpdateResult.affectedRows}`);
@@ -588,29 +576,99 @@ async function initializeDatabase() {
       console.error('Error al migrar tablas del módulo de plancha:', e);
     }
 
-    // --- RESTAURACIÓN DE MODELOS SOLICITADOS ---
+    // --- MIGRACIÓN DE RECUPERACIÓN COMPLETA PARA EL CAMIÓN (Restaurar a Terminado con stock) ---
     try {
-      console.log('--- MIGRACIÓN: Restaurando modelos solicitados (554258, 554296, 526260, 554223) ---');
-      
-      // 1. Restaurar órdenes de producción a 'En proceso' y archivado = 0 (Activo)
-      const [restoredProd] = await connection.query(`
-        UPDATE produccion p
-        JOIN inventario i ON p.inventario_id = i.id
-        SET p.archivado = 0, p.estado = 'En proceso', p.fecha_terminado = NULL
-        WHERE i.modelo IN ('554258', '554296', '526260', '554223')
-      `);
-      
-      // 2. Asegurar que los cortes correspondientes estén visibles (en_inventario = 0)
-      const [restoredCuts] = await connection.query(`
-        UPDATE inventario
-        SET en_inventario = 0
-        WHERE modelo IN ('554258', '554296', '526260', '554223')
-      `);
+      console.log('--- MIGRACIÓN: Recuperación de Modelos para la lista del Camión ---');
+      const recoveryTargets = [
+        { modelo: '554258', qty: 140 },
+        { modelo: '532148', qty: 125 },
+        { modelo: '526260', qty: 134 },
+        { modelo: '723119', qty: 116 },
+        { modelo: '554232', qty: 50 },
+        { modelo: '532046', qty: 105 },
+        { modelo: '501476', qty: 145 }
+      ];
 
-      console.log(`Modelos restaurados. Órdenes actualizadas: ${restoredProd.affectedRows}, Cortes actualizados: ${restoredCuts.affectedRows}`);
-      console.log('--- FIN MIGRACIÓN RESTAURACIÓN ---');
+      for (const target of recoveryTargets) {
+        // Find production orders for this model
+        const [prodRows] = await connection.query(`
+          SELECT p.id, p.inventario_id 
+          FROM produccion p
+          JOIN inventario i ON p.inventario_id = i.id
+          WHERE i.modelo = ?
+        `, [target.modelo]);
+
+        for (const p of prodRows) {
+          // Set production order to Terminado, active (archivado = 0), and set quantity
+          await connection.query(`
+            UPDATE produccion 
+            SET estado = 'Terminado', cantidad = ?, cantidad_recibida = ?, archivado = 0, fecha_terminado = NOW()
+            WHERE id = ?
+          `, [target.qty, target.qty, p.id]);
+
+          // Make sure inventario cut is en_inventario = 0
+          await connection.query(`
+            UPDATE inventario SET en_inventario = 0 WHERE id = ?
+          `, [p.inventario_id]);
+
+          // Delete any existing camion_detalles for this production order to restore 100% available stock
+          await connection.query(`
+            DELETE FROM camion_detalles WHERE produccion_id = ?
+          `, [p.id]);
+        }
+      }
+
+      // Handle multi-lot models: 554296 (48 and 72)
+      const [prods296] = await connection.query(`
+        SELECT p.id, p.inventario_id 
+        FROM produccion p
+        JOIN inventario i ON p.inventario_id = i.id
+        WHERE i.modelo = '554296'
+      `);
+      const qtys296 = [48, 72];
+      for (let idx = 0; idx < prods296.length; idx++) {
+        const p = prods296[idx];
+        const qty = qtys296[idx] || 120; // Fallback to 120 if only one
+        await connection.query(`
+          UPDATE produccion 
+          SET estado = 'Terminado', cantidad = ?, cantidad_recibida = ?, archivado = 0, fecha_terminado = NOW()
+          WHERE id = ?
+        `, [qty, qty, p.id]);
+        await connection.query(`
+          UPDATE inventario SET en_inventario = 0 WHERE id = ?
+        `, [p.inventario_id]);
+        await connection.query(`
+          DELETE FROM camion_detalles WHERE produccion_id = ?
+        `, [p.id]);
+      }
+
+      // Handle multi-lot models: 752935 (92 and 96)
+      const [prods935] = await connection.query(`
+        SELECT p.id, p.inventario_id 
+        FROM produccion p
+        JOIN inventario i ON p.inventario_id = i.id
+        WHERE i.modelo = '752935'
+      `);
+      const qtys935 = [92, 96];
+      for (let idx = 0; idx < prods935.length; idx++) {
+        const p = prods935[idx];
+        const qty = qtys935[idx] || 94; // Fallback
+        await connection.query(`
+          UPDATE produccion 
+          SET estado = 'Terminado', cantidad = ?, cantidad_recibida = ?, archivado = 0, fecha_terminado = NOW()
+          WHERE id = ?
+        `, [qty, qty, p.id]);
+        await connection.query(`
+          UPDATE inventario SET en_inventario = 0 WHERE id = ?
+        `, [p.inventario_id]);
+        await connection.query(`
+          DELETE FROM camion_detalles WHERE produccion_id = ?
+        `, [p.id]);
+      }
+
+      console.log('--- FIN MIGRACIÓN RECUPERACIÓN CAMIÓN ---');
     } catch (e) {
-      console.error('Error al restaurar los modelos solicitados:', e);
+      console.error('Error en migración de recuperación de camión:', e);
     }
 
     connection.release();
