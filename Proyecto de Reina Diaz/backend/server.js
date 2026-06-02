@@ -2689,9 +2689,26 @@ app.get('/api/reportes/plancha/pagos', async (req, res) => {
       doc.moveDown();
       doc.fontSize(12).text('No se encontraron registros de pagos en el periodo seleccionado.', { align: 'center' });
     } else {
+      const formatDateUTC = (dateVal) => {
+        if (!dateVal) return '';
+        let dateStr = "";
+        if (dateVal instanceof Date) {
+          dateStr = dateVal.toISOString();
+        } else {
+          dateStr = String(dateVal);
+        }
+        const cleanDate = dateStr.split('T')[0];
+        const parts = cleanDate.split('-');
+        if (parts.length < 3) return dateStr;
+        const [year, month, day] = parts;
+        return `${parseInt(day, 10)}/${parseInt(month, 10)}/${year}`;
+      };
+
+      const localNow = new Date(new Date().getTime() - 6 * 60 * 60 * 1000); // Colima timezone adjustment (UTC-6)
+
       const tableConfig = {
         title: "Reporte de Pagos de Plancha",
-        subtitle: `Pagos registrados ${subtitleDate}` + " - Generado el " + new Date().toLocaleDateString(),
+        subtitle: `Pagos registrados ${subtitleDate}` + " - Generado el " + formatDateUTC(localNow),
         headers: [
           { label: "FECHA", property: "fecha", width: 80 },
           { label: "PLANCHADOR", property: "nombre", width: 160 },
@@ -2700,7 +2717,7 @@ app.get('/api/reportes/plancha/pagos', async (req, res) => {
           { label: "TOTAL", property: "total", width: 100 }
         ],
         datas: rows.map(r => ({
-          fecha: new Date(r.fecha).toLocaleDateString(),
+          fecha: formatDateUTC(r.fecha),
           nombre: (r.planchador_nombre || '').toUpperCase(),
           produccion: '$' + Number(r.total_produccion).toFixed(2),
           ajuste: '$' + Number(r.total_ajustes).toFixed(2),
