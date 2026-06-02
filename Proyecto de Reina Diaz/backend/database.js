@@ -703,6 +703,78 @@ async function initializeDatabase() {
       console.error('Error en migración de recuperación de camión:', e);
     }
 
+    // Migration: Backfill pago_id for plancha_trabajos and planchador_asistencias
+    try {
+      console.log('--- MIGRACIÓN: Asociando trabajos y asistencias huérfanas a pagos históricos ---');
+      const [payments] = await connection.query(`
+        SELECT id, planchador_id, fecha 
+        FROM planchador_pagos 
+        ORDER BY fecha ASC, id ASC
+      `);
+
+      const [orphanWorks] = await connection.query(`
+        SELECT id, planchador_id, fecha_terminado 
+        FROM plancha_trabajos 
+        WHERE pago_id IS NULL AND estado = 'terminado'
+      `);
+
+      const [orphanAsistencias] = await connection.query(`
+        SELECT id, planchador_id, fecha 
+        FROM planchador_asistencias 
+        WHERE pago_id IS NULL
+      `);
+
+      const paymentsByPlanchador = {};
+      for (const p of payments) {
+        if (!paymentsByPlanchador[p.planchador_id]) {
+          paymentsByPlanchador[p.planchador_id] = [];
+        }
+        paymentsByPlanchador[p.planchador_id].push(p);
+      }
+
+      const getCleanDateStr = (dateVal) => {
+        if (!dateVal) return '';
+        if (dateVal instanceof Date) {
+          return dateVal.toISOString().split('T')[0];
+        }
+        const str = String(dateVal);
+        const datePart = str.split(' ')[0];
+        return datePart.split('T')[0];
+      };
+
+      let updatedWorks = 0;
+      for (const w of orphanWorks) {
+        const planchadorPayments = paymentsByPlanchador[w.planchador_id] || [];
+        const wDate = getCleanDateStr(w.fecha_terminado);
+        const matchedPayment = planchadorPayments.find(p => getCleanDateStr(p.fecha) >= wDate);
+        if (matchedPayment) {
+          await connection.query(
+            "UPDATE plancha_trabajos SET pago_id = ? WHERE id = ?",
+            [matchedPayment.id, w.id]
+          );
+          updatedWorks++;
+        }
+      }
+
+      let updatedAsistencias = 0;
+      for (const a of orphanAsistencias) {
+        const planchadorPayments = paymentsByPlanchador[a.planchador_id] || [];
+        const aDate = getCleanDateStr(a.fecha);
+        const matchedPayment = planchadorPayments.find(p => getCleanDateStr(p.fecha) >= aDate);
+        if (matchedPayment) {
+          await connection.query(
+            "UPDATE planchador_asistencias SET pago_id = ? WHERE id = ?",
+            [matchedPayment.id, a.id]
+          );
+          updatedAsistencias++;
+        }
+      }
+
+      console.log(`Migración completada. Trabajos asociados: ${updatedWorks}, Asistencias asociadas: ${updatedAsistencias}`);
+    } catch (e) {
+      console.error("Error en migración de backfill pago_id:", e);
+    }
+
     connection.release();
     console.log('Database initialization complete.');
   } catch (error) {

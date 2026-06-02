@@ -2408,19 +2408,6 @@ app.get('/api/planchadores/:id/pagos', authenticateToken, async (req, res) => {
       [req.params.id]
     );
 
-    const [earningsResult] = await db.query(
-      "SELECT COALESCE(SUM(total), 0) as ganado FROM plancha_trabajos WHERE planchador_id = ? AND estado = 'terminado'",
-      [req.params.id]
-    );
-    const [attendanceResult] = await db.query(
-      "SELECT COALESCE(SUM(monto), 0) as ganado_asistencia FROM planchador_asistencias WHERE planchador_id = ?",
-      [req.params.id]
-    );
-
-    const ganadoTrabajos = parseFloat(earningsResult[0].ganado) || 0;
-    const ganadoAsistencia = parseFloat(attendanceResult[0].ganado_asistencia) || 0;
-    const ganado = ganadoTrabajos + ganadoAsistencia;
-
     const [paymentsResult] = await db.query(
       "SELECT COALESCE(SUM(monto), 0) as pagado FROM planchador_pagos WHERE planchador_id = ?",
       [req.params.id]
@@ -2441,7 +2428,10 @@ app.get('/api/planchadores/:id/pagos', authenticateToken, async (req, res) => {
       [req.params.id]
     );
 
-    const pendiente = Math.max(0, ganado - pagado);
+    const pendingWorksSum = trabajosPendientes.reduce((sum, pt) => sum + parseFloat(pt.total || 0), 0);
+    const pendingAsistenciasSum = asistenciasPendientes.reduce((sum, pa) => sum + parseFloat(pa.monto || 0), 0);
+    const pendiente = pendingWorksSum + pendingAsistenciasSum;
+    const ganado = pagado + pendiente;
 
     res.json({
       ganado,
