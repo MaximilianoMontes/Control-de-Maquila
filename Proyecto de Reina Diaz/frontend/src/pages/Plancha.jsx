@@ -125,10 +125,8 @@ export default function Plancha() {
     const friday = new Date(d.setDate(diff));
     return friday.toISOString().split('T')[0];
   });
-  const [cuadreMeta, setCuadreMeta] = useState('500');
-  const [cuadreBono, setCuadreBono] = useState('300');
-  const [cuadrePenalizacion, setCuadrePenalizacion] = useState('150');
-  const [cuadrePiezasLogradas, setCuadrePiezasLogradas] = useState(0);
+  const [cuadreDiaAdelantado, setCuadreDiaAdelantado] = useState('400');
+  const [cuadrePlanchaReal, setCuadrePlanchaReal] = useState(0);
 
   // Filtros de reporte de pago
   const [reportStart, setReportStart] = useState('');
@@ -596,28 +594,26 @@ export default function Plancha() {
       const res = await axios.get(`${API_URL}/api/planchadores/${cuadrePlanchadorId}/piezas-rango?start=${cuadreStart}&end=${cuadreEnd}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setCuadrePiezasLogradas(res.data.total_piezas || 0);
+      setCuadrePlanchaReal(res.data.total_ganado || 0);
     } catch (e) {
       console.error(e);
-      alert('Error al consultar piezas logradas del planchador');
+      alert('Error al consultar plancha real del planchador');
     }
   };
 
   const handleAplicarCuadre = async () => {
-    const metaVal = parseInt(cuadreMeta) || 0;
-    const bonoVal = parseFloat(cuadreBono) || 0;
-    const penVal = parseFloat(cuadrePenalizacion) || 0;
-    
-    const cumple = cuadrePiezasLogradas >= metaVal;
-    const finalMonto = cumple ? bonoVal : -penVal;
-    const descRazon = cumple 
-      ? `Bono de cumplimiento Plancha (${cuadrePiezasLogradas}/${metaVal} pzas)`
-      : `Descuento por incumplimiento Plancha (${cuadrePiezasLogradas}/${metaVal} pzas)`;
+    const diaAdelantadoVal = parseFloat(cuadreDiaAdelantado) || 0;
+    const planchaRealVal = parseFloat(cuadrePlanchaReal) || 0;
+    const finalMonto = planchaRealVal - diaAdelantadoVal;
 
     if (finalMonto === 0) {
-      alert('El monto a aplicar debe ser diferente de 0');
+      alert('La diferencia es 0, no hay ajuste necesario.');
       return;
     }
+
+    const descRazon = finalMonto > 0
+      ? `Diferencia de Cuadre Plancha (Bono) [Real: $${planchaRealVal} vs Adelantado: $${diaAdelantadoVal}]`
+      : `Diferencia de Cuadre Plancha (Descuento) [Real: $${planchaRealVal} vs Adelantado: $${diaAdelantadoVal}]`;
 
     try {
       const token = localStorage.getItem('token');
@@ -627,9 +623,10 @@ export default function Plancha() {
         monto: finalMonto
       }, { headers: { Authorization: `Bearer ${token}` } });
 
-      alert(`Cuadre aplicado correctamente: ${cumple ? 'Bono de $' + bonoVal : 'Descuento de $' + penVal}`);
+      alert(`Cuadre aplicado correctamente: Diferencia de ${formatCurrency(finalMonto)}`);
       setShowCuadreModal(false);
       setCuadrePlanchadorId('');
+      setCuadrePlanchaReal(0);
       if (pagoPlanchadorId === cuadrePlanchadorId) {
         handleCargarPagosPlanchador(pagoPlanchadorId);
       }
@@ -2019,71 +2016,76 @@ export default function Plancha() {
                 disabled={!cuadrePlanchadorId}
                 style={{ width: '100%', borderColor: 'rgba(16, 185, 129, 0.4)', color: '#10b981' }}
               >
-                Consultar Piezas Planchadas en Rango
+                Consultar Plancha Real en Rango
               </button>
 
               <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,0.08)', margin: '0.5rem 0' }} />
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
                 <div className="form-group">
-                  <label className="form-label">Meta Piezas</label>
+                  <label className="form-label">Día Adelantado ($)</label>
                   <input 
-                    type="number" 
-                    min="1"
-                    required
+                    type="text" 
                     className="form-input" 
-                    value={cuadreMeta} 
-                    onChange={e => setCuadreMeta(e.target.value)} 
+                    value="400" 
+                    disabled 
+                    style={{ background: 'rgba(255,255,255,0.05)', cursor: 'not-allowed', fontWeight: 'bold' }} 
                   />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Bono (+)</label>
+                  <label className="form-label">Plancha Real ($)</label>
                   <input 
-                    type="number" 
-                    min="0"
-                    required
+                    type="text" 
                     className="form-input" 
-                    value={cuadreBono} 
-                    onChange={e => setCuadreBono(e.target.value)} 
+                    value={formatCurrency(cuadrePlanchaReal)} 
+                    disabled 
+                    style={{ background: 'rgba(255,255,255,0.05)', cursor: 'not-allowed', fontWeight: 'bold', color: '#10b981' }} 
                   />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Penalización (-)</label>
-                  <input 
-                    type="number" 
-                    min="0"
-                    required
-                    className="form-input" 
-                    value={cuadrePenalizacion} 
-                    onChange={e => setCuadrePenalizacion(e.target.value)} 
-                  />
+                  <label className="form-label">Diferencia ($)</label>
+                  {(() => {
+                    const diaAdelantadoVal = 400;
+                    const diferencia = cuadrePlanchaReal - diaAdelantadoVal;
+                    return (
+                      <input 
+                        type="text" 
+                        className="form-input" 
+                        value={(diferencia >= 0 ? '+' : '') + formatCurrency(diferencia)} 
+                        disabled 
+                        style={{ 
+                          background: 'rgba(255,255,255,0.05)', 
+                          cursor: 'not-allowed', 
+                          fontWeight: 'bold', 
+                          color: diferencia > 0 ? '#10b981' : diferencia < 0 ? '#ef4444' : '#fff' 
+                        }} 
+                      />
+                    );
+                  })()}
                 </div>
               </div>
 
               {/* Resultado del Cuadre */}
               {(() => {
-                const metaVal = parseInt(cuadreMeta) || 0;
-                const bonoVal = parseFloat(cuadreBono) || 0;
-                const penVal = parseFloat(cuadrePenalizacion) || 0;
-                
-                const cumple = cuadrePiezasLogradas >= metaVal;
+                const diaAdelantadoVal = 400;
+                const diferencia = cuadrePlanchaReal - diaAdelantadoVal;
 
                 return (
                   <div 
                     style={{ 
                       padding: '1.2rem', 
-                      background: cumple ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)', 
-                      border: `1px solid ${cumple ? 'rgba(16, 185, 129, 0.25)' : 'rgba(239, 68, 68, 0.25)'}`, 
+                      background: diferencia > 0 ? 'rgba(16, 185, 129, 0.1)' : diferencia < 0 ? 'rgba(239, 68, 68, 0.1)' : 'rgba(255, 255, 255, 0.02)', 
+                      border: `1px solid ${diferencia > 0 ? 'rgba(16, 185, 129, 0.25)' : diferencia < 0 ? 'rgba(239, 68, 68, 0.25)' : 'rgba(255, 255, 255, 0.08)'}`, 
                       borderRadius: '12px',
                       textAlign: 'center'
                     }}
                   >
-                    <div style={{ fontSize: '0.85rem', color: '#94a3b8', marginBottom: '0.2rem' }}>Piezas Planchadas en el Rango:</div>
-                    <div style={{ fontSize: '1.8rem', fontWeight: 'bold', color: cumple ? '#10b981' : '#ef4444' }}>
-                      {cuadrePiezasLogradas} / {metaVal}
+                    <div style={{ fontSize: '0.85rem', color: '#94a3b8', marginBottom: '0.2rem' }}>Resultado de Diferencia:</div>
+                    <div style={{ fontSize: '1.6rem', fontWeight: 'bold', color: diferencia > 0 ? '#10b981' : diferencia < 0 ? '#ef4444' : '#fff' }}>
+                      {diferencia > 0 ? `Bono: +${formatCurrency(diferencia)}` : diferencia < 0 ? `Descuento: ${formatCurrency(diferencia)}` : 'Sin Diferencia'}
                     </div>
-                    <div style={{ marginTop: '0.5rem', fontSize: '1.1rem', fontWeight: 'bold', color: cumple ? '#10b981' : '#ef4444' }}>
-                      {cumple ? `¡Meta Cumplida! Bono: +$${bonoVal}` : `Meta no alcanzada. Penalidad: -$${penVal}`}
+                    <div style={{ marginTop: '0.4rem', fontSize: '0.85rem', color: '#64748b' }}>
+                      {diferencia > 0 ? 'Se sumará la diferencia como un bono en el historial.' : diferencia < 0 ? 'Se restará la diferencia como un descuento en el historial.' : 'No se registrará ningún ajuste financiero.'}
                     </div>
                   </div>
                 );
@@ -2097,7 +2099,7 @@ export default function Plancha() {
                   onClick={() => {
                     setShowCuadreModal(false);
                     setCuadrePlanchadorId('');
-                    setCuadrePiezasLogradas(0);
+                    setCuadrePlanchaReal(0);
                   }}
                 >
                   Cancelar

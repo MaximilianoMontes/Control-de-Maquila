@@ -2599,7 +2599,9 @@ app.get('/api/planchadores/:id/piezas-rango', authenticateToken, async (req, res
   }
   try {
     const [result] = await db.query(`
-      SELECT COALESCE(SUM(piezas), 0) as total_piezas 
+      SELECT 
+        COALESCE(SUM(piezas), 0) as total_piezas,
+        COALESCE(SUM(total), 0) as total_ganado
       FROM plancha_trabajos 
       WHERE planchador_id = ? 
         AND estado = 'terminado' 
@@ -2607,7 +2609,10 @@ app.get('/api/planchadores/:id/piezas-rango', authenticateToken, async (req, res
         AND DATE(fecha_terminado) BETWEEN ? AND ?
     `, [planchadorId, start, end]);
 
-    res.json({ total_piezas: result[0].total_piezas });
+    res.json({ 
+      total_piezas: parseFloat(result[0].total_piezas) || 0,
+      total_ganado: parseFloat(result[0].total_ganado) || 0
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
