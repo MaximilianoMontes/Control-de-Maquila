@@ -139,6 +139,13 @@ export default function Plancha() {
     fetchModelosDisponibles();
   }, []);
 
+  // Recalcular cuadre automáticamente cuando cambien las fechas o el planchador en el modal de cuadre
+  useEffect(() => {
+    if (showCuadreModal && cuadrePlanchadorId && cuadreStart && cuadreEnd) {
+      handleCalcularCuadre(true);
+    }
+  }, [showCuadreModal, cuadrePlanchadorId, cuadreStart, cuadreEnd]);
+
   const fetchPlanchadores = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -584,9 +591,9 @@ export default function Plancha() {
     }
   };
 
-  const handleCalcularCuadre = async () => {
+  const handleCalcularCuadre = async (silente = false) => {
     if (!cuadrePlanchadorId || !cuadreStart || !cuadreEnd) {
-      alert('Faltan datos para realizar la consulta del cuadre');
+      if (!silente) alert('Faltan datos para realizar la consulta del cuadre');
       return;
     }
     try {
@@ -597,7 +604,7 @@ export default function Plancha() {
       setCuadrePlanchaReal(res.data.total_ganado || 0);
     } catch (e) {
       console.error(e);
-      alert('Error al consultar plancha real del planchador');
+      if (!silente) alert('Error al consultar plancha real del planchador');
     }
   };
 
@@ -1960,7 +1967,7 @@ export default function Plancha() {
                 onClick={() => {
                   setShowCuadreModal(false);
                   setCuadrePlanchadorId('');
-                  setCuadrePiezasLogradas(0);
+                  setCuadrePlanchaReal(0);
                 }} 
                 className="btn-icon" 
                 style={{ background: 'rgba(255,255,255,0.05)', color: '#fff', border: 'none', padding: '8px', borderRadius: '50%', cursor: 'pointer' }}
@@ -2012,18 +2019,18 @@ export default function Plancha() {
               <button 
                 type="button" 
                 className="btn btn-secondary" 
-                onClick={handleCalcularCuadre}
+                onClick={() => handleCalcularCuadre(false)}
                 disabled={!cuadrePlanchadorId}
                 style={{ width: '100%', borderColor: 'rgba(16, 185, 129, 0.4)', color: '#10b981' }}
               >
-                Consultar Plancha Real en Rango
+                Recargar Plancha Real
               </button>
 
               <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,0.08)', margin: '0.5rem 0' }} />
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
                 <div className="form-group">
-                  <label className="form-label">Día Adelantado ($)</label>
+                  <label className="form-label">Día adelantado ($)</label>
                   <input 
                     type="text" 
                     className="form-input" 
@@ -2033,7 +2040,7 @@ export default function Plancha() {
                   />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Plancha Real ($)</label>
+                  <label className="form-label">Plancha real ($)</label>
                   <input 
                     type="text" 
                     className="form-input" 
