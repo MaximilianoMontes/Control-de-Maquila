@@ -534,24 +534,17 @@ export default function Plancha() {
     }
     
     // Calcular monto final según el tipo de ajuste
-    let finalMonto = parseFloat(ajusteMonto) || 0;
+    const dias = parseFloat(ajusteParamDias) || 1;
+    const tarifa = 400; // Tarifa fija e inalterable
+    const finalMonto = dias * tarifa;
     let descFormula = '';
     
     if (ajusteRazon === 'Dia adelantado' || ajusteRazon === 'Vacaciones') {
-      const dias = parseFloat(ajusteParamDias) || 1;
-      const tarifa = parseFloat(ajusteParamTarifa) || 250;
-      finalMonto = dias * tarifa;
       descFormula = `${dias} días × $${tarifa}/día`;
     } else if (ajusteRazon === 'Festivo') {
-      const dias = parseFloat(ajusteParamDias) || 1;
-      const tarifa = parseFloat(ajusteParamTarifa) || 250;
-      finalMonto = dias * tarifa * 2;
-      descFormula = `${dias} días festivos × $${tarifa}/día × 2`;
+      descFormula = `${dias} días festivos × $${tarifa}/día`;
     } else if (ajusteRazon === 'Apoyo en calidad') {
-      const horas = parseFloat(ajusteParamHoras) || 8;
-      const tarifa = parseFloat(ajusteParamPagoHora) || 50;
-      finalMonto = horas * tarifa;
-      descFormula = `${horas} horas × $${tarifa}/hora en Apoyo calidad`;
+      descFormula = `${dias} días × $${tarifa}/día en Apoyo calidad`;
     }
 
     if (finalMonto <= 0) {
@@ -1819,16 +1812,7 @@ export default function Plancha() {
                   value={ajusteRazon} 
                   onChange={e => {
                     setAjusteRazon(e.target.value);
-                    if (e.target.value === 'Dia adelantado' || e.target.value === 'Vacaciones') {
-                      setAjusteParamDias('1');
-                      setAjusteParamTarifa('250');
-                    } else if (e.target.value === 'Festivo') {
-                      setAjusteParamDias('1');
-                      setAjusteParamTarifa('250');
-                    } else if (e.target.value === 'Apoyo en calidad') {
-                      setAjusteParamHoras('8');
-                      setAjusteParamPagoHora('50');
-                    }
+                    setAjusteParamDias('1');
                   }}
                 >
                   <option value="Dia adelantado">Día adelantado</option>
@@ -1838,123 +1822,66 @@ export default function Plancha() {
                 </select>
               </div>
 
-              {(ajusteRazon === 'Dia adelantado' || ajusteRazon === 'Vacaciones') && (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                  <div className="form-group">
-                    <label className="form-label">Días</label>
-                    <input 
-                      type="number" 
-                      step="0.5"
-                      min="0.5"
-                      required
-                      className="form-input" 
-                      value={ajusteParamDias} 
-                      onChange={e => setAjusteParamDias(e.target.value)} 
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Tarifa por Día ($)</label>
-                    <input 
-                      type="number" 
-                      step="0.01"
-                      min="0"
-                      required
-                      className="form-input" 
-                      value={ajusteParamTarifa} 
-                      onChange={e => setAjusteParamTarifa(e.target.value)} 
-                    />
-                  </div>
-                </div>
-              )}
-
-              {ajusteRazon === 'Festivo' && (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                  <div className="form-group">
-                    <label className="form-label">Días Festivos</label>
-                    <input 
-                      type="number" 
-                      step="1"
-                      min="1"
-                      required
-                      className="form-input" 
-                      value={ajusteParamDias} 
-                      onChange={e => setAjusteParamDias(e.target.value)} 
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Tarifa por Día ($)</label>
-                    <input 
-                      type="number" 
-                      step="0.01"
-                      min="0"
-                      required
-                      className="form-input" 
-                      value={ajusteParamTarifa} 
-                      onChange={e => setAjusteParamTarifa(e.target.value)} 
-                    />
-                  </div>
-                </div>
-              )}
-
+              {/* Selector de Área de Apoyo solo para Apoyo en calidad */}
               {ajusteRazon === 'Apoyo en calidad' && (
-                <>
-                  <div className="form-group">
-                    <label className="form-label">Área de Apoyo</label>
-                    <select 
-                      className="form-input" 
-                      value={ajusteApoyoDetalle} 
-                      onChange={e => setAjusteApoyoDetalle(e.target.value)}
-                    >
-                      <option value="Corte">Corte</option>
-                      <option value="Empaque">Empaque</option>
-                      <option value="Limpieza">Limpieza</option>
-                      <option value="Avios">Avios</option>
-                      <option value="Terminados">Terminados</option>
-                      <option value="Almacen de ventas">Almacen de ventas</option>
-                    </select>
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                    <div className="form-group">
-                      <label className="form-label">Horas Trabajadas</label>
-                      <input 
-                        type="number" 
-                        step="0.5"
-                        min="0.5"
-                        required
-                        className="form-input" 
-                        value={ajusteParamHoras} 
-                        onChange={e => setAjusteParamHoras(e.target.value)} 
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Pago por Hora ($)</label>
-                      <input 
-                        type="number" 
-                        step="0.01"
-                        min="0"
-                        required
-                        className="form-input" 
-                        value={ajusteParamPagoHora} 
-                        onChange={e => setAjusteParamPagoHora(e.target.value)} 
-                      />
-                    </div>
-                  </div>
-                </>
+                <div className="form-group">
+                  <label className="form-label">Área de Apoyo</label>
+                  <select 
+                    className="form-input" 
+                    value={ajusteApoyoDetalle} 
+                    onChange={e => setAjusteApoyoDetalle(e.target.value)}
+                  >
+                    <option value="Corte">Corte</option>
+                    <option value="Empaque">Empaque</option>
+                    <option value="Limpieza">Limpieza</option>
+                    <option value="Avios">Avios</option>
+                    <option value="Terminados">Terminados</option>
+                    <option value="Almacen de ventas">Almacen de ventas</option>
+                  </select>
+                </div>
               )}
+
+              {/* Campos comunes para todos los tipos de ajuste */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div className="form-group">
+                  <label className="form-label">
+                    {ajusteRazon === 'Festivo' ? 'Días Festivos' : 'Días'}
+                  </label>
+                  <input 
+                    type="number" 
+                    step="0.5"
+                    min="0.5"
+                    required
+                    className="form-input" 
+                    value={ajusteParamDias} 
+                    onChange={e => setAjusteParamDias(e.target.value)} 
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Tarifa por Día ($)</label>
+                  <input 
+                    type="text" 
+                    className="form-input" 
+                    value="400" 
+                    disabled 
+                    style={{ background: 'rgba(255,255,255,0.05)', cursor: 'not-allowed', fontWeight: 'bold' }} 
+                  />
+                </div>
+              </div>
 
               {/* Mostrar Monto Resultante y Fórmula */}
               {(() => {
+                const dias = parseFloat(ajusteParamDias) || 0;
+                const tarifa = 400;
+                const val = dias * tarifa;
                 let formulaText = '';
-                let val = 0;
+
                 if (ajusteRazon === 'Dia adelantado' || ajusteRazon === 'Vacaciones') {
-                  val = (parseFloat(ajusteParamDias) || 0) * (parseFloat(ajusteParamTarifa) || 0);
-                  formulaText = `${ajusteParamDias} días × $${ajusteParamTarifa}/día`;
+                  formulaText = `${dias} días × $${tarifa}/día`;
                 } else if (ajusteRazon === 'Festivo') {
-                  val = (parseFloat(ajusteParamDias) || 0) * (parseFloat(ajusteParamTarifa) || 0) * 2;
-                  formulaText = `${ajusteParamDias} días × $${ajusteParamTarifa}/día × 2 (Doble)`;
+                  formulaText = `${dias} días festivos × $${tarifa}/día`;
                 } else if (ajusteRazon === 'Apoyo en calidad') {
-                  val = (parseFloat(ajusteParamHoras) || 0) * (parseFloat(ajusteParamPagoHora) || 0);
-                  formulaText = `${ajusteParamHoras} hrs × $${ajusteParamPagoHora}/hora`;
+                  formulaText = `${dias} días × $${tarifa}/día en Apoyo calidad`;
                 }
 
                 return (
