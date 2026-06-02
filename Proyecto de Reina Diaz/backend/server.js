@@ -2804,6 +2804,17 @@ app.get('/api/plancha/historial', authenticateToken, async (req, res) => {
   }
 });
 
+app.get('/api/debug-pagos', async (req, res) => {
+  try {
+    const [pagos] = await db.query("SELECT * FROM planchador_pagos ORDER BY fecha DESC, id DESC");
+    const [trabajos] = await db.query("SELECT * FROM plancha_trabajos ORDER BY id DESC LIMIT 50");
+    const [asistencias] = await db.query("SELECT * FROM planchador_asistencias ORDER BY id DESC LIMIT 50");
+    res.json({ pagos, trabajos, asistencias });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 if (require.main === module) {
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on http://0.0.0.0:${PORT}`);
