@@ -1407,13 +1407,21 @@ export default function Plancha() {
                                   style={{ width: '28px', height: '28px', borderRadius: '4px', objectFit: 'cover', background: '#000' }} 
                                 />
                               ) : null}
-                              <strong>{t.modelo_nombre}</strong>
+                              <strong>{t.modelo_nombre || t.color}</strong>
                             </div>
                           </td>
                           <td>{formatDate(t.fecha_creacion)}</td>
-                          <td><span className="badge badge-info">T{t.talla}</span></td>
+                          <td>
+                            {t.talla === 'AJUSTE' ? (
+                              <span className="badge badge-warning" style={{ background: 'rgba(245, 158, 11, 0.2)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.3)' }}>AJUSTE</span>
+                            ) : (
+                              <span className="badge badge-info">T{t.talla}</span>
+                            )}
+                          </td>
                           <td>{t.piezas}</td>
-                          <td style={{ color: '#34d399', fontWeight: 'bold' }}>{formatCurrency(t.neto)}</td>
+                          <td style={{ color: t.neto < 0 ? '#ef4444' : '#34d399', fontWeight: 'bold' }}>
+                            {t.neto < 0 ? '-' : ''}{formatCurrency(Math.abs(t.neto))}
+                          </td>
                         </tr>
                       ))
                     )}

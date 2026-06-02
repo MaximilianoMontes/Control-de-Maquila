@@ -2558,7 +2558,7 @@ app.post('/api/plancha/ajustes', authenticateToken, async (req, res) => {
     const [existing] = await connection.query(`
       SELECT id FROM plancha_trabajos 
       WHERE planchador_id = ? 
-        AND camion_detalles_id = 0 
+        AND (camion_detalles_id = 0 OR camion_detalles_id IS NULL) 
         AND DATE(fecha_creacion) = CURDATE()
     `, [planchador_id]);
 
@@ -2570,7 +2570,7 @@ app.post('/api/plancha/ajustes', authenticateToken, async (req, res) => {
     await connection.query(`
       INSERT INTO plancha_trabajos 
       (planchador_id, camion_detalles_id, talla, piezas, burro_numero, estado, precio_unitario, neto, total, color, fecha_terminado)
-      VALUES (?, 0, 'AJUSTE', 1, 0, 'terminado', ?, ?, ?, ?, NOW())
+      VALUES (?, NULL, 'AJUSTE', 1, 0, 'terminado', ?, ?, ?, ?, NOW())
     `, [
       planchador_id,
       monto,
@@ -2605,7 +2605,7 @@ app.get('/api/planchadores/:id/piezas-rango', authenticateToken, async (req, res
       FROM plancha_trabajos 
       WHERE planchador_id = ? 
         AND estado = 'terminado' 
-        AND camion_detalles_id > 0
+        AND COALESCE(camion_detalles_id, 0) > 0
         AND DATE(fecha_terminado) BETWEEN ? AND ?
     `, [planchadorId, start, end]);
 
@@ -2633,7 +2633,7 @@ app.get('/api/reportes/plancha/pagos', async (req, res) => {
           FROM plancha_trabajos pt
           WHERE pt.pago_id IN (
             SELECT id FROM planchador_pagos WHERE planchador_id = pp.planchador_id AND DATE(fecha) = DATE(pp.fecha)
-          ) AND pt.camion_detalles_id > 0
+          ) AND COALESCE(pt.camion_detalles_id, 0) > 0
         ), 0) as total_produccion,
         COALESCE((
           SELECT SUM(pa.monto) 
@@ -2647,14 +2647,14 @@ app.get('/api/reportes/plancha/pagos', async (req, res) => {
           FROM plancha_trabajos pt
           WHERE pt.pago_id IN (
             SELECT id FROM planchador_pagos WHERE planchador_id = pp.planchador_id AND DATE(fecha) = DATE(pp.fecha)
-          ) AND pt.camion_detalles_id = 0 AND pt.color NOT LIKE '%Diferencia%'
+          ) AND COALESCE(pt.camion_detalles_id, 0) = 0 AND pt.color NOT LIKE '%Diferencia%'
         ), 0) as total_pago_fijo,
         COALESCE((
           SELECT SUM(pt.total) 
           FROM plancha_trabajos pt
           WHERE pt.pago_id IN (
             SELECT id FROM planchador_pagos WHERE planchador_id = pp.planchador_id AND DATE(fecha) = DATE(pp.fecha)
-          ) AND pt.camion_detalles_id = 0 AND pt.color LIKE '%Diferencia%'
+          ) AND COALESCE(pt.camion_detalles_id, 0) = 0 AND pt.color LIKE '%Diferencia%'
         ), 0) as total_diferencia_dia_adelantado
       FROM planchador_pagos pp
       JOIN planchadores p ON pp.planchador_id = p.id

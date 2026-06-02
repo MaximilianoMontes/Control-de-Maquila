@@ -553,7 +553,7 @@ async function initializeDatabase() {
         CREATE TABLE IF NOT EXISTS plancha_trabajos (
           id INT AUTO_INCREMENT PRIMARY KEY,
           planchador_id INT NOT NULL,
-          camion_detalles_id INT NOT NULL,
+          camion_detalles_id INT NULL,
           talla VARCHAR(10) NOT NULL,
           piezas INT DEFAULT 0,
           burro_numero INT NOT NULL,
@@ -593,6 +593,14 @@ async function initializeDatabase() {
         console.log("Migration: color column added to plancha_trabajos");
       } catch (e) {
         // Ignorar si ya existe
+      }
+
+      // 7. Permitir NULL en camion_detalles_id para que los ajustes/cuadres no fallen por FK en MySQL
+      try {
+        await connection.query("ALTER TABLE plancha_trabajos MODIFY COLUMN camion_detalles_id INT NULL");
+        console.log("Migration: plancha_trabajos.camion_detalles_id modified to allow NULL");
+      } catch (e) {
+        // Ignorar si falla o ya está
       }
       
       console.log('--- FIN MIGRACIÓN MÓDULO PLANCHA ---');
