@@ -2624,27 +2624,38 @@ app.get('/api/reportes/plancha/pagos', async (req, res) => {
   try {
     let query = `
       SELECT 
-        pp.id,
-        pp.fecha,
-        pp.monto as total_pagado,
+        MIN(pp.id) as id,
+        DATE(pp.fecha) as fecha,
         p.nombre as planchador_nombre,
+        SUM(pp.monto) as total_pagado,
         COALESCE((
-          SELECT SUM(total) 
-          FROM plancha_trabajos 
-          WHERE pago_id = pp.id AND camion_detalles_id > 0
+          SELECT SUM(pt.total) 
+          FROM plancha_trabajos pt
+          WHERE pt.pago_id IN (
+            SELECT id FROM planchador_pagos WHERE planchador_id = pp.planchador_id AND DATE(fecha) = DATE(pp.fecha)
+          ) AND pt.camion_detalles_id > 0
         ), 0) as total_produccion,
-        (
-          COALESCE((
-            SELECT SUM(total) 
-            FROM plancha_trabajos 
-            WHERE pago_id = pp.id AND camion_detalles_id = 0
-          ), 0) +
-          COALESCE((
-            SELECT SUM(monto) 
-            FROM planchador_asistencias 
-            WHERE pago_id = pp.id
-          ), 0)
-        ) as total_ajustes
+        COALESCE((
+          SELECT SUM(pa.monto) 
+          FROM planchador_asistencias pa
+          WHERE pa.pago_id IN (
+            SELECT id FROM planchador_pagos WHERE planchador_id = pp.planchador_id AND DATE(fecha) = DATE(pp.fecha)
+          )
+        ), 0) as total_bono,
+        COALESCE((
+          SELECT SUM(pt.total) 
+          FROM plancha_trabajos pt
+          WHERE pt.pago_id IN (
+            SELECT id FROM planchador_pagos WHERE planchador_id = pp.planchador_id AND DATE(fecha) = DATE(pp.fecha)
+          ) AND pt.camion_detalles_id = 0 AND pt.color NOT LIKE '%Diferencia%'
+        ), 0) as total_pago_fijo,
+        COALESCE((
+          SELECT SUM(pt.total) 
+          FROM plancha_trabajos pt
+          WHERE pt.pago_id IN (
+            SELECT id FROM planchador_pagos WHERE planchador_id = pp.planchador_id AND DATE(fecha) = DATE(pp.fecha)
+          ) AND pt.camion_detalles_id = 0 AND pt.color LIKE '%Diferencia%'
+        ), 0) as total_diferencia_dia_adelantado
       FROM planchador_pagos pp
       JOIN planchadores p ON pp.planchador_id = p.id
     `;
@@ -2653,25 +2664,26 @@ app.get('/api/reportes/plancha/pagos', async (req, res) => {
 
     if (start && end) {
       if (start === end) {
-        query += ` WHERE pp.fecha = ?`;
+        query += ` WHERE DATE(pp.fecha) = ?`;
         params.push(start);
         subtitleDate = `del día ${start}`;
       } else {
-        query += ` WHERE pp.fecha BETWEEN ? AND ?`;
+        query += ` WHERE DATE(pp.fecha) BETWEEN ? AND ?`;
         params.push(start, end);
         subtitleDate = `del ${start} al ${end}`;
       }
     } else if (start) {
-      query += ` WHERE pp.fecha >= ?`;
+      query += ` WHERE DATE(pp.fecha) >= ?`;
       params.push(start);
       subtitleDate = `desde ${start}`;
     } else if (end) {
-      query += ` WHERE pp.fecha <= ?`;
+      query += ` WHERE DATE(pp.fecha) <= ?`;
       params.push(end);
       subtitleDate = `hasta ${end}`;
     }
     
-    query += ` ORDER BY pp.fecha ASC, pp.id ASC`;
+    query += ` GROUP BY DATE(pp.fecha), pp.planchador_id, p.nombre`;
+    query += ` ORDER BY DATE(pp.fecha) ASC, p.nombre ASC`;
     const [rows] = await db.query(query, params);
 
     const doc = new PDFDocument({ margin: 20, size: 'A4', layout: 'portrait' });
@@ -2715,25 +2727,29 @@ app.get('/api/reportes/plancha/pagos', async (req, res) => {
         title: "Reporte de Pagos de Plancha",
         subtitle: `Pagos registrados ${subtitleDate}` + " - Generado el " + formatDateUTC(localNow),
         headers: [
-          { label: "FECHA", property: "fecha", width: 80 },
-          { label: "PLANCHADOR", property: "nombre", width: 160 },
-          { label: "PRODUCCIÓN", property: "produccion", width: 100 },
-          { label: "BONO/AJUSTE", property: "ajuste", width: 100 },
-          { label: "TOTAL", property: "total", width: 100 }
+          { label: "FECHA", property: "fecha", width: 65 },
+          { label: "PLANCHADOR", property: "nombre", width: 120 },
+          { label: "PRODUCCIÓN", property: "produccion", width: 75 },
+          { label: "BONO", property: "bono", width: 65 },
+          { label: "PAGO FIJO", property: "pago_fijo", width: 75 },
+          { label: "DIF. DÍA ADELANTADO", property: "dif_dia_adelantado", width: 85 },
+          { label: "TOTAL", property: "total", width: 70 }
         ],
         datas: rows.map(r => ({
           fecha: formatDateUTC(r.fecha),
           nombre: (r.planchador_nombre || '').toUpperCase(),
           produccion: '$' + Number(r.total_produccion).toFixed(2),
-          ajuste: '$' + Number(r.total_ajustes).toFixed(2),
+          bono: '$' + Number(r.total_bono).toFixed(2),
+          pago_fijo: '$' + Number(r.total_pago_fijo).toFixed(2),
+          dif_dia_adelantado: '$' + Number(r.total_diferencia_dia_adelantado).toFixed(2),
           total: '$' + Number(r.total_pagado).toFixed(2)
         })),
         options: { padding: 5 }
       };
 
       await doc.table(tableConfig, {
-        prepareHeader: () => doc.font("Helvetica-Bold").fontSize(10),
-        prepareRow: () => doc.font("Helvetica").fontSize(10)
+        prepareHeader: () => doc.font("Helvetica-Bold").fontSize(9),
+        prepareRow: () => doc.font("Helvetica").fontSize(8)
       });
 
       const totalMonto = rows.reduce((sum, r) => sum + Number(r.total_pagado), 0);
