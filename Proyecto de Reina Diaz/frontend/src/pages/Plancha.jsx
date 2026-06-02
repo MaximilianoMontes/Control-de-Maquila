@@ -91,6 +91,7 @@ export default function Plancha() {
   const [pagoPlanchadorId, setPagoPlanchadorId] = useState('');
   const [montoPago, setMontoPago] = useState('');
   const [tipoPago, setTipoPago] = useState('completo');
+  const [pagoSubmitting, setPagoSubmitting] = useState(false);
 
   // Estado de banner de asistencia
   const [attendanceNotif, setAttendanceNotif] = useState(null); // { nombre, count }
@@ -495,8 +496,9 @@ export default function Plancha() {
 
   const handleRegistrarPago = async (e) => {
     e.preventDefault();
-    if (!pagoPlanchadorId || !montoPago || parseFloat(montoPago) <= 0) return;
+    if (!pagoPlanchadorId || !montoPago || parseFloat(montoPago) <= 0 || pagoSubmitting) return;
     try {
+      setPagoSubmitting(true);
       const token = localStorage.getItem('token');
       await axios.post(`${API_URL}/api/plancha/pagos`, {
         planchador_id: pagoPlanchadorId,
@@ -510,6 +512,8 @@ export default function Plancha() {
     } catch (e) {
       console.error(e);
       alert(e.response?.data?.error || 'Error al registrar pago');
+    } finally {
+      setPagoSubmitting(false);
     }
   };
 
@@ -1301,9 +1305,9 @@ export default function Plancha() {
                   type="submit" 
                   className="btn btn-primary" 
                   style={{ width: '100%' }}
-                  disabled={!pagoPlanchadorId || parseFloat(montoPago || 0) <= 0}
+                  disabled={pagoSubmitting || !pagoPlanchadorId || parseFloat(montoPago || 0) <= 0}
                 >
-                  Registrar Pago
+                  {pagoSubmitting ? 'Registrando...' : 'Registrar Pago'}
                 </button>
 
                 <div style={{ display: 'flex', gap: '0.8rem', marginTop: '0.5rem' }}>

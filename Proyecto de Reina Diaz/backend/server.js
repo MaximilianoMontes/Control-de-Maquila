@@ -2622,60 +2622,44 @@ app.get('/api/planchadores/:id/piezas-rango', authenticateToken, async (req, res
 app.get('/api/reportes/plancha/pagos', async (req, res) => {
   const { start, end } = req.query;
   try {
-    let query = `
-      SELECT 
-        pp.id,
-        pp.fecha,
-        pp.monto as total_pagado,
-        p.nombre as planchador_nombre,
-        COALESCE((
-          SELECT SUM(pt.total) 
-          FROM plancha_trabajos pt
-          WHERE pt.pago_id = pp.id AND COALESCE(pt.camion_detalles_id, 0) > 0
-        ), 0) as total_produccion,
-        COALESCE((
-          SELECT SUM(pa.monto) 
-          FROM planchador_asistencias pa
-          WHERE pa.pago_id = pp.id
-        ), 0) as total_bono,
-        COALESCE((
-          SELECT SUM(pt.total) 
-          FROM plancha_trabajos pt
-          WHERE pt.pago_id = pp.id AND COALESCE(pt.camion_detalles_id, 0) = 0 AND pt.color NOT LIKE '%Diferencia%'
-        ), 0) as total_pago_fijo,
-        COALESCE((
-          SELECT SUM(pt.total) 
-          FROM plancha_trabajos pt
-          WHERE pt.pago_id = pp.id AND COALESCE(pt.camion_detalles_id, 0) = 0 AND pt.color LIKE '%Diferencia%'
-        ), 0) as total_diferencia_dia_adelantado
-      FROM planchador_pagos pp
-      JOIN planchadores p ON pp.planchador_id = p.id
-    `;
+    let whereClause = "";
     const params = [];
     let subtitleDate = "";
 
     if (start && end) {
       if (start === end) {
-        query += ` WHERE DATE(pp.fecha) = ?`;
+        whereClause = ` WHERE DATE(pp.fecha) = ?`;
         params.push(start);
         subtitleDate = `del día ${start}`;
       } else {
-        query += ` WHERE DATE(pp.fecha) BETWEEN ? AND ?`;
+        whereClause = ` WHERE DATE(pp.fecha) BETWEEN ? AND ?`;
         params.push(start, end);
         subtitleDate = `del ${start} al ${end}`;
       }
     } else if (start) {
-      query += ` WHERE DATE(pp.fecha) >= ?`;
+      whereClause = ` WHERE DATE(pp.fecha) >= ?`;
       params.push(start);
       subtitleDate = `desde ${start}`;
     } else if (end) {
-      query += ` WHERE DATE(pp.fecha) <= ?`;
+      whereClause = ` WHERE DATE(pp.fecha) <= ?`;
       params.push(end);
       subtitleDate = `hasta ${end}`;
     }
-    
-    query += ` ORDER BY pp.fecha ASC, pp.id ASC`;
-    const [rows] = await db.query(query, params);
+
+    const paymentsQuery = `
+      SELECT 
+        pp.id,
+        pp.planchador_id,
+        pp.fecha,
+        pp.monto as total_pagado,
+        p.nombre as planchador_nombre
+      FROM planchador_pagos pp
+      JOIN planchadores p ON pp.planchador_id = p.id
+      ${whereClause}
+      ORDER BY pp.fecha ASC, pp.id ASC
+    `;
+
+    const [payments] = await db.query(paymentsQuery, params);
 
     const doc = new PDFDocument({ margin: 20, size: 'A4', layout: 'portrait' });
     res.setHeader('Content-disposition', 'attachment; filename="Reporte_Pagos_Plancha.pdf"');
@@ -2692,7 +2676,7 @@ app.get('/api/reportes/plancha/pagos', async (req, res) => {
 
     doc.y = 100;
 
-    if (rows.length === 0) {
+    if (payments.length === 0) {
       doc.fontSize(20).text('Reporte de Pagos de Plancha', { align: 'center' });
       doc.moveDown();
       doc.fontSize(12).text('No se encontraron registros de pagos en el periodo seleccionado.', { align: 'center' });
@@ -2712,9 +2696,121 @@ app.get('/api/reportes/plancha/pagos', async (req, res) => {
         return `${parseInt(day, 10)}/${parseInt(month, 10)}/${year}`;
       };
 
-      // Consolidar pagos de un mismo planchador en un mismo día
+      const paymentIds = payments.map(p => p.id);
+
+      const [works] = await db.query(`
+        SELECT id, planchador_id, total, camion_detalles_id, color, fecha_terminado, pago_id
+        FROM plancha_trabajos
+        WHERE estado = 'terminado' AND (pago_id IS NULL OR pago_id IN (?))
+      `, [paymentIds]);
+
+      const [asistencias] = await db.query(`
+        SELECT id, planchador_id, monto, fecha, pago_id
+        FROM planchador_asistencias
+        WHERE pago_id IS NULL OR pago_id IN (?)
+      `, [paymentIds]);
+
+      for (const p of payments) {
+        p.total_produccion = 0;
+        p.total_bono = 0;
+        p.total_pago_fijo = 0;
+        p.total_diferencia_dia_adelantado = 0;
+      }
+
+      const paymentMap = {};
+      for (const p of payments) {
+        paymentMap[p.id] = p;
+      }
+
+      const orphanWorks = [];
+      const orphanAsistencias = [];
+
+      for (const w of works) {
+        if (w.pago_id !== null) {
+          const p = paymentMap[w.pago_id];
+          if (p) {
+            const isProduccion = (Number(w.camion_detalles_id) || 0) > 0;
+            const isDiferencia = w.color && w.color.includes('Diferencia');
+            if (isProduccion) {
+              p.total_produccion += Number(w.total) || 0;
+            } else if (isDiferencia) {
+              p.total_diferencia_dia_adelantado += Number(w.total) || 0;
+            } else {
+              p.total_pago_fijo += Number(w.total) || 0;
+            }
+          }
+        } else {
+          orphanWorks.push(w);
+        }
+      }
+
+      for (const a of asistencias) {
+        if (a.pago_id !== null) {
+          const p = paymentMap[a.pago_id];
+          if (p) {
+            p.total_bono += Number(a.monto) || 0;
+          }
+        } else {
+          orphanAsistencias.push(a);
+        }
+      }
+
+      const paymentsByPlanchador = {};
+      for (const p of payments) {
+        if (!paymentsByPlanchador[p.planchador_id]) {
+          paymentsByPlanchador[p.planchador_id] = [];
+        }
+        paymentsByPlanchador[p.planchador_id].push(p);
+      }
+
+      const getCleanDateStr = (dateVal) => {
+        if (!dateVal) return '';
+        if (dateVal instanceof Date) {
+          return dateVal.toISOString().split('T')[0];
+        }
+        const str = String(dateVal);
+        const datePart = str.split(' ')[0];
+        return datePart.split('T')[0];
+      };
+
+      for (const w of orphanWorks) {
+        const planchadorPayments = paymentsByPlanchador[w.planchador_id] || [];
+        const wDate = getCleanDateStr(w.fecha_terminado);
+        
+        const matchedPayment = planchadorPayments.find(p => {
+          const pDate = getCleanDateStr(p.fecha);
+          return pDate >= wDate;
+        });
+
+        if (matchedPayment) {
+          const isProduccion = (Number(w.camion_detalles_id) || 0) > 0;
+          const isDiferencia = w.color && w.color.includes('Diferencia');
+          if (isProduccion) {
+            matchedPayment.total_produccion += Number(w.total) || 0;
+          } else if (isDiferencia) {
+            matchedPayment.total_diferencia_dia_adelantado += Number(w.total) || 0;
+          } else {
+            matchedPayment.total_pago_fijo += Number(w.total) || 0;
+          }
+        }
+      }
+
+      for (const a of orphanAsistencias) {
+        const planchadorPayments = paymentsByPlanchador[a.planchador_id] || [];
+        const aDate = getCleanDateStr(a.fecha);
+        
+        const matchedPayment = planchadorPayments.find(p => {
+          const pDate = getCleanDateStr(p.fecha);
+          return pDate >= aDate;
+        });
+
+        if (matchedPayment) {
+          matchedPayment.total_bono += Number(a.monto) || 0;
+        }
+      }
+
       const consolidatedMap = {};
-      for (const r of rows) {
+      for (const r of payments) {
         const cleanDate = formatDateUTC(r.fecha);
         const nameKey = (r.planchador_nombre || '').toUpperCase();
         const key = `${cleanDate}_${nameKey}`;
@@ -2727,7 +2823,7 @@ app.get('/api/reportes/plancha/pagos', async (req, res) => {
             total_bono: 0,
             total_pago_fijo: 0,
             total_diferencia_dia_adelantado: 0,
-            total_pagado: 0
+            sum_payment_montos: 0
           };
         }
 
@@ -2735,12 +2831,19 @@ app.get('/api/reportes/plancha/pagos', async (req, res) => {
         consolidatedMap[key].total_bono += Number(r.total_bono) || 0;
         consolidatedMap[key].total_pago_fijo += Number(r.total_pago_fijo) || 0;
         consolidatedMap[key].total_diferencia_dia_adelantado += Number(r.total_diferencia_dia_adelantado) || 0;
-        consolidatedMap[key].total_pagado += Number(r.total_pagado) || 0;
+        consolidatedMap[key].sum_payment_montos += Number(r.total_pagado) || 0;
       }
 
-      const consolidatedRows = Object.values(consolidatedMap);
+      const consolidatedRows = Object.values(consolidatedMap).map(row => {
+        const breakdownSum = row.total_produccion + row.total_bono + row.total_pago_fijo + row.total_diferencia_dia_adelantado;
+        const total = breakdownSum > 0 ? breakdownSum : row.sum_payment_montos;
+        return {
+          ...row,
+          total_pagado: total
+        };
+      });
 
-      const localNow = new Date(new Date().getTime() - 6 * 60 * 60 * 1000); // Colima timezone adjustment (UTC-6)
+      const localNow = new Date(new Date().getTime() - 6 * 60 * 60 * 1000);
 
       const tableConfig = {
         title: "Reporte de Pagos de Plancha",
@@ -2804,16 +2907,7 @@ app.get('/api/plancha/historial', authenticateToken, async (req, res) => {
   }
 });
 
-app.get('/api/debug-pagos', async (req, res) => {
-  try {
-    const [pagos] = await db.query("SELECT * FROM planchador_pagos ORDER BY fecha DESC, id DESC");
-    const [trabajos] = await db.query("SELECT * FROM plancha_trabajos ORDER BY id DESC LIMIT 50");
-    const [asistencias] = await db.query("SELECT * FROM planchador_asistencias ORDER BY id DESC LIMIT 50");
-    res.json({ pagos, trabajos, asistencias });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
+// Debug payments removed
 
 if (require.main === module) {
   app.listen(PORT, '0.0.0.0', () => {
