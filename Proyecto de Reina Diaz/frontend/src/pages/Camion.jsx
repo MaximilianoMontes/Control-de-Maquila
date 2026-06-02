@@ -13,6 +13,13 @@ const API = API_URL;
 const getImgSrc = (img) => img ? (img.startsWith('http') ? img : `${API}${img}`) : null;
 const formatCurrency = (val) => new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(val);
 
+const formatDate = (dateStr) => {
+  if (!dateStr) return '';
+  const cleanDate = dateStr.split('T')[0];
+  const [year, month, day] = cleanDate.split('-');
+  return `${day}/${month}/${year}`;
+};
+
 const SIZES = ["05", "07", "09", "11", "13", "15"];
 const parseColors = (colorStr) => {
   if (!colorStr) return ['N/A'];
@@ -580,7 +587,7 @@ export default function Camion() {
                         {t('nav.camion') || 'Camión'} #{truck.id}
                       </span>
                       <span style={{ fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                        <Calendar size={14} color="#94a3b8" /> <strong>{t('camion.shippedOn')}:</strong> {new Date(truck.fecha_envio).toLocaleDateString('es-MX')}
+                        <Calendar size={14} color="#94a3b8" /> <strong>{t('camion.shippedOn')}:</strong> {formatDate(truck.fecha_envio)}
                       </span>
                       {truck.observaciones && (
                         <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontStyle: 'italic' }}>

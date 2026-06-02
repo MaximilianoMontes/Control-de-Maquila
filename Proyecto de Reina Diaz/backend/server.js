@@ -2412,7 +2412,14 @@ app.get('/api/planchadores/:id/pagos', authenticateToken, async (req, res) => {
       "SELECT COALESCE(SUM(total), 0) as ganado FROM plancha_trabajos WHERE planchador_id = ? AND estado = 'terminado'",
       [req.params.id]
     );
-    const ganado = parseFloat(earningsResult[0].ganado) || 0;
+    const [attendanceResult] = await db.query(
+      "SELECT COALESCE(SUM(monto), 0) as ganado_asistencia FROM planchador_asistencias WHERE planchador_id = ?",
+      [req.params.id]
+    );
+
+    const ganadoTrabajos = parseFloat(earningsResult[0].ganado) || 0;
+    const ganadoAsistencia = parseFloat(attendanceResult[0].ganado_asistencia) || 0;
+    const ganado = ganadoTrabajos + ganadoAsistencia;
 
     const [paymentsResult] = await db.query(
       "SELECT COALESCE(SUM(monto), 0) as pagado FROM planchador_pagos WHERE planchador_id = ?",
@@ -2429,6 +2436,11 @@ app.get('/api/planchadores/:id/pagos', authenticateToken, async (req, res) => {
       ORDER BY pt.fecha_creacion DESC
     `, [req.params.id]);
 
+    const [asistenciasPendientes] = await db.query(
+      "SELECT * FROM planchador_asistencias WHERE planchador_id = ? AND pago_id IS NULL ORDER BY fecha DESC",
+      [req.params.id]
+    );
+
     const pendiente = Math.max(0, ganado - pagado);
 
     res.json({
@@ -2436,7 +2448,8 @@ app.get('/api/planchadores/:id/pagos', authenticateToken, async (req, res) => {
       pagado,
       pendiente,
       pagos,
-      trabajosPendientes
+      trabajosPendientes,
+      asistenciasPendientes
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -2469,6 +2482,11 @@ app.post('/api/plancha/pagos', authenticateToken, async (req, res) => {
       [pagoId, planchador_id]
     );
 
+    await connection.query(
+      "UPDATE planchador_asistencias SET pago_id = ? WHERE planchador_id = ? AND pago_id IS NULL",
+      [pagoId, planchador_id]
+    );
+
     await connection.commit();
     await logActivity(req.user.id, 'ADD', 'PLANCHA_PAGO', `Registró pago de $${monto} al planchador ${planchador.nombre}`);
     res.json({ success: true, pagoId });
@@ -2480,16 +2498,247 @@ app.post('/api/plancha/pagos', authenticateToken, async (req, res) => {
   }
 });
 
+// 10.1 REGISTRAR ASISTENCIA DE PLANCHADOR
+app.post('/api/planchadores/:id/asistencia', authenticateToken, async (req, res) => {
+  const planchadorId = req.params.id;
+  try {
+    // 1. Verificar si ya tiene registrada la asistencia para el día de hoy
+    const [existing] = await db.query(
+      "SELECT id FROM planchador_asistencias WHERE planchador_id = ? AND fecha = CURDATE()",
+      [planchadorId]
+    );
+
+    let newlyRegistered = false;
+    if (existing.length === 0) {
+      await db.query(
+        "INSERT INTO planchador_asistencias (planchador_id, fecha, monto) VALUES (?, CURDATE(), 50.00)",
+        [planchadorId]
+      );
+      newlyRegistered = true;
+    }
+
+    // 2. Obtener conteo de asistencias del lunes a viernes de la semana actual
+    const [countResult] = await db.query(`
+      SELECT COUNT(*) as count 
+      FROM planchador_asistencias 
+      WHERE planchador_id = ? 
+        AND fecha >= DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY)
+        AND WEEKDAY(fecha) < 5
+    `, [planchadorId]);
+
+    const count = countResult[0].count || 0;
+
+    res.json({
+      success: true,
+      registered: newlyRegistered,
+      asistencias_count: count,
+      monto: 50.00
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 10.2 REGISTRAR AJUSTE / PAGO FIJO DE PLANCHADOR
+app.post('/api/plancha/ajustes', authenticateToken, async (req, res) => {
+  const { planchador_id, razon, monto } = req.body;
+  if (!planchador_id || !razon || monto === undefined) {
+    return res.status(400).json({ error: 'Faltan parámetros requeridos' });
+  }
+
+  const connection = await db.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    const [planchadores] = await connection.query("SELECT nombre FROM planchadores WHERE id = ?", [planchador_id]);
+    const planchador = planchadores[0];
+    if (!planchador) throw new Error('Planchador no encontrado');
+
+    // Validar si ya se registró un ajuste hoy para este planchador
+    const [existing] = await connection.query(`
+      SELECT id FROM plancha_trabajos 
+      WHERE planchador_id = ? 
+        AND camion_detalles_id = 0 
+        AND DATE(fecha_creacion) = CURDATE()
+    `, [planchador_id]);
+
+    if (existing.length > 0) {
+      throw new Error('Ya se registró un ajuste o pago fijo para este planchador el día de hoy. Solo se permite uno por día.');
+    }
+
+    // Insertar como un trabajo especial en plancha_trabajos
+    await connection.query(`
+      INSERT INTO plancha_trabajos 
+      (planchador_id, camion_detalles_id, talla, piezas, burro_numero, estado, precio_unitario, neto, total, color, fecha_terminado)
+      VALUES (?, 0, 'AJUSTE', 1, 0, 'terminado', ?, ?, ?, ?, NOW())
+    `, [
+      planchador_id,
+      monto,
+      monto,
+      monto,
+      razon
+    ]);
+
+    await connection.commit();
+    await logActivity(req.user.id, 'ADD', 'PLANCHA_AJUSTE', `Registró ajuste de $${monto} por '${razon}' al planchador ${planchador.nombre}`);
+    res.json({ success: true });
+  } catch (error) {
+    await connection.rollback();
+    res.status(400).json({ error: error.message });
+  } finally {
+    connection.release();
+  }
+});
+
+// 10.3 OBTENER TOTAL DE PIEZAS PLANCHADAS EN UN RANGO DE FECHAS
+app.get('/api/planchadores/:id/piezas-rango', authenticateToken, async (req, res) => {
+  const planchadorId = req.params.id;
+  const { start, end } = req.query;
+  if (!start || !end) {
+    return res.status(400).json({ error: 'Rango de fechas requerido' });
+  }
+  try {
+    const [result] = await db.query(`
+      SELECT COALESCE(SUM(piezas), 0) as total_piezas 
+      FROM plancha_trabajos 
+      WHERE planchador_id = ? 
+        AND estado = 'terminado' 
+        AND camion_detalles_id > 0
+        AND DATE(fecha_terminado) BETWEEN ? AND ?
+    `, [planchadorId, start, end]);
+
+    res.json({ total_piezas: result[0].total_piezas });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 10.4 REPORTES DE PAGOS DE PLANCHA EN PDF
+app.get('/api/reportes/plancha/pagos', async (req, res) => {
+  const { start, end } = req.query;
+  try {
+    let query = `
+      SELECT 
+        pp.id,
+        pp.fecha,
+        pp.monto as total_pagado,
+        p.nombre as planchador_nombre,
+        COALESCE((
+          SELECT SUM(total) 
+          FROM plancha_trabajos 
+          WHERE pago_id = pp.id AND camion_detalles_id > 0
+        ), 0) as total_produccion,
+        (
+          COALESCE((
+            SELECT SUM(total) 
+            FROM plancha_trabajos 
+            WHERE pago_id = pp.id AND camion_detalles_id = 0
+          ), 0) +
+          COALESCE((
+            SELECT SUM(monto) 
+            FROM planchador_asistencias 
+            WHERE pago_id = pp.id
+          ), 0)
+        ) as total_ajustes
+      FROM planchador_pagos pp
+      JOIN planchadores p ON pp.planchador_id = p.id
+    `;
+    const params = [];
+    let subtitleDate = "";
+
+    if (start && end) {
+      if (start === end) {
+        query += ` WHERE pp.fecha = ?`;
+        params.push(start);
+        subtitleDate = `del día ${start}`;
+      } else {
+        query += ` WHERE pp.fecha BETWEEN ? AND ?`;
+        params.push(start, end);
+        subtitleDate = `del ${start} al ${end}`;
+      }
+    } else if (start) {
+      query += ` WHERE pp.fecha >= ?`;
+      params.push(start);
+      subtitleDate = `desde ${start}`;
+    } else if (end) {
+      query += ` WHERE pp.fecha <= ?`;
+      params.push(end);
+      subtitleDate = `hasta ${end}`;
+    }
+    
+    query += ` ORDER BY pp.fecha ASC, pp.id ASC`;
+    const [rows] = await db.query(query, params);
+
+    const doc = new PDFDocument({ margin: 20, size: 'A4', layout: 'portrait' });
+    res.setHeader('Content-disposition', 'attachment; filename="Reporte_Pagos_Plancha.pdf"');
+    res.setHeader('Content-type', 'application/pdf');
+
+    doc.pipe(res);
+
+    try {
+      const logoPath = path.join(__dirname, '..', 'frontend', 'public', 'logo.png');
+      if (fs.existsSync(logoPath)) {
+        doc.image(logoPath, 25, 20, { width: 85 });
+      }
+    } catch (e) {}
+
+    doc.y = 100;
+
+    if (rows.length === 0) {
+      doc.fontSize(20).text('Reporte de Pagos de Plancha', { align: 'center' });
+      doc.moveDown();
+      doc.fontSize(12).text('No se encontraron registros de pagos en el periodo seleccionado.', { align: 'center' });
+    } else {
+      const tableConfig = {
+        title: "Reporte de Pagos de Plancha",
+        subtitle: `Pagos registrados ${subtitleDate}` + " - Generado el " + new Date().toLocaleDateString(),
+        headers: [
+          { label: "FECHA", property: "fecha", width: 80 },
+          { label: "PLANCHADOR", property: "nombre", width: 160 },
+          { label: "PRODUCCIÓN", property: "produccion", width: 100 },
+          { label: "BONO/AJUSTE", property: "ajuste", width: 100 },
+          { label: "TOTAL", property: "total", width: 100 }
+        ],
+        datas: rows.map(r => ({
+          fecha: new Date(r.fecha).toLocaleDateString(),
+          nombre: (r.planchador_nombre || '').toUpperCase(),
+          produccion: '$' + Number(r.total_produccion).toFixed(2),
+          ajuste: '$' + Number(r.total_ajustes).toFixed(2),
+          total: '$' + Number(r.total_pagado).toFixed(2)
+        })),
+        options: { padding: 5 }
+      };
+
+      await doc.table(tableConfig, {
+        prepareHeader: () => doc.font("Helvetica-Bold").fontSize(10),
+        prepareRow: () => doc.font("Helvetica").fontSize(10)
+      });
+
+      const totalMonto = rows.reduce((sum, r) => sum + Number(r.total_pagado), 0);
+      doc.moveDown();
+      doc.fontSize(14).font("Helvetica-Bold").text(`TOTAL PAGADO EN EL PERIODO: $${totalMonto.toFixed(2)}`, { align: 'right' });
+    }
+
+    doc.end();
+  } catch (error) {
+    console.error("Error generando reporte pagos plancha:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // 11. HISTORIAL GENERAL DE PLANCHADO
 app.get('/api/plancha/historial', authenticateToken, async (req, res) => {
   try {
     const [rows] = await db.query(`
       SELECT pt.*, p.nombre as planchador_nombre,
-             cd.modelo as modelo_nombre, COALESCE(pt.color, cd.color, 'Único') as color, cd.no_orden, cd.precio_plancha,
+             COALESCE(cd.modelo, CONCAT('Ajuste: ', pt.color)) as modelo_nombre, 
+             COALESCE(pt.color, cd.color, 'Único') as color, 
+             cd.no_orden, 
+             COALESCE(cd.precio_plancha, pt.precio_unitario) as precio_plancha,
              (SELECT imagen FROM inventario WHERE modelo = cd.modelo LIMIT 1) as modelo_imagen
       FROM plancha_trabajos pt
       JOIN planchadores p ON pt.planchador_id = p.id
-      JOIN camion_detalles cd ON pt.camion_detalles_id = cd.id
+      LEFT JOIN camion_detalles cd ON pt.camion_detalles_id = cd.id
       ORDER BY pt.fecha_terminado DESC, pt.id DESC
     `);
     res.json(rows);

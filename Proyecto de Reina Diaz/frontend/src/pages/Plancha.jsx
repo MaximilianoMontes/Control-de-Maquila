@@ -16,11 +16,14 @@ import {
   Trash2, 
   UserPlus, 
   X,
-  History
+  History,
+  Download,
+  Calculator
 } from 'lucide-react';
 import { useSettings } from '../context/SettingsContext';
 import API_URL from '../config';
 import PlanchaSidebar from '../components/PlanchaSidebar';
+import Header from '../components/Header';
 
 // Tallas asociadas a cada burro (1 al 10)
 const BURROS_TALLAS = {
@@ -79,6 +82,48 @@ export default function Plancha() {
   const [pagoPlanchadorId, setPagoPlanchadorId] = useState('');
   const [montoPago, setMontoPago] = useState('');
   const [tipoPago, setTipoPago] = useState('completo');
+
+  // Estado de banner de asistencia
+  const [attendanceNotif, setAttendanceNotif] = useState(null); // { nombre, count }
+
+  // Estado de modal de Ajustes / Pagos fijos
+  const [showAjusteModal, setShowAjusteModal] = useState(false);
+  const [ajustePlanchadorId, setAjustePlanchadorId] = useState('');
+  const [ajusteRazon, setAjusteRazon] = useState('Dia adelantado');
+  const [ajusteApoyoDetalle, setAjusteApoyoDetalle] = useState('Corte');
+  const [ajusteMonto, setAjusteMonto] = useState('250');
+  const [ajusteParamDias, setAjusteParamDias] = useState('1');
+  const [ajusteParamTarifa, setAjusteParamTarifa] = useState('250');
+  const [ajusteParamHoras, setAjusteParamHoras] = useState('8');
+  const [ajusteParamPagoHora, setAjusteParamPagoHora] = useState('50');
+
+  // Estado de modal de Cuadre
+  const [showCuadreModal, setShowCuadreModal] = useState(false);
+  const [cuadrePlanchadorId, setCuadrePlanchadorId] = useState('');
+  const [cuadreStart, setCuadreStart] = useState(() => {
+    // Lunes de la semana actual
+    const d = new Date();
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    const monday = new Date(d.setDate(diff));
+    return monday.toISOString().split('T')[0];
+  });
+  const [cuadreEnd, setCuadreEnd] = useState(() => {
+    // Viernes de la semana actual
+    const d = new Date();
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1) + 4;
+    const friday = new Date(d.setDate(diff));
+    return friday.toISOString().split('T')[0];
+  });
+  const [cuadreMeta, setCuadreMeta] = useState('500');
+  const [cuadreBono, setCuadreBono] = useState('300');
+  const [cuadrePenalizacion, setCuadrePenalizacion] = useState('150');
+  const [cuadrePiezasLogradas, setCuadrePiezasLogradas] = useState(0);
+
+  // Filtros de reporte de pago
+  const [reportStart, setReportStart] = useState('');
+  const [reportEnd, setReportEnd] = useState('');
 
   // Carga inicial
   useEffect(() => {
@@ -237,6 +282,8 @@ export default function Plancha() {
         id: draggedItem.data.id,
         nombre: draggedItem.data.nombre
       };
+      // Registrar la asistencia de forma automática al asignar al burro
+      registrarAsistencia(draggedItem.data.id, draggedItem.data.nombre);
     } else if (draggedItem.type === 'modelo') {
       const model = draggedItem.data;
       const talla = burro.talla;
@@ -414,6 +461,7 @@ export default function Plancha() {
     setPagoPlanchadorId(id);
     if (!id) {
       setPlanchadorPagoDetalle(null);
+      setMontoPago('');
       return;
     }
     try {
@@ -422,6 +470,10 @@ export default function Plancha() {
         headers: { Authorization: `Bearer ${token}` }
       });
       setPlanchadorPagoDetalle(res.data);
+      // Auto-rellenar monto completo
+      if (res.data && res.data.pendiente !== undefined) {
+        setMontoPago(res.data.pendiente.toString());
+      }
     } catch (e) {
       console.error(e);
     }
@@ -435,7 +487,7 @@ export default function Plancha() {
       await axios.post(`${API_URL}/api/plancha/pagos`, {
         planchador_id: pagoPlanchadorId,
         monto: parseFloat(montoPago),
-        tipo_pago: tipoPago
+        tipo_pago: 'completo' // Siempre completo
       }, { headers: { Authorization: `Bearer ${token}` } });
 
       setMontoPago('');
@@ -447,25 +499,168 @@ export default function Plancha() {
     }
   };
 
+  // --- MÉTODOS EXTRA (ASISTENCIAS, AJUSTES, CUADRE, REPORTES) ---
+  
+  const registrarAsistencia = async (planchadorId, nombre) => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.post(`${API_URL}/api/planchadores/${planchadorId}/asistencia`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      // Mostrar banner por 5 segundos
+      setAttendanceNotif({
+        nombre,
+        count: res.data.asistencias_count,
+        registered: res.data.registered
+      });
+      
+      setTimeout(() => {
+        setAttendanceNotif(null);
+      }, 5000);
+
+      // Recargar planchadores para actualizar saldos si se requiere
+      fetchPlanchadores();
+    } catch (e) {
+      console.error("Error registrando asistencia:", e);
+    }
+  };
+
+  const handleRegistrarAjuste = async (e) => {
+    e.preventDefault();
+    if (!ajustePlanchadorId) {
+      alert('Selecciona un planchador');
+      return;
+    }
+    
+    // Calcular monto final según el tipo de ajuste
+    let finalMonto = parseFloat(ajusteMonto) || 0;
+    let descFormula = '';
+    
+    if (ajusteRazon === 'Dia adelantado' || ajusteRazon === 'Vacaciones') {
+      const dias = parseFloat(ajusteParamDias) || 1;
+      const tarifa = parseFloat(ajusteParamTarifa) || 250;
+      finalMonto = dias * tarifa;
+      descFormula = `${dias} días × $${tarifa}/día`;
+    } else if (ajusteRazon === 'Festivo') {
+      const dias = parseFloat(ajusteParamDias) || 1;
+      const tarifa = parseFloat(ajusteParamTarifa) || 250;
+      finalMonto = dias * tarifa * 2;
+      descFormula = `${dias} días festivos × $${tarifa}/día × 2`;
+    } else if (ajusteRazon === 'Apoyo en calidad') {
+      const horas = parseFloat(ajusteParamHoras) || 8;
+      const tarifa = parseFloat(ajusteParamPagoHora) || 50;
+      finalMonto = horas * tarifa;
+      descFormula = `${horas} horas × $${tarifa}/hora en Apoyo calidad`;
+    }
+
+    if (finalMonto <= 0) {
+      alert('El monto del ajuste debe ser mayor a 0');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      const razonFinal = ajusteRazon === 'Apoyo en calidad' 
+        ? `Apoyo en calidad (${ajusteApoyoDetalle}) [${descFormula}]`
+        : `${ajusteRazon} [${descFormula}]`;
+
+      await axios.post(`${API_URL}/api/plancha/ajustes`, {
+        planchador_id: ajustePlanchadorId,
+        razon: razonFinal,
+        monto: finalMonto
+      }, { headers: { Authorization: `Bearer ${token}` } });
+
+      alert('Ajuste / Pago fijo registrado con éxito');
+      setShowAjusteModal(false);
+      setAjustePlanchadorId('');
+      fetchModelosDisponibles();
+      if (pagoPlanchadorId === ajustePlanchadorId) {
+        handleCargarPagosPlanchador(pagoPlanchadorId);
+      }
+    } catch (e) {
+      console.error(e);
+      alert(e.response?.data?.error || 'Error al registrar ajuste');
+    }
+  };
+
+  const handleCalcularCuadre = async () => {
+    if (!cuadrePlanchadorId || !cuadreStart || !cuadreEnd) {
+      alert('Faltan datos para realizar la consulta del cuadre');
+      return;
+    }
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.get(`${API_URL}/api/planchadores/${cuadrePlanchadorId}/piezas-rango?start=${cuadreStart}&end=${cuadreEnd}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setCuadrePiezasLogradas(res.data.total_piezas || 0);
+    } catch (e) {
+      console.error(e);
+      alert('Error al consultar piezas logradas del planchador');
+    }
+  };
+
+  const handleAplicarCuadre = async () => {
+    const metaVal = parseInt(cuadreMeta) || 0;
+    const bonoVal = parseFloat(cuadreBono) || 0;
+    const penVal = parseFloat(cuadrePenalizacion) || 0;
+    
+    const cumple = cuadrePiezasLogradas >= metaVal;
+    const finalMonto = cumple ? bonoVal : -penVal;
+    const descRazon = cumple 
+      ? `Bono de cumplimiento Plancha (${cuadrePiezasLogradas}/${metaVal} pzas)`
+      : `Descuento por incumplimiento Plancha (${cuadrePiezasLogradas}/${metaVal} pzas)`;
+
+    if (finalMonto === 0) {
+      alert('El monto a aplicar debe ser diferente de 0');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API_URL}/api/plancha/ajustes`, {
+        planchador_id: cuadrePlanchadorId,
+        razon: descRazon,
+        monto: finalMonto
+      }, { headers: { Authorization: `Bearer ${token}` } });
+
+      alert(`Cuadre aplicado correctamente: ${cumple ? 'Bono de $' + bonoVal : 'Descuento de $' + penVal}`);
+      setShowCuadreModal(false);
+      setCuadrePlanchadorId('');
+      if (pagoPlanchadorId === cuadrePlanchadorId) {
+        handleCargarPagosPlanchador(pagoPlanchadorId);
+      }
+    } catch (e) {
+      console.error(e);
+      alert(e.response?.data?.error || 'Error al aplicar el cuadre');
+    }
+  };
+
+  const handleDownloadReporte = () => {
+    let url = `${API_URL}/api/reportes/plancha/pagos`;
+    const params = new URLSearchParams();
+    if (reportStart) params.append('start', reportStart);
+    if (reportEnd) params.append('end', reportEnd);
+    const query = params.toString();
+    if (query) url += `?${query}`;
+    window.open(url, '_blank');
+  };
+
   return (
     <div className="app-layout">
       {/* Sidebar exclusiva de Plancha */}
       <PlanchaSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
       
       <div className="main-container">
-        {/* Header exclusivo */}
-        <header className="launcher-header" style={{ padding: '1.2rem 2rem', borderBottom: '1px solid rgba(14, 165, 233, 0.15)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <h1 className="gradient-text" style={{ fontSize: '1.25rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'linear-gradient(135deg, #0ea5e9, #22d3ee)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-              <Flame color="#0ea5e9" size={20} /> Módulo de Plancha
-            </h1>
+        <Header />
+
+        {/* Banner de Asistencia */}
+        {attendanceNotif && (
+          <div className="attendance-banner">
+            👤 {attendanceNotif.nombre} - {attendanceNotif.count}/5 asistido {attendanceNotif.registered ? '(Asistencia Registrada)' : '(Ya registrado hoy)'}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <span style={{ fontSize: '0.85rem', color: '#64748b' }}>
-              Compañía: <strong>Reina Diaz</strong>
-            </span>
-          </div>
-        </header>
+        )}
 
         <main className="main-content" style={{ padding: '2rem' }}>
 
@@ -831,7 +1026,14 @@ export default function Plancha() {
                   >
                     {/* Indicador de Talla y Número de Burro */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#94a3b8' }}>Burro #{burro.numero}</span>
+                      <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#94a3b8' }}>
+                        {burro.numero === 1 ? 'Burro #1-Maru' :
+                         burro.numero === 2 ? 'Burro #2-Karla' :
+                         burro.numero === 3 ? 'Burro #3-Maribel' :
+                         burro.numero === 4 ? 'Burro #4-Alma' :
+                         burro.numero === 5 ? 'Burro #5-Karina' :
+                         `Burro #${burro.numero}`}
+                      </span>
                       <span 
                         style={{ 
                           fontSize: '1rem', 
@@ -1035,69 +1237,132 @@ export default function Plancha() {
       {activeTab === 'pagos' && (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '2rem', alignItems: 'start' }}>
           
-          {/* Formulario de Pagos */}
-          <div className="glass-card">
-            <h2 style={{ fontSize: '1.4rem', margin: '0 0 1.5rem 0', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Wallet color="#3b82f6" /> Registrar Pago Plancha
-            </h2>
-            <form onSubmit={handleRegistrarPago} style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
-              <div className="form-group">
-                <label className="form-label">Seleccionar Planchador</label>
-                <select 
-                  className="form-input" 
-                  value={pagoPlanchadorId} 
-                  onChange={e => handleCargarPagosPlanchador(e.target.value)} 
-                  required
-                >
-                  <option value="">-- Elige un Planchador --</option>
-                  {planchadores.map(p => (
-                    <option key={p.id} value={p.id}>{p.nombre}</option>
-                  ))}
-                </select>
-              </div>
-
-              {planchadorPagoDetalle && (
-                <div style={{ background: 'rgba(0,0,0,0.02)', padding: '1rem', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '0.4rem', fontSize: '0.95rem' }}>
-                  <p style={{ margin: 0 }}><strong>Total Ganado:</strong> {formatCurrency(planchadorPagoDetalle.ganado)}</p>
-                  <p style={{ margin: 0, color: '#34d399' }}><strong>Total Pagado:</strong> {formatCurrency(planchadorPagoDetalle.pagado)}</p>
-                  <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,0.05)', margin: '0.4rem 0' }} />
-                  <p style={{ margin: 0, fontSize: '1.1rem', color: planchadorPagoDetalle.pendiente > 0 ? '#ef4444' : '#34d399' }}>
-                    <strong>Saldo Pendiente: {formatCurrency(planchadorPagoDetalle.pendiente)}</strong>
-                  </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+            {/* Formulario de Pagos */}
+            <div className="glass-card">
+              <h2 style={{ fontSize: '1.4rem', margin: '0 0 1.5rem 0', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Wallet color="#3b82f6" /> Registrar Pago Plancha
+              </h2>
+              <form onSubmit={handleRegistrarPago} style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+                <div className="form-group">
+                  <label className="form-label">Seleccionar Planchador</label>
+                  <select 
+                    className="form-input" 
+                    value={pagoPlanchadorId} 
+                    onChange={e => handleCargarPagosPlanchador(e.target.value)} 
+                    required
+                  >
+                    <option value="">-- Elige un Planchador --</option>
+                    {planchadores.map(p => (
+                      <option key={p.id} value={p.id}>{p.nombre}</option>
+                    ))}
+                  </select>
                 </div>
-              )}
 
-              <div className="form-group">
-                <label className="form-label">Tipo de Pago</label>
-                <select className="form-input" value={tipoPago} onChange={e => setTipoPago(e.target.value)}>
-                  <option value="completo">Pago Completo</option>
-                  <option value="abono">Abono parcial</option>
-                </select>
+                {planchadorPagoDetalle && (
+                  <div style={{ background: 'rgba(0,0,0,0.02)', padding: '1rem', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '0.4rem', fontSize: '0.95rem' }}>
+                    <p style={{ margin: 0 }}><strong>Total Ganado:</strong> {formatCurrency(planchadorPagoDetalle.ganado)}</p>
+                    <p style={{ margin: 0, color: '#34d399' }}><strong>Total Pagado:</strong> {formatCurrency(planchadorPagoDetalle.pagado)}</p>
+                    <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,0.05)', margin: '0.4rem 0' }} />
+                    <p style={{ margin: 0, fontSize: '1.1rem', color: planchadorPagoDetalle.pendiente > 0 ? '#ef4444' : '#34d399' }}>
+                      <strong>Saldo Pendiente: {formatCurrency(planchadorPagoDetalle.pendiente)}</strong>
+                    </p>
+                  </div>
+                )}
+
+                <div className="form-group">
+                  <label className="form-label">Tipo de Pago</label>
+                  <select className="form-input" value="completo" disabled style={{ background: 'rgba(255,255,255,0.05)', cursor: 'not-allowed' }}>
+                    <option value="completo">Pago Completo (Liquidación)</option>
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Monto del Pago</label>
+                  <input 
+                    type="number" 
+                    step="0.01" 
+                    required 
+                    className="form-input"
+                    placeholder={planchadorPagoDetalle ? `Sugerido: ${formatCurrency(planchadorPagoDetalle.pendiente)}` : 'Ej: 500'} 
+                    value={montoPago} 
+                    onChange={e => setMontoPago(e.target.value)} 
+                    disabled={!pagoPlanchadorId}
+                  />
+                </div>
+
+                <button 
+                  type="submit" 
+                  className="btn btn-primary" 
+                  style={{ width: '100%' }}
+                  disabled={!pagoPlanchadorId || parseFloat(montoPago || 0) <= 0}
+                >
+                  Registrar Pago
+                </button>
+
+                <div style={{ display: 'flex', gap: '0.8rem', marginTop: '0.5rem' }}>
+                  <button 
+                    type="button" 
+                    className="btn btn-secondary" 
+                    style={{ flex: 1, borderColor: 'rgba(14, 165, 233, 0.4)', color: '#0ea5e9', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', padding: '10px' }}
+                    onClick={() => {
+                      setAjustePlanchadorId(pagoPlanchadorId);
+                      setShowAjusteModal(true);
+                    }}
+                  >
+                    <Plus size={16} /> Ajuste/Pago Fijo
+                  </button>
+                  <button 
+                    type="button" 
+                    className="btn btn-secondary" 
+                    style={{ flex: 1, borderColor: 'rgba(16, 185, 129, 0.4)', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', padding: '10px' }}
+                    onClick={() => {
+                      setCuadrePlanchadorId(pagoPlanchadorId);
+                      setShowCuadreModal(true);
+                    }}
+                  >
+                    <Calculator size={16} /> Cuadre Semanal
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            {/* Descarga de Reportes de Nómina PDF */}
+            <div className="glass-card" style={{ padding: '1.5rem' }}>
+              <h3 style={{ margin: '0 0 1.2rem 0', fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <History size={18} color="#0ea5e9" /> Reporte de Nómina PDF
+              </h3>
+              <p style={{ fontSize: '0.8rem', color: '#64748b', margin: '-0.5rem 0 1.2rem 0' }}>Descarga un reporte consolidado en PDF de las ganancias y nómina de los planchadores</p>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div className="form-group">
+                  <label className="form-label">Fecha de Inicio</label>
+                  <input 
+                    type="date" 
+                    className="form-input" 
+                    value={reportStart} 
+                    onChange={e => setReportStart(e.target.value)} 
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Fecha Fin</label>
+                  <input 
+                    type="date" 
+                    className="form-input" 
+                    value={reportEnd} 
+                    onChange={e => setReportEnd(e.target.value)} 
+                  />
+                </div>
+                <button 
+                  type="button" 
+                  className="btn btn-primary" 
+                  style={{ width: '100%', marginTop: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                  onClick={handleDownloadReporte}
+                >
+                  <Download size={16} /> Descargar Reporte (PDF)
+                </button>
               </div>
-
-              <div className="form-group">
-                <label className="form-label">Monto del Pago</label>
-                <input 
-                  type="number" 
-                  step="0.01" 
-                  required 
-                  className="form-input"
-                  placeholder={planchadorPagoDetalle ? `Sugerido: ${formatCurrency(planchadorPagoDetalle.pendiente)}` : 'Ej: 500'} 
-                  value={montoPago} 
-                  onChange={e => setMontoPago(e.target.value)} 
-                  disabled={!pagoPlanchadorId}
-                />
-              </div>
-
-              <button 
-                type="submit" 
-                className="btn btn-primary" 
-                style={{ width: '100%' }}
-                disabled={!pagoPlanchadorId || parseFloat(montoPago || 0) <= 0}
-              >
-                Registrar Pago
-              </button>
-            </form>
+            </div>
           </div>
 
           {/* Historial de Pagos y Trabajos pendientes */}
@@ -1490,6 +1755,428 @@ export default function Plancha() {
                 </button>
               </div>
             </form>
+
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 3: REGISTRAR AJUSTE / PAGO FIJO */}
+      {showAjusteModal && (
+        <div 
+          style={{ 
+            position: 'fixed', 
+            top: 0, 
+            left: 0, 
+            right: 0, 
+            bottom: 0, 
+            background: 'rgba(0,0,0,0.6)', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            zIndex: 1000, 
+            backdropFilter: 'blur(8px)' 
+          }}
+        >
+          <div className="glass-card" style={{ width: '95%', maxWidth: '500px', padding: '2rem', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.1)' }}>
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <h2 style={{ margin: 0, fontSize: '1.5rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Wallet color="#0ea5e9" /> Registrar Ajuste / Pago Fijo
+              </h2>
+              <button 
+                onClick={() => {
+                  setShowAjusteModal(false);
+                  setAjustePlanchadorId('');
+                }} 
+                className="btn-icon" 
+                style={{ background: 'rgba(255,255,255,0.05)', color: '#fff', border: 'none', padding: '8px', borderRadius: '50%', cursor: 'pointer' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleRegistrarAjuste} style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+              
+              <div className="form-group">
+                <label className="form-label">Planchador</label>
+                <select 
+                  className="form-input" 
+                  value={ajustePlanchadorId} 
+                  onChange={e => setAjustePlanchadorId(e.target.value)}
+                  required
+                >
+                  <option value="">-- Elige un Planchador --</option>
+                  {planchadores.map(p => (
+                    <option key={p.id} value={p.id}>{p.nombre}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Razón del Pago Fijo</label>
+                <select 
+                  className="form-input" 
+                  value={ajusteRazon} 
+                  onChange={e => {
+                    setAjusteRazon(e.target.value);
+                    if (e.target.value === 'Dia adelantado' || e.target.value === 'Vacaciones') {
+                      setAjusteParamDias('1');
+                      setAjusteParamTarifa('250');
+                    } else if (e.target.value === 'Festivo') {
+                      setAjusteParamDias('1');
+                      setAjusteParamTarifa('250');
+                    } else if (e.target.value === 'Apoyo en calidad') {
+                      setAjusteParamHoras('8');
+                      setAjusteParamPagoHora('50');
+                    }
+                  }}
+                >
+                  <option value="Dia adelantado">Día adelantado</option>
+                  <option value="Vacaciones">Vacaciones</option>
+                  <option value="Festivo">Festivo</option>
+                  <option value="Apoyo en calidad">Apoyo en calidad (Corte, Empaque, Limpieza, etc)</option>
+                </select>
+              </div>
+
+              {(ajusteRazon === 'Dia adelantado' || ajusteRazon === 'Vacaciones') && (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  <div className="form-group">
+                    <label className="form-label">Días</label>
+                    <input 
+                      type="number" 
+                      step="0.5"
+                      min="0.5"
+                      required
+                      className="form-input" 
+                      value={ajusteParamDias} 
+                      onChange={e => setAjusteParamDias(e.target.value)} 
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Tarifa por Día ($)</label>
+                    <input 
+                      type="number" 
+                      step="0.01"
+                      min="0"
+                      required
+                      className="form-input" 
+                      value={ajusteParamTarifa} 
+                      onChange={e => setAjusteParamTarifa(e.target.value)} 
+                    />
+                  </div>
+                </div>
+              )}
+
+              {ajusteRazon === 'Festivo' && (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  <div className="form-group">
+                    <label className="form-label">Días Festivos</label>
+                    <input 
+                      type="number" 
+                      step="1"
+                      min="1"
+                      required
+                      className="form-input" 
+                      value={ajusteParamDias} 
+                      onChange={e => setAjusteParamDias(e.target.value)} 
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Tarifa por Día ($)</label>
+                    <input 
+                      type="number" 
+                      step="0.01"
+                      min="0"
+                      required
+                      className="form-input" 
+                      value={ajusteParamTarifa} 
+                      onChange={e => setAjusteParamTarifa(e.target.value)} 
+                    />
+                  </div>
+                </div>
+              )}
+
+              {ajusteRazon === 'Apoyo en calidad' && (
+                <>
+                  <div className="form-group">
+                    <label className="form-label">Área de Apoyo</label>
+                    <select 
+                      className="form-input" 
+                      value={ajusteApoyoDetalle} 
+                      onChange={e => setAjusteApoyoDetalle(e.target.value)}
+                    >
+                      <option value="Corte">Corte</option>
+                      <option value="Empaque">Empaque</option>
+                      <option value="Limpieza">Limpieza</option>
+                      <option value="Avios">Avios</option>
+                      <option value="Terminados">Terminados</option>
+                      <option value="Almacen de ventas">Almacen de ventas</option>
+                    </select>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    <div className="form-group">
+                      <label className="form-label">Horas Trabajadas</label>
+                      <input 
+                        type="number" 
+                        step="0.5"
+                        min="0.5"
+                        required
+                        className="form-input" 
+                        value={ajusteParamHoras} 
+                        onChange={e => setAjusteParamHoras(e.target.value)} 
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Pago por Hora ($)</label>
+                      <input 
+                        type="number" 
+                        step="0.01"
+                        min="0"
+                        required
+                        className="form-input" 
+                        value={ajusteParamPagoHora} 
+                        onChange={e => setAjusteParamPagoHora(e.target.value)} 
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Mostrar Monto Resultante y Fórmula */}
+              {(() => {
+                let formulaText = '';
+                let val = 0;
+                if (ajusteRazon === 'Dia adelantado' || ajusteRazon === 'Vacaciones') {
+                  val = (parseFloat(ajusteParamDias) || 0) * (parseFloat(ajusteParamTarifa) || 0);
+                  formulaText = `${ajusteParamDias} días × $${ajusteParamTarifa}/día`;
+                } else if (ajusteRazon === 'Festivo') {
+                  val = (parseFloat(ajusteParamDias) || 0) * (parseFloat(ajusteParamTarifa) || 0) * 2;
+                  formulaText = `${ajusteParamDias} días × $${ajusteParamTarifa}/día × 2 (Doble)`;
+                } else if (ajusteRazon === 'Apoyo en calidad') {
+                  val = (parseFloat(ajusteParamHoras) || 0) * (parseFloat(ajusteParamPagoHora) || 0);
+                  formulaText = `${ajusteParamHoras} hrs × $${ajusteParamPagoHora}/hora`;
+                }
+
+                return (
+                  <div 
+                    style={{ 
+                      padding: '1rem', 
+                      background: 'rgba(14, 165, 233, 0.1)', 
+                      border: '1px solid rgba(14, 165, 233, 0.2)', 
+                      borderRadius: '10px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: '0.2rem'
+                    }}
+                  >
+                    <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Fórmula: {formulaText}</span>
+                    <span style={{ fontSize: '1.4rem', fontWeight: 'bold', color: '#38bdf8' }}>
+                      Total: {formatCurrency(val)}
+                    </span>
+                  </div>
+                );
+              })()}
+
+              <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
+                <button 
+                  type="button" 
+                  className="btn btn-secondary" 
+                  style={{ flex: 1 }}
+                  onClick={() => {
+                    setShowAjusteModal(false);
+                    setAjustePlanchadorId('');
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>
+                  Registrar Ajuste
+                </button>
+              </div>
+            </form>
+
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 4: CALCULAR Y APLICAR CUADRE SEMANAL */}
+      {showCuadreModal && (
+        <div 
+          style={{ 
+            position: 'fixed', 
+            top: 0, 
+            left: 0, 
+            right: 0, 
+            bottom: 0, 
+            background: 'rgba(0,0,0,0.6)', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            zIndex: 1000, 
+            backdropFilter: 'blur(8px)' 
+          }}
+        >
+          <div className="glass-card" style={{ width: '95%', maxWidth: '550px', padding: '2rem', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.1)' }}>
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <h2 style={{ margin: 0, fontSize: '1.5rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Calculator color="#10b981" /> Cuadre Semanal de Plancha
+              </h2>
+              <button 
+                onClick={() => {
+                  setShowCuadreModal(false);
+                  setCuadrePlanchadorId('');
+                  setCuadrePiezasLogradas(0);
+                }} 
+                className="btn-icon" 
+                style={{ background: 'rgba(255,255,255,0.05)', color: '#fff', border: 'none', padding: '8px', borderRadius: '50%', cursor: 'pointer' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+              
+              <div className="form-group">
+                <label className="form-label">Planchador</label>
+                <select 
+                  className="form-input" 
+                  value={cuadrePlanchadorId} 
+                  onChange={e => setCuadrePlanchadorId(e.target.value)}
+                  required
+                >
+                  <option value="">-- Elige un Planchador --</option>
+                  {planchadores.map(p => (
+                    <option key={p.id} value={p.id}>{p.nombre}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div className="form-group">
+                  <label className="form-label">Fecha de Inicio</label>
+                  <input 
+                    type="date" 
+                    required
+                    className="form-input" 
+                    value={cuadreStart} 
+                    onChange={e => setCuadreStart(e.target.value)} 
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Fecha Fin</label>
+                  <input 
+                    type="date" 
+                    required
+                    className="form-input" 
+                    value={cuadreEnd} 
+                    onChange={e => setCuadreEnd(e.target.value)} 
+                  />
+                </div>
+              </div>
+
+              <button 
+                type="button" 
+                className="btn btn-secondary" 
+                onClick={handleCalcularCuadre}
+                disabled={!cuadrePlanchadorId}
+                style={{ width: '100%', borderColor: 'rgba(16, 185, 129, 0.4)', color: '#10b981' }}
+              >
+                Consultar Piezas Planchadas en Rango
+              </button>
+
+              <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,0.08)', margin: '0.5rem 0' }} />
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
+                <div className="form-group">
+                  <label className="form-label">Meta Piezas</label>
+                  <input 
+                    type="number" 
+                    min="1"
+                    required
+                    className="form-input" 
+                    value={cuadreMeta} 
+                    onChange={e => setCuadreMeta(e.target.value)} 
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Bono (+)</label>
+                  <input 
+                    type="number" 
+                    min="0"
+                    required
+                    className="form-input" 
+                    value={cuadreBono} 
+                    onChange={e => setCuadreBono(e.target.value)} 
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Penalización (-)</label>
+                  <input 
+                    type="number" 
+                    min="0"
+                    required
+                    className="form-input" 
+                    value={cuadrePenalizacion} 
+                    onChange={e => setCuadrePenalizacion(e.target.value)} 
+                  />
+                </div>
+              </div>
+
+              {/* Resultado del Cuadre */}
+              {(() => {
+                const metaVal = parseInt(cuadreMeta) || 0;
+                const bonoVal = parseFloat(cuadreBono) || 0;
+                const penVal = parseFloat(cuadrePenalizacion) || 0;
+                
+                const cumple = cuadrePiezasLogradas >= metaVal;
+
+                return (
+                  <div 
+                    style={{ 
+                      padding: '1.2rem', 
+                      background: cumple ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)', 
+                      border: `1px solid ${cumple ? 'rgba(16, 185, 129, 0.25)' : 'rgba(239, 68, 68, 0.25)'}`, 
+                      borderRadius: '12px',
+                      textAlign: 'center'
+                    }}
+                  >
+                    <div style={{ fontSize: '0.85rem', color: '#94a3b8', marginBottom: '0.2rem' }}>Piezas Planchadas en el Rango:</div>
+                    <div style={{ fontSize: '1.8rem', fontWeight: 'bold', color: cumple ? '#10b981' : '#ef4444' }}>
+                      {cuadrePiezasLogradas} / {metaVal}
+                    </div>
+                    <div style={{ marginTop: '0.5rem', fontSize: '1.1rem', fontWeight: 'bold', color: cumple ? '#10b981' : '#ef4444' }}>
+                      {cumple ? `¡Meta Cumplida! Bono: +$${bonoVal}` : `Meta no alcanzada. Penalidad: -$${penVal}`}
+                    </div>
+                  </div>
+                );
+              })()}
+
+              <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
+                <button 
+                  type="button" 
+                  className="btn btn-secondary" 
+                  style={{ flex: 1 }}
+                  onClick={() => {
+                    setShowCuadreModal(false);
+                    setCuadrePlanchadorId('');
+                    setCuadrePiezasLogradas(0);
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="button" 
+                  className="btn btn-primary" 
+                  style={{ flex: 1 }}
+                  disabled={!cuadrePlanchadorId}
+                  onClick={handleAplicarCuadre}
+                >
+                  Aplicar Cuadre
+                </button>
+              </div>
+            </div>
 
           </div>
         </div>

@@ -572,7 +572,22 @@ async function initializeDatabase() {
         );
       `);
 
-      // 5. Add color column to plancha_trabajos
+      // 5. Tabla planchador_asistencias
+      await connection.query(`
+        CREATE TABLE IF NOT EXISTS planchador_asistencias (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          planchador_id INT NOT NULL,
+          fecha DATE NOT NULL,
+          monto DECIMAL(10, 2) DEFAULT 50.00,
+          pago_id INT DEFAULT NULL,
+          fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY(planchador_id) REFERENCES planchadores(id) ON DELETE CASCADE,
+          FOREIGN KEY(pago_id) REFERENCES planchador_pagos(id) ON DELETE SET NULL,
+          UNIQUE KEY unique_planchador_fecha (planchador_id, fecha)
+        );
+      `);
+
+      // 6. Add color column to plancha_trabajos
       try {
         await connection.query("ALTER TABLE plancha_trabajos ADD COLUMN color VARCHAR(100) DEFAULT NULL");
         console.log("Migration: color column added to plancha_trabajos");
