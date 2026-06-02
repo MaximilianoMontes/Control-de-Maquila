@@ -562,7 +562,7 @@ export default function Plancha() {
     }
 
     if (finalMonto <= 0) {
-      alert('El monto del ajuste debe ser mayor a 0');
+      alert('El monto del pago fijo debe ser mayor a 0');
       return;
     }
 
@@ -578,7 +578,7 @@ export default function Plancha() {
         monto: finalMonto
       }, { headers: { Authorization: `Bearer ${token}` } });
 
-      alert('Ajuste / Pago fijo registrado con éxito');
+      alert('Pago fijo registrado con éxito');
       setShowAjusteModal(false);
       setAjustePlanchadorId('');
       fetchModelosDisponibles();
@@ -587,7 +587,7 @@ export default function Plancha() {
       }
     } catch (e) {
       console.error(e);
-      alert(e.response?.data?.error || 'Error al registrar ajuste');
+      alert(e.response?.data?.error || 'Error al registrar pago fijo');
     }
   };
 
@@ -1316,7 +1316,7 @@ export default function Plancha() {
                       setShowAjusteModal(true);
                     }}
                   >
-                    <Plus size={16} /> Ajuste/Pago Fijo
+                    <Plus size={16} /> Pago Fijo
                   </button>
                   <button 
                     type="button" 
@@ -1413,7 +1413,7 @@ export default function Plancha() {
                           <td>{formatDate(t.fecha_creacion)}</td>
                           <td>
                             {t.talla === 'AJUSTE' ? (
-                              <span className="badge badge-warning" style={{ background: 'rgba(245, 158, 11, 0.2)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.3)' }}>AJUSTE</span>
+                              <span className="badge badge-warning" style={{ background: 'rgba(245, 158, 11, 0.2)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.3)' }}>PAGO FIJO</span>
                             ) : (
                               <span className="badge badge-info">T{t.talla}</span>
                             )}
@@ -1492,7 +1492,7 @@ export default function Plancha() {
                   <th>Burro</th>
                   <th>Pzas Planchadas</th>
                   <th>Neto</th>
-                  <th>Ajuste</th>
+                  <th>Pago Fijo</th>
                   <th>Total</th>
                 </tr>
               </thead>
@@ -1587,7 +1587,7 @@ export default function Plancha() {
                     <th>Talla</th>
                     <th>Pzas-Planchadas</th>
                     <th>Neto</th>
-                    <th>Ajuste</th>
+                    <th>Pago Fijo</th>
                     <th>Total</th>
                   </tr>
                 </thead>
@@ -1774,7 +1774,7 @@ export default function Plancha() {
         </div>
       )}
 
-      {/* MODAL 3: REGISTRAR AJUSTE / PAGO FIJO */}
+      {/* MODAL 3: REGISTRAR PAGO FIJO */}
       {showAjusteModal && (
         <div 
           style={{ 
@@ -1795,7 +1795,7 @@ export default function Plancha() {
             
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
               <h2 style={{ margin: 0, fontSize: '1.5rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Wallet color="#0ea5e9" /> Registrar Ajuste / Pago Fijo
+                <Wallet color="#0ea5e9" /> Registrar Pago Fijo
               </h2>
               <button 
                 onClick={() => {
@@ -1939,7 +1939,7 @@ export default function Plancha() {
                   Cancelar
                 </button>
                 <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>
-                  Registrar Ajuste
+                  Registrar Pago Fijo
                 </button>
               </div>
             </form>
