@@ -45,6 +45,15 @@ const normalizeTalla = (t) => {
   return isNaN(num) ? t.trim() : num.toString();
 };
 
+const formatDate = (dateStr) => {
+  if (!dateStr) return '';
+  const cleanDate = dateStr.split('T')[0];
+  const parts = cleanDate.split('-');
+  if (parts.length < 3) return dateStr;
+  const [year, month, day] = parts;
+  return `${parseInt(day, 10)}/${parseInt(month, 10)}/${year}`;
+};
+
 export default function Plancha() {
   const { settings, t, formatCurrency } = useSettings();
   const [activeTab, setActiveTab] = useState('plancha');
@@ -1397,7 +1406,7 @@ export default function Plancha() {
                               <strong>{t.modelo_nombre}</strong>
                             </div>
                           </td>
-                          <td>{new Date(t.fecha_creacion).toLocaleDateString()}</td>
+                          <td>{formatDate(t.fecha_creacion)}</td>
                           <td><span className="badge badge-info">T{t.talla}</span></td>
                           <td>{t.piezas}</td>
                           <td style={{ color: '#34d399', fontWeight: 'bold' }}>{formatCurrency(t.neto)}</td>
@@ -1433,7 +1442,7 @@ export default function Plancha() {
                       planchadorPagoDetalle.pagos.map((p, index) => (
                         <tr key={p.id}>
                           <td>#{planchadorPagoDetalle.pagos.length - index}</td>
-                          <td>{new Date(p.fecha).toLocaleDateString()}</td>
+                          <td>{formatDate(p.fecha)}</td>
                           <td><span className="badge badge-info" style={{ textTransform: 'uppercase' }}>{p.tipo_pago}</span></td>
                           <td style={{ color: '#34d399', fontWeight: 'bold' }}>{formatCurrency(p.monto)}</td>
                         </tr>
