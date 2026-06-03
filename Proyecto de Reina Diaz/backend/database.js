@@ -665,15 +665,13 @@ async function initializeDatabase() {
 
       // Handle multi-lot models: 554296 (48 and 72)
       const [prods296] = await connection.query(`
-        SELECT p.id, p.inventario_id 
+        SELECT p.id, p.inventario_id, i.piezas_en_proceso 
         FROM produccion p
         JOIN inventario i ON p.inventario_id = i.id
         WHERE i.modelo = '554296'
       `);
-      const qtys296 = [48, 72];
-      for (let idx = 0; idx < prods296.length; idx++) {
-        const p = prods296[idx];
-        const qty = qtys296[idx] || 120; // Fallback to 120 if only one
+      for (const p of prods296) {
+        const qty = p.piezas_en_proceso || 120;
         await connection.query(`
           UPDATE produccion 
           SET estado = 'Terminado', cantidad = ?, cantidad_recibida = ?, archivado = 0, fecha_terminado = NOW()
@@ -689,15 +687,13 @@ async function initializeDatabase() {
 
       // Handle multi-lot models: 752935 (92 and 96)
       const [prods935] = await connection.query(`
-        SELECT p.id, p.inventario_id 
+        SELECT p.id, p.inventario_id, i.piezas_en_proceso 
         FROM produccion p
         JOIN inventario i ON p.inventario_id = i.id
         WHERE i.modelo = '752935'
       `);
-      const qtys935 = [92, 96];
-      for (let idx = 0; idx < prods935.length; idx++) {
-        const p = prods935[idx];
-        const qty = qtys935[idx] || 94; // Fallback
+      for (const p of prods935) {
+        const qty = p.piezas_en_proceso || 96;
         await connection.query(`
           UPDATE produccion 
           SET estado = 'Terminado', cantidad = ?, cantidad_recibida = ?, archivado = 0, fecha_terminado = NOW()
