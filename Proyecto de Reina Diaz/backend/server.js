@@ -341,7 +341,7 @@ app.get('/api/inventario', async (req, res) => {
 });
 
 app.post('/api/inventario', authenticateToken, upload.single('imagenBtn'), async (req, res) => {
-  let { numero, modelo, precio, color, cliente, no_orden, piezas_en_proceso, imagenUrl, observaciones, es_reprogramacion } = req.body;
+  let { numero, modelo, precio, color, cliente, no_orden, piezas_en_proceso, imagenUrl, observaciones, es_reprogramacion, precio_plancha } = req.body;
   const finalImageUrl = req.file ? await processImage(req.file) : (imagenUrl || null);
   const isReprog = (es_reprogramacion === 'true' || es_reprogramacion === true || es_reprogramacion === 1) ? 1 : 0;
 
@@ -367,8 +367,8 @@ app.post('/api/inventario', authenticateToken, upload.single('imagenBtn'), async
 
     const [result] = await db.query(`
       INSERT INTO inventario 
-      (numero, modelo, precio, color, cliente, no_orden, piezas_en_proceso, imagen, observaciones, es_reprogramacion) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (numero, modelo, precio, color, cliente, no_orden, piezas_en_proceso, imagen, observaciones, es_reprogramacion, precio_plancha) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
       numero ? String(numero) : null,
       modelo ? String(modelo) : null,
@@ -379,7 +379,8 @@ app.post('/api/inventario', authenticateToken, upload.single('imagenBtn'), async
       parseInt(piezas_en_proceso) || 0,
       finalImageUrl ? String(finalImageUrl) : null,
       observaciones ? String(observaciones) : null,
-      isReprog ? 1 : 0
+      isReprog ? 1 : 0,
+      parseFloat(String(precio_plancha).replace(/[^0-9.-]+/g,"")) || 0
     ]);
     
     const logTag = isReprog ? 'REPROGRAMACION' : 'ALTA';
@@ -387,8 +388,8 @@ app.post('/api/inventario', authenticateToken, upload.single('imagenBtn'), async
     
     // Automatically mirror the new cut in inventario_real
     await db.query(`
-      INSERT INTO inventario_real (numero, temporada, modelo, precio, color, cliente, no_orden, piezas, imagen, observaciones, fecha_ingreso)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+      INSERT INTO inventario_real (numero, temporada, modelo, precio, color, cliente, no_orden, piezas, imagen, observaciones, fecha_ingreso, precio_plancha)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?)
     `, [
       numero ? String(numero) : null,
       req.body.temporada ? String(req.body.temporada) : null,
@@ -399,7 +400,8 @@ app.post('/api/inventario', authenticateToken, upload.single('imagenBtn'), async
       no_orden ? String(no_orden) : null,
       parseInt(piezas_en_proceso) || 0,
       finalImageUrl ? String(finalImageUrl) : null,
-      observaciones ? String(observaciones) : null
+      observaciones ? String(observaciones) : null,
+      parseFloat(String(precio_plancha).replace(/[^0-9.-]+/g,"")) || 0
     ]);
 
     res.json({ id: result.insertId, success: true });
@@ -423,7 +425,7 @@ app.put('/api/inventario/:id/imagen', upload.single('imagenBtn'), async (req, re
 });
 
 app.put('/api/inventario/:id', authenticateToken, upload.single('imagenBtn'), async (req, res) => {
-  let { numero, modelo, precio, color, cliente, no_orden, piezas_en_proceso, imagenUrl, imagen_actual, observaciones } = req.body;
+  let { numero, modelo, precio, color, cliente, no_orden, piezas_en_proceso, imagenUrl, imagen_actual, observaciones, precio_plancha } = req.body;
   const imagen = req.file ? await processImage(req.file) : (imagenUrl || imagen_actual || null);
   
   try {
@@ -442,7 +444,7 @@ app.put('/api/inventario/:id', authenticateToken, upload.single('imagenBtn'), as
 
     await db.query(`
       UPDATE inventario 
-      SET numero=?, modelo=?, precio=?, color=?, cliente=?, no_orden=?, piezas_en_proceso=?, imagen=?, observaciones=? 
+      SET numero=?, modelo=?, precio=?, color=?, cliente=?, no_orden=?, piezas_en_proceso=?, imagen=?, observaciones=?, precio_plancha=? 
       WHERE id=?
     `, [
       numero ? String(numero) : null,
@@ -454,6 +456,7 @@ app.put('/api/inventario/:id', authenticateToken, upload.single('imagenBtn'), as
       parseInt(piezas_en_proceso) || 0,
       imagen ? String(imagen) : null,
       observaciones ? String(observaciones) : null,
+      parseFloat(String(precio_plancha).replace(/[^0-9.-]+/g,"")) || 0,
       req.params.id
     ]);
 
@@ -462,6 +465,8 @@ app.put('/api/inventario/:id', authenticateToken, upload.single('imagenBtn'), as
     const numPrecio = parseFloat(String(precio).replace(/[^0-9.-]+/g,"")) || 0;
     if (old.precio !== numPrecio) changes.push(`Precio: ${old.precio} -> ${numPrecio}`);
     if (old.piezas_en_proceso !== piezas_en_proceso) changes.push(`Piezas: ${old.piezas_en_proceso} -> ${piezas_en_proceso}`);
+    const numPrecioPlancha = parseFloat(String(precio_plancha).replace(/[^0-9.-]+/g,"")) || 0;
+    if (old.precio_plancha !== numPrecioPlancha) changes.push(`Precio Plancha: ${old.precio_plancha} -> ${numPrecioPlancha}`);
     
     const desc = changes.length > 0 ? `Editó ${modelo}: ${changes.join(', ')}` : `Actualizó datos de ${modelo}`;
     await logActivity(req.user.id, 'EDIT', 'INVENTARIO', desc);
@@ -469,7 +474,7 @@ app.put('/api/inventario/:id', authenticateToken, upload.single('imagenBtn'), as
     // Automatically update the mirrored record in inventario_real
     const [updateResult] = await db.query(`
       UPDATE inventario_real 
-      SET numero=?, modelo=?, precio=?, color=?, cliente=?, no_orden=?, piezas=?, imagen=?, observaciones=?
+      SET numero=?, modelo=?, precio=?, color=?, cliente=?, no_orden=?, piezas=?, imagen=?, observaciones=?, precio_plancha=?
       WHERE no_orden=? AND modelo=?
     `, [
       numero ? String(numero) : null,
@@ -481,14 +486,15 @@ app.put('/api/inventario/:id', authenticateToken, upload.single('imagenBtn'), as
       parseInt(piezas_en_proceso) || 0,
       imagen ? String(imagen) : null,
       observaciones ? String(observaciones) : null,
+      parseFloat(String(precio_plancha).replace(/[^0-9.-]+/g,"")) || 0,
       old.no_orden || '',
       old.modelo
     ]);
 
     if (updateResult.affectedRows === 0) {
       await db.query(`
-        INSERT INTO inventario_real (numero, modelo, precio, color, cliente, no_orden, piezas, imagen, observaciones, fecha_ingreso)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+        INSERT INTO inventario_real (numero, modelo, precio, color, cliente, no_orden, piezas, imagen, observaciones, fecha_ingreso, precio_plancha)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?)
       `, [
         numero ? String(numero) : null,
         modelo ? String(modelo) : null,
@@ -498,7 +504,8 @@ app.put('/api/inventario/:id', authenticateToken, upload.single('imagenBtn'), as
         no_orden ? String(no_orden) : null,
         parseInt(piezas_en_proceso) || 0,
         imagen ? String(imagen) : null,
-        observaciones ? String(observaciones) : null
+        observaciones ? String(observaciones) : null,
+        parseFloat(String(precio_plancha).replace(/[^0-9.-]+/g,"")) || 0
       ]);
     }
 
@@ -683,7 +690,7 @@ app.get('/api/camiones/disponibles', authenticateToken, async (req, res) => {
       FROM produccion p
       JOIN maquileros m ON p.maquilero_id = m.id
       JOIN inventario i ON p.inventario_id = i.id
-      WHERE p.estado IN ('Terminado', 'Terminado Parcial') AND p.archivado = 0
+      WHERE p.estado IN ('Terminado', 'Terminado Parcial') AND p.archivado = 0 AND (p.es_extra = 0 OR p.es_extra IS NULL)
     `);
 
     const available = rows.map(r => {
@@ -746,7 +753,7 @@ app.post('/api/camiones', authenticateToken, async (req, res) => {
       // Check stock in produccion order (fallback to item.id if item.produccion_id is not provided)
       const prodId = item.produccion_id || item.id;
       const [prodRows] = await connection.query(
-        "SELECT cantidad, cantidad_recibida FROM produccion WHERE id = ?",
+        "SELECT p.cantidad, p.cantidad_recibida, i.precio_plancha FROM produccion p LEFT JOIN inventario i ON p.inventario_id = i.id WHERE p.id = ?",
         [prodId]
       );
       const prodRow = prodRows[0];
@@ -755,6 +762,7 @@ app.post('/api/camiones', authenticateToken, async (req, res) => {
       }
 
       const piezas_producidas = prodRow.cantidad_recibida !== null ? prodRow.cantidad_recibida : prodRow.cantidad;
+      const precioPlancha = prodRow.precio_plancha || 0.00;
       
       const [shippedRows] = await connection.query(
         "SELECT COALESCE(SUM(piezas), 0) as total FROM camion_detalles WHERE produccion_id = ?",
@@ -767,10 +775,10 @@ app.post('/api/camiones', authenticateToken, async (req, res) => {
         throw new Error(`Stock insuficiente para la orden del modelo ${item.modelo} (Disponible: ${disponible}, Requerido: ${piezas}).`);
       }
 
-      // Insert into camion_detalles including produccion_id
+      // Insert into camion_detalles including produccion_id and precio_plancha
       await connection.query(`
-        INSERT INTO camion_detalles (camion_id, numero, temporada, modelo, precio, color, cliente, no_orden, piezas, tallas_cantidades, produccion_id)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO camion_detalles (camion_id, numero, temporada, modelo, precio, color, cliente, no_orden, piezas, tallas_cantidades, produccion_id, precio_plancha)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `, [
         camionId,
         item.numero || null,
@@ -782,7 +790,8 @@ app.post('/api/camiones', authenticateToken, async (req, res) => {
         item.no_orden || null,
         piezas,
         JSON.stringify(tallas_cantidades),
-        prodId
+        prodId,
+        precioPlancha
       ]);
 
       // Deduct from inventario_real by matching no_orden and modelo
@@ -2878,6 +2887,181 @@ app.get('/api/reportes/plancha/pagos', async (req, res) => {
     doc.end();
   } catch (error) {
     console.error("Error generando reporte pagos plancha:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 10.5 REPORTE RESUMEN GENERAL DE PLANCHADORES EN PDF
+app.get('/api/reportes/plancha/resumen', async (req, res) => {
+  const { start, end } = req.query;
+  try {
+    const [planchadores] = await db.query("SELECT id, nombre FROM planchadores ORDER BY nombre ASC");
+    
+    let subtitleDate = "";
+    if (start && end) {
+      subtitleDate = `del ${start} al ${end}`;
+    } else if (start) {
+      subtitleDate = `desde ${start}`;
+    } else if (end) {
+      subtitleDate = `hasta ${end}`;
+    } else {
+      subtitleDate = "de todos los tiempos";
+    }
+
+    const rowsData = [];
+
+    for (const planchador of planchadores) {
+      // 1. Get works
+      let worksQuery = `
+        SELECT talla, color, total
+        FROM plancha_trabajos
+        WHERE planchador_id = ? AND estado = 'terminado'
+      `;
+      let worksParams = [planchador.id];
+      if (start && end) {
+        worksQuery += ` AND DATE(fecha_terminado) BETWEEN ? AND ?`;
+        worksParams.push(start, end);
+      } else if (start) {
+        worksQuery += ` AND DATE(fecha_terminado) >= ?`;
+        worksParams.push(start);
+      } else if (end) {
+        worksQuery += ` AND DATE(fecha_terminado) <= ?`;
+        worksParams.push(end);
+      }
+      
+      const [works] = await db.query(worksQuery, worksParams);
+
+      let regularWork = 0;
+      let cuadreDif = 0;
+      let pagoFijo = 0;
+
+      for (const w of works) {
+        const total = Number(w.total) || 0;
+        if (w.talla === 'AJUSTE') {
+          if (w.color && (w.color.includes('Cuadre') || w.color.includes('Diferencia'))) {
+            cuadreDif += total;
+          } else {
+            pagoFijo += total;
+          }
+        } else {
+          regularWork += total;
+        }
+      }
+
+      // 2. Get asistencias
+      let astQuery = `
+        SELECT monto FROM planchador_asistencias WHERE planchador_id = ?
+      `;
+      let astParams = [planchador.id];
+      if (start && end) {
+        astQuery += ` AND DATE(fecha) BETWEEN ? AND ?`;
+        astParams.push(start, end);
+      } else if (start) {
+        astQuery += ` AND DATE(fecha) >= ?`;
+        astParams.push(start);
+      } else if (end) {
+        astQuery += ` AND DATE(fecha) <= ?`;
+        astParams.push(end);
+      }
+      
+      const [asistencias] = await db.query(astQuery, astParams);
+      const asistenciasTotal = asistencias.reduce((sum, a) => sum + (Number(a.monto) || 0), 0);
+
+      // 3. Get payments
+      let payQuery = `
+        SELECT monto FROM planchador_pagos WHERE planchador_id = ?
+      `;
+      let payParams = [planchador.id];
+      if (start && end) {
+        payQuery += ` AND DATE(fecha) BETWEEN ? AND ?`;
+        payParams.push(start, end);
+      } else if (start) {
+        payQuery += ` AND DATE(fecha) >= ?`;
+        payParams.push(start);
+      } else if (end) {
+        payQuery += ` AND DATE(fecha) <= ?`;
+        payParams.push(end);
+      }
+      
+      const [payments] = await db.query(payQuery, payParams);
+      const pagadoTotal = payments.reduce((sum, p) => sum + (Number(p.monto) || 0), 0);
+
+      const ganadoTotal = regularWork + asistenciasTotal + pagoFijo + cuadreDif;
+      const pendienteTotal = ganadoTotal - pagadoTotal;
+
+      rowsData.push({
+        nombre: planchador.nombre.toUpperCase(),
+        regular: regularWork,
+        asistencias: asistenciasTotal,
+        pago_fijo: pagoFijo,
+        cuadre: cuadreDif,
+        ganado: ganadoTotal,
+        pagado: pagadoTotal,
+        pendiente: pendienteTotal
+      });
+    }
+
+    const doc = new PDFDocument({ margin: 20, size: 'A4', layout: 'landscape' });
+    res.setHeader('Content-disposition', 'attachment; filename="Resumen_General_Plancha.pdf"');
+    res.setHeader('Content-type', 'application/pdf');
+
+    doc.pipe(res);
+
+    try {
+      const logoPath = path.join(__dirname, '..', 'frontend', 'public', 'logo.png');
+      if (fs.existsSync(logoPath)) {
+        doc.image(logoPath, 25, 20, { width: 85 });
+      }
+    } catch (e) {}
+
+    doc.y = 80;
+
+    const localNow = new Date(new Date().getTime() - 6 * 60 * 60 * 1000);
+
+    const formatDateUTC = (dateVal) => {
+      if (!dateVal) return '';
+      let dateStr = (dateVal instanceof Date) ? dateVal.toISOString() : String(dateVal);
+      const cleanDate = dateStr.split('T')[0];
+      const parts = cleanDate.split('-');
+      if (parts.length < 3) return dateStr;
+      const [year, month, day] = parts;
+      return `${parseInt(day, 10)}/${parseInt(month, 10)}/${year}`;
+    };
+
+    const tableConfig = {
+      title: "Resumen General de Planchadores",
+      subtitle: `Resumen de actividades y saldos ${subtitleDate} - Generado el ${formatDateUTC(localNow)}`,
+      headers: [
+        { label: "PLANCHADOR", property: "nombre", width: 140 },
+        { label: "PLANCHA REGULAR", property: "regular", width: 90 },
+        { label: "ASISTENCIAS", property: "asistencias", width: 80 },
+        { label: "PAGO FIJO", property: "pago_fijo", width: 80 },
+        { label: "DIF. CUADRE", property: "cuadre", width: 80 },
+        { label: "TOTAL GANADO", property: "ganado", width: 90 },
+        { label: "TOTAL PAGADO", property: "pagado", width: 90 },
+        { label: "SALDO PENDIENTE", property: "pendiente", width: 95 }
+      ],
+      datas: rowsData.map(r => ({
+        nombre: r.nombre,
+        regular: '$' + r.regular.toFixed(2),
+        asistencias: '$' + r.asistencias.toFixed(2),
+        pago_fijo: '$' + r.pago_fijo.toFixed(2),
+        cuadre: (r.cuadre >= 0 ? '+' : '') + '$' + r.cuadre.toFixed(2),
+        ganado: '$' + r.ganado.toFixed(2),
+        pagado: '$' + r.pagado.toFixed(2),
+        pendiente: '$' + r.pendiente.toFixed(2)
+      })),
+      options: { padding: 5 }
+    };
+
+    await doc.table(tableConfig, {
+      prepareHeader: () => doc.font("Helvetica-Bold").fontSize(9),
+      prepareRow: () => doc.font("Helvetica").fontSize(8)
+    });
+
+    doc.end();
+  } catch (error) {
+    console.error("Error generando resumen plancha:", error);
     res.status(500).json({ error: error.message });
   }
 });
