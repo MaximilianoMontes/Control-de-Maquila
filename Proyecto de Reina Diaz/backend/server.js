@@ -2546,16 +2546,16 @@ app.post('/api/plancha/ajustes', authenticateToken, async (req, res) => {
 
     const targetDateStr = fecha ? fecha : null;
 
-    // Validar si ya se registró un ajuste en esta fecha para este planchador
+    // Validar si ya se registró un ajuste con la misma descripción en esta fecha para este planchador
     const checkQuery = targetDateStr
-      ? `SELECT id FROM plancha_trabajos WHERE planchador_id = ? AND (camion_detalles_id = 0 OR camion_detalles_id IS NULL) AND DATE(fecha_creacion) = ?`
-      : `SELECT id FROM plancha_trabajos WHERE planchador_id = ? AND (camion_detalles_id = 0 OR camion_detalles_id IS NULL) AND DATE(fecha_creacion) = CURDATE()`;
+      ? `SELECT id FROM plancha_trabajos WHERE planchador_id = ? AND (camion_detalles_id = 0 OR camion_detalles_id IS NULL) AND DATE(fecha_creacion) = ? AND color = ?`
+      : `SELECT id FROM plancha_trabajos WHERE planchador_id = ? AND (camion_detalles_id = 0 OR camion_detalles_id IS NULL) AND DATE(fecha_creacion) = CURDATE() AND color = ?`;
     
-    const checkParams = targetDateStr ? [planchador_id, targetDateStr] : [planchador_id];
+    const checkParams = targetDateStr ? [planchador_id, targetDateStr, razon] : [planchador_id, razon];
     const [existing] = await connection.query(checkQuery, checkParams);
 
     if (existing.length > 0) {
-      throw new Error(`Ya se registró un ajuste o pago fijo para este planchador en la fecha seleccionada (${targetDateStr || 'hoy'}). Solo se permite uno por día.`);
+      throw new Error(`Ya se registró un ajuste o pago fijo con la descripción "${razon}" para este planchador en la fecha seleccionada (${targetDateStr || 'hoy'}).`);
     }
 
     const adjustmentDate = targetDateStr ? `${targetDateStr} 12:00:00` : new Date();
