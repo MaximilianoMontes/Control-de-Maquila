@@ -775,22 +775,6 @@ async function initializeDatabase() {
       console.error("Error en migración de backfill pago_id:", e);
     }
 
-    // TEMPORARY: Clear plancha tables for testing from scratch
-    try {
-      console.log('--- MIGRACIÓN TEMPORAL: Borrando tablas de plancha ---');
-      await connection.query("DELETE FROM plancha_trabajos");
-      await connection.query("DELETE FROM planchador_asistencias");
-      await connection.query("DELETE FROM planchador_pagos");
-      await connection.query("DELETE FROM planchadores");
-      await connection.query("ALTER TABLE planchadores AUTO_INCREMENT = 1");
-      await connection.query("ALTER TABLE planchador_pagos AUTO_INCREMENT = 1");
-      await connection.query("ALTER TABLE plancha_trabajos AUTO_INCREMENT = 1");
-      await connection.query("ALTER TABLE planchador_asistencias AUTO_INCREMENT = 1");
-      console.log('--- TABLAS DE PLANCHA BORRADAS Y IDS REINICIADOS ---');
-    } catch (e) {
-      console.error("Error al borrar tablas de plancha:", e);
-    }
-
     connection.release();
     console.log('Database initialization complete.');
   } catch (error) {
