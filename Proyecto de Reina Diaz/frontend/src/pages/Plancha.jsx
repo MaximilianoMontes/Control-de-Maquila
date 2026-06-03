@@ -19,7 +19,8 @@ import {
   History,
   Download,
   Calculator,
-  FileText
+  FileText,
+  Edit3
 } from 'lucide-react';
 import { useSettings } from '../context/SettingsContext';
 import API_URL from '../config';
@@ -254,7 +255,7 @@ export default function Plancha() {
   // --- MÉTODOS VERIFICACIÓN (MODELOS) ---
   const handleAbrirVerificacion = (modelo) => {
     setModeloAVerificar(modelo);
-    setPrecioPlanchaInput('');
+    setPrecioPlanchaInput(modelo.precio_plancha !== undefined && modelo.precio_plancha !== null ? String(modelo.precio_plancha) : '');
     setMostrarVerificarModal(true);
   };
 
@@ -268,11 +269,12 @@ export default function Plancha() {
       }, { headers: { Authorization: `Bearer ${token}` } });
 
       setMostrarVerificarModal(false);
+      const isEditing = modeloAVerificar.verificado;
       setModeloAVerificar(null);
       setPrecioPlanchaInput('');
       fetchModelosCamion();
       fetchModelosDisponibles();
-      alert('Modelo verificado y desbloqueado para Plancha');
+      alert(isEditing ? 'Precio de planchado actualizado con éxito' : 'Modelo verificado y desbloqueado para Plancha');
     } catch (e) {
       console.error(e);
       alert('Error al verificar modelo');
@@ -849,9 +851,18 @@ export default function Plancha() {
                   {/* Acciones */}
                   <div style={{ marginTop: 'auto', paddingTop: '0.5rem' }}>
                     {m.verificado ? (
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.9rem' }}>
-                        <span style={{ color: '#94a3b8' }}>Pago de Plancha:</span>
-                        <strong style={{ color: '#34d399', fontSize: '1.1rem' }}>{formatCurrency(m.precio_plancha)} <span style={{ fontSize: '0.75rem', fontWeight: 'normal', color: '#64748b' }}>/ pza</span></strong>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.9rem' }}>
+                          <span style={{ color: '#94a3b8' }}>Pago de Plancha:</span>
+                          <strong style={{ color: '#34d399', fontSize: '1.1rem' }}>{formatCurrency(m.precio_plancha)} <span style={{ fontSize: '0.75rem', fontWeight: 'normal', color: '#64748b' }}>/ pza</span></strong>
+                        </div>
+                        <button 
+                          className="btn btn-secondary" 
+                          style={{ width: '100%', padding: '6px', fontSize: '0.8rem', borderColor: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
+                          onClick={() => handleAbrirVerificacion(m)}
+                        >
+                          <Edit3 size={12} /> Editar Precio
+                        </button>
                       </div>
                     ) : (
                       <button 
@@ -1728,7 +1739,7 @@ export default function Plancha() {
             
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
               <h2 style={{ margin: 0, fontSize: '1.5rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <ShieldCheck color="#10b981" /> Confirmar Llegada
+                <ShieldCheck color="#10b981" /> {modeloAVerificar.verificado ? 'Editar Precio de Planchado' : 'Confirmar Llegada'}
               </h2>
               <button 
                 onClick={() => {
@@ -1840,8 +1851,8 @@ export default function Plancha() {
                 >
                   Cancelar
                 </button>
-                <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>
-                  Confirmar Llegada
+                 <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>
+                  {modeloAVerificar.verificado ? 'Guardar Cambios' : 'Confirmar Llegada'}
                 </button>
               </div>
             </form>
