@@ -861,11 +861,7 @@ app.post('/api/camiones', authenticateToken, async (req, res) => {
         [piezas, item.no_orden || '', item.modelo || '']
       );
 
-      // Clean up if stock is 0
-      await connection.query(
-        "DELETE FROM inventario_real WHERE no_orden = ? AND modelo = ? AND piezas <= 0",
-        [item.no_orden || '', item.modelo || '']
-      );
+
 
       // Log activity
       const descLog = `Subió al camión #${camionId} (${fecha_envio}) ${piezas} piezas del modelo ${item.modelo} (Tallas: ${JSON.stringify(tallas_cantidades)})`;

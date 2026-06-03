@@ -710,19 +710,20 @@ async function initializeDatabase() {
       // Ignorar si ya existe
     }
 
-    // ONE-OFF TEST DATA CLEANUP MIGRATION
+    // Restore missing cuts to inventario_real with stock 0 so they remain visible in Inventory
     try {
-      console.log("ONE-OFF: Starting cleanup of truck and plancha test data...");
-      await connection.query("SET FOREIGN_KEY_CHECKS = 0");
-      await connection.query("DELETE FROM plancha_trabajos");
-      await connection.query("DELETE FROM planchador_pagos");
-      await connection.query("DELETE FROM planchador_asistencias");
-      await connection.query("DELETE FROM camion_detalles");
-      await connection.query("DELETE FROM camiones");
-      await connection.query("SET FOREIGN_KEY_CHECKS = 1");
-      console.log("ONE-OFF: Cleanup completed successfully!");
-    } catch (err) {
-      console.error("ONE-OFF: Error executing cleanup:", err);
+      console.log("Migration: Restoring missing fully-shipped cuts to inventario_real with pieces = 0...");
+      await connection.query(`
+        INSERT INTO inventario_real (numero, modelo, precio, color, cliente, no_orden, piezas, imagen, observaciones, fecha_ingreso, precio_plancha)
+        SELECT i.numero, i.modelo, i.precio, i.color, i.cliente, i.no_orden, 0, i.imagen, i.observaciones, i.fecha_creacion, i.precio_plancha
+        FROM inventario i
+        WHERE NOT EXISTS (
+          SELECT 1 FROM inventario_real ir WHERE ir.no_orden = i.no_orden AND ir.modelo = i.modelo
+        )
+      `);
+      console.log("Migration: Missing cuts successfully restored to inventario_real.");
+    } catch (e) {
+      console.error("Migration Error: Failed to restore missing cuts to inventario_real:", e);
     }
 
     connection.release();
