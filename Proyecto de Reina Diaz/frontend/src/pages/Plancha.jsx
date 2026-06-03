@@ -1275,16 +1275,63 @@ export default function Plancha() {
                   </select>
                 </div>
 
-                {planchadorPagoDetalle && (
-                  <div style={{ background: 'rgba(0,0,0,0.02)', padding: '1rem', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '0.4rem', fontSize: '0.95rem' }}>
-                    <p style={{ margin: 0 }}><strong>Total Ganado:</strong> {formatCurrency(planchadorPagoDetalle.ganado)}</p>
-                    <p style={{ margin: 0, color: '#34d399' }}><strong>Total Pagado:</strong> {formatCurrency(planchadorPagoDetalle.pagado)}</p>
-                    <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,0.05)', margin: '0.4rem 0' }} />
-                    <p style={{ margin: 0, fontSize: '1.1rem', color: planchadorPagoDetalle.pendiente > 0 ? '#ef4444' : '#34d399' }}>
-                      <strong>Saldo Pendiente: {formatCurrency(planchadorPagoDetalle.pendiente)}</strong>
-                    </p>
-                  </div>
-                )}
+                {planchadorPagoDetalle && (() => {
+                  const trabajos = planchadorPagoDetalle.trabajosPendientes || [];
+                  const asistenciasList = planchadorPagoDetalle.asistenciasPendientes || [];
+                  
+                  const regularWork = trabajos
+                    .filter(pt => pt.talla !== 'AJUSTE')
+                    .reduce((sum, pt) => sum + parseFloat(pt.total || 0), 0);
+                    
+                  const cuadreDif = trabajos
+                    .filter(pt => pt.talla === 'AJUSTE' && (pt.color?.includes('Cuadre') || pt.color?.includes('Diferencia')))
+                    .reduce((sum, pt) => sum + parseFloat(pt.total || 0), 0);
+                    
+                  const pagoFijoVal = trabajos
+                    .filter(pt => pt.talla === 'AJUSTE' && !(pt.color?.includes('Cuadre') || pt.color?.includes('Diferencia')))
+                    .reduce((sum, pt) => sum + parseFloat(pt.total || 0), 0);
+                    
+                  const asistenciasVal = asistenciasList.reduce((sum, pa) => sum + parseFloat(pa.monto || 0), 0);
+
+                  return (
+                    <div style={{ background: 'rgba(0,0,0,0.02)', padding: '1rem', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '0.4rem', fontSize: '0.95rem' }}>
+                      <p style={{ margin: 0 }}><strong>Total Ganado:</strong> {formatCurrency(planchadorPagoDetalle.ganado)}</p>
+                      
+                      {regularWork > 0 && (
+                        <p style={{ margin: 0, fontSize: '0.85rem', color: '#94a3b8', paddingLeft: '1rem' }}>
+                          • Plancha Regular: <span style={{ color: '#f8fafc' }}>{formatCurrency(regularWork)}</span>
+                        </p>
+                      )}
+                      {cuadreDif !== 0 && (
+                        <p style={{ margin: 0, fontSize: '0.85rem', color: '#94a3b8', paddingLeft: '1rem' }}>
+                          • Diferencia Cuadre: <span style={{ color: cuadreDif > 0 ? '#34d399' : '#ef4444', fontWeight: 'bold' }}>
+                            {cuadreDif > 0 ? '+' : ''}{formatCurrency(cuadreDif)}
+                          </span>
+                        </p>
+                      )}
+                      {pagoFijoVal !== 0 && (
+                        <p style={{ margin: 0, fontSize: '0.85rem', color: '#94a3b8', paddingLeft: '1rem' }}>
+                          • Pago Fijo / Apoyos: <span style={{ color: '#60a5fa', fontWeight: 'bold' }}>
+                            {pagoFijoVal > 0 ? '+' : ''}{formatCurrency(pagoFijoVal)}
+                          </span>
+                        </p>
+                      )}
+                      {asistenciasVal > 0 && (
+                        <p style={{ margin: 0, fontSize: '0.85rem', color: '#94a3b8', paddingLeft: '1rem' }}>
+                          • Asistencias: <span style={{ color: '#10b981' }}>
+                            +{formatCurrency(asistenciasVal)}
+                          </span>
+                        </p>
+                      )}
+
+                      <p style={{ margin: 0, color: '#34d399' }}><strong>Total Pagado:</strong> {formatCurrency(planchadorPagoDetalle.pagado)}</p>
+                      <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,0.05)', margin: '0.4rem 0' }} />
+                      <p style={{ margin: 0, fontSize: '1.1rem', color: planchadorPagoDetalle.pendiente > 0 ? '#ef4444' : '#34d399' }}>
+                        <strong>Saldo Pendiente: {formatCurrency(planchadorPagoDetalle.pendiente)}</strong>
+                      </p>
+                    </div>
+                  );
+                })()}
 
                 <div className="form-group">
                   <label className="form-label">Tipo de Pago</label>
