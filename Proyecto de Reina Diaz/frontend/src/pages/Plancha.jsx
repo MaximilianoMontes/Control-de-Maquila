@@ -18,7 +18,8 @@ import {
   X,
   History,
   Download,
-  Calculator
+  Calculator,
+  FileText
 } from 'lucide-react';
 import { useSettings } from '../context/SettingsContext';
 import API_URL from '../config';
@@ -655,6 +656,16 @@ export default function Plancha() {
 
   const handleDownloadReporte = () => {
     let url = `${API_URL}/api/reportes/plancha/pagos`;
+    const params = new URLSearchParams();
+    if (reportStart) params.append('start', reportStart);
+    if (reportEnd) params.append('end', reportEnd);
+    const query = params.toString();
+    if (query) url += `?${query}`;
+    window.open(url, '_blank');
+  };
+
+  const handleDownloadResumen = () => {
+    let url = `${API_URL}/api/reportes/plancha/resumen`;
     const params = new URLSearchParams();
     if (reportStart) params.append('start', reportStart);
     if (reportEnd) params.append('end', reportEnd);
@@ -1423,6 +1434,14 @@ export default function Plancha() {
                   onClick={handleDownloadReporte}
                 >
                   <Download size={16} /> Descargar Reporte (PDF)
+                </button>
+                <button 
+                  type="button" 
+                  className="btn btn-secondary" 
+                  style={{ width: '100%', marginTop: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', borderColor: 'rgba(14, 165, 233, 0.4)', color: '#0ea5e9' }}
+                  onClick={handleDownloadResumen}
+                >
+                  <FileText size={16} /> Descargar Resumen General (PDF)
                 </button>
               </div>
             </div>

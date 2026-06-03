@@ -56,7 +56,8 @@ async function initializeDatabase() {
         observaciones TEXT,
         es_reprogramacion TINYINT(1) DEFAULT 0,
         en_inventario TINYINT(1) DEFAULT 0,
-        fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        precio_plancha DECIMAL(10, 2) DEFAULT 0.00
       );
     `);
 
@@ -73,7 +74,8 @@ async function initializeDatabase() {
         piezas INT DEFAULT 0,
         imagen TEXT,
         observaciones TEXT,
-        fecha_ingreso TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        fecha_ingreso TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        precio_plancha DECIMAL(10, 2) DEFAULT 0.00
       );
     `);
 
@@ -773,6 +775,21 @@ async function initializeDatabase() {
       console.log(`Migración completada. Trabajos asociados: ${updatedWorks}, Asistencias asociadas: ${updatedAsistencias}`);
     } catch (e) {
       console.error("Error en migración de backfill pago_id:", e);
+    }
+
+    // Migration: Add precio_plancha to inventario and inventario_real
+    try {
+      await connection.query("ALTER TABLE inventario ADD COLUMN precio_plancha DECIMAL(10, 2) DEFAULT 0.00");
+      console.log("Migration: precio_plancha column added to inventario");
+    } catch (e) {
+      // Ignorar si ya existe
+    }
+
+    try {
+      await connection.query("ALTER TABLE inventario_real ADD COLUMN precio_plancha DECIMAL(10, 2) DEFAULT 0.00");
+      console.log("Migration: precio_plancha column added to inventario_real");
+    } catch (e) {
+      // Ignorar si ya existe
     }
 
     connection.release();

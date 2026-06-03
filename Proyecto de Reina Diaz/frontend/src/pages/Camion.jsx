@@ -65,9 +65,23 @@ export default function Camion() {
   const [searchTerm, setSearchTerm] = useState('');
 
   // Active Truck Load State
-  const [cargo, setCargo] = useState([]); // Array of { ...stockItem, piezas: N, tallas_cantidades: { "05": 10, ... } }
+  const [cargo, setCargo] = useState(() => {
+    const saved = localStorage.getItem('camion_cargo_draft');
+    return saved ? JSON.parse(saved) : [];
+  }); // Array of { ...stockItem, piezas: N, tallas_cantidades: { "05": 10, ... } }
   const [fechaEnvio, setFechaEnvio] = useState(new Date().toISOString().split('T')[0]);
-  const [observaciones, setObservaciones] = useState('');
+  const [observaciones, setObservaciones] = useState(() => {
+    return localStorage.getItem('camion_observaciones_draft') || '';
+  });
+
+  // Save to localStorage on change
+  useEffect(() => {
+    localStorage.setItem('camion_cargo_draft', JSON.stringify(cargo));
+  }, [cargo]);
+
+  useEffect(() => {
+    localStorage.setItem('camion_observaciones_draft', observaciones);
+  }, [observaciones]);
 
   // Modal State for Size Entry
   const [isModalOpen, setIsModalOpen] = useState(false);
