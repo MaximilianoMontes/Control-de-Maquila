@@ -142,10 +142,10 @@ export default function Plancha() {
 
   // Recalcular cuadre automáticamente cuando cambien las fechas o el planchador en el modal de cuadre
   useEffect(() => {
-    if (showCuadreModal && cuadrePlanchadorId && cuadreStart && cuadreEnd) {
+    if (showCuadreModal && cuadrePlanchadorId && cuadreStart) {
       handleCalcularCuadre(true);
     }
-  }, [showCuadreModal, cuadrePlanchadorId, cuadreStart, cuadreEnd]);
+  }, [showCuadreModal, cuadrePlanchadorId, cuadreStart]);
 
   const fetchPlanchadores = async () => {
     try {
@@ -596,13 +596,13 @@ export default function Plancha() {
   };
 
   const handleCalcularCuadre = async (silente = false) => {
-    if (!cuadrePlanchadorId || !cuadreStart || !cuadreEnd) {
+    if (!cuadrePlanchadorId || !cuadreStart) {
       if (!silente) alert('Faltan datos para realizar la consulta del cuadre');
       return;
     }
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.get(`${API_URL}/api/planchadores/${cuadrePlanchadorId}/piezas-rango?start=${cuadreStart}&end=${cuadreEnd}`, {
+      const res = await axios.get(`${API_URL}/api/planchadores/${cuadrePlanchadorId}/piezas-rango?start=${cuadreStart}&end=${cuadreStart}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setCuadrePlanchaReal(res.data.total_ganado || 0);
@@ -616,6 +616,11 @@ export default function Plancha() {
     const diaAdelantadoVal = parseFloat(cuadreDiaAdelantado) || 0;
     const planchaRealVal = parseFloat(cuadrePlanchaReal) || 0;
     const finalMonto = planchaRealVal - diaAdelantadoVal;
+
+    if (!cuadreEnd) {
+      alert('Debe elegir la fecha en la cual se aplicará la diferencia.');
+      return;
+    }
 
     if (finalMonto === 0) {
       alert('La diferencia es 0, no hay ajuste necesario.');
