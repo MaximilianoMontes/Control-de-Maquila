@@ -65,23 +65,12 @@ export default function Camion() {
   const [searchTerm, setSearchTerm] = useState('');
 
   // Active Truck Load State
-  const [cargo, setCargo] = useState(() => {
-    const saved = localStorage.getItem('camion_cargo_draft');
-    return saved ? JSON.parse(saved) : [];
-  }); // Array of { ...stockItem, piezas: N, tallas_cantidades: { "05": 10, ... } }
+  const [cargo, setCargo] = useState([]); // Array of { ...stockItem, piezas: N, tallas_cantidades: { "05": 10, ... } }
   const [fechaEnvio, setFechaEnvio] = useState(new Date().toISOString().split('T')[0]);
-  const [observaciones, setObservaciones] = useState(() => {
-    return localStorage.getItem('camion_observaciones_draft') || '';
-  });
+  const [observaciones, setObservaciones] = useState('');
 
-  // Save to localStorage on change
-  useEffect(() => {
-    localStorage.setItem('camion_cargo_draft', JSON.stringify(cargo));
-  }, [cargo]);
-
-  useEffect(() => {
-    localStorage.setItem('camion_observaciones_draft', observaciones);
-  }, [observaciones]);
+  const [draftLoaded, setDraftLoaded] = useState(false);
+  const [savingStatus, setSavingStatus] = useState(''); // '', 'saving', 'saved', 'error'
 
   // Modal State for Size Entry
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -108,6 +97,17 @@ export default function Camion() {
       // Fetch history of sent trucks
       const historyRes = await axios.get(`${API}/api/camiones`, { headers });
       setHistory(historyRes.data);
+
+      // Fetch draft from database
+      const draftRes = await axios.get(`${API}/api/camiones/borrador`, { headers });
+      if (draftRes.data) {
+        setCargo(draftRes.data.cargo || []);
+        setObservaciones(draftRes.data.observaciones || '');
+        if (draftRes.data.fecha_envio) {
+          setFechaEnvio(draftRes.data.fecha_envio);
+        }
+      }
+      setDraftLoaded(true);
     } catch (e) {
       console.error(e);
       alert(t('prod.alertGenericError') || 'Error al obtener datos');
@@ -119,6 +119,34 @@ export default function Camion() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  // Save draft to database on change
+  useEffect(() => {
+    if (!draftLoaded) return;
+
+    const saveDraft = async () => {
+      try {
+        setSavingStatus('saving');
+        const token = localStorage.getItem('token');
+        const headers = { Authorization: `Bearer ${token}` };
+        await axios.post(`${API}/api/camiones/borrador`, {
+          cargo,
+          observaciones,
+          fecha_envio: fechaEnvio
+        }, { headers });
+        setSavingStatus('saved');
+      } catch (err) {
+        console.error("Error saving draft to DB:", err);
+        setSavingStatus('error');
+      }
+    };
+
+    const delayDebounce = setTimeout(() => {
+      saveDraft();
+    }, 800);
+
+    return () => clearTimeout(delayDebounce);
+  }, [cargo, observaciones, fechaEnvio, draftLoaded]);
 
   // Modal Actions
   const openCargoModal = (item, cargoIdx = null) => {
@@ -285,10 +313,14 @@ export default function Camion() {
       
       alert(t('camion.shipSuccess') || '¡Camión enviado con éxito!');
       
+      // Prevent auto-save from writing an empty draft back
+      setDraftLoaded(false);
+
       // Reset active truck
       setCargo([]);
       setObservaciones('');
       setFechaEnvio(new Date().toISOString().split('T')[0]);
+      setSavingStatus('');
       
       // Refresh
       fetchData();
@@ -438,6 +470,21 @@ export default function Camion() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <h2 style={{ fontSize: '1.25rem', margin: 0, fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <Truck size={22} color="var(--color-primary)" /> {t('camion.cargoArea')}
+              {savingStatus === 'saving' && (
+                <span style={{ fontSize: '0.75rem', color: '#fbbf24', fontWeight: 'normal', display: 'inline-flex', alignItems: 'center', gap: '4px', marginLeft: '0.5rem', background: 'rgba(245, 158, 11, 0.1)', padding: '2px 8px', borderRadius: '12px' }}>
+                  🔄 Guardando...
+                </span>
+              )}
+              {savingStatus === 'saved' && (
+                <span style={{ fontSize: '0.75rem', color: '#34d399', fontWeight: 'normal', display: 'inline-flex', alignItems: 'center', gap: '4px', marginLeft: '0.5rem', background: 'rgba(52, 211, 153, 0.1)', padding: '2px 8px', borderRadius: '12px' }}>
+                  ✓ Guardado
+                </span>
+              )}
+              {savingStatus === 'error' && (
+                <span style={{ fontSize: '0.75rem', color: '#f87171', fontWeight: 'normal', display: 'inline-flex', alignItems: 'center', gap: '4px', marginLeft: '0.5rem', background: 'rgba(248, 113, 113, 0.1)', padding: '2px 8px', borderRadius: '12px' }}>
+                  ⚠️ Error
+                </span>
+              )}
             </h2>
             {cargo.length > 0 && (
               <span className="badge badge-success" style={{ fontWeight: 700 }}>

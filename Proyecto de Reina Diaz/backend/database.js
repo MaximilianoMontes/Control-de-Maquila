@@ -167,6 +167,17 @@ async function initializeDatabase() {
       );
     `);
 
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS camion_borrador (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NULL,
+        cargo LONGTEXT NOT NULL,
+        observaciones TEXT NULL,
+        fecha_envio VARCHAR(50) NULL,
+        fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      );
+    `);
+
     // Migraciones
     try {
       await connection.query("ALTER TABLE camion_detalles ADD COLUMN produccion_id INT DEFAULT NULL");

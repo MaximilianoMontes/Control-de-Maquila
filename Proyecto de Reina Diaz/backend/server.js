@@ -709,6 +709,67 @@ app.get('/api/camiones/disponibles', authenticateToken, async (req, res) => {
   }
 });
 
+// GET TRUCK LOAD DRAFT
+app.get('/api/camiones/borrador', authenticateToken, async (req, res) => {
+  const allowedRoles = ['admin', 'produccion1', 'produccion2'];
+  if (!allowedRoles.includes(req.user.role)) {
+    return res.status(403).json({ error: 'No autorizado para esta sección' });
+  }
+  try {
+    const [rows] = await db.query(
+      "SELECT cargo, observaciones, fecha_envio FROM camion_borrador WHERE user_id = ? OR user_id IS NULL ORDER BY id DESC LIMIT 1",
+      [req.user.id]
+    );
+    if (rows.length > 0) {
+      let parsedCargo = [];
+      try {
+        parsedCargo = JSON.parse(rows[0].cargo);
+      } catch (e) {
+        parsedCargo = [];
+      }
+      res.json({
+        cargo: parsedCargo,
+        observaciones: rows[0].observaciones || '',
+        fecha_envio: rows[0].fecha_envio || ''
+      });
+    } else {
+      res.json({ cargo: [], observaciones: '', fecha_envio: '' });
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// SAVE TRUCK LOAD DRAFT
+app.post('/api/camiones/borrador', authenticateToken, async (req, res) => {
+  const allowedRoles = ['admin', 'produccion1', 'produccion2'];
+  if (!allowedRoles.includes(req.user.role)) {
+    return res.status(403).json({ error: 'No autorizado para esta sección' });
+  }
+  const { cargo, observaciones, fecha_envio } = req.body;
+  const connection = await db.getConnection();
+  try {
+    await connection.beginTransaction();
+    // Delete any existing draft for this user
+    await connection.query(
+      "DELETE FROM camion_borrador WHERE user_id = ? OR user_id IS NULL",
+      [req.user.id]
+    );
+    // Insert new draft
+    await connection.query(
+      "INSERT INTO camion_borrador (user_id, cargo, observaciones, fecha_envio) VALUES (?, ?, ?, ?)",
+      [req.user.id, JSON.stringify(cargo || []), observaciones || '', fecha_envio || '']
+    );
+    await connection.commit();
+    res.json({ success: true });
+  } catch (error) {
+    await connection.rollback();
+    res.status(500).json({ error: error.message });
+  } finally {
+    connection.release();
+  }
+});
+
 app.post('/api/camiones', authenticateToken, async (req, res) => {
   const allowedRoles = ['admin', 'produccion1', 'produccion2'];
   if (!allowedRoles.includes(req.user.role)) {
@@ -813,6 +874,9 @@ app.post('/api/camiones', authenticateToken, async (req, res) => {
         [req.user.id, descLog]
       );
     }
+
+    // Clear draft for this user upon checkout success
+    await connection.query("DELETE FROM camion_borrador WHERE user_id = ? OR user_id IS NULL", [req.user.id]);
 
     await connection.commit();
     res.json({ success: true, camionId });
