@@ -631,7 +631,8 @@ export default function Plancha() {
       await axios.post(`${API_URL}/api/plancha/ajustes`, {
         planchador_id: cuadrePlanchadorId,
         razon: descRazon,
-        monto: finalMonto
+        monto: finalMonto,
+        fecha: cuadreEnd
       }, { headers: { Authorization: `Bearer ${token}` } });
 
       alert(`Cuadre aplicado correctamente: Diferencia de ${formatCurrency(finalMonto)}`);
@@ -2007,7 +2008,7 @@ export default function Plancha() {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div className="form-group">
-                  <label className="form-label">Fecha de Inicio</label>
+                  <label className="form-label">Día adelantado</label>
                   <input 
                     type="date" 
                     required
@@ -2017,7 +2018,7 @@ export default function Plancha() {
                   />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Fecha Fin</label>
+                  <label className="form-label">Aplicar diferencia el día</label>
                   <input 
                     type="date" 
                     required

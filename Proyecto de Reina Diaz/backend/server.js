@@ -2531,7 +2531,7 @@ app.post('/api/planchadores/:id/asistencia', authenticateToken, async (req, res)
 
 // 10.2 REGISTRAR AJUSTE / PAGO FIJO DE PLANCHADOR
 app.post('/api/plancha/ajustes', authenticateToken, async (req, res) => {
-  const { planchador_id, razon, monto } = req.body;
+  const { planchador_id, razon, monto, fecha } = req.body;
   if (!planchador_id || !razon || monto === undefined) {
     return res.status(400).json({ error: 'Faltan parámetros requeridos' });
   }
@@ -2544,29 +2544,35 @@ app.post('/api/plancha/ajustes', authenticateToken, async (req, res) => {
     const planchador = planchadores[0];
     if (!planchador) throw new Error('Planchador no encontrado');
 
-    // Validar si ya se registró un ajuste hoy para este planchador
-    const [existing] = await connection.query(`
-      SELECT id FROM plancha_trabajos 
-      WHERE planchador_id = ? 
-        AND (camion_detalles_id = 0 OR camion_detalles_id IS NULL) 
-        AND DATE(fecha_creacion) = CURDATE()
-    `, [planchador_id]);
+    const targetDateStr = fecha ? fecha : null;
+
+    // Validar si ya se registró un ajuste en esta fecha para este planchador
+    const checkQuery = targetDateStr
+      ? `SELECT id FROM plancha_trabajos WHERE planchador_id = ? AND (camion_detalles_id = 0 OR camion_detalles_id IS NULL) AND DATE(fecha_creacion) = ?`
+      : `SELECT id FROM plancha_trabajos WHERE planchador_id = ? AND (camion_detalles_id = 0 OR camion_detalles_id IS NULL) AND DATE(fecha_creacion) = CURDATE()`;
+    
+    const checkParams = targetDateStr ? [planchador_id, targetDateStr] : [planchador_id];
+    const [existing] = await connection.query(checkQuery, checkParams);
 
     if (existing.length > 0) {
-      throw new Error('Ya se registró un ajuste o pago fijo para este planchador el día de hoy. Solo se permite uno por día.');
+      throw new Error(`Ya se registró un ajuste o pago fijo para este planchador en la fecha seleccionada (${targetDateStr || 'hoy'}). Solo se permite uno por día.`);
     }
+
+    const adjustmentDate = targetDateStr ? `${targetDateStr} 12:00:00` : new Date();
 
     // Insertar como un trabajo especial en plancha_trabajos
     await connection.query(`
       INSERT INTO plancha_trabajos 
-      (planchador_id, camion_detalles_id, talla, piezas, burro_numero, estado, precio_unitario, neto, total, color, fecha_terminado)
-      VALUES (?, NULL, 'AJUSTE', 1, 0, 'terminado', ?, ?, ?, ?, NOW())
+      (planchador_id, camion_detalles_id, talla, piezas, burro_numero, estado, precio_unitario, neto, total, color, fecha_terminado, fecha_creacion)
+      VALUES (?, NULL, 'AJUSTE', 1, 0, 'terminado', ?, ?, ?, ?, ?, ?)
     `, [
       planchador_id,
       monto,
       monto,
       monto,
-      razon
+      razon,
+      adjustmentDate,
+      adjustmentDate
     ]);
 
     await connection.commit();
