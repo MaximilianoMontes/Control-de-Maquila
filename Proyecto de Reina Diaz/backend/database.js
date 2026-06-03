@@ -792,6 +792,21 @@ async function initializeDatabase() {
       // Ignorar si ya existe
     }
 
+    // ONE-OFF TEST DATA CLEANUP MIGRATION
+    try {
+      console.log("ONE-OFF: Starting cleanup of truck and plancha test data...");
+      await connection.query("SET FOREIGN_KEY_CHECKS = 0");
+      await connection.query("DELETE FROM plancha_trabajos");
+      await connection.query("DELETE FROM planchador_pagos");
+      await connection.query("DELETE FROM planchador_asistencias");
+      await connection.query("DELETE FROM camion_detalles");
+      await connection.query("DELETE FROM camiones");
+      await connection.query("SET FOREIGN_KEY_CHECKS = 1");
+      console.log("ONE-OFF: Cleanup completed successfully!");
+    } catch (err) {
+      console.error("ONE-OFF: Error executing cleanup:", err);
+    }
+
     connection.release();
     console.log('Database initialization complete.');
   } catch (error) {
