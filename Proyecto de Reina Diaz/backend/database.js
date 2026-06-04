@@ -521,39 +521,39 @@ async function initializeDatabase() {
     }
 
     try {
-      console.log('--- MIGRACIÓN MANUAL: Restaurar orden 29 a En proceso ---');
+      console.log('--- MIGRACIÓN MANUAL: Restaurar orden de Juan Ortiz (752943) a En proceso ---');
       const [orderRows] = await connection.query(`
         SELECT p.id, p.estado, p.archivado, i.modelo, m.nombre
         FROM produccion p
         JOIN maquileros m ON p.maquilero_id = m.id
         JOIN inventario i ON p.inventario_id = i.id
-        WHERE p.id = 29
+        WHERE m.nombre LIKE '%Juan Ortiz%' AND i.modelo = '752943' AND p.cantidad = 180
       `);
-      console.log('Orden 29 actual:', orderRows);
+      console.log('Ordenes encontradas:', orderRows);
       
-      if (orderRows.length > 0) {
+      for (const row of orderRows) {
         // Restaurar orden de producción a 'En proceso'
         const [updateResult] = await connection.query(`
           UPDATE produccion 
           SET estado = 'En proceso', 
               archivado = 0, 
               fecha_terminado = NULL
-          WHERE id = 29
-        `);
-        console.log(`Orden 29 actualizada a 'En proceso'. Filas afectadas: ${updateResult.affectedRows}`);
+          WHERE id = ?
+        `, [row.id]);
+        console.log(`Orden ID ${row.id} actualizada a 'En proceso'. Filas afectadas: ${updateResult.affectedRows}`);
         
         // Restaurar corte a en_inventario = 0
         const [cutUpdateResult] = await connection.query(`
           UPDATE inventario i
           JOIN produccion p ON p.inventario_id = i.id
           SET i.en_inventario = 0
-          WHERE p.id = 29
-        `);
-        console.log(`Corte de orden 29 actualizado a en_inventario = 0. Filas afectadas: ${cutUpdateResult.affectedRows}`);
+          WHERE p.id = ?
+        `, [row.id]);
+        console.log(`Corte de orden ID ${row.id} actualizado a en_inventario = 0. Filas afectadas: ${cutUpdateResult.affectedRows}`);
       }
-      console.log('--- FIN DE MIGRACIÓN MANUAL ORDEN 29 ---');
+      console.log('--- FIN DE MIGRACIÓN MANUAL ---');
     } catch (e) {
-      console.error('Error al restaurar orden 29:', e);
+      console.error('Error al restaurar orden:', e);
     }
 
     // --- NUEVO MÓDULO: PLANCHA ---
