@@ -133,7 +133,7 @@ export default function Launcher() {
       <main className="launcher-grid-wrapper">
         <div className="launcher-grid">
           {/* App 1: Maquila (Active ERP Dashboard) */}
-          {userRole !== 'plancha' && userRole !== 'inventario1' && (
+          {userRole !== 'plancha' && (
             <Link to="/dashboard" className="launcher-app-item">
               <div className="launcher-app-icon">
                 <MaquilaIcon />
