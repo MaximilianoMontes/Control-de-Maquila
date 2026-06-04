@@ -2842,7 +2842,6 @@ app.get('/api/reportes/plancha/pagos', async (req, res) => {
         LEFT JOIN camion_detalles cd ON pt.camion_detalles_id = cd.id
         WHERE pt.planchador_id = ? 
           AND pt.estado = 'terminado' 
-          AND (pt.burro_numero IS NULL OR pt.burro_numero < 11)
           AND pt.talla <> 'AJUSTE'
       `;
       let worksParams = [planchadorId];
@@ -3392,14 +3391,13 @@ app.get('/api/reportes/plancha/resumen', async (req, res) => {
       title: "Resumen General de Planchadores",
       subtitle: `Resumen de actividades y saldos ${subtitleDate} - Generado el ${formatDateUTC(localNow)}`,
       headers: [
-        { label: "PLANCHADOR", property: "nombre", width: 170 },
-        { label: "TOTAL PIEZAS", property: "piezas", width: 80 },
-        { label: "PLANCHA REGULAR", property: "regular", width: 95 },
-        { label: "ASISTENCIAS", property: "asistencias", width: 90 },
-        { label: "PAGO FIJO", property: "pago_fijo", width: 85 },
-        { label: "DIF. CUADRE", property: "cuadre", width: 85 },
-        { label: "TOTAL GANADO", property: "ganado", width: 95 },
-        { label: "TOTAL PAGADO", property: "pagado", width: 95 }
+        { label: "PLANCHADOR", property: "nombre", width: 190 },
+        { label: "TOTAL PIEZAS", property: "piezas", width: 90 },
+        { label: "PLANCHA REGULAR", property: "regular", width: 105 },
+        { label: "ASISTENCIAS", property: "asistencias", width: 100 },
+        { label: "PAGO FIJO", property: "pago_fijo", width: 100 },
+        { label: "DIF. CUADRE", property: "cuadre", width: 100 },
+        { label: "TOTAL PAGADO", property: "pagado", width: 110 }
       ],
       datas: [
         ...rowsData.map(r => ({
@@ -3409,7 +3407,6 @@ app.get('/api/reportes/plancha/resumen', async (req, res) => {
           asistencias: '$' + r.asistencias.toFixed(2),
           pago_fijo: '$' + r.pago_fijo.toFixed(2),
           cuadre: (r.cuadre >= 0 ? '+' : '') + '$' + r.cuadre.toFixed(2),
-          ganado: '$' + r.ganado.toFixed(2),
           pagado: '$' + r.pagado.toFixed(2)
         })),
         {
@@ -3419,7 +3416,6 @@ app.get('/api/reportes/plancha/resumen', async (req, res) => {
           asistencias: '$' + sumAsistencias.toFixed(2),
           pago_fijo: '$' + sumPagoFijo.toFixed(2),
           cuadre: (sumCuadre >= 0 ? '+' : '') + '$' + sumCuadre.toFixed(2),
-          ganado: '$' + sumGanado.toFixed(2),
           pagado: '$' + sumPagado.toFixed(2)
         }
       ],
