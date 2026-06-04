@@ -873,7 +873,9 @@ export default function Ayuda() {
 
   const handleTabChange = (tabId) => {
     setActiveTab(tabId);
-    setSearchParams({ tab: tabId });
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set('tab', tabId);
+    setSearchParams(newParams);
     setExpandedAccordion(null); // Reset expanded guide on tab change
   };
 

@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   Users, 
   Layers, 
@@ -15,6 +15,17 @@ import { useSettings } from '../context/SettingsContext';
 export default function PlanchaSidebar({ activeTab, setActiveTab }) {
   const { logout } = useAuth();
   const { t } = useSettings();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const isPlanchaPage = location.pathname === '/plancha';
+
+  const handleTabClick = (tabId) => {
+    if (isPlanchaPage) {
+      setActiveTab(tabId);
+    } else {
+      navigate(`/plancha?tab=${tabId}`);
+    }
+  };
 
   const menuItems = [
     { id: 'plancha', name: 'Burros de Plancha', icon: <Flame size={20} /> },
@@ -51,7 +62,7 @@ export default function PlanchaSidebar({ activeTab, setActiveTab }) {
         {menuItems.map(item => (
           <button 
             key={item.id} 
-            onClick={() => setActiveTab(item.id)}
+            onClick={() => handleTabClick(item.id)}
             className={`nav-link ${activeTab === item.id ? 'active' : ''}`}
             style={{ 
               background: activeTab === item.id ? 'rgba(14, 165, 233, 0.08)' : 'transparent',
