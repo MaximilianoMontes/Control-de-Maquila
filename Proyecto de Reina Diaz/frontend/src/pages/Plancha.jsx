@@ -175,6 +175,7 @@ export default function Plancha() {
   // Filtros de reporte de pago
   const [reportStart, setReportStart] = useState('');
   const [reportEnd, setReportEnd] = useState('');
+  const [reportPlanchadorId, setReportPlanchadorId] = useState('');
 
   // Carga inicial
   useEffect(() => {
@@ -832,6 +833,7 @@ export default function Plancha() {
     const params = new URLSearchParams();
     if (reportStart) params.append('start', reportStart);
     if (reportEnd) params.append('end', reportEnd);
+    if (reportPlanchadorId) params.append('planchadorId', reportPlanchadorId);
     const query = params.toString();
     if (query) url += `?${query}`;
     window.open(url, '_blank');
@@ -1798,6 +1800,19 @@ export default function Plancha() {
                     value={reportEnd} 
                     onChange={e => setReportEnd(e.target.value)} 
                   />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Planchador (Opcional)</label>
+                  <select 
+                    className="form-input" 
+                    value={reportPlanchadorId} 
+                    onChange={e => setReportPlanchadorId(e.target.value)}
+                  >
+                    <option value="">-- Todos los Planchadores --</option>
+                    {planchadores.filter(p => !p.nombre.toLowerCase().includes('olga') && !p.nombre.toLowerCase().includes('luis')).map(p => (
+                      <option key={p.id} value={p.id}>{p.nombre}</option>
+                    ))}
+                  </select>
                 </div>
                 <button 
                   type="button" 
