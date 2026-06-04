@@ -875,6 +875,14 @@ app.post('/api/camiones', authenticateToken, async (req, res) => {
     await connection.query("DELETE FROM camion_borrador WHERE user_id = ? OR user_id IS NULL", [req.user.id]);
 
     await connection.commit();
+    
+    // Auto-archive matching production orders after committing
+    try {
+      await autoArchiveOrders();
+    } catch (e) {
+      console.error("Error running autoArchiveOrders after truck commit:", e);
+    }
+
     res.json({ success: true, camionId });
   } catch (error) {
     await connection.rollback();
@@ -887,12 +895,12 @@ app.post('/api/camiones', authenticateToken, async (req, res) => {
 const autoArchiveOrders = async () => {
   try {
     // 1. Get orders that should be archived but are not yet (archivado < 2)
-    // Condition: state is 'Terminado' or 'Terminado Parcial', and fully loaded/shipped on the truck in the system
+    // Condition: fully loaded/shipped on the truck in the system, regardless of their current status (except cancelled ones)
     const [toArchive] = await db.query(`
       SELECT p.id 
       FROM produccion p
       WHERE p.archivado < 2
-        AND p.estado IN ('Terminado', 'Terminado Parcial')
+        AND p.estado != 'Cancelado'
         AND (
           SELECT COALESCE(SUM(cd.piezas), 0)
           FROM camion_detalles cd
@@ -901,13 +909,13 @@ const autoArchiveOrders = async () => {
     `);
 
     // 2. Get orders that are currently auto-archived (archivado = 2) but no longer meet the criteria to be archived
-    // (e.g. they were edited, the state changed, or the truck details changed)
+    // (e.g. they were cancelled, or pieces were removed from the truck)
     const [toUnarchive] = await db.query(`
       SELECT p.id 
       FROM produccion p
       WHERE p.archivado = 2
         AND (
-          p.estado NOT IN ('Terminado', 'Terminado Parcial')
+          p.estado = 'Cancelado'
           OR (
             SELECT COALESCE(SUM(cd.piezas), 0)
             FROM camion_detalles cd
@@ -918,7 +926,11 @@ const autoArchiveOrders = async () => {
 
     // 3. Process archiving to state 2 (Factory Delivered / Permanent Hide)
     for (const p of toArchive) {
-      await db.query("UPDATE produccion SET archivado = 2 WHERE id = ?", [p.id]);
+      // Automatically ensure they are marked as Terminado and archived, setting fecha_terminado to NOW if null
+      await db.query(
+        "UPDATE produccion SET estado = 'Terminado', archivado = 2, fecha_terminado = COALESCE(fecha_terminado, NOW()) WHERE id = ?",
+        [p.id]
+      );
       await checkAndMoveToInventory(p.id, 1); // 1 = System user
     }
 
