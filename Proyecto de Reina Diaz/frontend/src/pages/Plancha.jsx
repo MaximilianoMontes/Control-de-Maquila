@@ -21,7 +21,8 @@ import {
   Download,
   Calculator,
   FileText,
-  Edit3
+  Edit3,
+  MinusCircle
 } from 'lucide-react';
 import { useSettings } from '../context/SettingsContext';
 import API_URL from '../config';
@@ -527,6 +528,36 @@ export default function Plancha() {
       alert(e.response?.data?.error || 'Error al registrar pago');
     } finally {
       setPagoSubmitting(false);
+    }
+  };
+
+  const handleEliminarAjuste = async (id) => {
+    if (!confirm('¿Estás seguro de que deseas eliminar este ajuste/pago fijo?')) return;
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(`${API_URL}/api/plancha/trabajos/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      alert('Ajuste eliminado correctamente');
+      handleCargarPagosPlanchador(pagoPlanchadorId);
+    } catch (e) {
+      console.error(e);
+      alert(e.response?.data?.error || 'Error al eliminar el ajuste');
+    }
+  };
+
+  const handleEliminarAsistencia = async (id) => {
+    if (!confirm('¿Estás seguro de que deseas eliminar esta asistencia?')) return;
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(`${API_URL}/api/plancha/asistencias/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      alert('Asistencia eliminada correctamente');
+      handleCargarPagosPlanchador(pagoPlanchadorId);
+    } catch (e) {
+      console.error(e);
+      alert(e.response?.data?.error || 'Error al eliminar la asistencia');
     }
   };
 
@@ -1325,8 +1356,11 @@ export default function Plancha() {
                     
                   const asistenciasVal = asistenciasList.reduce((sum, pa) => sum + parseFloat(pa.monto || 0), 0);
 
+                  const cuadreItems = trabajos.filter(pt => pt.talla === 'AJUSTE' && (pt.color?.includes('Cuadre') || pt.color?.includes('Diferencia')));
+                  const pagoFijoItems = trabajos.filter(pt => pt.talla === 'AJUSTE' && !(pt.color?.includes('Cuadre') || pt.color?.includes('Diferencia')));
+
                   return (
-                    <div style={{ background: 'rgba(0,0,0,0.02)', padding: '1rem', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '0.4rem', fontSize: '0.95rem' }}>
+                    <div style={{ background: 'rgba(0,0,0,0.02)', padding: '1rem', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.95rem' }}>
                       <p style={{ margin: 0 }}><strong>Total Ganado:</strong> {formatCurrency(planchadorPagoDetalle.ganado)}</p>
                       
                       {regularWork > 0 && (
@@ -1334,26 +1368,92 @@ export default function Plancha() {
                           • Plancha Regular: <span style={{ color: '#f8fafc' }}>{formatCurrency(regularWork)}</span>
                         </p>
                       )}
+                      
                       {cuadreDif !== 0 && (
-                        <p style={{ margin: 0, fontSize: '0.85rem', color: '#94a3b8', paddingLeft: '1rem' }}>
-                          • Diferencia Cuadre: <span style={{ color: cuadreDif > 0 ? '#34d399' : '#ef4444', fontWeight: 'bold' }}>
-                            {cuadreDif > 0 ? '+' : ''}{formatCurrency(cuadreDif)}
-                          </span>
-                        </p>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', paddingLeft: '1rem' }}>
+                          <p style={{ margin: 0, fontSize: '0.85rem', color: '#94a3b8' }}>
+                            • Diferencia Cuadre: <span style={{ color: cuadreDif > 0 ? '#34d399' : '#ef4444', fontWeight: 'bold' }}>
+                              {cuadreDif > 0 ? '+' : ''}{formatCurrency(cuadreDif)}
+                            </span>
+                          </p>
+                          {cuadreItems.map(item => (
+                            <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.75rem', color: '#cbd5e1', paddingLeft: '0.5rem', background: 'rgba(255,255,255,0.02)', padding: '4px 8px', borderRadius: '6px' }}>
+                              <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '180px' }} title={item.color}>
+                                - {item.color || 'Ajuste'}
+                              </span>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <span style={{ fontWeight: 600, color: item.total > 0 ? '#34d399' : '#ef4444' }}>
+                                  {item.total > 0 ? '+' : ''}{formatCurrency(item.total)}
+                                </span>
+                                <MinusCircle 
+                                  size={14} 
+                                  color="#ef4444" 
+                                  style={{ cursor: 'pointer' }} 
+                                  title="Eliminar ajuste"
+                                  onClick={() => handleEliminarAjuste(item.id)}
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       )}
+                      
                       {pagoFijoVal !== 0 && (
-                        <p style={{ margin: 0, fontSize: '0.85rem', color: '#94a3b8', paddingLeft: '1rem' }}>
-                          • Pago Fijo / Apoyos: <span style={{ color: '#60a5fa', fontWeight: 'bold' }}>
-                            {pagoFijoVal > 0 ? '+' : ''}{formatCurrency(pagoFijoVal)}
-                          </span>
-                        </p>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', paddingLeft: '1rem' }}>
+                          <p style={{ margin: 0, fontSize: '0.85rem', color: '#94a3b8' }}>
+                            • Pago Fijo / Apoyos: <span style={{ color: '#60a5fa', fontWeight: 'bold' }}>
+                              {pagoFijoVal > 0 ? '+' : ''}{formatCurrency(pagoFijoVal)}
+                            </span>
+                          </p>
+                          {pagoFijoItems.map(item => (
+                            <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.75rem', color: '#cbd5e1', paddingLeft: '0.5rem', background: 'rgba(255,255,255,0.02)', padding: '4px 8px', borderRadius: '6px' }}>
+                              <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '180px' }} title={item.color}>
+                                - {item.color || 'Apoyo'}
+                              </span>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <span style={{ fontWeight: 600, color: '#60a5fa' }}>
+                                  {item.total > 0 ? '+' : ''}{formatCurrency(item.total)}
+                                </span>
+                                <MinusCircle 
+                                  size={14} 
+                                  color="#ef4444" 
+                                  style={{ cursor: 'pointer' }} 
+                                  title="Eliminar pago fijo"
+                                  onClick={() => handleEliminarAjuste(item.id)}
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       )}
+                      
                       {asistenciasVal > 0 && (
-                        <p style={{ margin: 0, fontSize: '0.85rem', color: '#94a3b8', paddingLeft: '1rem' }}>
-                          • Asistencias: <span style={{ color: '#10b981' }}>
-                            +{formatCurrency(asistenciasVal)}
-                          </span>
-                        </p>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', paddingLeft: '1rem' }}>
+                          <p style={{ margin: 0, fontSize: '0.85rem', color: '#94a3b8' }}>
+                            • Asistencias: <span style={{ color: '#10b981' }}>
+                              +{formatCurrency(asistenciasVal)}
+                            </span>
+                          </p>
+                          {asistenciasList.map(item => (
+                            <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.75rem', color: '#cbd5e1', paddingLeft: '0.5rem', background: 'rgba(255,255,255,0.02)', padding: '4px 8px', borderRadius: '6px' }}>
+                              <span>
+                                - Asistencia {formatDate(item.fecha)}
+                              </span>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <span style={{ fontWeight: 600, color: '#10b981' }}>
+                                  +{formatCurrency(item.monto)}
+                                </span>
+                                <MinusCircle 
+                                  size={14} 
+                                  color="#ef4444" 
+                                  style={{ cursor: 'pointer' }} 
+                                  title="Eliminar asistencia"
+                                  onClick={() => handleEliminarAsistencia(item.id)}
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       )}
 
                       <p style={{ margin: 0, color: '#34d399' }}><strong>Total Pagado:</strong> {formatCurrency(planchadorPagoDetalle.pagado)}</p>
