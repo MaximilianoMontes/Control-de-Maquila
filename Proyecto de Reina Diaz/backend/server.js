@@ -2667,6 +2667,67 @@ app.post('/api/plancha/ajustes', authenticateToken, async (req, res) => {
   }
 });
 
+// DELETE TRABAJO O AJUSTE DE PLANCHA
+app.delete('/api/plancha/trabajos/:id', authenticateToken, async (req, res) => {
+  const allowedRoles = ['admin', 'produccion1', 'produccion2'];
+  if (!allowedRoles.includes(req.user.role)) {
+    return res.status(403).json({ error: 'No autorizado para esta sección' });
+  }
+
+  try {
+    const [olds] = await db.query(
+      "SELECT pt.*, p.nombre as planchador_nombre FROM plancha_trabajos pt JOIN planchadores p ON pt.planchador_id = p.id WHERE pt.id = ?",
+      [req.params.id]
+    );
+    const old = olds[0];
+    if (!old) return res.status(404).json({ error: 'Registro no encontrado' });
+
+    // Si ya está pagado, no permitir eliminar
+    if (old.pago_id) {
+      return res.status(400).json({ error: 'No se puede eliminar un registro que ya fue pagado/liquidado' });
+    }
+
+    await db.query("DELETE FROM plancha_trabajos WHERE id = ?", [req.params.id]);
+
+    const desc = old.talla === 'AJUSTE'
+      ? `Eliminó ajuste de $${old.total} (${old.color}) del planchador ${old.planchador_nombre}`
+      : `Eliminó trabajo de plancha del modelo ${old.color} (Talla: ${old.talla}) del planchador ${old.planchador_nombre}`;
+
+    await logActivity(req.user.id, 'DELETE', 'PLANCHA_TRABAJO', desc);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// DELETE ASISTENCIA DE PLANCHADOR
+app.delete('/api/plancha/asistencias/:id', authenticateToken, async (req, res) => {
+  const allowedRoles = ['admin', 'produccion1', 'produccion2'];
+  if (!allowedRoles.includes(req.user.role)) {
+    return res.status(403).json({ error: 'No autorizado para esta sección' });
+  }
+
+  try {
+    const [olds] = await db.query(
+      "SELECT pa.*, p.nombre as planchador_nombre FROM planchador_asistencias pa JOIN planchadores p ON pa.planchador_id = p.id WHERE pa.id = ?",
+      [req.params.id]
+    );
+    const old = olds[0];
+    if (!old) return res.status(404).json({ error: 'Asistencia no encontrada' });
+
+    if (old.pago_id) {
+      return res.status(400).json({ error: 'No se puede eliminar una asistencia que ya fue pagada/liquidada' });
+    }
+
+    await db.query("DELETE FROM planchador_asistencias WHERE id = ?", [req.params.id]);
+
+    await logActivity(req.user.id, 'DELETE', 'PLANCHA_ASISTENCIA', `Eliminó asistencia del día ${old.fecha} ($${old.monto}) del planchador ${old.planchador_nombre}`);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // 10.3 OBTENER TOTAL DE PIEZAS PLANCHADAS EN UN RANGO DE FECHAS
 app.get('/api/planchadores/:id/piezas-rango', authenticateToken, async (req, res) => {
   const planchadorId = req.params.id;
