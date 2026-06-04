@@ -887,7 +887,7 @@ export default function Plancha() {
         <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: '2rem', alignItems: 'start' }}>
           
           {/* Side panel de elementos arrastrables */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', position: 'sticky', top: '0', zIndex: 10, maxHeight: 'calc(100vh - 140px)', overflowY: 'auto', paddingRight: '6px' }}>
             
             {/* Planchadores */}
             <div className="glass-card" style={{ padding: '1.2rem' }}>

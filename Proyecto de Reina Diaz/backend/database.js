@@ -520,43 +520,6 @@ async function initializeDatabase() {
       console.error('Error en migración de sincronización retroactiva de inventario:', e);
     }
 
-    try {
-      console.log('--- MIGRACIÓN MANUAL: Restaurar orden de Juan Sanchez Herrera (740964) a En proceso ---');
-      const [orderRows] = await connection.query(`
-        SELECT p.id, p.estado, p.archivado, i.modelo, m.nombre
-        FROM produccion p
-        JOIN maquileros m ON p.maquilero_id = m.id
-        JOIN inventario i ON p.inventario_id = i.id
-        WHERE i.modelo = '740964' AND m.nombre LIKE '%Juan Sanchez%'
-      `);
-      console.log('Órdenes encontradas:', orderRows);
-      
-      for (const row of orderRows) {
-        console.log(`Restaurando orden ID: ${row.id} a En proceso...`);
-        // Restaurar orden de producción a 'En proceso'
-        const [updateResult] = await connection.query(`
-          UPDATE produccion 
-          SET estado = 'En proceso', 
-              archivado = 0, 
-              fecha_terminado = NULL
-          WHERE id = ?
-        `, [row.id]);
-        console.log(`Orden ${row.id} actualizada. Filas afectadas: ${updateResult.affectedRows}`);
-        
-        // Restaurar corte a en_inventario = 0
-        const [cutUpdateResult] = await connection.query(`
-          UPDATE inventario i
-          JOIN produccion p ON p.inventario_id = i.id
-          SET i.en_inventario = 0
-          WHERE p.id = ?
-        `, [row.id]);
-        console.log(`Corte de orden ${row.id} actualizado. Filas afectadas: ${cutUpdateResult.affectedRows}`);
-      }
-      console.log('--- FIN DE MIGRACIÓN MANUAL ORDEN JUAN SANCHEZ ---');
-    } catch (e) {
-      console.error('Error al restaurar orden de Juan Sanchez:', e);
-    }
-
     // --- NUEVO MÓDULO: PLANCHA ---
     try {
       console.log('--- MIGRACIÓN: Creando tablas para el Módulo de Plancha ---');
