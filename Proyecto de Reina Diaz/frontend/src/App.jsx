@@ -64,17 +64,17 @@ function App() {
     <Routes>
       <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
       <Route path="/" element={<ProtectedRoute><Launcher /></ProtectedRoute>} />
-      <Route path="/dashboard" element={<ProtectedRoute><MainLayout><Dashboard /></MainLayout></ProtectedRoute>} />
-      <Route path="/maquileros" element={<ProtectedRoute><MainLayout><Maquileros /></MainLayout></ProtectedRoute>} />
-      <Route path="/inventario" element={<ProtectedRoute><MainLayout><Inventario /></MainLayout></ProtectedRoute>} />
-      <Route path="/cortes" element={<ProtectedRoute><MainLayout><Cortes /></MainLayout></ProtectedRoute>} />
-      <Route path="/produccion" element={<ProtectedRoute><MainLayout><Produccion /></MainLayout></ProtectedRoute>} />
-      <Route path="/extras" element={<ProtectedRoute><MainLayout><Extras /></MainLayout></ProtectedRoute>} />
+      <Route path="/dashboard" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2']}><MainLayout><Dashboard /></MainLayout></ProtectedRoute>} />
+      <Route path="/maquileros" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2']}><MainLayout><Maquileros /></MainLayout></ProtectedRoute>} />
+      <Route path="/inventario" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2']}><MainLayout><Inventario /></MainLayout></ProtectedRoute>} />
+      <Route path="/cortes" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2']}><MainLayout><Cortes /></MainLayout></ProtectedRoute>} />
+      <Route path="/produccion" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2']}><MainLayout><Produccion /></MainLayout></ProtectedRoute>} />
+      <Route path="/extras" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2']}><MainLayout><Extras /></MainLayout></ProtectedRoute>} />
       <Route path="/camion" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2']}><MainLayout><Camion /></MainLayout></ProtectedRoute>} />
       <Route path="/pagos" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2']}><MainLayout><Pagos /></MainLayout></ProtectedRoute>} />
-      <Route path="/plancha" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2']}><Plancha /></ProtectedRoute>} />
-      <Route path="/reportes" element={<ProtectedRoute><MainLayout><Reportes /></MainLayout></ProtectedRoute>} />
-      <Route path="/historial" element={<ProtectedRoute><MainLayout><Historial /></MainLayout></ProtectedRoute>} />
+      <Route path="/plancha" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2', 'plancha', 'inventario1']}><Plancha /></ProtectedRoute>} />
+      <Route path="/reportes" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2']}><MainLayout><Reportes /></MainLayout></ProtectedRoute>} />
+      <Route path="/historial" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2']}><MainLayout><Historial /></MainLayout></ProtectedRoute>} />
       <Route path="/ayuda" element={<ProtectedRoute><MainLayout><Ayuda /></MainLayout></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

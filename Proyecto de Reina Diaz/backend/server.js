@@ -2296,6 +2296,10 @@ app.get('/api/plancha/modelos', authenticateToken, async (req, res) => {
 
 // 6. VERIFICAR LLEGADA DE MODELO A COLIMA
 app.post('/api/plancha/modelos/:id/verificar', authenticateToken, async (req, res) => {
+  const allowedRoles = ['admin', 'produccion1', 'produccion2', 'inventario1'];
+  if (!allowedRoles.includes(req.user.role)) {
+    return res.status(403).json({ error: 'No autorizado para esta sección' });
+  }
   const { precio_plancha } = req.body;
   if (precio_plancha === undefined || precio_plancha < 0) {
     return res.status(400).json({ error: 'El precio de plancha es requerido y debe ser positivo o cero' });
@@ -2691,7 +2695,7 @@ app.post('/api/plancha/ajustes', authenticateToken, async (req, res) => {
 
 // DELETE TRABAJO O AJUSTE DE PLANCHA
 app.delete('/api/plancha/trabajos/:id', authenticateToken, async (req, res) => {
-  const allowedRoles = ['admin', 'produccion1', 'produccion2'];
+  const allowedRoles = ['admin', 'produccion1', 'produccion2', 'plancha', 'inventario1'];
   if (!allowedRoles.includes(req.user.role)) {
     return res.status(403).json({ error: 'No autorizado para esta sección' });
   }
@@ -2724,7 +2728,7 @@ app.delete('/api/plancha/trabajos/:id', authenticateToken, async (req, res) => {
 
 // DELETE ASISTENCIA DE PLANCHADOR
 app.delete('/api/plancha/asistencias/:id', authenticateToken, async (req, res) => {
-  const allowedRoles = ['admin', 'produccion1', 'produccion2'];
+  const allowedRoles = ['admin', 'produccion1', 'produccion2', 'plancha', 'inventario1'];
   if (!allowedRoles.includes(req.user.role)) {
     return res.status(403).json({ error: 'No autorizado para esta sección' });
   }
