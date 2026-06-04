@@ -1143,8 +1143,17 @@ export default function Plancha() {
                       </div>
 
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                        {Object.entries(m.tallas_disponibles).map(([talla, qty]) => {
-                          if (qty <= 0) return null;
+                        {Object.entries(m.tallas_disponibles)
+                          .sort(([tallaA], [tallaB]) => {
+                            const numA = parseInt(tallaA, 10);
+                            const numB = parseInt(tallaB, 10);
+                            if (isNaN(numA) && isNaN(numB)) return tallaA.localeCompare(tallaB);
+                            if (isNaN(numA)) return 1;
+                            if (isNaN(numB)) return -1;
+                            return numA - numB;
+                          })
+                          .map(([talla, qty]) => {
+                            if (qty <= 0) return null;
 
                           // Calcular desglose de colores para esta talla (normalizado)
                           const normT = normalizeTalla(talla);
@@ -1418,6 +1427,14 @@ export default function Plancha() {
                                         if (m.talla && !uniqueTallas.includes(m.talla)) {
                                           uniqueTallas.push(m.talla);
                                         }
+                                        uniqueTallas.sort((tallaA, tallaB) => {
+                                          const numA = parseInt(tallaA, 10);
+                                          const numB = parseInt(tallaB, 10);
+                                          if (isNaN(numA) && isNaN(numB)) return tallaA.localeCompare(tallaB);
+                                          if (isNaN(numA)) return 1;
+                                          if (isNaN(numB)) return -1;
+                                          return numA - numB;
+                                        });
                                         return uniqueTallas.map(t => (
                                           <option key={t} value={t} style={{ background: '#1e293b', color: '#fff' }}>
                                             T{t}
@@ -2075,10 +2092,28 @@ export default function Plancha() {
             <div style={{ marginBottom: '1.5rem' }}>
               <p style={{ fontSize: '0.9rem', color: '#94a3b8', margin: '0 0 0.8rem 0' }}>Confirma que las siguientes cantidades de piezas por talla llegaron completas a Colima:</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                {Object.entries(modeloAVerificar.tallas_cantidades).map(([key, val]) => {
-                  if (typeof val === 'object' && val !== null) {
-                    const entries = Object.entries(val).filter(([_, qty]) => qty > 0);
-                    if (entries.length === 0) return null;
+                {Object.entries(modeloAVerificar.tallas_cantidades)
+                  .sort(([keyA], [keyB]) => {
+                    const numA = parseInt(keyA, 10);
+                    const numB = parseInt(keyB, 10);
+                    if (isNaN(numA) && isNaN(numB)) return keyA.localeCompare(keyB);
+                    if (isNaN(numA)) return 1;
+                    if (isNaN(numB)) return -1;
+                    return numA - numB;
+                  })
+                  .map(([key, val]) => {
+                    if (typeof val === 'object' && val !== null) {
+                      const entries = Object.entries(val)
+                        .filter(([_, qty]) => qty > 0)
+                        .sort(([szA], [szB]) => {
+                          const numA = parseInt(szA, 10);
+                          const numB = parseInt(szB, 10);
+                          if (isNaN(numA) && isNaN(numB)) return szA.localeCompare(szB);
+                          if (isNaN(numA)) return 1;
+                          if (isNaN(numB)) return -1;
+                          return numA - numB;
+                        });
+                      if (entries.length === 0) return null;
                     return (
                       <div key={key} style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', background: 'rgba(255,255,255,0.01)', padding: '8px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.04)' }}>
                         <span style={{ fontSize: '0.85rem', color: '#c084fc', fontWeight: 700 }}>Color: {key}</span>
