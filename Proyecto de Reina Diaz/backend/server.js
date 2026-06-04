@@ -2840,7 +2840,10 @@ app.get('/api/reportes/plancha/pagos', async (req, res) => {
                COALESCE(pt.color, cd.color, 'Único') as color_nombre
         FROM plancha_trabajos pt
         LEFT JOIN camion_detalles cd ON pt.camion_detalles_id = cd.id
-        WHERE pt.planchador_id = ? AND pt.estado = 'terminado' AND (pt.burro_numero IS NULL OR pt.burro_numero < 11)
+        WHERE pt.planchador_id = ? 
+          AND pt.estado = 'terminado' 
+          AND (pt.burro_numero IS NULL OR pt.burro_numero < 11)
+          AND pt.talla <> 'AJUSTE'
       `;
       let worksParams = [planchadorId];
       if (start && end) {
@@ -2856,24 +2859,6 @@ app.get('/api/reportes/plancha/pagos', async (req, res) => {
       worksQuery += ` ORDER BY pt.fecha_terminado ASC, pt.id ASC`;
       const [works] = await db.query(worksQuery, worksParams);
 
-      let astQuery = `
-        SELECT fecha, monto 
-        FROM planchador_asistencias 
-        WHERE planchador_id = ?
-      `;
-      let astParams = [planchadorId];
-      if (start && end) {
-        astQuery += ` AND DATE(fecha) BETWEEN ? AND ?`;
-        astParams.push(start, end);
-      } else if (start) {
-        astQuery += ` AND DATE(fecha) >= ?`;
-        astParams.push(start);
-      } else if (end) {
-        astQuery += ` AND DATE(fecha) <= ?`;
-        astParams.push(end);
-      }
-      const [asistencias] = await db.query(astQuery, astParams);
-
       const items = [];
       for (const w of works) {
         items.push({
@@ -2883,17 +2868,6 @@ app.get('/api/reportes/plancha/pagos', async (req, res) => {
           talla: w.talla,
           piezas: w.piezas || 0,
           total: Number(w.total) || 0
-        });
-      }
-
-      for (const a of asistencias) {
-        items.push({
-          fecha: a.fecha,
-          modelo: 'ASISTENCIA',
-          color: '-',
-          talla: '-',
-          piezas: 0,
-          total: Number(a.monto) || 0
         });
       }
 
@@ -3418,15 +3392,14 @@ app.get('/api/reportes/plancha/resumen', async (req, res) => {
       title: "Resumen General de Planchadores",
       subtitle: `Resumen de actividades y saldos ${subtitleDate} - Generado el ${formatDateUTC(localNow)}`,
       headers: [
-        { label: "PLANCHADOR", property: "nombre", width: 130 },
-        { label: "TOTAL PIEZAS", property: "piezas", width: 70 },
-        { label: "PLANCHA REGULAR", property: "regular", width: 85 },
-        { label: "ASISTENCIAS", property: "asistencias", width: 80 },
-        { label: "PAGO FIJO", property: "pago_fijo", width: 75 },
-        { label: "DIF. CUADRE", property: "cuadre", width: 75 },
-        { label: "TOTAL GANADO", property: "ganado", width: 85 },
-        { label: "TOTAL PAGADO", property: "pagado", width: 85 },
-        { label: "SALDO PENDIENTE", property: "pendiente", width: 90 }
+        { label: "PLANCHADOR", property: "nombre", width: 170 },
+        { label: "TOTAL PIEZAS", property: "piezas", width: 80 },
+        { label: "PLANCHA REGULAR", property: "regular", width: 95 },
+        { label: "ASISTENCIAS", property: "asistencias", width: 90 },
+        { label: "PAGO FIJO", property: "pago_fijo", width: 85 },
+        { label: "DIF. CUADRE", property: "cuadre", width: 85 },
+        { label: "TOTAL GANADO", property: "ganado", width: 95 },
+        { label: "TOTAL PAGADO", property: "pagado", width: 95 }
       ],
       datas: [
         ...rowsData.map(r => ({
@@ -3437,8 +3410,7 @@ app.get('/api/reportes/plancha/resumen', async (req, res) => {
           pago_fijo: '$' + r.pago_fijo.toFixed(2),
           cuadre: (r.cuadre >= 0 ? '+' : '') + '$' + r.cuadre.toFixed(2),
           ganado: '$' + r.ganado.toFixed(2),
-          pagado: '$' + r.pagado.toFixed(2),
-          pendiente: '$' + r.pendiente.toFixed(2)
+          pagado: '$' + r.pagado.toFixed(2)
         })),
         {
           nombre: 'TOTAL',
@@ -3448,8 +3420,7 @@ app.get('/api/reportes/plancha/resumen', async (req, res) => {
           pago_fijo: '$' + sumPagoFijo.toFixed(2),
           cuadre: (sumCuadre >= 0 ? '+' : '') + '$' + sumCuadre.toFixed(2),
           ganado: '$' + sumGanado.toFixed(2),
-          pagado: '$' + sumPagado.toFixed(2),
-          pendiente: '$' + sumPendiente.toFixed(2)
+          pagado: '$' + sumPagado.toFixed(2)
         }
       ],
       options: { padding: 5 }

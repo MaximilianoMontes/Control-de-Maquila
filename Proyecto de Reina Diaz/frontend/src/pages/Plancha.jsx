@@ -1809,7 +1809,7 @@ export default function Plancha() {
                     onChange={e => setReportPlanchadorId(e.target.value)}
                   >
                     <option value="">-- Todos los Planchadores --</option>
-                    {planchadores.filter(p => !p.nombre.toLowerCase().includes('olga') && !p.nombre.toLowerCase().includes('luis')).map(p => (
+                    {planchadores.map(p => (
                       <option key={p.id} value={p.id}>{p.nombre}</option>
                     ))}
                   </select>
