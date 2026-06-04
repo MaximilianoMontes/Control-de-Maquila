@@ -45,6 +45,27 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
+// Helper para formatear fechas a DD/MM/YYYY
+const formatDateToDMY = (dateVal) => {
+  if (!dateVal) return '-';
+  let str = "";
+  if (dateVal instanceof Date) {
+    const offset = dateVal.getTimezoneOffset();
+    const localDate = new Date(dateVal.getTime() - (offset * 60 * 1000));
+    str = localDate.toISOString();
+  } else {
+    str = String(dateVal);
+  }
+  const match = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (match) {
+    const [_, year, month, day] = match;
+    return `${parseInt(day, 10)}/${parseInt(month, 10)}/${year}`;
+  }
+  const d = new Date(dateVal);
+  if (isNaN(d.getTime())) return str;
+  return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
+};
+
 // Helper para registrar actividad
 const logActivity = async (userId, action, target, description) => {
   try {
@@ -1530,20 +1551,20 @@ app.get('/api/reportes/produccion', async (req, res) => {
         if (start === end) {
           query += ` AND p.fecha_fin = ?`;
           params.push(start);
-          subtitleDate = `Reporte del día ${start}`;
+          subtitleDate = `Reporte del día ${formatDateToDMY(start)}`;
         } else {
           query += ` AND p.fecha_fin BETWEEN ? AND ?`;
           params.push(start, end);
-          subtitleDate = `Del ${start} al ${end}`;
+          subtitleDate = `Del ${formatDateToDMY(start)} al ${formatDateToDMY(end)}`;
         }
       } else if (start) {
         query += ` AND p.fecha_fin = ?`;
         params.push(start);
-        subtitleDate = `Reporte del día ${start}`;
+        subtitleDate = `Reporte del día ${formatDateToDMY(start)}`;
       } else if (date) {
         query += ` AND p.fecha_fin = ?`;
         params.push(date);
-        subtitleDate = `Reporte del día ${date}`;
+        subtitleDate = `Reporte del día ${formatDateToDMY(date)}`;
       }
       query += ` ORDER BY p.fecha_fin DESC`;
 
@@ -1571,7 +1592,7 @@ app.get('/api/reportes/produccion', async (req, res) => {
     } else {
       const tableConfig = {
         title: "Reporte de Órdenes Terminadas",
-        subtitle: subtitleDate + " - Generado el " + new Date().toLocaleDateString(),
+        subtitle: subtitleDate + " - Generado el " + formatDateToDMY(new Date()),
         headers: [
           { label: "MAQUILERO", property: "maquilero", width: 110 },
           { label: "MODELO", property: "modelo", width: 80 },
@@ -1595,7 +1616,7 @@ app.get('/api/reportes/produccion', async (req, res) => {
           cliente: o.producto_cliente || '-',
           orden: o.inventario_orden || '-',
           piezas: String(o.cantidad || 0),
-          entrega: o.fecha_fin || '-'
+          entrega: formatDateToDMY(o.fecha_fin)
         })),
         options: { padding: 5 }
       };
@@ -1669,7 +1690,7 @@ app.get('/api/reportes/inventario', async (req, res) => {
       const reportTitle = filter === 'asignados' ? "Reporte de Inventario (Asignados)" : (filter === 'pendientes' ? "Reporte de Inventario (Disponibles)" : "Reporte de Estatus de Inventario");
       const tableConfig = {
         title: reportTitle,
-        subtitle: "Existencias, costos y unidades actuales registrados en almacén - Generado el " + new Date().toLocaleDateString(),
+        subtitle: "Existencias, costos y unidades actuales registrados en almacén - Generado el " + formatDateToDMY(new Date()),
         headers: [
           { label: "MODELO", property: "modelo", width: 80 },
           { label: "CODIGO", property: "codigo", width: 160 },
@@ -1744,20 +1765,20 @@ app.get('/api/reportes/recoleccion', async (req, res) => {
       if (start === end) {
         query += ` AND p.fecha_fin = ?`;
         params.push(start);
-        subtitleDate = `del día ${start}`;
+        subtitleDate = `del día ${formatDateToDMY(start)}`;
       } else {
         query += ` AND p.fecha_fin BETWEEN ? AND ?`;
         params.push(start, end);
-        subtitleDate = `del ${start} al ${end}`;
+        subtitleDate = `del ${formatDateToDMY(start)} al ${formatDateToDMY(end)}`;
       }
     } else if (start) {
       query += ` AND p.fecha_fin = ?`;
       params.push(start);
-      subtitleDate = `del día ${start}`;
+      subtitleDate = `del día ${formatDateToDMY(start)}`;
     } else if (end) {
       query += ` AND p.fecha_fin = ?`;
       params.push(end);
-      subtitleDate = `del día ${end}`;
+      subtitleDate = `del día ${formatDateToDMY(end)}`;
     }
     query += ` ORDER BY p.fecha_fin ASC`;
     const [orders] = await db.query(query, params);
@@ -1784,7 +1805,7 @@ app.get('/api/reportes/recoleccion', async (req, res) => {
     } else {
       const tableConfig = {
         title: "Reporte de Recolección",
-        subtitle: `Producción a entregar ${subtitleDate}` + " - Generado el " + new Date().toLocaleDateString(),
+        subtitle: `Producción a entregar ${subtitleDate}` + " - Generado el " + formatDateToDMY(new Date()),
         headers: [
           { label: "MAQUILERO", property: "maquilero", width: 110 },
           { label: "MODELO", property: "modelo", width: 80 },
@@ -1808,7 +1829,7 @@ app.get('/api/reportes/recoleccion', async (req, res) => {
           cliente: o.producto_cliente || '-',
           orden: o.inventario_orden || '-',
           piezas: String(o.cantidad || 0),
-          entrega: o.fecha_fin || '-'
+          entrega: formatDateToDMY(o.fecha_fin)
         })),
         options: { padding: 5 }
       };
@@ -1858,20 +1879,20 @@ app.get('/api/reportes/pagos', async (req, res) => {
       if (start === end) {
         query += ` WHERE pg.fecha = ?`;
         params.push(start);
-        subtitleDate = `del día ${start}`;
+        subtitleDate = `del día ${formatDateToDMY(start)}`;
       } else {
         query += ` WHERE pg.fecha BETWEEN ? AND ?`;
         params.push(start, end);
-        subtitleDate = `del ${start} al ${end}`;
+        subtitleDate = `del ${formatDateToDMY(start)} al ${formatDateToDMY(end)}`;
       }
     } else if (start) {
       query += ` WHERE pg.fecha >= ?`;
       params.push(start);
-      subtitleDate = `desde ${start}`;
+      subtitleDate = `desde ${formatDateToDMY(start)}`;
     } else if (end) {
       query += ` WHERE pg.fecha <= ?`;
       params.push(end);
-      subtitleDate = `hasta ${end}`;
+      subtitleDate = `hasta ${formatDateToDMY(end)}`;
     }
     
     query += ` ORDER BY pg.fecha ASC, pg.id ASC`;
@@ -1899,7 +1920,7 @@ app.get('/api/reportes/pagos', async (req, res) => {
     } else {
       const tableConfig = {
         title: "Reporte de Pagos a Maquileros",
-        subtitle: `Pagos realizados ${subtitleDate}` + " - Generado el " + new Date().toLocaleDateString(),
+        subtitle: `Pagos realizados ${subtitleDate}` + " - Generado el " + formatDateToDMY(new Date()),
         headers: [
           { label: "FECHA", property: "fecha", width: 80 },
           { label: "MAQUILERO", property: "maquilero", width: 160 },
@@ -1908,7 +1929,7 @@ app.get('/api/reportes/pagos', async (req, res) => {
           { label: "MONTO", property: "monto", width: 100 }
         ],
         datas: rows.map(r => ({
-          fecha: new Date(r.fecha).toLocaleDateString(),
+          fecha: formatDateToDMY(r.fecha),
           maquilero: (r.maquilero_nombre || '').toUpperCase(),
           modelo: r.producto_modelo || '-',
           tipo: (r.tipo_pago || 'ABONO').toUpperCase(),
@@ -2768,20 +2789,20 @@ app.get('/api/reportes/plancha/pagos', async (req, res) => {
       if (start === end) {
         whereClause = ` WHERE DATE(pp.fecha) = ?`;
         params.push(start);
-        subtitleDate = `del día ${start}`;
+        subtitleDate = `del día ${formatDateToDMY(start)}`;
       } else {
         whereClause = ` WHERE DATE(pp.fecha) BETWEEN ? AND ?`;
         params.push(start, end);
-        subtitleDate = `del ${start} al ${end}`;
+        subtitleDate = `del ${formatDateToDMY(start)} al ${formatDateToDMY(end)}`;
       }
     } else if (start) {
       whereClause = ` WHERE DATE(pp.fecha) >= ?`;
       params.push(start);
-      subtitleDate = `desde ${start}`;
+      subtitleDate = `desde ${formatDateToDMY(start)}`;
     } else if (end) {
       whereClause = ` WHERE DATE(pp.fecha) <= ?`;
       params.push(end);
-      subtitleDate = `hasta ${end}`;
+      subtitleDate = `hasta ${formatDateToDMY(end)}`;
     }
 
     const paymentsQuery = `
@@ -3032,11 +3053,11 @@ app.get('/api/reportes/plancha/resumen', async (req, res) => {
     
     let subtitleDate = "";
     if (start && end) {
-      subtitleDate = `del ${start} al ${end}`;
+      subtitleDate = `del ${formatDateToDMY(start)} al ${formatDateToDMY(end)}`;
     } else if (start) {
-      subtitleDate = `desde ${start}`;
+      subtitleDate = `desde ${formatDateToDMY(start)}`;
     } else if (end) {
-      subtitleDate = `hasta ${end}`;
+      subtitleDate = `hasta ${formatDateToDMY(end)}`;
     } else {
       subtitleDate = "de todos los tiempos";
     }
