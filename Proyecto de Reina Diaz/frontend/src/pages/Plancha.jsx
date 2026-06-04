@@ -29,7 +29,7 @@ import API_URL from '../config';
 import PlanchaSidebar from '../components/PlanchaSidebar';
 import Header from '../components/Header';
 
-// Tallas asociadas a cada burro (1 al 10)
+// Tallas asociadas a cada burro (1 al 12)
 const BURROS_TALLAS = {
   1: '5',
   2: '7',
@@ -40,7 +40,9 @@ const BURROS_TALLAS = {
   7: '7',
   8: '9',
   9: '11',
-  10: '13'
+  10: '13',
+  11: 'TODAS',
+  12: 'TODAS'
 };
 
 const normalizeTalla = (t) => {
@@ -91,13 +93,41 @@ export default function Plancha() {
   // Estado pestaña Plancha (Drag & Drop)
   const [draggedItem, setDraggedItem] = useState(null); // { type: 'planchador'|'modelo', data: obj }
   const [burrosState, setBurrosState] = useState(
-    Array.from({ length: 10 }, (_, i) => ({
+    Array.from({ length: 12 }, (_, i) => ({
       numero: i + 1,
       talla: BURROS_TALLAS[i + 1],
       planchador: null, // { id, nombre }
       modelos: [] // [{ id, modelo, imagen, piezas, maxPiezas }]
     }))
   );
+
+  // Nombres personalizados de los burros del 1 al 10 con persistencia
+  const [burrosNames, setBurrosNames] = useState(() => {
+    try {
+      const saved = localStorage.getItem('plancha_burros_names');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.error("Error loading burros names:", e);
+    }
+    return {
+      1: 'Mary',
+      2: 'Karla',
+      3: 'Maribel',
+      4: 'Alma',
+      5: 'Karina',
+      6: '',
+      7: '',
+      8: '',
+      9: '',
+      10: ''
+    };
+  });
+
+  const handleRenameBurro = (numero, newName) => {
+    const updated = { ...burrosNames, [numero]: newName };
+    setBurrosNames(updated);
+    localStorage.setItem('plancha_burros_names', JSON.stringify(updated));
+  };
 
   // Estado pestaña Pagos
   const [planchadorPagoDetalle, setPlanchadorPagoDetalle] = useState(null);
@@ -315,16 +345,32 @@ export default function Plancha() {
       registrarAsistencia(draggedItem.data.id, draggedItem.data.nombre);
     } else if (draggedItem.type === 'modelo') {
       const model = draggedItem.data;
-      const talla = burro.talla;
-      const normTalla = normalizeTalla(talla);
+      
+      let selectedTalla = "";
+      if (burro.numero >= 11) {
+        // Encontrar la primera talla con stock disponible > 0
+        const foundTallaEntry = Object.entries(model.tallas_disponibles || {}).find(
+          ([t, disp]) => disp > 0
+        );
+        if (!foundTallaEntry) {
+          alert(`El modelo ${model.modelo} no tiene piezas disponibles en ninguna talla.`);
+          setDraggedItem(null);
+          return;
+        }
+        selectedTalla = foundTallaEntry[0];
+      } else {
+        selectedTalla = burro.talla;
+      }
 
-      // Validar si el modelo tiene stock disponible en la talla de este burro (normalizado)
+      const normTalla = normalizeTalla(selectedTalla);
+
+      // Validar si el modelo tiene stock disponible en la talla elegida (normalizado)
       const matchingTallaKey = Object.keys(model.tallas_disponibles || {}).find(
         k => normalizeTalla(k) === normTalla
       );
       const disp = matchingTallaKey ? (model.tallas_disponibles[matchingTallaKey] || 0) : 0;
       if (disp <= 0) {
-        alert(`El modelo ${model.modelo} no tiene piezas disponibles para la Talla ${talla}`);
+        alert(`El modelo ${model.modelo} no tiene piezas disponibles para la Talla ${selectedTalla}`);
         setDraggedItem(null);
         return;
       }
@@ -341,9 +387,9 @@ export default function Plancha() {
             );
             const stockVal = matchingColorTallaKey ? (tallasObj[matchingColorTallaKey] || 0) : 0;
 
-            // Verificar que tenga stock y que no esté ya asignado en este burro
+            // Verificar que tenga stock y que no esté ya asignado en este burro con esta talla y color
             const alreadyAssigned = burro.modelos.some(
-              m => m.id === model.id && m.color === color
+              m => m.id === model.id && m.color === color && m.talla === selectedTalla
             );
 
             return stockVal > 0 && !alreadyAssigned;
@@ -360,15 +406,17 @@ export default function Plancha() {
       }
 
       if (stockDeEseColorYTalla <= 0) {
-        alert(`Todas las variantes de color disponibles del modelo ${model.modelo} para la Talla ${talla} ya han sido agregadas a este burro.`);
+        alert(`Todas las variantes de color disponibles del modelo ${model.modelo} para la Talla ${selectedTalla} ya han sido agregadas a este burro.`);
         setDraggedItem(null);
         return;
       }
 
-      // Validar si el modelo con ese mismo color ya está asignado en este burro (seguridad secundaria)
-      const existing = burro.modelos.find(m => m.id === model.id && m.color === selectedColor);
+      // Validar si el modelo con ese mismo color y talla ya está asignado en este burro (seguridad secundaria)
+      const existing = burro.modelos.find(
+        m => m.id === model.id && m.color === selectedColor && m.talla === selectedTalla
+      );
       if (existing) {
-        alert(`La variante de color "${selectedColor || 'Único'}" del modelo ${model.modelo} ya está en la lista de este burro`);
+        alert(`La variante de color "${selectedColor || 'Único'}" del modelo ${model.modelo} para la Talla ${selectedTalla} ya está en la lista de este burro`);
         setDraggedItem(null);
         return;
       }
@@ -379,6 +427,7 @@ export default function Plancha() {
         modelo: model.modelo,
         imagen: model.imagen,
         color: selectedColor,
+        talla: selectedTalla,
         piezas: 1,
         maxPiezas: stockDeEseColorYTalla,
         tallas_colores_disponibles: model.tallas_colores_disponibles
@@ -389,21 +438,25 @@ export default function Plancha() {
     setDraggedItem(null);
   };
 
-  const handleChangeModeloColor = (burroIndex, modelId, oldColor, newColor) => {
+  const handleChangeModeloColor = (burroIndex, modelId, oldColor, newColor, modelTalla) => {
     if (oldColor === newColor) return;
     const newBurros = [...burrosState];
     const burro = newBurros[burroIndex];
-    const talla = burro.talla;
+    const talla = burro.numero >= 11 ? modelTalla : burro.talla;
     const normTalla = normalizeTalla(talla);
 
-    // Verificar si el modelo con el nuevo color ya está en este burro
-    const duplicate = burro.modelos.some(m => m.id === modelId && m.color === newColor);
+    // Verificar si el modelo con el nuevo color ya está en este burro para esta talla
+    const duplicate = burro.modelos.some(
+      m => m.id === modelId && m.color === newColor && m.talla === talla
+    );
     if (duplicate) {
       alert(`La variante de color "${newColor || 'Único'}" ya está en la lista de este burro.`);
       return;
     }
 
-    const model = burro.modelos.find(m => m.id === modelId && m.color === oldColor);
+    const model = burro.modelos.find(
+      m => m.id === modelId && m.color === oldColor && m.talla === talla
+    );
     if (model) {
       let stockDeEseColorYTalla = 0;
       if (model.tallas_colores_disponibles && model.tallas_colores_disponibles[newColor]) {
@@ -423,21 +476,93 @@ export default function Plancha() {
     }
   };
 
+  const handleChangeModeloTalla = (burroIndex, modelId, color, oldTalla, newTalla) => {
+    if (oldTalla === newTalla) return;
+    const newBurros = [...burrosState];
+    const burro = newBurros[burroIndex];
+    const normTalla = normalizeTalla(newTalla);
+
+    const model = burro.modelos.find(
+      m => m.id === modelId && m.color === color && m.talla === oldTalla
+    );
+    if (!model) return;
+
+    // Verificar si el modelo con la nueva talla y el color actual ya está en este burro
+    const duplicate = burro.modelos.some(
+      m => m.id === modelId && m.color === color && m.talla === newTalla
+    );
+    if (duplicate) {
+      alert(`El modelo ${model.modelo} con la Talla ${newTalla} y color ${color || 'Único'} ya está en este burro.`);
+      return;
+    }
+
+    // Verificar stock de la nueva talla para el color actual
+    let stockDeEseColorYTalla = 0;
+    if (model.tallas_colores_disponibles && model.tallas_colores_disponibles[color]) {
+      const colorTallasObj = model.tallas_colores_disponibles[color];
+      const matchingColorTallaKey = Object.keys(colorTallasObj || {}).find(
+        k => normalizeTalla(k) === normTalla
+      );
+      stockDeEseColorYTalla = matchingColorTallaKey ? (colorTallasObj[matchingColorTallaKey] || 0) : 0;
+    }
+
+    let finalColor = color;
+    // Si no hay stock para el color actual en la nueva talla, buscar el primer color con stock
+    if (stockDeEseColorYTalla <= 0 && model.tallas_colores_disponibles) {
+      const foundColorEntry = Object.entries(model.tallas_colores_disponibles).find(
+        ([col, tallasObj]) => {
+          const matchingColorTallaKey = Object.keys(tallasObj || {}).find(
+            k => normalizeTalla(k) === normTalla
+          );
+          const stockVal = matchingColorTallaKey ? (tallasObj[matchingColorTallaKey] || 0) : 0;
+          // Que no esté duplicado en el burro
+          const alreadyAssigned = burro.modelos.some(
+            m => m.id === modelId && m.color === col && m.talla === newTalla
+          );
+          return stockVal > 0 && !alreadyAssigned;
+        }
+      );
+      if (foundColorEntry) {
+        finalColor = foundColorEntry[0];
+        const colorTallasObj = foundColorEntry[1];
+        const matchingColorTallaKey = Object.keys(colorTallasObj || {}).find(
+          k => normalizeTalla(k) === normTalla
+        );
+        stockDeEseColorYTalla = matchingColorTallaKey ? (colorTallasObj[matchingColorTallaKey] || 0) : 0;
+      } else {
+        alert(`No hay stock disponible para ninguna variante de color del modelo ${model.modelo} en la Talla ${newTalla}`);
+        return;
+      }
+    }
+
+    model.talla = newTalla;
+    model.color = finalColor;
+    model.maxPiezas = stockDeEseColorYTalla;
+    if (model.piezas > stockDeEseColorYTalla) {
+      model.piezas = stockDeEseColorYTalla > 0 ? stockDeEseColorYTalla : 1;
+    }
+    setBurrosState(newBurros);
+  };
+
   const handleRemovePlanchadorFromBurro = (index) => {
     const newBurros = [...burrosState];
     newBurros[index].planchador = null;
     setBurrosState(newBurros);
   };
 
-  const handleRemoveModeloFromBurro = (burroIndex, modelId, color) => {
+  const handleRemoveModeloFromBurro = (burroIndex, modelId, color, talla) => {
     const newBurros = [...burrosState];
-    newBurros[burroIndex].modelos = newBurros[burroIndex].modelos.filter(m => !(m.id === modelId && m.color === color));
+    newBurros[burroIndex].modelos = newBurros[burroIndex].modelos.filter(
+      m => !(m.id === modelId && m.color === color && m.talla === talla)
+    );
     setBurrosState(newBurros);
   };
 
-  const handleUpdatePiezas = (burroIndex, modelId, color, delta) => {
+  const handleUpdatePiezas = (burroIndex, modelId, color, talla, delta) => {
     const newBurros = [...burrosState];
-    const model = newBurros[burroIndex].modelos.find(m => m.id === modelId && m.color === color);
+    const model = newBurros[burroIndex].modelos.find(
+      m => m.id === modelId && m.color === color && m.talla === talla
+    );
     if (model) {
       const newVal = model.piezas + delta;
       if (newVal >= 1 && newVal <= model.maxPiezas) {
@@ -467,7 +592,8 @@ export default function Plancha() {
         modelos: burro.modelos.map(m => ({
           camion_detalles_id: m.id,
           piezas: m.piezas,
-          color: m.color
+          color: m.color,
+          talla: m.talla
         }))
       }, { headers: { Authorization: `Bearer ${token}` } });
 
@@ -1076,7 +1202,7 @@ export default function Plancha() {
                 <Flame color="#ef4444" size={24} /> Tablero de Burros
               </h2>
               <span style={{ fontSize: '0.85rem', color: '#64748b', background: 'rgba(255,255,255,0.02)', padding: '4px 10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                1 al 5 y 6 al 10 repiten tallas: <strong>5, 7, 9, 11, 13</strong>
+                1 al 10 repiten tallas: <strong>5, 7, 9, 11, 13</strong> | 11 y 12: <strong>Comodines (Cualquier Talla)</strong>
               </span>
             </div>
 
@@ -1104,27 +1230,51 @@ export default function Plancha() {
                     }}
                   >
                     {/* Indicador de Talla y Número de Burro */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#94a3b8' }}>
-                        {burro.numero === 1 ? 'Burro #1-Maru' :
-                         burro.numero === 2 ? 'Burro #2-Karla' :
-                         burro.numero === 3 ? 'Burro #3-Maribel' :
-                         burro.numero === 4 ? 'Burro #4-Alma' :
-                         burro.numero === 5 ? 'Burro #5-Karina' :
-                         `Burro #${burro.numero}`}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px', flex: 1, minWidth: 0 }}>
+                        {burro.numero >= 11 ? (
+                          burro.numero === 11 ? 'Burro Muestras - Luis' : 'Burro Supervisora-Olga'
+                        ) : (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', width: '100%' }}>
+                            <span style={{ whiteSpace: 'nowrap' }}>Burro #{burro.numero} -</span>
+                            <input
+                              type="text"
+                              value={burrosNames[burro.numero] || ''}
+                              onChange={(e) => handleRenameBurro(burro.numero, e.target.value)}
+                              placeholder="Nombre..."
+                              style={{
+                                background: 'transparent',
+                                border: 'none',
+                                borderBottom: '1px dashed rgba(255,255,255,0.2)',
+                                color: '#f8fafc',
+                                fontSize: '1.05rem',
+                                fontWeight: 'bold',
+                                width: '100%',
+                                minWidth: '80px',
+                                padding: '0 2px',
+                                outline: 'none',
+                              }}
+                            />
+                          </div>
+                        )}
                       </span>
                       <span 
                         style={{ 
-                          fontSize: '1rem', 
+                          fontSize: '0.9rem', 
                           fontWeight: 'bold', 
-                          background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                          background: burro.numero >= 11 
+                            ? 'linear-gradient(135deg, #10b981, #059669)'
+                            : 'linear-gradient(135deg, #f59e0b, #d97706)',
                           color: '#fff',
                           padding: '3px 12px',
                           borderRadius: '20px',
-                          boxShadow: '0 2px 10px rgba(217, 119, 6, 0.3)'
+                          boxShadow: burro.numero >= 11
+                            ? '0 2px 10px rgba(16, 185, 129, 0.3)'
+                            : '0 2px 10px rgba(217, 119, 6, 0.3)',
+                          whiteSpace: 'nowrap'
                         }}
                       >
-                        Talla {burro.talla}
+                        {burro.numero >= 11 ? 'Todas' : `Talla ${burro.talla}`}
                       </span>
                     </div>
 
@@ -1171,16 +1321,20 @@ export default function Plancha() {
                       }}
                     >
                       <h4 style={{ margin: 0, fontSize: '0.85rem', color: '#64748b', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '4px' }}>
-                        Modelos a planchar (Talla {burro.talla}):
+                        {burro.numero >= 11 
+                          ? 'Modelos a planchar (Cualquier talla):' 
+                          : `Modelos a planchar (Talla ${burro.talla}):`}
                       </h4>
 
                       {!hasModelos ? (
                         <div style={{ margin: 'auto', textAlign: 'center', color: '#64748b', fontSize: '0.8rem' }}>
-                          Arrastra un modelo de Talla {burro.talla} aquí
+                          {burro.numero >= 11 
+                            ? 'Arrastra cualquier modelo aquí' 
+                            : `Arrastra un modelo de Talla ${burro.talla} aquí`}
                         </div>
                       ) : (
                         burro.modelos.map(m => {
-                          const normTalla = normalizeTalla(burro.talla);
+                          const normTalla = normalizeTalla(burro.numero >= 11 ? m.talla : burro.talla);
                           const availableColors = [];
                           if (m.tallas_colores_disponibles) {
                             Object.entries(m.tallas_colores_disponibles).forEach(([col, tallasObj]) => {
@@ -1199,7 +1353,7 @@ export default function Plancha() {
 
                           return (
                             <div 
-                              key={`${m.id}_${m.color}`} 
+                              key={`${m.id}_${m.color}_${m.talla}`} 
                               style={{ 
                                 display: 'flex', 
                                 alignItems: 'center', 
@@ -1226,12 +1380,53 @@ export default function Plancha() {
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                   <strong style={{ fontSize: '0.85rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Mod {m.modelo}</strong>
                                   <button 
-                                    onClick={() => handleRemoveModeloFromBurro(index, m.id, m.color)}
+                                    onClick={() => handleRemoveModeloFromBurro(index, m.id, m.color, m.talla)}
                                     style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '2px' }}
                                   >
                                     <X size={14} />
                                   </button>
                                 </div>
+
+                                {/* Selector de Talla (Solo para burros wildcard) */}
+                                {burro.numero >= 11 && (
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
+                                    <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Talla:</span>
+                                    <select
+                                      value={m.talla}
+                                      onChange={(e) => handleChangeModeloTalla(index, m.id, m.color, m.talla, e.target.value)}
+                                      style={{
+                                        background: 'rgba(0, 0, 0, 0.4)',
+                                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                                        color: '#f59e0b',
+                                        borderRadius: '4px',
+                                        fontSize: '0.8rem',
+                                        fontWeight: 'bold',
+                                        padding: '1px 4px',
+                                        outline: 'none',
+                                        cursor: 'pointer'
+                                      }}
+                                    >
+                                      {(() => {
+                                        const uniqueTallas = Object.entries(m.tallas_colores_disponibles || {}).reduce((acc, [col, tallasObj]) => {
+                                          Object.entries(tallasObj || {}).forEach(([t, qty]) => {
+                                            if (qty > 0 && !acc.includes(t)) {
+                                              acc.push(t);
+                                            }
+                                          });
+                                          return acc;
+                                        }, []);
+                                        if (m.talla && !uniqueTallas.includes(m.talla)) {
+                                          uniqueTallas.push(m.talla);
+                                        }
+                                        return uniqueTallas.map(t => (
+                                          <option key={t} value={t} style={{ background: '#1e293b', color: '#fff' }}>
+                                            T{t}
+                                          </option>
+                                        ));
+                                      })()}
+                                    </select>
+                                  </div>
+                                )}
 
                                 {/* Selector o Tag de Color */}
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
@@ -1243,7 +1438,7 @@ export default function Plancha() {
                                   ) : (
                                     <select
                                       value={m.color}
-                                      onChange={(e) => handleChangeModeloColor(index, m.id, m.color, e.target.value)}
+                                      onChange={(e) => handleChangeModeloColor(index, m.id, m.color, e.target.value, m.talla)}
                                       style={{
                                         background: 'rgba(0, 0, 0, 0.4)',
                                         border: '1px solid rgba(255, 255, 255, 0.1)',
@@ -1268,7 +1463,7 @@ export default function Plancha() {
                                 {/* Controles de más y menos */}
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
                                   <button 
-                                    onClick={() => handleUpdatePiezas(index, m.id, m.color, -1)}
+                                    onClick={() => handleUpdatePiezas(index, m.id, m.color, m.talla, -1)}
                                     className="btn"
                                     style={{ padding: '2px 8px', minWidth: 0, fontSize: '0.75rem', background: 'rgba(255,255,255,0.05)', border: 'none' }}
                                     disabled={m.piezas <= 1}
@@ -1279,7 +1474,7 @@ export default function Plancha() {
                                     {m.piezas} <span style={{ fontWeight: 'normal', color: '#64748b', fontSize: '0.75rem' }}>/ {m.maxPiezas}</span>
                                   </span>
                                   <button 
-                                    onClick={() => handleUpdatePiezas(index, m.id, m.color, 1)}
+                                    onClick={() => handleUpdatePiezas(index, m.id, m.color, m.talla, 1)}
                                     className="btn"
                                     style={{ padding: '2px 8px', minWidth: 0, fontSize: '0.75rem', background: 'rgba(255,255,255,0.05)', border: 'none' }}
                                     disabled={m.piezas >= m.maxPiezas}
