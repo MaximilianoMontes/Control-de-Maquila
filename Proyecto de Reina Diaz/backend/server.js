@@ -2419,11 +2419,12 @@ app.post('/api/plancha/asignar', authenticateToken, async (req, res) => {
     const planchador = planchadores[0];
     if (!planchador) throw new Error('Planchador no encontrado');
 
-    const normTalla = normalizeTalla(talla);
-
     for (const m of modelos) {
-      const { camion_detalles_id, piezas, color } = m;
+      const { camion_detalles_id, piezas, color, talla: modelTalla } = m;
       if (!camion_detalles_id || piezas <= 0) continue;
+
+      const itemTalla = modelTalla || talla;
+      const normTalla = normalizeTalla(itemTalla);
 
       const [models] = await connection.query(
         "SELECT precio_plancha, modelo, tallas_cantidades FROM camion_detalles WHERE id = ?", 
@@ -2444,12 +2445,12 @@ app.post('/api/plancha/asignar', authenticateToken, async (req, res) => {
       const selectedColor = color || "";
 
       // Encontrar la clave original de talla que coincida con normTalla (por ejemplo, "05")
-      let matchingTallaKey = talla;
+      let matchingTallaKey = itemTalla;
       if (isNested) {
         const colorObj = tallasOriginales[selectedColor] || {};
-        matchingTallaKey = Object.keys(colorObj).find(k => normalizeTalla(k) === normTalla) || talla;
+        matchingTallaKey = Object.keys(colorObj).find(k => normalizeTalla(k) === normTalla) || itemTalla;
       } else {
-        matchingTallaKey = Object.keys(tallasOriginales).find(k => normalizeTalla(k) === normTalla) || talla;
+        matchingTallaKey = Object.keys(tallasOriginales).find(k => normalizeTalla(k) === normTalla) || itemTalla;
       }
 
       let maxPiezas = 0;
