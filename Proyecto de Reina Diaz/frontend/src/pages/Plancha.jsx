@@ -690,6 +690,10 @@ export default function Plancha() {
   // --- MÉTODOS EXTRA (ASISTENCIAS, AJUSTES, CUADRE, REPORTES) ---
   
   const registrarAsistencia = async (planchadorId, nombre) => {
+    if (nombre && nombre.toLowerCase().includes('olga')) {
+      console.log("Olga no puede tener asistencias.");
+      return;
+    }
     try {
       const token = localStorage.getItem('token');
       const res = await axios.post(`${API_URL}/api/planchadores/${planchadorId}/asistencia`, {}, {
@@ -1707,30 +1711,65 @@ export default function Plancha() {
                   {pagoSubmitting ? 'Registrando...' : 'Registrar Pago'}
                 </button>
 
-                <div style={{ display: 'flex', gap: '0.8rem', marginTop: '0.5rem' }}>
-                  <button 
-                    type="button" 
-                    className="btn btn-secondary" 
-                    style={{ flex: 1, borderColor: 'rgba(14, 165, 233, 0.4)', color: '#0ea5e9', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', padding: '10px' }}
-                    onClick={() => {
-                      setAjustePlanchadorId(pagoPlanchadorId);
-                      setShowAjusteModal(true);
-                    }}
-                  >
-                    <Plus size={16} /> Pago Fijo
-                  </button>
-                  <button 
-                    type="button" 
-                    className="btn btn-secondary" 
-                    style={{ flex: 1, borderColor: 'rgba(16, 185, 129, 0.4)', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', padding: '10px' }}
-                    onClick={() => {
-                      setCuadrePlanchadorId(pagoPlanchadorId);
-                      setShowCuadreModal(true);
-                    }}
-                  >
-                    <Calculator size={16} /> Cuadre Semanal
-                  </button>
-                </div>
+                {(() => {
+                  const selectedPlanchadorObj = planchadores.find(p => String(p.id) === String(pagoPlanchadorId));
+                  const isOlga = selectedPlanchadorObj?.nombre?.toLowerCase().includes('olga');
+                  const isLuis = selectedPlanchadorObj?.nombre?.toLowerCase().includes('luis');
+                  const restrictAjusteCuadre = isOlga || isLuis;
+
+                  return (
+                    <div style={{ display: 'flex', gap: '0.8rem', marginTop: '0.5rem' }}>
+                      <button 
+                        type="button" 
+                        className="btn btn-secondary" 
+                        style={{ 
+                          flex: 1, 
+                          borderColor: restrictAjusteCuadre ? 'rgba(255,255,255,0.05)' : 'rgba(14, 165, 233, 0.4)', 
+                          color: restrictAjusteCuadre ? '#64748b' : '#0ea5e9', 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center', 
+                          gap: '4px', 
+                          padding: '10px',
+                          cursor: restrictAjusteCuadre ? 'not-allowed' : 'pointer',
+                          opacity: restrictAjusteCuadre ? 0.5 : 1
+                        }}
+                        onClick={() => {
+                          if (restrictAjusteCuadre) return;
+                          setAjustePlanchadorId(pagoPlanchadorId);
+                          setShowAjusteModal(true);
+                        }}
+                        disabled={restrictAjusteCuadre}
+                      >
+                        <Plus size={16} /> Pago Fijo
+                      </button>
+                      <button 
+                        type="button" 
+                        className="btn btn-secondary" 
+                        style={{ 
+                          flex: 1, 
+                          borderColor: restrictAjusteCuadre ? 'rgba(255,255,255,0.05)' : 'rgba(16, 185, 129, 0.4)', 
+                          color: restrictAjusteCuadre ? '#64748b' : '#10b981', 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center', 
+                          gap: '4px', 
+                          padding: '10px',
+                          cursor: restrictAjusteCuadre ? 'not-allowed' : 'pointer',
+                          opacity: restrictAjusteCuadre ? 0.5 : 1
+                        }}
+                        onClick={() => {
+                          if (restrictAjusteCuadre) return;
+                          setCuadrePlanchadorId(pagoPlanchadorId);
+                          setShowCuadreModal(true);
+                        }}
+                        disabled={restrictAjusteCuadre}
+                      >
+                        <Calculator size={16} /> Cuadre Semanal
+                      </button>
+                    </div>
+                  );
+                })()}
               </form>
             </div>
 
@@ -2247,7 +2286,7 @@ export default function Plancha() {
                   required
                 >
                   <option value="">-- Elige un Planchador --</option>
-                  {planchadores.map(p => (
+                  {planchadores.filter(p => !p.nombre.toLowerCase().includes('olga') && !p.nombre.toLowerCase().includes('luis')).map(p => (
                     <option key={p.id} value={p.id}>{p.nombre}</option>
                   ))}
                 </select>
@@ -2422,7 +2461,7 @@ export default function Plancha() {
                   required
                 >
                   <option value="">-- Elige un Planchador --</option>
-                  {planchadores.map(p => (
+                  {planchadores.filter(p => !p.nombre.toLowerCase().includes('olga') && !p.nombre.toLowerCase().includes('luis')).map(p => (
                     <option key={p.id} value={p.id}>{p.nombre}</option>
                   ))}
                 </select>
