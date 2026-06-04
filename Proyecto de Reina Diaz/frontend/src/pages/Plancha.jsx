@@ -25,6 +25,7 @@ import {
   MinusCircle
 } from 'lucide-react';
 import { useSettings } from '../context/SettingsContext';
+import { useAuth } from '../context/AuthContext';
 import API_URL from '../config';
 import PlanchaSidebar from '../components/PlanchaSidebar';
 import Header from '../components/Header';
@@ -62,6 +63,8 @@ const formatDate = (dateStr) => {
 
 export default function Plancha() {
   const { settings, t, formatCurrency } = useSettings();
+  const { user } = useAuth();
+  const userRole = (user?.role || user?.rol || '').toString().toLowerCase().trim();
   const [searchParams, setSearchParams] = useSearchParams();
   const initialTab = searchParams.get('tab') || 'plancha';
   const [activeTab, setActiveTab] = useState(initialTab);
@@ -573,6 +576,17 @@ export default function Plancha() {
     }
   };
 
+  const handleSetPiezas = (burroIndex, modelId, color, talla, val) => {
+    const newBurros = [...burrosState];
+    const model = newBurros[burroIndex].modelos.find(
+      m => m.id === modelId && m.color === color && m.talla === talla
+    );
+    if (model) {
+      model.piezas = val;
+      setBurrosState(newBurros);
+    }
+  };
+
   const handleFinalizarPlanchado = async (index) => {
     const burro = burrosState[index];
     if (!burro.planchador) {
@@ -1029,22 +1043,30 @@ export default function Plancha() {
                           <span style={{ color: '#94a3b8' }}>Pago de Plancha:</span>
                           <strong style={{ color: '#34d399', fontSize: '1.1rem' }}>{formatCurrency(m.precio_plancha)} <span style={{ fontSize: '0.75rem', fontWeight: 'normal', color: '#64748b' }}>/ pza</span></strong>
                         </div>
-                        <button 
-                          className="btn btn-secondary" 
-                          style={{ width: '100%', padding: '6px', fontSize: '0.8rem', borderColor: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
-                          onClick={() => handleAbrirVerificacion(m)}
-                        >
-                          <Edit3 size={12} /> Editar Precio
-                        </button>
+                        {userRole !== 'plancha' && (
+                          <button 
+                            className="btn btn-secondary" 
+                            style={{ width: '100%', padding: '6px', fontSize: '0.8rem', borderColor: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
+                            onClick={() => handleAbrirVerificacion(m)}
+                          >
+                            <Edit3 size={12} /> Editar Precio
+                          </button>
+                        )}
                       </div>
                     ) : (
-                      <button 
-                        className="btn btn-primary" 
-                        style={{ width: '100%', padding: '8px' }}
-                        onClick={() => handleAbrirVerificacion(m)}
-                      >
-                        Verificar en Colima
-                      </button>
+                      userRole === 'plancha' ? (
+                        <div style={{ textAlign: 'center', color: '#94a3b8', fontSize: '0.85rem', fontStyle: 'italic', padding: '4px 0' }}>
+                          Pendiente de Verificación
+                        </div>
+                      ) : (
+                        <button 
+                          className="btn btn-primary" 
+                          style={{ width: '100%', padding: '8px' }}
+                          onClick={() => handleAbrirVerificacion(m)}
+                        >
+                          Verificar en Colima
+                        </button>
+                      )
                     )}
                   </div>
 
@@ -1489,18 +1511,51 @@ export default function Plancha() {
                                     onClick={() => handleUpdatePiezas(index, m.id, m.color, m.talla, -1)}
                                     className="btn"
                                     style={{ padding: '2px 8px', minWidth: 0, fontSize: '0.75rem', background: 'rgba(255,255,255,0.05)', border: 'none' }}
-                                    disabled={m.piezas <= 1}
+                                    disabled={!m.piezas || m.piezas <= 1}
                                   >
                                     -
                                   </button>
-                                  <span style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>
-                                    {m.piezas} <span style={{ fontWeight: 'normal', color: '#64748b', fontSize: '0.75rem' }}>/ {m.maxPiezas}</span>
+                                  <input
+                                    type="number"
+                                    min="1"
+                                    max={m.maxPiezas}
+                                    value={m.piezas}
+                                    onChange={(e) => {
+                                      const val = parseInt(e.target.value, 10);
+                                      if (!isNaN(val)) {
+                                        const clamped = Math.max(1, Math.min(val, m.maxPiezas));
+                                        handleSetPiezas(index, m.id, m.color, m.talla, clamped);
+                                      } else {
+                                        handleSetPiezas(index, m.id, m.color, m.talla, '');
+                                      }
+                                    }}
+                                    onBlur={(e) => {
+                                      const val = parseInt(e.target.value, 10);
+                                      if (isNaN(val) || val < 1) {
+                                        handleSetPiezas(index, m.id, m.color, m.talla, 1);
+                                      }
+                                    }}
+                                    style={{
+                                      width: '45px',
+                                      background: 'rgba(255,255,255,0.05)',
+                                      border: '1px solid rgba(255,255,255,0.1)',
+                                      borderRadius: '4px',
+                                      color: '#fff',
+                                      textAlign: 'center',
+                                      fontSize: '0.85rem',
+                                      fontWeight: 'bold',
+                                      padding: '2px',
+                                      marginRight: '2px'
+                                    }}
+                                  />
+                                  <span style={{ fontSize: '0.85rem', fontWeight: 'normal', color: '#64748b', marginRight: '4px' }}>
+                                    / {m.maxPiezas}
                                   </span>
                                   <button 
                                     onClick={() => handleUpdatePiezas(index, m.id, m.color, m.talla, 1)}
                                     className="btn"
                                     style={{ padding: '2px 8px', minWidth: 0, fontSize: '0.75rem', background: 'rgba(255,255,255,0.05)', border: 'none' }}
-                                    disabled={m.piezas >= m.maxPiezas}
+                                    disabled={!m.piezas || m.piezas >= m.maxPiezas}
                                   >
                                     +
                                   </button>

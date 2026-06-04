@@ -264,7 +264,8 @@ async function initializeDatabase() {
       ['admin', 'admin123', 'admin'],
       ['produccion1', 'prod123', 'produccion1'],
       ['produccion2', 'prod123', 'produccion2'],
-      ['inventario1', 'inv123', 'inventario1']
+      ['inventario1', 'inv123', 'inventario1'],
+      ['plancha', 'plan123', 'plancha']
     ];
 
     for (const [username, password, role] of users) {

@@ -64,6 +64,7 @@ export default function Launcher() {
   };
 
   // Safe username formatting for initials
+  const userRole = (user?.role || user?.rol || '').toString().toLowerCase().trim();
   const username = user?.username || 'Admin';
   const userInitials = username.substring(0, 2).toUpperCase();
 
@@ -132,12 +133,14 @@ export default function Launcher() {
       <main className="launcher-grid-wrapper">
         <div className="launcher-grid">
           {/* App 1: Maquila (Active ERP Dashboard) */}
-          <Link to="/dashboard" className="launcher-app-item">
-            <div className="launcher-app-icon">
-              <MaquilaIcon />
-            </div>
-            <span className="launcher-app-name">{text.maquila}</span>
-          </Link>
+          {userRole !== 'plancha' && userRole !== 'inventario1' && (
+            <Link to="/dashboard" className="launcher-app-item">
+              <div className="launcher-app-icon">
+                <MaquilaIcon />
+              </div>
+              <span className="launcher-app-name">{text.maquila}</span>
+            </Link>
+          )}
 
           {/* App 2: Plancha (Active) */}
           <Link to="/plancha" className="launcher-app-item">
