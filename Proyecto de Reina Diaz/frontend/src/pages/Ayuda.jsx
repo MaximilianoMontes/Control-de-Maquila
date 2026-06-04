@@ -21,7 +21,8 @@ import {
   AlertCircle, 
   Calendar, 
   X,
-  Truck
+  Truck,
+  Flame
 } from 'lucide-react';
 
 
@@ -411,6 +412,38 @@ const guides_es = {
       ),
       keywords: 'historial camiones bitacora desglose tallas auditoria consulta'
     }
+  ],
+  plancha: [
+    {
+      title: '¿Cómo funciona el Módulo de Plancha?',
+      content: (
+        <div>
+          <p>El módulo de <strong>Plancha</strong> está diseñado para controlar el trabajo de los planchadores de manera independiente:</p>
+          <ul>
+            <li><strong>Catálogo de Planchadores:</strong> Registra a tus planchadores con su nombre y teléfono para asignarles tareas de planchado.</li>
+            <li><strong>Asignación por Burros:</strong> Puedes asignar prendas del camión a diferentes "Burros" (mesas de planchado) arrastrando los modelos e ingresando la cantidad de piezas y la talla.</li>
+            <li><strong>Registro de Asistencias:</strong> Permite llevar un control de asistencia diaria para pagar bonos/apoyos de asistencia en sus nóminas.</li>
+            <li><strong>Control de Trabajos y Pagos:</strong> Consulta el balance de trabajos realizados por planchador, los pagos registrados y genera un comprobante de nómina.</li>
+          </ul>
+        </div>
+      ),
+      keywords: 'plancha planchadores burros asistencia pagos nómina'
+    },
+    {
+      title: 'Asignar Trabajo en los Burros',
+      content: (
+        <div>
+          <p>Para asignar prendas a un planchador en un burro de planchado:</p>
+          <ol>
+            <li>Arrastra el modelo desde la lista de "Modelos por Planchar" hacia el burro correspondiente o haz clic para asignarlo.</li>
+            <li>En la ventana emergente, ingresa el planchador responsable, la talla de la prenda y el total de piezas a planchar.</li>
+            <li>El sistema calculará automáticamente el costo de planchado según el precio configurado para el modelo.</li>
+            <li>Una vez completado el planchado de la prenda, el trabajo se registra en el historial de nómina del planchador.</li>
+          </ol>
+        </div>
+      ),
+      keywords: 'burros asignar planchado arrastrar modelos piezas'
+    }
   ]
 };
 
@@ -785,6 +818,38 @@ const guides_en = {
       ),
       keywords: 'trucks history log sizes breakdown audit query'
     }
+  ],
+  plancha: [
+    {
+      title: 'How does the Ironing (Plancha) Module work?',
+      content: (
+        <div>
+          <p>The <strong>Ironing (Plancha)</strong> module is designed to control the work of ironers independently:</p>
+          <ul>
+            <li><strong>Ironers Registry:</strong> Register your ironers with their name and phone to assign them ironing tasks.</li>
+            <li><strong>Burros (Ironing Boards) Assignment:</strong> You can assign garments from the truck to different "Burros" (ironing boards) by dragging the models and entering the number of pieces and size.</li>
+            <li><strong>Attendance Registry:</strong> Allows you to keep a daily attendance log to pay attendance bonuses/allowances in their payroll.</li>
+            <li><strong>Jobs & Payments Control:</strong> Check the balance of work done by ironer, registered payments, and generate a payroll receipt.</li>
+          </ul>
+        </div>
+      ),
+      keywords: 'ironing ironers boards attendance payments payroll'
+    },
+    {
+      title: 'Assigning Work to the Ironing Boards',
+      content: (
+        <div>
+          <p>To assign garments to an ironer on an ironing board (burro):</p>
+          <ol>
+            <li>Drag the model from the "Models to Iron" list to the corresponding board.</li>
+            <li>In the pop-up window, select the responsible ironer, the size of the garment, and the total pieces to iron.</li>
+            <li>The system will automatically calculate the ironing cost based on the configured price for the model.</li>
+            <li>Once ironing is completed, the job is registered in the ironer's payroll history.</li>
+          </ol>
+        </div>
+      ),
+      keywords: 'ironing boards assign drag models pieces'
+    }
   ]
 };
 
@@ -825,6 +890,7 @@ export default function Ayuda() {
     { id: 'produccion', name: t('nav.produccion'), icon: <Factory size={18} /> },
     { id: 'extras', name: t('nav.extras'), icon: <Sparkles size={18} /> },
     { id: 'camion', name: t('nav.camion'), icon: <Truck size={18} /> },
+    { id: 'plancha', name: t('nav.plancha'), icon: <Flame size={18} /> },
     { id: 'pagos', name: t('nav.pagos'), icon: <Wallet size={18} /> },
   ];
 

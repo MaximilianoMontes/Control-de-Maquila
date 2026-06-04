@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
@@ -30,13 +30,16 @@ import {
   Plus,
   Trash2,
   AlertTriangle,
-  LayoutGrid
+  LayoutGrid,
+  Flame
 } from 'lucide-react';
 
 export default function Header() {
   const { user, logout } = useAuth();
   const { settings, updateSetting, t, translateLog } = useSettings();
   const navigate = useNavigate();
+  const location = useLocation();
+  const isPlanchaPage = location.pathname.startsWith('/plancha');
   const isAdmin = user?.role === 'admin' || user?.rol === 'admin';
   
   // Dropdown states
@@ -339,30 +342,45 @@ export default function Header() {
                 <h4>{t('header.helpCenter')}</h4>
               </div>
               <div style={{ padding: '4px' }}>
-                <Link to="/ayuda?tab=general" className="profile-dropdown-item" onClick={() => setShowHelp(false)}>
-                  <BookOpen size={16} />
-                  <span>{t('header.userManual')}</span>
-                </Link>
-                <Link to="/ayuda?tab=maquileros" className="profile-dropdown-item" onClick={() => setShowHelp(false)}>
-                  <Users size={16} />
-                  <span>{t('header.tailorGuide')}</span>
-                </Link>
-                <Link to="/ayuda?tab=inventario" className="profile-dropdown-item" onClick={() => setShowHelp(false)}>
-                  <Package size={16} />
-                  <span>{t('header.inventoryControl')}</span>
-                </Link>
-                <Link to="/ayuda?tab=cortes" className="profile-dropdown-item" onClick={() => setShowHelp(false)}>
-                  <Scissors size={16} />
-                  <span>{t('header.cutsDesign')}</span>
-                </Link>
-                <Link to="/ayuda?tab=produccion" className="profile-dropdown-item" onClick={() => setShowHelp(false)}>
-                  <Factory size={16} />
-                  <span>{t('header.productionFlow')}</span>
-                </Link>
-                <Link to="/ayuda?tab=pagos" className="profile-dropdown-item" onClick={() => setShowHelp(false)}>
-                  <Wallet size={16} />
-                  <span>{t('header.paymentsAcum')}</span>
-                </Link>
+                {isPlanchaPage ? (
+                  <>
+                    <Link to="/ayuda?tab=plancha" className="profile-dropdown-item" onClick={() => setShowHelp(false)}>
+                      <Flame size={16} />
+                      <span>{settings.language === 'en' ? 'Ironing Module Guide' : 'Guía del Módulo de Plancha'}</span>
+                    </Link>
+                    <Link to="/ayuda?tab=general" className="profile-dropdown-item" onClick={() => setShowHelp(false)}>
+                      <BookOpen size={16} />
+                      <span>{settings.language === 'en' ? 'General Help Center' : 'Centro de Ayuda General'}</span>
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <Link to="/ayuda?tab=general" className="profile-dropdown-item" onClick={() => setShowHelp(false)}>
+                      <BookOpen size={16} />
+                      <span>{t('header.userManual')}</span>
+                    </Link>
+                    <Link to="/ayuda?tab=maquileros" className="profile-dropdown-item" onClick={() => setShowHelp(false)}>
+                      <Users size={16} />
+                      <span>{t('header.tailorGuide')}</span>
+                    </Link>
+                    <Link to="/ayuda?tab=inventario" className="profile-dropdown-item" onClick={() => setShowHelp(false)}>
+                      <Package size={16} />
+                      <span>{t('header.inventoryControl')}</span>
+                    </Link>
+                    <Link to="/ayuda?tab=cortes" className="profile-dropdown-item" onClick={() => setShowHelp(false)}>
+                      <Scissors size={16} />
+                      <span>{t('header.cutsDesign')}</span>
+                    </Link>
+                    <Link to="/ayuda?tab=produccion" className="profile-dropdown-item" onClick={() => setShowHelp(false)}>
+                      <Factory size={16} />
+                      <span>{t('header.productionFlow')}</span>
+                    </Link>
+                    <Link to="/ayuda?tab=pagos" className="profile-dropdown-item" onClick={() => setShowHelp(false)}>
+                      <Wallet size={16} />
+                      <span>{t('header.paymentsAcum')}</span>
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
           </div>

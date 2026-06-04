@@ -20,6 +20,7 @@ const translations = {
     'nav.reportes': 'Reportes',
     'nav.pagos': 'Pagos',
     'nav.historial': 'Historial',
+    'nav.plancha': 'Plancha',
     'nav.logout': 'Cerrar Sesión',
 
     // Header
@@ -91,6 +92,7 @@ const translations = {
     'ayuda.guide': 'guía',
     'ayuda.guides': 'guías',
     'ayuda.tabGeneral': 'Visión General',
+    'ayuda.tabPlancha': 'Módulo de Plancha',
     'ayuda.tipHeader': 'Consejos del Desarrollador para Productividad',
     'ayuda.tip1Title': 'Paleta de Comandos Rápida',
     'ayuda.tip1Text': 'Presiona la combinación de teclas Ctrl + G desde cualquier parte del sistema para abrir el buscador flotante y moverte entre pantallas sin usar el ratón.',
@@ -452,6 +454,7 @@ const translations = {
     'nav.reportes': 'Reports',
     'nav.pagos': 'Payments',
     'nav.historial': 'History',
+    'nav.plancha': 'Ironing',
     'nav.logout': 'Log Out',
 
     // Header
@@ -523,6 +526,7 @@ const translations = {
     'ayuda.guide': 'guide',
     'ayuda.guides': 'guides',
     'ayuda.tabGeneral': 'Overview',
+    'ayuda.tabPlancha': 'Ironing Module',
     'ayuda.tipHeader': 'Developer Tips for Productivity',
     'ayuda.tip1Title': 'Quick Command Palette',
     'ayuda.tip1Text': 'Press the key combination Ctrl + G from anywhere in the system to open the floating search bar and navigate between screens without using the mouse.',
