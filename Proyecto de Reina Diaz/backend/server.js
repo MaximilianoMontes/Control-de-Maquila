@@ -2861,7 +2861,7 @@ app.get('/api/reportes/plancha/pagos', async (req, res) => {
       const [works] = await db.query(`
         SELECT id, planchador_id, total, camion_detalles_id, color, fecha_terminado, pago_id
         FROM plancha_trabajos
-        WHERE estado = 'terminado' AND (pago_id IS NULL OR pago_id IN (?))
+        WHERE estado = 'terminado' AND (pago_id IS NULL OR pago_id IN (?)) AND (burro_numero IS NULL OR burro_numero < 11)
       `, [paymentIds]);
 
       const [asistencias] = await db.query(`
@@ -3066,11 +3066,11 @@ app.get('/api/reportes/plancha/resumen', async (req, res) => {
     const rowsData = [];
 
     for (const planchador of planchadores) {
-      // 1. Get works
+      // 1. Get works (excluding special burros 11 and 12)
       let worksQuery = `
         SELECT talla, color, total
         FROM plancha_trabajos
-        WHERE planchador_id = ? AND estado = 'terminado'
+        WHERE planchador_id = ? AND estado = 'terminado' AND (burro_numero IS NULL OR burro_numero < 11)
       `;
       let worksParams = [planchador.id];
       if (start && end) {
