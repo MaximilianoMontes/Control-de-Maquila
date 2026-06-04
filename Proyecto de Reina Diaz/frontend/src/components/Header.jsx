@@ -31,7 +31,8 @@ import {
   Trash2,
   AlertTriangle,
   LayoutGrid,
-  Flame
+  Flame,
+  Layers
 } from 'lucide-react';
 
 export default function Header() {
@@ -167,7 +168,14 @@ export default function Header() {
   }, [showCommandPalette]);
 
   // Available commands in Command Palette
-  const commands = [
+  const commands = isPlanchaPage ? [
+    { name: 'Tablero de Burros', desc: 'Interfaz interactiva de planchado y asignación', path: '/plancha?tab=plancha', icon: <Flame size={18} />, badge: 'Burros' },
+    { name: 'Modelos en Tránsito', desc: 'Verificación de llegada y precios de plancha', path: '/plancha?tab=modelos', icon: <Layers size={18} />, badge: 'Modelos' },
+    { name: 'Planchadores', desc: 'Registro y administración de planchadores', path: '/plancha?tab=planchadores', icon: <Users size={18} />, badge: 'Planchadores' },
+    { name: 'Pagos a Planchadores', desc: 'Liquidación de sueldos, apoyos y cuadres', path: '/plancha?tab=pagos', icon: <Wallet size={18} />, badge: 'Pagos' },
+    { name: 'Reportes e Historial', desc: 'Trabajos finalizados y exportación de reportes', path: '/plancha?tab=historial', icon: <FileText size={18} />, badge: 'Reportes' },
+    { name: t('header.helpCenter'), desc: t('header.cmdHelpDesc'), path: '/ayuda', icon: <HelpCircle size={18} />, badge: t('header.cmdHelpBadge') },
+  ] : [
     { name: t('nav.dashboard'), desc: t('header.cmdDashboardDesc'), path: '/', icon: <LayoutDashboard size={18} />, badge: t('header.cmdDashboardBadge') },
     { name: t('nav.maquileros'), desc: t('header.cmdMaquilerosDesc'), path: '/maquileros', icon: <Users size={18} />, badge: t('header.cmdMaquilerosBadge') },
     { name: t('nav.inventario'), desc: t('header.cmdInventarioDesc'), path: '/inventario', icon: <Package size={18} />, badge: t('header.cmdInventarioBadge') },
