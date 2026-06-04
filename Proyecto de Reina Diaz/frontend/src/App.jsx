@@ -1,8 +1,9 @@
 // Trigger build
 import { useState } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import Sidebar from './components/Sidebar';
+import PlanchaSidebar from './components/PlanchaSidebar';
 import Header from './components/Header';
 import Login from './pages/Login';
 import Launcher from './pages/Launcher';
@@ -21,9 +22,16 @@ import Camion from './pages/Camion';
 import KillFeed from './components/KillFeed';
 
 function MainLayout({ children }) {
+  const [searchParams] = useSearchParams();
+  const fromPlancha = searchParams.get('from') === 'plancha';
+
   return (
     <div className="app-layout">
-      <Sidebar />
+      {fromPlancha ? (
+        <PlanchaSidebar activeTab="ayuda" setActiveTab={() => {}} />
+      ) : (
+        <Sidebar />
+      )}
       <KillFeed />
       <div className="main-container">
         <Header />

@@ -344,11 +344,11 @@ export default function Header() {
               <div style={{ padding: '4px' }}>
                 {isPlanchaPage ? (
                   <>
-                    <Link to="/ayuda?tab=plancha" className="profile-dropdown-item" onClick={() => setShowHelp(false)}>
+                    <Link to="/ayuda?tab=plancha&from=plancha" className="profile-dropdown-item" onClick={() => setShowHelp(false)}>
                       <Flame size={16} />
                       <span>{settings.language === 'en' ? 'Ironing Module Guide' : 'Guía del Módulo de Plancha'}</span>
                     </Link>
-                    <Link to="/ayuda?tab=general" className="profile-dropdown-item" onClick={() => setShowHelp(false)}>
+                    <Link to="/ayuda?tab=general&from=plancha" className="profile-dropdown-item" onClick={() => setShowHelp(false)}>
                       <BookOpen size={16} />
                       <span>{settings.language === 'en' ? 'General Help Center' : 'Centro de Ayuda General'}</span>
                     </Link>

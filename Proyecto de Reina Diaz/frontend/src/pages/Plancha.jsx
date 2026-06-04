@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { 
   Users, 
@@ -58,7 +59,16 @@ const formatDate = (dateStr) => {
 
 export default function Plancha() {
   const { settings, t, formatCurrency } = useSettings();
-  const [activeTab, setActiveTab] = useState('plancha');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialTab = searchParams.get('tab') || 'plancha';
+  const [activeTab, setActiveTab] = useState(initialTab);
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
 
   // Estados comunes
   const [planchadores, setPlanchadores] = useState([]);
