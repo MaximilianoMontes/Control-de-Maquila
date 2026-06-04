@@ -3050,7 +3050,11 @@ app.get('/api/reportes/plancha/pagos', async (req, res) => {
 app.get('/api/reportes/plancha/resumen', async (req, res) => {
   const { start, end } = req.query;
   try {
-    const [planchadores] = await db.query("SELECT id, nombre FROM planchadores ORDER BY nombre ASC");
+    const [allPlanchadores] = await db.query("SELECT id, nombre FROM planchadores ORDER BY nombre ASC");
+    const planchadores = allPlanchadores.filter(p => 
+      !p.nombre.toLowerCase().includes('olga') && 
+      !p.nombre.toLowerCase().includes('luis')
+    );
     
     let subtitleDate = "";
     if (start && end) {
@@ -3068,7 +3072,7 @@ app.get('/api/reportes/plancha/resumen', async (req, res) => {
     for (const planchador of planchadores) {
       // 1. Get works (excluding special burros 11 and 12)
       let worksQuery = `
-        SELECT talla, color, total
+        SELECT talla, color, total, piezas
         FROM plancha_trabajos
         WHERE planchador_id = ? AND estado = 'terminado' AND (burro_numero IS NULL OR burro_numero < 11)
       `;
@@ -3089,9 +3093,11 @@ app.get('/api/reportes/plancha/resumen', async (req, res) => {
       let regularWork = 0;
       let cuadreDif = 0;
       let pagoFijo = 0;
+      let totalPiezas = 0;
 
       for (const w of works) {
         const total = Number(w.total) || 0;
+        const piezas = Number(w.piezas) || 0;
         if (w.talla === 'AJUSTE') {
           if (w.color && (w.color.includes('Cuadre') || w.color.includes('Diferencia'))) {
             cuadreDif += total;
@@ -3100,6 +3106,7 @@ app.get('/api/reportes/plancha/resumen', async (req, res) => {
           }
         } else {
           regularWork += total;
+          totalPiezas += piezas;
         }
       }
 
@@ -3146,6 +3153,7 @@ app.get('/api/reportes/plancha/resumen', async (req, res) => {
 
       rowsData.push({
         nombre: planchador.nombre.toUpperCase(),
+        piezas: totalPiezas,
         regular: regularWork,
         asistencias: asistenciasTotal,
         pago_fijo: pagoFijo,
@@ -3154,6 +3162,26 @@ app.get('/api/reportes/plancha/resumen', async (req, res) => {
         pagado: pagadoTotal,
         pendiente: pendienteTotal
       });
+    }
+
+    let sumPiezas = 0;
+    let sumRegular = 0;
+    let sumAsistencias = 0;
+    let sumPagoFijo = 0;
+    let sumCuadre = 0;
+    let sumGanado = 0;
+    let sumPagado = 0;
+    let sumPendiente = 0;
+
+    for (const r of rowsData) {
+      sumPiezas += r.piezas;
+      sumRegular += r.regular;
+      sumAsistencias += r.asistencias;
+      sumPagoFijo += r.pago_fijo;
+      sumCuadre += r.cuadre;
+      sumGanado += r.ganado;
+      sumPagado += r.pagado;
+      sumPendiente += r.pendiente;
     }
 
     const doc = new PDFDocument({ margin: 20, size: 'A4', layout: 'landscape' });
@@ -3187,31 +3215,52 @@ app.get('/api/reportes/plancha/resumen', async (req, res) => {
       title: "Resumen General de Planchadores",
       subtitle: `Resumen de actividades y saldos ${subtitleDate} - Generado el ${formatDateUTC(localNow)}`,
       headers: [
-        { label: "PLANCHADOR", property: "nombre", width: 140 },
-        { label: "PLANCHA REGULAR", property: "regular", width: 90 },
+        { label: "PLANCHADOR", property: "nombre", width: 130 },
+        { label: "TOTAL PIEZAS", property: "piezas", width: 70 },
+        { label: "PLANCHA REGULAR", property: "regular", width: 85 },
         { label: "ASISTENCIAS", property: "asistencias", width: 80 },
-        { label: "PAGO FIJO", property: "pago_fijo", width: 80 },
-        { label: "DIF. CUADRE", property: "cuadre", width: 80 },
-        { label: "TOTAL GANADO", property: "ganado", width: 90 },
-        { label: "TOTAL PAGADO", property: "pagado", width: 90 },
-        { label: "SALDO PENDIENTE", property: "pendiente", width: 95 }
+        { label: "PAGO FIJO", property: "pago_fijo", width: 75 },
+        { label: "DIF. CUADRE", property: "cuadre", width: 75 },
+        { label: "TOTAL GANADO", property: "ganado", width: 85 },
+        { label: "TOTAL PAGADO", property: "pagado", width: 85 },
+        { label: "SALDO PENDIENTE", property: "pendiente", width: 90 }
       ],
-      datas: rowsData.map(r => ({
-        nombre: r.nombre,
-        regular: '$' + r.regular.toFixed(2),
-        asistencias: '$' + r.asistencias.toFixed(2),
-        pago_fijo: '$' + r.pago_fijo.toFixed(2),
-        cuadre: (r.cuadre >= 0 ? '+' : '') + '$' + r.cuadre.toFixed(2),
-        ganado: '$' + r.ganado.toFixed(2),
-        pagado: '$' + r.pagado.toFixed(2),
-        pendiente: '$' + r.pendiente.toFixed(2)
-      })),
+      datas: [
+        ...rowsData.map(r => ({
+          nombre: r.nombre,
+          piezas: String(r.piezas),
+          regular: '$' + r.regular.toFixed(2),
+          asistencias: '$' + r.asistencias.toFixed(2),
+          pago_fijo: '$' + r.pago_fijo.toFixed(2),
+          cuadre: (r.cuadre >= 0 ? '+' : '') + '$' + r.cuadre.toFixed(2),
+          ganado: '$' + r.ganado.toFixed(2),
+          pagado: '$' + r.pagado.toFixed(2),
+          pendiente: '$' + r.pendiente.toFixed(2)
+        })),
+        {
+          nombre: 'TOTAL',
+          piezas: String(sumPiezas),
+          regular: '$' + sumRegular.toFixed(2),
+          asistencias: '$' + sumAsistencias.toFixed(2),
+          pago_fijo: '$' + sumPagoFijo.toFixed(2),
+          cuadre: (sumCuadre >= 0 ? '+' : '') + '$' + sumCuadre.toFixed(2),
+          ganado: '$' + sumGanado.toFixed(2),
+          pagado: '$' + sumPagado.toFixed(2),
+          pendiente: '$' + sumPendiente.toFixed(2)
+        }
+      ],
       options: { padding: 5 }
     };
 
     await doc.table(tableConfig, {
       prepareHeader: () => doc.font("Helvetica-Bold").fontSize(9),
-      prepareRow: () => doc.font("Helvetica").fontSize(8)
+      prepareRow: (row, indexColumn, indexRow, rectRow) => {
+        if (row.nombre === 'TOTAL') {
+          doc.font("Helvetica-Bold").fontSize(8);
+        } else {
+          doc.font("Helvetica").fontSize(8);
+        }
+      }
     });
 
     doc.end();
