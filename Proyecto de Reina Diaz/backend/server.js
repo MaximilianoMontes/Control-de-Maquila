@@ -1606,7 +1606,7 @@ app.get('/api/pagos/:id/comprobante', async (req, res) => {
     if (pago.ajuste_tipo && pago.ajuste_tipo !== 'ninguno') {
       const label = pago.ajuste_tipo === 'bono' ? 'BONO EXTRA' : 'DESCUENTO (PENALIZACIÓN)';
       const sign = pago.ajuste_tipo === 'bono' ? '+' : '-';
-      doc.font('Helvetica-Bold').text(`${label} (${pago.ajuste_porcentaje}%): ${sign}$${pago.ajuste_monto.toFixed(2)}`);
+      doc.font('Helvetica-Bold').text(`${label} (${pago.ajuste_porcentaje}%): ${sign}$${Number(pago.ajuste_monto || 0).toFixed(2)}`);
       doc.font('Helvetica');
     }
     
