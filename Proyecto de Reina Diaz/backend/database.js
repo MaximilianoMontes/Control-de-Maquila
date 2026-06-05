@@ -371,60 +371,88 @@ async function initializeDatabase() {
     }
 
     try {
-      console.log('--- MIGRACIÓN MANUAL: Eliminación de orden de prueba 73 (y modelo pruebsas) ---');
-      
-      // 1. Obtener la orden de producción 73
-      const [p73] = await connection.query("SELECT * FROM produccion WHERE id = 73");
-      if (p73.length > 0) {
-        const order = p73[0];
+      console.log('--- MIGRACIÓN MANUAL COMPLETA: Eliminación de datos de pruebas (modelo: pruebsas, maquilero: pruebas) ---');
+
+      // 1. Obtener los IDs de producción asociados al maquilero 'pruebas' o al modelo 'pruebsas'
+      const [testOrders] = await connection.query(`
+        SELECT p.id, p.inventario_id, p.maquilero_id 
+        FROM produccion p
+        LEFT JOIN maquileros m ON p.maquilero_id = m.id
+        LEFT JOIN inventario i ON p.inventario_id = i.id
+        WHERE m.nombre = 'pruebas' OR i.modelo = 'pruebsas'
+      `);
+
+      console.log(`Se encontraron ${testOrders.length} ordenes de producción de prueba.`);
+
+      for (const order of testOrders) {
+        console.log(`Procesando eliminación de orden de producción ID: ${order.id}`);
+
+        // Find payments associated with this order
+        const [pagos] = await connection.query("SELECT id FROM pagos WHERE produccion_id = ?", [order.id]);
+        const pagoIds = pagos.map(p => p.id);
         
-        // 2. Eliminar de descuentos_personales asociados a la orden
-        await connection.query("DELETE FROM descuentos_personales WHERE inventario_id = ?", [order.inventario_id]);
-        
-        // 3. Eliminar pagos de la orden y sus descuentos asociados
-        const [pagos] = await connection.query("SELECT id FROM pagos WHERE produccion_id = 73");
-        for (const p of pagos) {
-          await connection.query("DELETE FROM descuentos_personales WHERE pago_id = ?", [p.id]);
+        if (pagoIds.length > 0) {
+          // Delete personal discounts linked to payments
+          await connection.query("DELETE FROM descuentos_personales WHERE pago_id IN (?)", [pagoIds]);
+          // Delete payments
+          await connection.query("DELETE FROM pagos WHERE id IN (?)", [pagoIds]);
         }
-        await connection.query("DELETE FROM pagos WHERE produccion_id = 73");
-        
-        // 4. Eliminar devoluciones de plancha asociadas
-        await connection.query("DELETE FROM plancha_devoluciones WHERE produccion_id = 73");
 
-        // 5. Eliminar la orden de producción
-        await connection.query("DELETE FROM produccion WHERE id = 73");
-        console.log("Orden de producción 73 eliminada.");
+        // Delete personal discounts linked to inventario_id
+        if (order.inventario_id) {
+          await connection.query("DELETE FROM descuentos_personales WHERE inventario_id = ?", [order.inventario_id]);
+        }
 
-        // 6. Eliminar el corte en inventario e inventario_real
-        const [cuts] = await connection.query("SELECT modelo, no_orden FROM inventario WHERE id = ?", [order.inventario_id]);
-        if (cuts.length > 0) {
-          const cut = cuts[0];
-          await connection.query("DELETE FROM inventario WHERE id = ?", [order.inventario_id]);
-          await connection.query("DELETE FROM inventario_real WHERE no_orden = ? AND modelo = ?", [cut.no_orden || '', cut.modelo]);
-          console.log(`Corte de inventario ${cut.modelo} y su inventario real eliminado.`);
+        // Delete plancha devoluciones associated with this order
+        await connection.query("DELETE FROM plancha_devoluciones WHERE produccion_id = ?", [order.id]);
+
+        // Find camion_detalles associated with this order
+        const [camionDetalles] = await connection.query("SELECT id FROM camion_detalles WHERE produccion_id = ?", [order.id]);
+        const cdIds = camionDetalles.map(cd => cd.id);
+        if (cdIds.length > 0) {
+          // Delete plancha devoluciones referencing camion_detalles
+          await connection.query("DELETE FROM plancha_devoluciones WHERE camion_detalles_id IN (?)", [cdIds]);
+          // Delete plancha_trabajos referencing camion_detalles
+          await connection.query("DELETE FROM plancha_trabajos WHERE camion_detalles_id IN (?)", [cdIds]);
+          // Delete camion_detalles
+          await connection.query("DELETE FROM camion_detalles WHERE id IN (?)", [cdIds]);
+        }
+
+        // Delete production order
+        await connection.query("DELETE FROM produccion WHERE id = ?", [order.id]);
+
+        // Delete inventory record
+        if (order.inventario_id) {
+          const [cuts] = await connection.query("SELECT modelo, no_orden FROM inventario WHERE id = ?", [order.inventario_id]);
+          if (cuts.length > 0) {
+            const cut = cuts[0];
+            await connection.query("DELETE FROM inventario WHERE id = ?", [order.inventario_id]);
+            await connection.query("DELETE FROM inventario_real WHERE no_orden = ? AND modelo = ?", [cut.no_orden || '', cut.modelo]);
+            console.log(`Corte de inventario ${cut.modelo} y su inventario real eliminado.`);
+          }
         }
       }
 
-      // 7. Depurar cualquier registro del historial que mencione 'pruebsas', 'pruebas' o 'orden 73'
+      // 2. Eliminar cualquier modelo 'pruebsas' huérfano de inventario e inventario_real
+      await connection.query("DELETE FROM inventario WHERE modelo = 'pruebsas'");
+      await connection.query("DELETE FROM inventario_real WHERE modelo = 'pruebsas'");
+
+      // 3. Eliminar el maquilero 'pruebas'
+      await connection.query("DELETE FROM maquileros WHERE nombre = 'pruebas'");
+
+      // 4. Limpiar historial
       await connection.query(`
         DELETE FROM historial 
         WHERE description LIKE '%pruebsas%' 
            OR description LIKE '%pruebas%' 
            OR description LIKE '%orden 73%' 
-           OR description LIKE '%ID 73%'
+           OR description LIKE '%ID 73%' 
            OR description LIKE '%ID #73%'
       `);
 
-      // 8. Eliminar el maquilero 'pruebas' si existe
-      const [maqPruebas] = await connection.query("SELECT id FROM maquileros WHERE nombre = 'pruebas'");
-      if (maqPruebas.length > 0) {
-        await connection.query("DELETE FROM maquileros WHERE id = ?", [maqPruebas[0].id]);
-        console.log("Maquilero de prueba 'pruebas' eliminado.");
-      }
-
-      console.log('--- FIN MIGRACIÓN MANUAL ORDEN 73 ---');
+      console.log('--- FIN MIGRACIÓN MANUAL COMPLETA DE PRUEBAS ---');
     } catch (e) {
-      console.error('Error al depurar orden 73:', e);
+      console.error('Error al depurar datos de pruebas:', e);
     }
 
     try {
