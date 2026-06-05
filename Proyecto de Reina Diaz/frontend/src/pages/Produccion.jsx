@@ -357,9 +357,7 @@ export default function Produccion() {
                           {canEdit && (o.estado === 'En proceso' || o.estado === 'Terminado Parcial') && (
                             <>
                               <button className="btn btn-success" style={{ padding: '0.4rem' }} onClick={() => handleTerminar(o.id)} title="Terminar Orden"><CheckCircle size={16} /></button>
-                              {o.estado === 'En proceso' && (
-                                <button className="btn" style={{ padding: '0.4rem', background: '#eab308', color: 'white' }} onClick={() => handleTerminarParcial(o.id)} title={t('prod.tooltipPartial')}><MinusCircle size={16} /></button>
-                              )}
+                              <button className="btn" style={{ padding: '0.4rem', background: '#eab308', color: 'white' }} onClick={() => handleTerminarParcial(o.id)} title={t('prod.tooltipPartial')}><MinusCircle size={16} /></button>
                               <button className="btn" style={{ padding: '0.4rem', background: '#8b5cf6', color: 'white' }} onClick={() => handleAddDay(o.id)} title="Agregar Prórroga (Días)"><Calendar size={16} /></button>
                               <button className="btn btn-danger" style={{ padding: '0.4rem' }} onClick={() => handleCancelar(o.id)} title="Cancelar Orden"><XCircle size={16} /></button>
                               <Link to={`/pagos?orden=${o.id}`} className="btn btn-primary" style={{ padding: '0.4rem', display: 'flex', alignItems: 'center' }} title="Registrar Pago"><DollarSign size={16} /></Link>
