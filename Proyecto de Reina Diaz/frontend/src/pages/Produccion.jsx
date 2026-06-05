@@ -4,7 +4,7 @@ import {
   Archive, ArchiveRestore, Image as ImageIcon, AlertTriangle, AlertCircle, Calendar, X, Sparkles,
   MinusCircle
 } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import axios from 'axios';
@@ -33,6 +33,7 @@ export default function Produccion() {
   const { user } = useAuth();
   const { settings, t, formatCurrency } = useSettings();
   const location = useLocation();
+  const navigate = useNavigate();
   const userRole = (user?.role || user?.rol || '').toString().toLowerCase().trim();
   const canEdit = userRole === 'admin' || userRole === 'produccion1' || userRole === 'produccion2';
   const [orders, setOrders] = useState([]);
@@ -132,18 +133,12 @@ export default function Produccion() {
 
   const handleTerminar = async (id) => {
     if (!confirm(t('prod.confirmFinish'))) return;
-    try {
-      await axios.put(`${API}/api/produccion/${id}`, { estado: 'Terminado', fecha_fin: new Date().toISOString().split('T')[0] });
-      fetchOrders();
-    } catch (e) { alert(t('prod.alertGenericError')); }
+    navigate(`/pagos?orden=${id}&tipo=completo`);
   };
 
   const handleTerminarParcial = async (id) => {
     if (!confirm(t('prod.confirmPartial'))) return;
-    try {
-      await axios.put(`${API}/api/produccion/${id}`, { estado: 'Terminado Parcial' });
-      fetchOrders();
-    } catch (e) { alert(t('prod.alertGenericError')); }
+    navigate(`/pagos?orden=${id}&tipo=abono`);
   };
 
   const handleCancelar = async (id) => {

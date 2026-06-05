@@ -999,12 +999,12 @@ app.post('/api/camiones', authenticateToken, async (req, res) => {
 const autoArchiveOrders = async () => {
   try {
     // 1. Get orders that should be archived but are not yet (archivado < 2)
-    // Condition: fully loaded/shipped on the truck in the system, regardless of their current status (except cancelled ones)
+    // Condition: fully loaded/shipped on the truck in the system, and state is 'Terminado' (fully paid/liquidated)
     const [toArchive] = await db.query(`
       SELECT p.id 
       FROM produccion p
       WHERE p.archivado < 2
-        AND p.estado != 'Cancelado'
+        AND p.estado = 'Terminado'
         AND (
           SELECT COALESCE(SUM(cd.piezas), 0)
           FROM camion_detalles cd
@@ -1013,13 +1013,13 @@ const autoArchiveOrders = async () => {
     `);
 
     // 2. Get orders that are currently auto-archived (archivado = 2) but no longer meet the criteria to be archived
-    // (e.g. they were cancelled, or pieces were removed from the truck)
+    // (e.g. they are no longer 'Terminado', or pieces were removed from the truck)
     const [toUnarchive] = await db.query(`
       SELECT p.id 
       FROM produccion p
       WHERE p.archivado = 2
         AND (
-          p.estado = 'Cancelado'
+          p.estado != 'Terminado'
           OR (
             SELECT COALESCE(SUM(cd.piezas), 0)
             FROM camion_detalles cd
@@ -1430,14 +1430,27 @@ app.post('/api/pagos', authenticateToken, async (req, res) => {
     const pagoId = result.insertId;
     
     // 2. Obtener el Maquilero de la orden
-    const [orders] = await connection.query("SELECT maquilero_id FROM produccion WHERE id = ?", [produccion_id]);
+    const [orders] = await connection.query("SELECT maquilero_id, estado FROM produccion WHERE id = ?", [produccion_id]);
     if (orders.length > 0) {
       const maquileroId = orders[0].maquilero_id;
+      const currentStatus = orders[0].estado;
+      
       // 3. Vincular y marcar como aplicados los descuentos pendientes de ese maquilero
       await connection.query(
         "UPDATE descuentos_personales SET aplicado = 1, pago_id = ? WHERE maquilero_id = ? AND aplicado = 0",
         [pagoId, maquileroId]
       );
+
+      // 3.5. Actualizar el estado de la orden de producción según el tipo de pago
+      if (tipo_pago === 'abono' && currentStatus === 'En proceso') {
+        await connection.query("UPDATE produccion SET estado = 'Terminado Parcial' WHERE id = ?", [produccion_id]);
+      } else if (tipo_pago === 'completo') {
+        const today = new Date().toISOString().split('T')[0];
+        await connection.query(
+          "UPDATE produccion SET estado = 'Terminado', fecha_terminado = COALESCE(fecha_terminado, NOW()), fecha_fin = COALESCE(fecha_fin, ?) WHERE id = ?",
+          [today, produccion_id]
+        );
+      }
     }
 
     // 4. Log Actividad
@@ -1486,6 +1499,19 @@ app.delete('/api/pagos/:id', authenticateToken, async (req, res) => {
     // 3. Delete the payment
     await connection.query("DELETE FROM pagos WHERE id = ?", [pagoId]);
 
+    // 3.5. Update order status based on remaining payments
+    const [remainingPagos] = await connection.query("SELECT tipo_pago FROM pagos WHERE produccion_id = ?", [pago.produccion_id]);
+    if (remainingPagos.length === 0) {
+      await connection.query("UPDATE produccion SET estado = 'En proceso', fecha_terminado = NULL WHERE id = ?", [pago.produccion_id]);
+    } else {
+      const hasCompleto = remainingPagos.some(p => p.tipo_pago === 'completo');
+      if (hasCompleto) {
+        await connection.query("UPDATE produccion SET estado = 'Terminado' WHERE id = ?", [pago.produccion_id]);
+      } else {
+        await connection.query("UPDATE produccion SET estado = 'Terminado Parcial', fecha_terminado = NULL WHERE id = ?", [pago.produccion_id]);
+      }
+    }
+
     // 4. Log the activity
     const [prods] = await connection.query("SELECT i.modelo FROM produccion p JOIN inventario i ON p.inventario_id = i.id WHERE p.id = ?", [pago.produccion_id]);
     const prod = prods[0];
@@ -1513,7 +1539,7 @@ app.get('/api/pagos/:id/comprobante', async (req, res) => {
   const pagoId = req.params.id;
   try {
     const [pagos] = await db.query(`
-      SELECT pg.*, p.id as orden_id, p.maquilero_id, p.inventario_id, 
+      SELECT pg.*, p.id as orden_id, p.maquilero_id, p.inventario_id, p.estado as orden_estado,
              p.cantidad, p.cantidad_recibida, p.ajuste_tipo, p.ajuste_porcentaje, p.ajuste_monto,
              m.nombre as maquilero_nombre,
              i.modelo as producto_modelo, i.precio as precio_unitario, i.no_orden as no_orden
@@ -1526,6 +1552,10 @@ app.get('/api/pagos/:id/comprobante', async (req, res) => {
     const pago = pagos[0];
 
     if (!pago) return res.status(404).json({ error: 'Pago no encontrado' });
+
+    if (pago.orden_estado !== 'Terminado' && pago.orden_estado !== 'Terminado Parcial') {
+      return res.status(403).send('Solo se puede generar el comprobante para ordenes terminadas o con pago parcial.');
+    }
 
     const [todosLosPagos] = await db.query("SELECT id FROM pagos WHERE produccion_id = ? ORDER BY id ASC", [pago.produccion_id]);
     const index = todosLosPagos.findIndex(p => p.id === parseInt(pagoId));
@@ -1954,26 +1984,27 @@ app.get('/api/reportes/pagos', async (req, res) => {
       JOIN produccion p ON pg.produccion_id = p.id
       JOIN maquileros m ON p.maquilero_id = m.id
       LEFT JOIN inventario i ON p.inventario_id = i.id
+      WHERE p.estado IN ('Terminado', 'Terminado Parcial')
     `;
     const params = [];
     let subtitleDate = "";
 
     if (start && end) {
       if (start === end) {
-        query += ` WHERE pg.fecha = ?`;
+        query += ` AND pg.fecha = ?`;
         params.push(start);
         subtitleDate = `del día ${formatDateToDMY(start)}`;
       } else {
-        query += ` WHERE pg.fecha BETWEEN ? AND ?`;
+        query += ` AND pg.fecha BETWEEN ? AND ?`;
         params.push(start, end);
         subtitleDate = `del ${formatDateToDMY(start)} al ${formatDateToDMY(end)}`;
       }
     } else if (start) {
-      query += ` WHERE pg.fecha >= ?`;
+      query += ` AND pg.fecha >= ?`;
       params.push(start);
       subtitleDate = `desde ${formatDateToDMY(start)}`;
     } else if (end) {
-      query += ` WHERE pg.fecha <= ?`;
+      query += ` AND pg.fecha <= ?`;
       params.push(end);
       subtitleDate = `hasta ${formatDateToDMY(end)}`;
     }
