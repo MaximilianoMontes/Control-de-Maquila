@@ -203,9 +203,6 @@ export default function Pagos() {
     }
   };
 
-  const handlePrintComprobante = (pagoId) => {
-    window.open(`${API_URL}/api/pagos/${pagoId}/comprobante`, '_blank');
-  };
 
   const ordenActual = orders.find(o => o.id.toString() === selectedOrden);
   const totalPagado = ordenActual ? parseFloat(ordenActual.pagado || 0) : 0;
@@ -309,22 +306,44 @@ export default function Pagos() {
                           <td style={{ color: '#34d399', fontWeight: 'bold' }}>{formatCurrency(p.monto)}</td>
                           <td>
                             <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
-                              <button 
-                                className="btn-icon" 
-                                onClick={() => handlePrintComprobante(p.id)} 
-                                disabled={!ordenActual || (ordenActual.estado !== 'Terminado' && ordenActual.estado !== 'Terminado Parcial')}
-                                style={{ 
-                                  background: (!ordenActual || (ordenActual.estado !== 'Terminado' && ordenActual.estado !== 'Terminado Parcial')) ? 'rgba(148, 163, 184, 0.1)' : 'rgba(59, 130, 246, 0.1)', 
-                                  color: (!ordenActual || (ordenActual.estado !== 'Terminado' && ordenActual.estado !== 'Terminado Parcial')) ? '#94a3b8' : '#60a5fa', 
-                                  border: 'none', 
-                                  padding: '6px', 
-                                  borderRadius: '4px', 
-                                  cursor: (!ordenActual || (ordenActual.estado !== 'Terminado' && ordenActual.estado !== 'Terminado Parcial')) ? 'not-allowed' : 'pointer' 
-                                }} 
-                                title={(!ordenActual || (ordenActual.estado !== 'Terminado' && ordenActual.estado !== 'Terminado Parcial')) ? "Solo disponible para órdenes terminadas o con pago parcial" : "Imprimir"}
-                              >
-                                <Printer size={18} />
-                              </button>
+                              {(!ordenActual || (ordenActual.estado !== 'Terminado' && ordenActual.estado !== 'Terminado Parcial')) ? (
+                                <button 
+                                  className="btn-icon" 
+                                  disabled
+                                  style={{ 
+                                    background: 'rgba(148, 163, 184, 0.1)', 
+                                    color: '#94a3b8', 
+                                    border: 'none', 
+                                    padding: '6px', 
+                                    borderRadius: '4px', 
+                                    cursor: 'not-allowed' 
+                                  }} 
+                                  title="Solo disponible para órdenes terminadas o con pago parcial"
+                                >
+                                  <Printer size={18} />
+                                </button>
+                              ) : (
+                                <a 
+                                  href={`${API_URL}/api/pagos/${p.id}/comprobante?token=${localStorage.getItem('token')}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="btn-icon"
+                                  style={{ 
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    background: 'rgba(59, 130, 246, 0.1)', 
+                                    color: '#60a5fa', 
+                                    border: 'none', 
+                                    padding: '6px', 
+                                    borderRadius: '4px', 
+                                    cursor: 'pointer' 
+                                  }} 
+                                  title="Imprimir"
+                                >
+                                  <Printer size={18} />
+                                </a>
+                              )}
                               <button className="btn-icon" onClick={() => handleDeletePago(p.id)} style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: 'none', padding: '6px', borderRadius: '4px', cursor: 'pointer' }} title="Eliminar">
                                 <Trash2 size={18} />
                               </button>
