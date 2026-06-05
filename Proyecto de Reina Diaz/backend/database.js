@@ -455,67 +455,7 @@ async function initializeDatabase() {
       console.error('Error al depurar datos de pruebas:', e);
     }
 
-    try {
-      console.log('--- MIGRACIÓN MANUAL: Resetear orden de Fermin Bruno Rodriguez (modelo 752995) a En proceso y sin pagos ---');
-      
-      // 1. Buscar el ID real de la orden de producción
-      const [orderRows] = await connection.query(`
-        SELECT p.id, p.maquilero_id, p.inventario_id
-        FROM produccion p
-        JOIN maquileros m ON p.maquilero_id = m.id
-        JOIN inventario i ON p.inventario_id = i.id
-        WHERE i.modelo = '752995' AND m.nombre LIKE '%Fermin Bruno%' AND p.cantidad = 180
-      `);
 
-      if (orderRows.length > 0) {
-        const orderId = orderRows[0].id;
-        console.log(`Orden encontrada con ID: ${orderId}`);
-
-        // 2. Obtener los pagos asociados a esta orden
-        const [pagos] = await connection.query("SELECT id FROM pagos WHERE produccion_id = ?", [orderId]);
-        const pagoIds = pagos.map(p => p.id);
-
-        if (pagoIds.length > 0) {
-          // 3. Restaurar o eliminar descuentos personales vinculados a estos pagos
-          await connection.query("DELETE FROM descuentos_personales WHERE pago_id IN (?)", [pagoIds]);
-          
-          // 4. Eliminar los pagos
-          await connection.query("DELETE FROM pagos WHERE id IN (?)", [pagoIds]);
-          console.log(`Eliminados ${pagoIds.length} pagos para la orden ID: ${orderId}`);
-        }
-
-        // 5. Restablecer el estado de la orden en 'produccion'
-        // Volver estado a 'En proceso', resetear cantidad_recibida a NULL, y desarchivar
-        await connection.query(`
-          UPDATE produccion 
-          SET estado = 'En proceso', 
-              cantidad_recibida = NULL, 
-              archivado = 0 
-          WHERE id = ?
-        `, [orderId]);
-
-        console.log(`Orden ID: ${orderId} actualizada a 'En proceso' y cantidad_recibida reseteada a NULL.`);
-
-        // 6. Eliminar cualquier detalle de camión o trabajo de plancha si se crearon cuando se marcó terminada
-        const [camionDetalles] = await connection.query("SELECT id FROM camion_detalles WHERE produccion_id = ?", [orderId]);
-        const cdIds = camionDetalles.map(cd => cd.id);
-        if (cdIds.length > 0) {
-          await connection.query("DELETE FROM plancha_devoluciones WHERE camion_detalles_id IN (?)", [cdIds]);
-          await connection.query("DELETE FROM plancha_trabajos WHERE camion_detalles_id IN (?)", [cdIds]);
-          await connection.query("DELETE FROM camion_detalles WHERE id IN (?)", [cdIds]);
-          console.log(`Eliminados registros de camión y plancha asociados a la orden ID: ${orderId}`);
-        }
-
-        // También eliminar cualquier devolución directa de plancha
-        await connection.query("DELETE FROM plancha_devoluciones WHERE produccion_id = ?", [orderId]);
-
-        console.log(`--- FIN RESET ORDEN FERMIN BRUNO RODRIGUEZ ---`);
-      } else {
-        console.log("No se encontró la orden de producción de Fermin Bruno Rodriguez (modelo 752995, cantidad 180).");
-      }
-    } catch (e) {
-      console.error('Error al resetear la orden de Fermin:', e);
-    }
 
     try {
       console.log('--- MIGRACIÓN MANUAL: Reversión de orden 740990 para Jose Luis Hernandez Cantu ---');
