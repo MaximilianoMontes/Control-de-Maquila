@@ -79,6 +79,10 @@ export default function Camion() {
   const [cargoQty, setCargoQty] = useState(0);
   const [tallas, setTallas] = useState({});
 
+  // Tab State
+  const [activeTab, setActiveTab] = useState('cargar'); // 'cargar', 'historial', 'devoluciones'
+  const [devoluciones, setDevoluciones] = useState([]);
+
   // Accordion History State
   const [expandedTruckId, setExpandedTruckId] = useState(null);
   const [dragOver, setDragOver] = useState(false);
@@ -98,6 +102,10 @@ export default function Camion() {
       const historyRes = await axios.get(`${API}/api/camiones`, { headers });
       setHistory(historyRes.data);
 
+      // Fetch returns from plancha
+      const devRes = await axios.get(`${API}/api/maquila/devoluciones`, { headers });
+      setDevoluciones(devRes.data);
+
       // Fetch draft from database
       const draftRes = await axios.get(`${API}/api/camiones/borrador`, { headers });
       if (draftRes.data) {
@@ -113,6 +121,20 @@ export default function Camion() {
       alert(t('prod.alertGenericError') || 'Error al obtener datos');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleArreglarDevolucion = async (id) => {
+    if (!confirm('¿Seguro que deseas marcar esta devolución como terminada/arreglada?')) return;
+    try {
+      const token = localStorage.getItem('token');
+      const headers = { Authorization: `Bearer ${token}` };
+      await axios.put(`${API}/api/maquila/devoluciones/${id}/arreglar`, {}, { headers });
+      alert('Devolución marcada como arreglada. Ahora está disponible en la lista para cargarse al camión.');
+      fetchData();
+    } catch (e) {
+      console.error(e);
+      alert('Error al actualizar devolución.');
     }
   };
 
@@ -305,7 +327,9 @@ export default function Camion() {
           cliente: c.cliente,
           no_orden: c.no_orden,
           piezas: c.piezas,
-          tallas_cantidades: c.tallas_cantidades
+          tallas_cantidades: c.tallas_cantidades,
+          is_devolucion: c.is_devolucion || false,
+          devolucion_id: c.devolucion_id || null
         }))
       };
 
@@ -356,8 +380,60 @@ export default function Camion() {
         </div>
       </div>
 
-      {/* Main interactive panel */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr', gap: '2rem', alignItems: 'stretch' }}>
+      {/* Tabs */}
+      <div style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '0.5rem', marginBottom: '1rem' }}>
+        <button 
+          onClick={() => setActiveTab('cargar')}
+          style={{
+            padding: '10px 20px',
+            background: activeTab === 'cargar' ? 'rgba(139, 92, 246, 0.15)' : 'transparent',
+            border: 'none',
+            borderBottom: activeTab === 'cargar' ? '2px solid var(--color-primary)' : 'none',
+            color: activeTab === 'cargar' ? '#fff' : 'var(--text-secondary)',
+            fontWeight: 600,
+            borderRadius: '8px 8px 0 0',
+            cursor: 'pointer',
+            transition: 'all 0.2s'
+          }}
+        >
+          Cargar Camión
+        </button>
+        <button 
+          onClick={() => setActiveTab('historial')}
+          style={{
+            padding: '10px 20px',
+            background: activeTab === 'historial' ? 'rgba(139, 92, 246, 0.15)' : 'transparent',
+            border: 'none',
+            borderBottom: activeTab === 'historial' ? '2px solid var(--color-primary)' : 'none',
+            color: activeTab === 'historial' ? '#fff' : 'var(--text-secondary)',
+            fontWeight: 600,
+            borderRadius: '8px 8px 0 0',
+            cursor: 'pointer',
+            transition: 'all 0.2s'
+          }}
+        >
+          Historial de Envíos
+        </button>
+        <button 
+          onClick={() => setActiveTab('devoluciones')}
+          style={{
+            padding: '10px 20px',
+            background: activeTab === 'devoluciones' ? 'rgba(139, 92, 246, 0.15)' : 'transparent',
+            border: 'none',
+            borderBottom: activeTab === 'devoluciones' ? '2px solid var(--color-primary)' : 'none',
+            color: activeTab === 'devoluciones' ? '#fff' : 'var(--text-secondary)',
+            fontWeight: 600,
+            borderRadius: '8px 8px 0 0',
+            cursor: 'pointer',
+            transition: 'all 0.2s'
+          }}
+        >
+          Devoluciones en Maquila
+        </button>
+      </div>
+
+      {activeTab === 'cargar' && (
+        <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr', gap: '2rem', alignItems: 'stretch' }}>
         
         {/* Left Side: Active Stock list */}
         <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', height: 'fit-content', minHeight: '500px' }}>
@@ -611,9 +687,10 @@ export default function Camion() {
         </div>
 
       </div>
+      )}
 
-      {/* Accordion History: Shipped trucks list */}
-      <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      {activeTab === 'historial' && (
+        <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         <h2 style={{ fontSize: '1.25rem', margin: 0, fontWeight: 700 }}>{t('camion.historyTitle')}</h2>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -727,6 +804,110 @@ export default function Camion() {
           )}
         </div>
       </div>
+      )}
+
+      {activeTab === 'devoluciones' && (
+        <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h2 style={{ fontSize: '1.25rem', margin: 0, fontWeight: 700 }}>Devoluciones de Plancha</h2>
+            <span className="badge badge-info" style={{ fontWeight: 700 }}>
+              {devoluciones.filter(d => d.estado === 'pendiente').length} Pendientes
+            </span>
+          </div>
+
+          <div className="table-wrapper">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Imagen</th>
+                  <th>Modelo</th>
+                  <th>Maquilero</th>
+                  <th>No. Orden</th>
+                  <th>Piezas Dev.</th>
+                  <th>Desglose por Talla</th>
+                  <th>Fecha Devolución</th>
+                  <th>Estado</th>
+                  <th>Acción</th>
+                </tr>
+              </thead>
+              <tbody>
+                {devoluciones.length === 0 ? (
+                  <tr>
+                    <td colSpan="9" style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>
+                      No hay devoluciones registradas.
+                    </td>
+                  </tr>
+                ) : (
+                  devoluciones.map(d => {
+                    const img = getImgSrc(d.imagen);
+                    const firstVal = d.tallas_cantidades ? Object.values(d.tallas_cantidades)[0] : null;
+                    const isNested = (typeof firstVal === 'object' && firstVal !== null);
+                    
+                    return (
+                      <tr key={d.id}>
+                        <td>
+                          {img ? (
+                            <img src={img} alt="" style={{ width: 40, height: 40, borderRadius: 6, objectFit: 'cover' }} />
+                          ) : (
+                            <div style={{ width: 40, height: 40, background: 'rgba(255,255,255,0.05)', borderRadius: 6 }} />
+                          )}
+                        </td>
+                        <td style={{ fontWeight: 700 }}>{d.modelo}</td>
+                        <td>{d.maquilero_nombre || 'N/A'}</td>
+                        <td>{d.no_orden || 'N/A'}</td>
+                        <td style={{ fontWeight: 800 }}>{d.piezas}</td>
+                        <td style={{ fontSize: '0.75rem' }}>
+                          {isNested ? (
+                            Object.entries(d.tallas_cantidades).map(([color, tallasObj]) => {
+                              const entries = Object.entries(tallasObj).filter(([_, q]) => q > 0);
+                              if (entries.length === 0) return null;
+                              return (
+                                <div key={color} style={{ margin: '2px 0' }}>
+                                  <strong style={{ color: '#c084fc' }}>{color}:</strong> {entries.map(([sz, q]) => `T${sz}(${q})`).join(', ')}
+                                </div>
+                              );
+                            })
+                          ) : (
+                            Object.entries(d.tallas_cantidades || {})
+                              .filter(([_, q]) => q > 0)
+                              .map(([sz, q]) => `T${sz}(${q})`)
+                              .join(', ')
+                          )}
+                        </td>
+                        <td>{formatDate(d.fecha_devolucion)}</td>
+                        <td>
+                          <span className={`badge ${
+                            d.estado === 'pendiente' ? 'badge-warning' : 
+                            d.estado === 'arreglado' ? 'badge-success' : 'badge-partial'
+                          }`}>
+                            {d.estado === 'pendiente' ? 'Pendiente' : 
+                             d.estado === 'arreglado' ? 'Arreglado' : 'Enviado'}
+                          </span>
+                        </td>
+                        <td>
+                          {d.estado === 'pendiente' ? (
+                            <button 
+                              className="btn btn-success" 
+                              style={{ padding: '4px 8px', fontSize: '0.8rem' }}
+                              onClick={() => handleArreglarDevolucion(d.id)}
+                            >
+                              Arreglado / Terminado
+                            </button>
+                          ) : (
+                            <span style={{ fontSize: '0.8rem', color: '#94a3b8', fontStyle: 'italic' }}>
+                              {d.estado === 'arreglado' ? 'Listo para enviar' : 'Enviado en camión'}
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* Tallas and quantity Modal */}
       {isModalOpen && selectedStockItem && (

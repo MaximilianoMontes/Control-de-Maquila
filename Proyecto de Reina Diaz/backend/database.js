@@ -168,6 +168,28 @@ async function initializeDatabase() {
     `);
 
     await connection.query(`
+      CREATE TABLE IF NOT EXISTS plancha_devoluciones (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        camion_detalles_id INT NULL,
+        produccion_id INT NULL,
+        modelo VARCHAR(255) NOT NULL,
+        numero VARCHAR(100),
+        temporada VARCHAR(100),
+        color TEXT,
+        cliente VARCHAR(255),
+        no_orden VARCHAR(100),
+        precio DECIMAL(10, 2) DEFAULT 0,
+        piezas INT DEFAULT 0,
+        tallas_cantidades TEXT,
+        estado VARCHAR(50) DEFAULT 'pendiente',
+        fecha_devolucion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        fecha_arreglado TIMESTAMP NULL DEFAULT NULL,
+        FOREIGN KEY(camion_detalles_id) REFERENCES camion_detalles(id) ON DELETE SET NULL,
+        FOREIGN KEY(produccion_id) REFERENCES produccion(id) ON DELETE SET NULL
+      );
+    `);
+
+    await connection.query(`
       CREATE TABLE IF NOT EXISTS camion_borrador (
         id INT AUTO_INCREMENT PRIMARY KEY,
         user_id INT NULL,
