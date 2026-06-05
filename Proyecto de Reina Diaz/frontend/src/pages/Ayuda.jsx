@@ -263,19 +263,19 @@ const guides_es = {
       keywords: 'seguimiento terminado cancelar archivado automatico bonos descuentos prórroga piezas recibidas'
     },
     {
-      title: 'El nuevo Flujo de "Terminado Parcial" (Efecto en Pagos y Camión)',
+      title: 'El nuevo Flujo de "Pago Parcial" (Efecto en Pagos y Camión)',
       content: (
         <div>
-          <p>Para resolver la necesidad de recibir entregas de piezas de forma escalonada a lo largo del tiempo, se ha implementado el estado <strong>Terminado Parcial</strong>:</p>
+          <p>Para resolver la necesidad de recibir entregas de piezas de forma escalonada a lo largo del tiempo, se ha implementado el estado <strong>Pago Parcial</strong>:</p>
           <ul>
             <li><strong>¿Qué es?:</strong> Es un estado intermedio que indica que el maquilero ha entregado una parte del lote, pero el trabajo de costura total aún no ha concluido.</li>
-            <li><strong>Acciones siempre Habilitadas:</strong> A diferencia de una orden completamente Terminada (que bloquea sus datos), una orden en "Terminado Parcial" mantiene <strong>completamente habilitados todos los controles operativos</strong>. Podrás seguir editando inline la cantidad de "Recibidas", aplicar bonos o descuentos y prorrogar la fecha de entrega.</li>
+            <li><strong>Acciones siempre Habilitadas:</strong> A diferencia de una orden completamente Terminada (que bloquea sus datos), una orden en "Pago Parcial" mantiene <strong>completamente habilitados todos los controles operativos</strong>. Podrás seguir editando inline la cantidad de "Recibidas", aplicar bonos o descuentos y prorrogar la fecha de entrega.</li>
             <li><strong>Control de Nómina Parcial:</strong> Puedes dirigirte al módulo de <strong>Pagos</strong> y registrar abonos y pagos sobre el saldo neto de las piezas recibidas hasta el momento. Esto te permite ir pagando al maquilero semanalmente conforme te entrega mercancía sin tener que esperar a que termine el lote completo.</li>
-            <li><strong>Cargar al Camión:</strong> Las prendas que has recibido de una orden en estado "Terminado Parcial" ingresan al stock activo de maquila y pueden ser cargadas al <strong>Camión</strong> de envío a Colima al instante, de manera parcial o total.</li>
+            <li><strong>Cargar al Camión:</strong> Las prendas que has recibido de una orden en estado "Pago Parcial" ingresan al stock activo de maquila y pueden ser cargadas al <strong>Camión</strong> de envío a Colima al instante, de manera parcial o total.</li>
           </ul>
         </div>
       ),
-      keywords: 'terminado parcial flujo pagos abonos entregas parciales camion costura inline recibidas'
+      keywords: 'pago parcial flujo pagos abonos entregas parciales camion costura inline recibidas'
     }
   ],
   pagos: [
@@ -383,7 +383,7 @@ const guides_es = {
         <div>
           <p>La sección <strong>Camión</strong> está diseñada para gestionar de forma inalterable y precisa los envíos de modelos terminados desde la maquila hacia la fábrica en Colima.</p>
           <ol>
-            <li><strong>Modelos Disponibles:</strong> En la parte izquierda verás las prendas confeccionadas provenientes estrictamente de órdenes de producción cuyo estado sea <strong>"Terminado"</strong> o <strong>"Terminado Parcial"</strong> y que tengan saldo disponible para enviar.</li>
+            <li><strong>Modelos Disponibles:</strong> En la parte izquierda verás las prendas confeccionadas provenientes estrictamente de órdenes de producción cuyo estado sea <strong>"Terminado"</strong> o <strong>"Pago Parcial"</strong> y que tengan saldo disponible para enviar.</li>
             <li><strong>Identificación de Maquileros:</strong> Cada tarjeta de modelo cuenta con una insignia púrpura con el nombre del maquilero que la confeccionó, permitiendo identificar el origen de cada lote al instante.</li>
             <li><strong>Cargar el Camión:</strong> Puedes arrastrar un modelo desde la lista izquierda y soltarlo en el área del camión virtual en la derecha, o simplemente hacer clic en el botón <strong>(+) Subir al Camión</strong>.</li>
             <li><strong>Desglose por Tallas Obligatorio:</strong> Al subir un lote, se abrirá una ventana emergente donde debes ingresar las cantidades exactas para cada una de las tallas estándar (<strong>05, 07, 09, 11, 13 y 15</strong>). El sistema tiene un validador en tiempo real: el botón de confirmar solo se activará cuando la suma de las tallas coincida exactamente con la cantidad total cargada. Puedes optar por enviar el total del lote o realizar un <strong>envío parcial</strong> ingresando una cantidad menor.</li>

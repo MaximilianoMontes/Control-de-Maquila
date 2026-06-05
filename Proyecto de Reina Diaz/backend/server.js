@@ -720,11 +720,50 @@ app.get('/api/camiones/disponibles', authenticateToken, async (req, res) => {
       return {
         ...r,
         piezas_producidas,
-        piezas: piezas_disponibles // Map to piezas for frontend compatibility
+        piezas: piezas_disponibles
       };
     }).filter(item => item.piezas > 0);
 
-    res.json(available);
+    const [devRows] = await db.query(`
+      SELECT d.*, m.nombre as maquilero_nombre,
+             (SELECT imagen FROM inventario WHERE modelo = d.modelo LIMIT 1) as imagen
+      FROM plancha_devoluciones d
+      LEFT JOIN produccion p ON d.produccion_id = p.id
+      LEFT JOIN maquileros m ON p.maquilero_id = m.id
+      WHERE d.estado = 'arreglado'
+    `);
+
+    const devItems = devRows.map(d => {
+      let originalTallas = {};
+      try {
+        originalTallas = d.tallas_cantidades ? JSON.parse(d.tallas_cantidades) : {};
+      } catch (e) {
+        originalTallas = {};
+      }
+      return {
+        id: `dev_${d.id}`,
+        produccion_id: d.produccion_id,
+        devolucion_id: d.id,
+        is_devolucion: true,
+        cantidad: d.piezas,
+        cantidad_recibida: d.piezas,
+        estado: 'Arreglado',
+        maquilero_nombre: d.maquilero_nombre ? `Devolución - ${d.maquilero_nombre}` : 'Devolución',
+        modelo: d.modelo,
+        numero: d.numero,
+        temporada: d.temporada,
+        color: d.color,
+        cliente: d.cliente,
+        no_orden: d.no_orden,
+        precio: d.precio,
+        imagen: d.imagen,
+        piezas_producidas: d.piezas,
+        piezas: d.piezas,
+        tallas_cantidades: originalTallas
+      };
+    });
+
+    res.json([...available, ...devItems]);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -833,28 +872,70 @@ app.post('/api/camiones', authenticateToken, async (req, res) => {
       }
 
       // Check stock in produccion order (fallback to item.id if item.produccion_id is not provided)
-      const prodId = item.produccion_id || item.id;
-      const [prodRows] = await connection.query(
-        "SELECT p.cantidad, p.cantidad_recibida, i.precio_plancha FROM produccion p LEFT JOIN inventario i ON p.inventario_id = i.id WHERE p.id = ?",
-        [prodId]
-      );
-      const prodRow = prodRows[0];
-      if (!prodRow) {
-        throw new Error(`La orden de producción para el modelo ${item.modelo} no existe.`);
-      }
-
-      const piezas_producidas = prodRow.cantidad_recibida !== null ? prodRow.cantidad_recibida : prodRow.cantidad;
-      const precioPlancha = prodRow.precio_plancha || 0.00;
+      const isDev = item.is_devolucion === true || item.is_devolucion === 'true';
+      const devId = item.devolucion_id;
       
-      const [shippedRows] = await connection.query(
-        "SELECT COALESCE(SUM(piezas), 0) as total FROM camion_detalles WHERE produccion_id = ?",
-        [prodId]
-      );
-      const piezas_ya_enviadas = parseInt(shippedRows[0].total) || 0;
-      const disponible = piezas_producidas - piezas_ya_enviadas;
+      let precioPlancha = 0.00;
+      let prodId = item.produccion_id || item.id;
 
-      if (disponible < piezas) {
-        throw new Error(`Stock insuficiente para la orden del modelo ${item.modelo} (Disponible: ${disponible}, Requerido: ${piezas}).`);
+      if (isDev) {
+        // It's a return!
+        const [devRows] = await connection.query(
+          "SELECT id, piezas, tallas_cantidades, produccion_id FROM plancha_devoluciones WHERE id = ? AND estado = 'arreglado'",
+          [devId]
+        );
+        const devRow = devRows[0];
+        if (!devRow) {
+          throw new Error(`La devolución para el modelo ${item.modelo} no existe o no está en estado 'arreglado'.`);
+        }
+        
+        const disponible = devRow.piezas;
+        if (disponible < piezas) {
+          throw new Error(`Stock insuficiente para la devolución del modelo ${item.modelo} (Disponible: ${disponible}, Requerido: ${piezas}).`);
+        }
+
+        prodId = devRow.produccion_id;
+
+        // Fetch precio_plancha from original production if exists
+        if (prodId) {
+          const [prodRows] = await connection.query(
+            "SELECT i.precio_plancha FROM produccion p LEFT JOIN inventario i ON p.inventario_id = i.id WHERE p.id = ?",
+            [prodId]
+          );
+          if (prodRows.length > 0) {
+            precioPlancha = prodRows[0].precio_plancha || 0.00;
+          }
+        }
+
+        // Mark dev as sent
+        await connection.query(
+          "UPDATE plancha_devoluciones SET estado = 'enviado' WHERE id = ?",
+          [devId]
+        );
+      } else {
+        // Normal production order: check stock in production order
+        const [prodRows] = await connection.query(
+          "SELECT p.cantidad, p.cantidad_recibida, i.precio_plancha FROM produccion p LEFT JOIN inventario i ON p.inventario_id = i.id WHERE p.id = ?",
+          [prodId]
+        );
+        const prodRow = prodRows[0];
+        if (!prodRow) {
+          throw new Error(`La orden de producción para el modelo ${item.modelo} no existe.`);
+        }
+
+        const piezas_producidas = prodRow.cantidad_recibida !== null ? prodRow.cantidad_recibida : prodRow.cantidad;
+        precioPlancha = prodRow.precio_plancha || 0.00;
+        
+        const [shippedRows] = await connection.query(
+          "SELECT COALESCE(SUM(piezas), 0) as total FROM camion_detalles WHERE produccion_id = ?",
+          [prodId]
+        );
+        const piezas_ya_enviadas = parseInt(shippedRows[0].total) || 0;
+        const disponible = piezas_producidas - piezas_ya_enviadas;
+
+        if (disponible < piezas) {
+          throw new Error(`Stock insuficiente para la orden del modelo ${item.modelo} (Disponible: ${disponible}, Requerido: ${piezas}).`);
+        }
       }
 
       // Insert into camion_detalles including produccion_id and precio_plancha
@@ -876,11 +957,13 @@ app.post('/api/camiones', authenticateToken, async (req, res) => {
         precioPlancha
       ]);
 
-      // Deduct from inventario_real by matching no_orden and modelo
-      await connection.query(
-        "UPDATE inventario_real SET piezas = piezas - ? WHERE no_orden = ? AND modelo = ?",
-        [piezas, item.no_orden || '', item.modelo || '']
-      );
+      if (!isDev) {
+        // Deduct from inventario_real by matching no_orden and modelo
+        await connection.query(
+          "UPDATE inventario_real SET piezas = piezas - ? WHERE no_orden = ? AND modelo = ?",
+          [piezas, item.no_orden || '', item.modelo || '']
+        );
+      }
 
 
 
@@ -2276,6 +2359,7 @@ app.get('/api/plancha/modelos', authenticateToken, async (req, res) => {
              (SELECT imagen FROM inventario WHERE modelo = cd.modelo LIMIT 1) as imagen
       FROM camion_detalles cd
       JOIN camiones c ON cd.camion_id = c.id
+      WHERE cd.piezas > 0
       ORDER BY c.fecha_envio DESC, cd.id DESC
     `);
     
@@ -2315,6 +2399,179 @@ app.post('/api/plancha/modelos/:id/verificar', authenticateToken, async (req, re
     );
 
     await logActivity(req.user.id, 'EDIT', 'PLANCHA_MODELO', `Verificó llegada completa y asignó precio de plancha $${precio_plancha} al modelo ${old.modelo}`);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 6b. DEVOLVER PIEZAS DESDE PLANCHA A MAQUILA
+app.post('/api/plancha/modelos/:id/devolver', authenticateToken, async (req, res) => {
+  const allowedRoles = ['admin', 'produccion1', 'produccion2', 'inventario1'];
+  if (!allowedRoles.includes(req.user.role)) {
+    return res.status(403).json({ error: 'No autorizado para esta sección' });
+  }
+
+  const { tallas_devolucion } = req.body;
+  if (!tallas_devolucion || typeof tallas_devolucion !== 'object') {
+    return res.status(400).json({ error: 'tallas_devolucion es requerido y debe ser un objeto' });
+  }
+
+  const connection = await db.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    const [cdRows] = await connection.query(
+      "SELECT * FROM camion_detalles WHERE id = ?",
+      [req.params.id]
+    );
+    const cd = cdRows[0];
+    if (!cd) {
+      connection.release();
+      return res.status(404).json({ error: 'Modelo no encontrado en el camión' });
+    }
+
+    let originalTallas = {};
+    try {
+      originalTallas = cd.tallas_cantidades ? JSON.parse(cd.tallas_cantidades) : {};
+    } catch (e) {
+      originalTallas = {};
+    }
+
+    const firstVal = Object.values(originalTallas)[0];
+    const isNested = (typeof firstVal === 'object' && firstVal !== null);
+
+    let totalDevolver = 0;
+    const cleanTallasDevolucion = {};
+
+    if (isNested) {
+      Object.entries(tallas_devolucion).forEach(([color, tallasObj]) => {
+        if (typeof tallasObj !== 'object' || tallasObj === null) return;
+        Object.entries(tallasObj).forEach(([talla, qty]) => {
+          const qtyInt = parseInt(qty) || 0;
+          if (qtyInt <= 0) return;
+
+          const origQty = parseInt(originalTallas[color]?.[talla]) || 0;
+          if (qtyInt > origQty) {
+            throw new Error(`No puedes devolver más piezas de las que existen (Color: ${color}, Talla: ${talla}, Disponible: ${origQty}, Devolución: ${qtyInt})`);
+          }
+
+          if (!cleanTallasDevolucion[color]) cleanTallasDevolucion[color] = {};
+          cleanTallasDevolucion[color][talla] = qtyInt;
+          totalDevolver += qtyInt;
+
+          originalTallas[color][talla] = origQty - qtyInt;
+        });
+      });
+    } else {
+      Object.entries(tallas_devolucion).forEach(([talla, qty]) => {
+        const qtyInt = parseInt(qty) || 0;
+        if (qtyInt <= 0) return;
+
+        const origQty = parseInt(originalTallas[talla]) || 0;
+        if (qtyInt > origQty) {
+          throw new Error(`No puedes devolver más piezas de las que existen (Talla: ${talla}, Disponible: ${origQty}, Devolución: ${qtyInt})`);
+        }
+
+        cleanTallasDevolucion[talla] = qtyInt;
+        totalDevolver += qtyInt;
+
+        originalTallas[talla] = origQty - qtyInt;
+      });
+    }
+
+    if (totalDevolver <= 0) {
+      throw new Error('Debes seleccionar al menos una pieza para devolver.');
+    }
+
+    // Actualizar camion_detalles
+    await connection.query(
+      "UPDATE camion_detalles SET tallas_cantidades = ?, piezas = piezas - ? WHERE id = ?",
+      [JSON.stringify(originalTallas), totalDevolver, req.params.id]
+    );
+
+    // Insertar en plancha_devoluciones
+    await connection.query(`
+      INSERT INTO plancha_devoluciones 
+      (camion_detalles_id, produccion_id, modelo, numero, temporada, color, cliente, no_orden, precio, piezas, tallas_cantidades, estado)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pendiente')
+    `, [
+      cd.id,
+      cd.produccion_id,
+      cd.modelo,
+      cd.numero,
+      cd.temporada,
+      cd.color,
+      cd.cliente,
+      cd.no_orden,
+      cd.precio,
+      totalDevolver,
+      JSON.stringify(cleanTallasDevolucion)
+    ]);
+
+    // Historial
+    await connection.query(
+      "INSERT INTO historial (user_id, action, target, description) VALUES (?, 'EDIT', 'PLANCHA_DEVOLUCION', ?)",
+      [req.user.id, `Devolvió ${totalDevolver} piezas del modelo ${cd.modelo} desde Colima a Maquila (Tallas: ${JSON.stringify(cleanTallasDevolucion)})`]
+    );
+
+    await connection.commit();
+    res.json({ success: true, totalDevolver });
+  } catch (error) {
+    await connection.rollback();
+    res.status(500).json({ error: error.message });
+  } finally {
+    connection.release();
+  }
+});
+
+// 6c. OBTENER DEVOLUCIONES EN MAQUILA
+app.get('/api/maquila/devoluciones', authenticateToken, async (req, res) => {
+  const allowedRoles = ['admin', 'produccion1', 'produccion2', 'inventario1'];
+  if (!allowedRoles.includes(req.user.role)) {
+    return res.status(403).json({ error: 'No autorizado para esta sección' });
+  }
+  try {
+    const [rows] = await db.query(`
+      SELECT d.*, m.nombre as maquilero_nombre,
+             (SELECT imagen FROM inventario WHERE modelo = d.modelo LIMIT 1) as imagen
+      FROM plancha_devoluciones d
+      LEFT JOIN produccion p ON d.produccion_id = p.id
+      LEFT JOIN maquileros m ON p.maquilero_id = m.id
+      ORDER BY d.fecha_devolucion DESC
+    `);
+    
+    const processed = rows.map(r => {
+      try {
+        r.tallas_cantidades = r.tallas_cantidades ? JSON.parse(r.tallas_cantidades) : {};
+      } catch (e) {
+        r.tallas_cantidades = {};
+      }
+      return r;
+    });
+    res.json(processed);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 6d. MARCAR DEVOLUCION COMO ARREGLADA (TERMINADA)
+app.put('/api/maquila/devoluciones/:id/arreglar', authenticateToken, async (req, res) => {
+  const allowedRoles = ['admin', 'produccion1', 'produccion2', 'inventario1'];
+  if (!allowedRoles.includes(req.user.role)) {
+    return res.status(403).json({ error: 'No autorizado para esta sección' });
+  }
+  try {
+    const [devs] = await db.query("SELECT modelo, piezas FROM plancha_devoluciones WHERE id = ?", [req.params.id]);
+    const dev = devs[0];
+    if (!dev) return res.status(404).json({ error: 'Devolución no encontrada' });
+
+    await db.query(
+      "UPDATE plancha_devoluciones SET estado = 'arreglado', fecha_arreglado = CURRENT_TIMESTAMP WHERE id = ?",
+      [req.params.id]
+    );
+
+    await logActivity(req.user.id, 'EDIT', 'PLANCHA_DEVOLUCION', `Marcó como arreglada la devolución del modelo ${dev.modelo} (${dev.piezas} piezas)`);
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });

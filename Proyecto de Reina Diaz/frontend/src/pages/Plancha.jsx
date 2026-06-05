@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { 
@@ -92,6 +92,108 @@ export default function Plancha() {
   const [modeloAVerificar, setModeloAVerificar] = useState(null);
   const [precioPlanchaInput, setPrecioPlanchaInput] = useState('');
   const [mostrarVerificarModal, setMostrarVerificarModal] = useState(false);
+
+  // Estado pestaña Modelos (Devolución)
+  const [mostrarDevolucionModal, setMostrarDevolucionModal] = useState(false);
+  const [modeloADevolver, setModeloADevolver] = useState(null);
+  const [devolucionCantidades, setDevolucionCantidades] = useState({});
+  const [isMouseDownDev, setIsMouseDownDev] = useState(false);
+  const [editingBlockDev, setEditingBlockDev] = useState(null); // { color, talla }
+  const dragActionDevRef = useRef(null); // 'select' | 'deselect'
+
+  const handleAbrirDevolucion = (modelo) => {
+    setModeloADevolver(modelo);
+    setDevolucionCantidades({});
+    setEditingBlockDev(null);
+    setIsMouseDownDev(false);
+    setMostrarDevolucionModal(true);
+  };
+
+  const handleBlockMouseDown = (color, talla, maxQty) => {
+    const currentVal = color
+      ? (devolucionCantidades[color]?.[talla] || 0)
+      : (devolucionCantidades[talla] || 0);
+    const isSelected = currentVal > 0;
+    const newAction = isSelected ? 'deselect' : 'select';
+    dragActionDevRef.current = newAction;
+    setIsMouseDownDev(true);
+    
+    updateDevQty(color, talla, newAction === 'select' ? maxQty : 0);
+  };
+
+  const handleBlockMouseEnter = (color, talla, maxQty) => {
+    if (!isMouseDownDev) return;
+    const action = dragActionDevRef.current;
+    updateDevQty(color, talla, action === 'select' ? maxQty : 0);
+  };
+
+  const updateDevQty = (color, talla, qty) => {
+    setDevolucionCantidades(prev => {
+      const next = { ...prev };
+      if (color) {
+        if (!next[color]) next[color] = {};
+        next[color][talla] = qty;
+      } else {
+        next[talla] = qty;
+      }
+      return next;
+    });
+  };
+
+  const handleConfirmarDevolucion = async (e) => {
+    e.preventDefault();
+    if (!modeloADevolver) return;
+    
+    // Clean up quantities to only send positive numbers
+    const payload = {};
+    const firstVal = Object.values(modeloADevolver.tallas_cantidades)[0];
+    const isNested = (typeof firstVal === 'object' && firstVal !== null);
+    let totalPieces = 0;
+
+    if (isNested) {
+      Object.entries(devolucionCantidades).forEach(([color, tallasObj]) => {
+        if (!tallasObj || typeof tallasObj !== 'object') return;
+        Object.entries(tallasObj).forEach(([talla, qty]) => {
+          const qtyInt = parseInt(qty) || 0;
+          if (qtyInt > 0) {
+            if (!payload[color]) payload[color] = {};
+            payload[color][talla] = qtyInt;
+            totalPieces += qtyInt;
+          }
+        });
+      });
+    } else {
+      Object.entries(devolucionCantidades).forEach(([talla, qty]) => {
+        const qtyInt = parseInt(qty) || 0;
+        if (qtyInt > 0) {
+          payload[talla] = qtyInt;
+          totalPieces += qtyInt;
+        }
+      });
+    }
+
+    if (totalPieces === 0) {
+      alert('Por favor, selecciona al menos una pieza para devolver.');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API_URL}/api/plancha/modelos/${modeloADevolver.id}/devolver`, {
+        tallas_devolucion: payload
+      }, { headers: { Authorization: `Bearer ${token}` } });
+
+      setMostrarDevolucionModal(false);
+      setModeloADevolver(null);
+      setDevolucionCantidades({});
+      fetchModelosCamion();
+      fetchModelosDisponibles();
+      alert('Devolución registrada con éxito.');
+    } catch (e) {
+      console.error(e);
+      alert(e.response?.data?.error || 'Error al registrar devolución');
+    }
+  };
 
   // Estado pestaña Plancha (Drag & Drop)
   const [draggedItem, setDraggedItem] = useState(null); // { type: 'planchador'|'modelo', data: obj }
@@ -1059,13 +1161,22 @@ export default function Plancha() {
                           Pendiente de Verificación
                         </div>
                       ) : (
-                        <button 
-                          className="btn btn-primary" 
-                          style={{ width: '100%', padding: '8px' }}
-                          onClick={() => handleAbrirVerificacion(m)}
-                        >
-                          Verificar en Colima
-                        </button>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          <button 
+                            className="btn btn-primary" 
+                            style={{ flex: 1, padding: '8px', fontSize: '0.85rem' }}
+                            onClick={() => handleAbrirVerificacion(m)}
+                          >
+                            Verificar
+                          </button>
+                          <button 
+                            className="btn" 
+                            style={{ flex: 1, padding: '8px', fontSize: '0.85rem', background: 'rgba(239, 68, 68, 0.15)', color: '#f87171', border: '1px solid rgba(239, 68, 68, 0.3)' }}
+                            onClick={() => handleAbrirDevolucion(m)}
+                          >
+                            Devolución
+                          </button>
+                        </div>
                       )
                     )}
                   </div>
@@ -2302,6 +2413,250 @@ export default function Plancha() {
                 </button>
                  <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>
                   {modeloAVerificar.verificado ? 'Guardar Cambios' : 'Confirmar Llegada'}
+                </button>
+              </div>
+            </form>
+
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE DEVOLUCIÓN A MAQUILA */}
+      {mostrarDevolucionModal && modeloADevolver && (
+        <div 
+          style={{ 
+            position: 'fixed', 
+            top: 0, 
+            left: 0, 
+            right: 0, 
+            bottom: 0, 
+            background: 'rgba(0,0,0,0.6)', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            zIndex: 1000, 
+            backdropFilter: 'blur(8px)' 
+          }}
+          onMouseUp={() => setIsMouseDownDev(false)}
+        >
+          <div 
+            className="glass-card" 
+            style={{ 
+              width: '95%', 
+              maxWidth: '550px', 
+              padding: '2rem', 
+              borderRadius: '20px', 
+              border: '1px solid rgba(255,255,255,0.1)',
+              maxHeight: '90vh',
+              overflowY: 'auto'
+            }}
+          >
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <h2 style={{ margin: 0, fontSize: '1.5rem', display: 'flex', alignItems: 'center', gap: '8px', color: '#f87171' }}>
+                <Layers /> Registrar Devolución
+              </h2>
+              <button 
+                onClick={() => {
+                  setMostrarDevolucionModal(false);
+                  setModeloADevolver(null);
+                }} 
+                className="btn-icon" 
+                style={{ background: 'rgba(255,255,255,0.05)', color: '#fff', border: 'none', padding: '8px', borderRadius: '50%', cursor: 'pointer' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '1.5rem', background: 'rgba(255,255,255,0.02)', padding: '10px', borderRadius: '12px' }}>
+              {modeloADevolver.imagen ? (
+                <img 
+                  src={`${API_URL}${modeloADevolver.imagen}`} 
+                  alt={modeloADevolver.modelo} 
+                  style={{ width: '50px', height: '50px', borderRadius: '6px', objectFit: 'cover', background: '#000' }} 
+                />
+              ) : null}
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1.2rem' }}>Modelo {modeloADevolver.modelo}</h3>
+                <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b' }}>No. Orden: {modeloADevolver.no_orden}</p>
+              </div>
+            </div>
+
+            <div style={{ marginBottom: '1.5rem' }}>
+              <p style={{ fontSize: '0.9rem', color: '#94a3b8', margin: '0 0 0.8rem 0' }}>
+                Selecciona las piezas que se van a devolver. Haz <strong>clic</strong> o mantén presionado y <strong>arrastra</strong> para seleccionar/deseleccionar tallas completas. Haz <strong>doble clic</strong> en una casilla para ingresar una cantidad específica de piezas.
+              </p>
+              
+              <div 
+                style={{ display: 'flex', flexDirection: 'column', gap: '1rem', userSelect: 'none' }}
+                onMouseLeave={() => setIsMouseDownDev(false)}
+              >
+                {(() => {
+                  const firstVal = Object.values(modeloADevolver.tallas_cantidades)[0];
+                  const isNested = (typeof firstVal === 'object' && firstVal !== null);
+
+                  if (isNested) {
+                    return Object.entries(modeloADevolver.tallas_cantidades).map(([color, tallasObj]) => {
+                      const entries = Object.entries(tallasObj).filter(([_, qty]) => qty > 0);
+                      if (entries.length === 0) return null;
+                      return (
+                        <div key={color} style={{ background: 'rgba(255,255,255,0.01)', padding: '10px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.04)' }}>
+                          <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: '#c084fc' }}>Color: {color}</h4>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem' }}>
+                            {entries.map(([talla, maxQty]) => {
+                              const currentQty = devolucionCantidades[color]?.[talla] || 0;
+                              const isSelected = currentQty > 0;
+                              const isEditing = editingBlockDev?.color === color && editingBlockDev?.talla === talla;
+                              
+                              return (
+                                <div
+                                  key={talla}
+                                  onMouseDown={() => handleBlockMouseDown(color, talla, maxQty)}
+                                  onMouseEnter={() => handleBlockMouseEnter(color, talla, maxQty)}
+                                  onDoubleClick={(e) => {
+                                    e.stopPropagation();
+                                    setEditingBlockDev({ color, talla });
+                                  }}
+                                  style={{
+                                    background: isSelected ? 'rgba(239, 68, 68, 0.15)' : 'rgba(255,255,255,0.03)',
+                                    border: isSelected ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid rgba(255,255,255,0.05)',
+                                    padding: '8px',
+                                    borderRadius: '8px',
+                                    textAlign: 'center',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.15s ease'
+                                  }}
+                                >
+                                  <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Talla {talla}</div>
+                                  {isEditing ? (
+                                    <input 
+                                      type="number"
+                                      min="0"
+                                      max={maxQty}
+                                      className="form-input"
+                                      style={{ width: '100%', padding: '2px', textAlign: 'center', fontSize: '0.85rem', marginTop: '4px' }}
+                                      defaultValue={currentQty}
+                                      autoFocus
+                                      onMouseDown={(e) => e.stopPropagation()}
+                                      onBlur={(e) => {
+                                        let val = parseInt(e.target.value) || 0;
+                                        if (val < 0) val = 0;
+                                        if (val > maxQty) val = maxQty;
+                                        updateDevQty(color, talla, val);
+                                        setEditingBlockDev(null);
+                                      }}
+                                      onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                          let val = parseInt(e.target.value) || 0;
+                                          if (val < 0) val = 0;
+                                          if (val > maxQty) val = maxQty;
+                                          updateDevQty(color, talla, val);
+                                          setEditingBlockDev(null);
+                                        } else if (e.key === 'Escape') {
+                                          setEditingBlockDev(null);
+                                        }
+                                      }}
+                                    />
+                                  ) : (
+                                    <div style={{ fontWeight: 'bold', fontSize: '0.85rem', color: isSelected ? '#f87171' : '#fff', marginTop: '2px' }}>
+                                      {currentQty} / {maxQty}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    });
+                  } else {
+                    return (
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem' }}>
+                        {Object.entries(modeloADevolver.tallas_cantidades).filter(([_, qty]) => qty > 0).map(([talla, maxQty]) => {
+                          const currentQty = devolucionCantidades[talla] || 0;
+                          const isSelected = currentQty > 0;
+                          const isEditing = editingBlockDev?.color === null && editingBlockDev?.talla === talla;
+                          
+                          return (
+                            <div
+                              key={talla}
+                              onMouseDown={() => handleBlockMouseDown(null, talla, maxQty)}
+                              onMouseEnter={() => handleBlockMouseEnter(null, talla, maxQty)}
+                              onDoubleClick={(e) => {
+                                e.stopPropagation();
+                                setEditingBlockDev({ color: null, talla });
+                              }}
+                              style={{
+                                background: isSelected ? 'rgba(239, 68, 68, 0.15)' : 'rgba(255,255,255,0.03)',
+                                border: isSelected ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid rgba(255,255,255,0.05)',
+                                padding: '8px',
+                                borderRadius: '8px',
+                                textAlign: 'center',
+                                cursor: 'pointer',
+                                transition: 'all 0.15s ease'
+                              }}
+                            >
+                              <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Talla {talla}</div>
+                              {isEditing ? (
+                                <input 
+                                  type="number"
+                                  min="0"
+                                  max={maxQty}
+                                  className="form-input"
+                                  style={{ width: '100%', padding: '2px', textAlign: 'center', fontSize: '0.85rem', marginTop: '4px' }}
+                                  defaultValue={currentQty}
+                                  autoFocus
+                                  onMouseDown={(e) => e.stopPropagation()}
+                                  onBlur={(e) => {
+                                    let val = parseInt(e.target.value) || 0;
+                                    if (val < 0) val = 0;
+                                    if (val > maxQty) val = maxQty;
+                                    updateDevQty(null, talla, val);
+                                    setEditingBlockDev(null);
+                                  }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      let val = parseInt(e.target.value) || 0;
+                                      if (val < 0) val = 0;
+                                      if (val > maxQty) val = maxQty;
+                                      updateDevQty(null, talla, val);
+                                      setEditingBlockDev(null);
+                                    } else if (e.key === 'Escape') {
+                                      setEditingBlockDev(null);
+                                    }
+                                  }}
+                                />
+                              ) : (
+                                <div style={{ fontWeight: 'bold', fontSize: '0.85rem', color: isSelected ? '#f87171' : '#fff', marginTop: '2px' }}>
+                                  {currentQty} / {maxQty}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  }
+                })()}
+              </div>
+            </div>
+
+            <form onSubmit={handleConfirmarDevolucion} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <button 
+                  type="button" 
+                  className="btn btn-secondary" 
+                  style={{ flex: 1 }}
+                  onClick={() => {
+                    setMostrarDevolucionModal(false);
+                    setModeloADevolver(null);
+                    setDevolucionCantidades({});
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button type="submit" className="btn" style={{ flex: 1, background: '#ef4444', color: '#fff' }}>
+                  Confirmar Devolución
                 </button>
               </div>
             </form>
