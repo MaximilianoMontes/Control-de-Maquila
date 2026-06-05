@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { 
-  Plus, Search, Pencil, Trash2, CheckCircle, XCircle, DollarSign, 
+  Plus, Search, Pencil, Trash2, CheckCircle, XCircle, 
   Archive, ArchiveRestore, Image as ImageIcon, AlertTriangle, AlertCircle, Calendar, X, Sparkles,
   MinusCircle
 } from 'lucide-react';
@@ -410,7 +410,6 @@ export default function Extras() {
                               <button className="btn" style={{ padding: '0.4rem', background: '#eab308', color: 'white' }} onClick={() => handleTerminarParcial(o.id)} title={t('prod.tooltipPartial')}><MinusCircle size={16} /></button>
                               <button className="btn" style={{ padding: '0.4rem', background: '#8b5cf6', color: 'white' }} onClick={() => handleAddDay(o.id)} title="Agregar Prórroga (Días)"><Calendar size={16} /></button>
                               <button className="btn btn-danger" style={{ padding: '0.4rem' }} onClick={() => handleCancelar(o.id)} title="Cancelar Orden"><XCircle size={16} /></button>
-                              <Link to={`/pagos?orden=${o.id}`} className="btn btn-primary" style={{ padding: '0.4rem', display: 'flex', alignItems: 'center' }} title="Registrar Pago"><DollarSign size={16} /></Link>
                             </>
                           )}
                           {canEdit ? (
