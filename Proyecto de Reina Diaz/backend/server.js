@@ -2312,6 +2312,102 @@ app.get('/api/admin/restore-models', async (req, res) => {
   }
 });
 
+// ADMINISTRATIVE ROUTE TO MANUALLY CLEAN UP TEST ORDER 73 DATA (pruebas / pruebsas)
+app.get('/api/admin/cleanup-test-73', async (req, res) => {
+  try {
+    const connection = await db.getConnection();
+    try {
+      console.log('--- ADMIN ON-DEMAND CLEANUP: Eliminación de datos de pruebas (modelo: pruebsas, maquilero: pruebas) ---');
+
+      // 1. Obtener los IDs de producción asociados al maquilero 'pruebas' o al modelo 'pruebsas'
+      const [testOrders] = await connection.query(`
+        SELECT p.id, p.inventario_id, p.maquilero_id 
+        FROM produccion p
+        LEFT JOIN maquileros m ON p.maquilero_id = m.id
+        LEFT JOIN inventario i ON p.inventario_id = i.id
+        WHERE m.nombre = 'pruebas' OR i.modelo = 'pruebsas'
+      `);
+
+      const deletedOrders = [];
+
+      for (const order of testOrders) {
+        // Find pagos associated with this order
+        const [pagos] = await connection.query("SELECT id FROM pagos WHERE produccion_id = ?", [order.id]);
+        const pagoIds = pagos.map(p => p.id);
+        
+        if (pagoIds.length > 0) {
+          // Delete personal discounts linked to payments
+          await connection.query("DELETE FROM descuentos_personales WHERE pago_id IN (?)", [pagoIds]);
+          // Delete payments
+          await connection.query("DELETE FROM pagos WHERE id IN (?)", [pagoIds]);
+        }
+
+        // Delete personal discounts linked to inventario_id
+        if (order.inventario_id) {
+          await connection.query("DELETE FROM descuentos_personales WHERE inventario_id = ?", [order.inventario_id]);
+        }
+
+        // Delete plancha devoluciones associated with this order
+        await connection.query("DELETE FROM plancha_devoluciones WHERE produccion_id = ?", [order.id]);
+
+        // Find camion_detalles associated with this order
+        const [camionDetalles] = await connection.query("SELECT id FROM camion_detalles WHERE produccion_id = ?", [order.id]);
+        const cdIds = camionDetalles.map(cd => cd.id);
+        if (cdIds.length > 0) {
+          // Delete plancha devoluciones referencing camion_detalles
+          await connection.query("DELETE FROM plancha_devoluciones WHERE camion_detalles_id IN (?)", [cdIds]);
+          // Delete plancha_trabajos referencing camion_detalles
+          await connection.query("DELETE FROM plancha_trabajos WHERE camion_detalles_id IN (?)", [cdIds]);
+          // Delete camion_detalles
+          await connection.query("DELETE FROM camion_detalles WHERE id IN (?)", [cdIds]);
+        }
+
+        // Delete production order
+        await connection.query("DELETE FROM produccion WHERE id = ?", [order.id]);
+
+        // Delete inventory record
+        if (order.inventario_id) {
+          const [cuts] = await connection.query("SELECT modelo, no_orden FROM inventario WHERE id = ?", [order.inventario_id]);
+          if (cuts.length > 0) {
+            const cut = cuts[0];
+            await connection.query("DELETE FROM inventario WHERE id = ?", [order.inventario_id]);
+            await connection.query("DELETE FROM inventario_real WHERE no_orden = ? AND modelo = ?", [cut.no_orden || '', cut.modelo]);
+          }
+        }
+        deletedOrders.push(order.id);
+      }
+
+      // 2. Eliminar cualquier modelo 'pruebsas' huérfano de inventario e inventario_real
+      await connection.query("DELETE FROM inventario WHERE modelo = 'pruebsas'");
+      await connection.query("DELETE FROM inventario_real WHERE modelo = 'pruebsas'");
+
+      // 3. Eliminar el maquilero 'pruebas'
+      await connection.query("DELETE FROM maquileros WHERE nombre = 'pruebas'");
+
+      // 4. Limpiar historial
+      await connection.query(`
+        DELETE FROM historial 
+        WHERE description LIKE '%pruebsas%' 
+           OR description LIKE '%pruebas%' 
+           OR description LIKE '%orden 73%' 
+           OR description LIKE '%ID 73%' 
+           OR description LIKE '%ID #73%'
+      `);
+
+      res.json({
+        success: true,
+        message: "Clean up of test data 'pruebas' and 'pruebsas' completed successfully.",
+        deletedOrdersCount: deletedOrders.length,
+        deletedOrders
+      });
+    } finally {
+      connection.release();
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // ==========================================
 // --- NUEVO MÓDULO: PLANCHA (IRONING) ------
 // ==========================================
