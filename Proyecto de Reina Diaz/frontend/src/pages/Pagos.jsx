@@ -9,14 +9,16 @@ export default function Pagos() {
   const { settings, t, formatCurrency } = useSettings();
   const [searchParams] = useSearchParams();
   const initialOrdenId = searchParams.get('orden') || '';
+  const initialTipoPago = searchParams.get('tipo') === 'completo' ? 'completo' : 'abono';
 
   // Estados para Pagos de Órdenes
   const [orders, setOrders] = useState([]);
   const [pagos, setPagos] = useState([]);
   const [selectedOrden, setSelectedOrden] = useState(initialOrdenId);
   const [monto, setMonto] = useState('');
-  const [tipoPago, setTipoPago] = useState('abono');
+  const [tipoPago, setTipoPago] = useState(initialTipoPago);
   const [pendingDiscount, setPendingDiscount] = useState(0);
+  const [lastPrefilledOrden, setLastPrefilledOrden] = useState('');
 
   // Estados para Descuentos Personales
   const [maquileros, setMaquileros] = useState([]);
@@ -45,13 +47,28 @@ export default function Pagos() {
   useEffect(() => {
     let interval;
     if (selectedOrden) {
-      const loadSelectedData = () => {
+      const loadSelectedData = async () => {
         fetchPagos(selectedOrden);
         const orden = orders.find(o => o.id.toString() === selectedOrden);
         if (orden) {
-          fetchPendingDiscount(orden.maquilero_id);
+          const discount = await fetchPendingDiscount(orden.maquilero_id);
           setSelectedMaquilero(orden.maquilero_id.toString());
           setSelectedModelo(orden.inventario_id.toString()); // Pre-selecciona el producto de la orden
+          
+          if (selectedOrden !== lastPrefilledOrden) {
+            const totalPagado = parseFloat(orden.pagado || 0);
+            const restante = orden.precio_total - totalPagado;
+            const suggested = Math.max(0, restante - discount);
+            setMonto(suggested > 0 ? suggested.toFixed(2) : '');
+            setLastPrefilledOrden(selectedOrden);
+            
+            const urlTipo = searchParams.get('tipo');
+            if (urlTipo === 'completo') {
+              setTipoPago('completo');
+            } else if (urlTipo === 'abono') {
+              setTipoPago('abono');
+            }
+          }
         }
       };
       
@@ -60,12 +77,14 @@ export default function Pagos() {
     } else {
       setPagos([]);
       setPendingDiscount(0);
+      setMonto('');
+      setLastPrefilledOrden('');
     }
     
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [selectedOrden, orders]);
+  }, [selectedOrden, orders, lastPrefilledOrden, searchParams]);
 
   useEffect(() => {
     if (selectedMaquilero) {
@@ -114,7 +133,11 @@ export default function Pagos() {
     try {
       const res = await axios.get(`${API_URL}/api/descuentos/pendientes/${maquileroId}`);
       setPendingDiscount(res.data.total_pendiente);
-    } catch (e) { console.error(e); }
+      return res.data.total_pendiente;
+    } catch (e) {
+      console.error(e);
+      return 0;
+    }
   };
 
   const handlePago = async (e) => {
@@ -286,7 +309,20 @@ export default function Pagos() {
                           <td style={{ color: '#34d399', fontWeight: 'bold' }}>{formatCurrency(p.monto)}</td>
                           <td>
                             <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
-                              <button className="btn-icon" onClick={() => handlePrintComprobante(p.id)} style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#60a5fa', border: 'none', padding: '6px', borderRadius: '4px', cursor: 'pointer' }} title="Imprimir">
+                              <button 
+                                className="btn-icon" 
+                                onClick={() => handlePrintComprobante(p.id)} 
+                                disabled={!ordenActual || (ordenActual.estado !== 'Terminado' && ordenActual.estado !== 'Terminado Parcial')}
+                                style={{ 
+                                  background: (!ordenActual || (ordenActual.estado !== 'Terminado' && ordenActual.estado !== 'Terminado Parcial')) ? 'rgba(148, 163, 184, 0.1)' : 'rgba(59, 130, 246, 0.1)', 
+                                  color: (!ordenActual || (ordenActual.estado !== 'Terminado' && ordenActual.estado !== 'Terminado Parcial')) ? '#94a3b8' : '#60a5fa', 
+                                  border: 'none', 
+                                  padding: '6px', 
+                                  borderRadius: '4px', 
+                                  cursor: (!ordenActual || (ordenActual.estado !== 'Terminado' && ordenActual.estado !== 'Terminado Parcial')) ? 'not-allowed' : 'pointer' 
+                                }} 
+                                title={(!ordenActual || (ordenActual.estado !== 'Terminado' && ordenActual.estado !== 'Terminado Parcial')) ? "Solo disponible para órdenes terminadas o con pago parcial" : "Imprimir"}
+                              >
                                 <Printer size={18} />
                               </button>
                               <button className="btn-icon" onClick={() => handleDeletePago(p.id)} style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: 'none', padding: '6px', borderRadius: '4px', cursor: 'pointer' }} title="Eliminar">
