@@ -96,7 +96,7 @@ export default function Pagos() {
 
   const fetchOrders = async () => {
     try {
-      const res = await axios.get(`${API_URL}/api/produccion?incluirExtras=true`);
+      const res = await axios.get(`${API_URL}/api/produccion?incluirExtras=true&incluirArchivados=true`);
       setOrders(res.data);
     } catch (e) { console.error(e); }
   };

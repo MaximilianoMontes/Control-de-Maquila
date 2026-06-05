@@ -1049,8 +1049,13 @@ const autoArchiveOrders = async () => {
 };
 
 app.get('/api/produccion', async (req, res) => {
-  const { verArchivados, incluirExtras } = req.query;
-  const whereArchivado = verArchivados === 'true' ? 'p.archivado = 1' : 'p.archivado = 0';
+  const { verArchivados, incluirExtras, incluirArchivados } = req.query;
+  let whereArchivado = 'p.archivado = 0';
+  if (incluirArchivados === 'true') {
+    whereArchivado = 'p.archivado IN (0, 1, 2, 3)';
+  } else if (verArchivados === 'true') {
+    whereArchivado = 'p.archivado = 1';
+  }
   const whereExtra = incluirExtras === 'true' ? '' : 'AND p.es_extra = 0';
   try {
     await autoArchiveOrders();
