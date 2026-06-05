@@ -35,7 +35,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Middleware de Autenticación
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
+  const token = (authHeader && authHeader.split(' ')[1]) || req.query.token;
   if (!token) return res.status(401).json({ error: 'Token no proporcionado' });
 
   jwt.verify(token, SECRET_KEY, (err, user) => {
@@ -1540,7 +1540,13 @@ app.delete('/api/pagos/:id', authenticateToken, async (req, res) => {
   }
 });
 
-app.get('/api/pagos/:id/comprobante', async (req, res) => {
+app.get('/api/pagos/:id/comprobante', authenticateToken, async (req, res) => {
+  const userRole = (req.user?.role || req.user?.rol || '').toString().toLowerCase().trim();
+  const allowedRoles = ['admin', 'produccion1', 'produccion2'];
+  if (!allowedRoles.includes(userRole)) {
+    return res.status(403).send('Solo los usuarios de administración o producción pueden descargar el comprobante.');
+  }
+
   const pagoId = req.params.id;
   try {
     const [pagos] = await db.query(`
