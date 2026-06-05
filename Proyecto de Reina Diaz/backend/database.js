@@ -365,11 +365,66 @@ async function initializeDatabase() {
         await connection.query("DELETE FROM pagos WHERE produccion_id = 39");
         await connection.query("DELETE FROM produccion WHERE id = 39");
         console.log("Orden 39 eliminada con éxito.");
-      } else {
-        console.log("Orden 39 ya no existe.");
       }
     } catch (e) {
       console.error('Error al eliminar orden 39:', e);
+    }
+
+    try {
+      console.log('--- MIGRACIÓN MANUAL: Eliminación de orden de prueba 73 (y modelo pruebsas) ---');
+      
+      // 1. Obtener la orden de producción 73
+      const [p73] = await connection.query("SELECT * FROM produccion WHERE id = 73");
+      if (p73.length > 0) {
+        const order = p73[0];
+        
+        // 2. Eliminar de descuentos_personales asociados a la orden
+        await connection.query("DELETE FROM descuentos_personales WHERE inventario_id = ?", [order.inventario_id]);
+        
+        // 3. Eliminar pagos de la orden y sus descuentos asociados
+        const [pagos] = await connection.query("SELECT id FROM pagos WHERE produccion_id = 73");
+        for (const p of pagos) {
+          await connection.query("DELETE FROM descuentos_personales WHERE pago_id = ?", [p.id]);
+        }
+        await connection.query("DELETE FROM pagos WHERE produccion_id = 73");
+        
+        // 4. Eliminar devoluciones de plancha asociadas
+        await connection.query("DELETE FROM plancha_devoluciones WHERE produccion_id = 73");
+
+        // 5. Eliminar la orden de producción
+        await connection.query("DELETE FROM produccion WHERE id = 73");
+        console.log("Orden de producción 73 eliminada.");
+
+        // 6. Eliminar el corte en inventario e inventario_real
+        const [cuts] = await connection.query("SELECT modelo, no_orden FROM inventario WHERE id = ?", [order.inventario_id]);
+        if (cuts.length > 0) {
+          const cut = cuts[0];
+          await connection.query("DELETE FROM inventario WHERE id = ?", [order.inventario_id]);
+          await connection.query("DELETE FROM inventario_real WHERE no_orden = ? AND modelo = ?", [cut.no_orden || '', cut.modelo]);
+          console.log(`Corte de inventario ${cut.modelo} y su inventario real eliminado.`);
+        }
+      }
+
+      // 7. Depurar cualquier registro del historial que mencione 'pruebsas', 'pruebas' o 'orden 73'
+      await connection.query(`
+        DELETE FROM historial 
+        WHERE description LIKE '%pruebsas%' 
+           OR description LIKE '%pruebas%' 
+           OR description LIKE '%orden 73%' 
+           OR description LIKE '%ID 73%'
+           OR description LIKE '%ID #73%'
+      `);
+
+      // 8. Eliminar el maquilero 'pruebas' si existe
+      const [maqPruebas] = await connection.query("SELECT id FROM maquileros WHERE nombre = 'pruebas'");
+      if (maqPruebas.length > 0) {
+        await connection.query("DELETE FROM maquileros WHERE id = ?", [maqPruebas[0].id]);
+        console.log("Maquilero de prueba 'pruebas' eliminado.");
+      }
+
+      console.log('--- FIN MIGRACIÓN MANUAL ORDEN 73 ---');
+    } catch (e) {
+      console.error('Error al depurar orden 73:', e);
     }
 
     try {

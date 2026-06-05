@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { 
-  Plus, Search, Pencil, Trash2, CheckCircle, XCircle, DollarSign, 
+  Plus, Search, Pencil, Trash2, CheckCircle, XCircle, 
   Archive, ArchiveRestore, Image as ImageIcon, AlertTriangle, AlertCircle, Calendar, X, Sparkles,
   MinusCircle
 } from 'lucide-react';
@@ -360,7 +360,6 @@ export default function Produccion() {
                               <button className="btn" style={{ padding: '0.4rem', background: '#eab308', color: 'white' }} onClick={() => handleTerminarParcial(o.id)} title={t('prod.tooltipPartial')}><MinusCircle size={16} /></button>
                               <button className="btn" style={{ padding: '0.4rem', background: '#8b5cf6', color: 'white' }} onClick={() => handleAddDay(o.id)} title="Agregar Prórroga (Días)"><Calendar size={16} /></button>
                               <button className="btn btn-danger" style={{ padding: '0.4rem' }} onClick={() => handleCancelar(o.id)} title="Cancelar Orden"><XCircle size={16} /></button>
-                              <Link to={`/pagos?orden=${o.id}`} className="btn btn-primary" style={{ padding: '0.4rem', display: 'flex', alignItems: 'center' }} title="Registrar Pago"><DollarSign size={16} /></Link>
                               <Link to={`/extras?newExtra=true&inventario_id=${o.inventario_id}&cantidad=${o.cantidad}&fecha_inicio=${formatDate(o.fecha_inicio)}&fecha_fin=${formatDate(o.fecha_fin)}`} className="btn" style={{ padding: '0.4rem', background: 'linear-gradient(135deg, #ec4899, #8b5cf6)', color: 'white', display: 'flex', alignItems: 'center' }} title="Crear Extra"><Sparkles size={16} /></Link>
                             </>
                           )}
