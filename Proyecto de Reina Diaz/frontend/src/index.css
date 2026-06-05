@@ -265,14 +265,15 @@ p { color: var(--text-secondary); line-height: 1.6; }
 
 /* Data Table */
 .table-wrapper {
-  overflow-x: auto;
+  overflow: visible;
   border: var(--glass-border);
   border-radius: var(--radius-lg);
   background: var(--bg-card);
 }
 .data-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   text-align: left;
 }
 .data-table th, .data-table td {
