@@ -203,6 +203,15 @@ export default function Pagos() {
     }
   };
 
+  const getFolioNumber = (o) => {
+    const isExtra = !!o.es_extra;
+    const isArchived = !!o.archivado;
+    const filteredList = orders
+      .filter(item => !!item.es_extra === isExtra && !!item.archivado === isArchived)
+      .sort((a, b) => b.id - a.id);
+    const idx = filteredList.findIndex(item => item.id === o.id);
+    return idx !== -1 ? (filteredList.length - idx) : o.id;
+  };
 
   const ordenActual = orders.find(o => o.id.toString() === selectedOrden);
   const totalPagado = ordenActual ? parseFloat(ordenActual.pagado || 0) : 0;
@@ -222,7 +231,7 @@ export default function Pagos() {
                   <option value="">{t('pay.chooseOrder')}</option>
                   {orders.map((o, index) => (
                     <option key={o.id} value={o.id}>
-                      {t('pay.order')} #{o.id} - {o.maquilero_nombre}{o.es_extra === 1 || o.es_extra ? ' (EXTRA)' : ''}
+                      {t('pay.order')} #{getFolioNumber(o)} - {o.maquilero_nombre}{o.es_extra === 1 || o.es_extra ? ' (EXTRA)' : ''}
                     </option>
                   ))}
                 </select>
