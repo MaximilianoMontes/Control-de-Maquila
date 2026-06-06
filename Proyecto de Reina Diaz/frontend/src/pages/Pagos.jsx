@@ -222,7 +222,7 @@ export default function Pagos() {
                   <option value="">{t('pay.chooseOrder')}</option>
                   {orders.map((o, index) => (
                     <option key={o.id} value={o.id}>
-                      {t('pay.order')} #{orders.length - index} - {o.maquilero_nombre}{o.es_extra === 1 || o.es_extra ? ' (EXTRA)' : ''}
+                      {t('pay.order')} #{o.id} - {o.maquilero_nombre}{o.es_extra === 1 || o.es_extra ? ' (EXTRA)' : ''}
                     </option>
                   ))}
                 </select>
