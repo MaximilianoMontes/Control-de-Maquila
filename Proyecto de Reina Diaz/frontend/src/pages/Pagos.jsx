@@ -213,6 +213,10 @@ export default function Pagos() {
     return idx !== -1 ? (filteredList.length - idx) : o.id;
   };
 
+  const activeProds = orders.filter(o => !o.es_extra && !o.archivado).sort((a, b) => b.id - a.id);
+  const activeExtras = orders.filter(o => (o.es_extra === 1 || o.es_extra) && !o.archivado).sort((a, b) => b.id - a.id);
+  const archivedOrders = orders.filter(o => o.archivado === 1 || o.archivado).sort((a, b) => b.id - a.id);
+
   const ordenActual = orders.find(o => o.id.toString() === selectedOrden);
   const totalPagado = ordenActual ? parseFloat(ordenActual.pagado || 0) : 0;
   const restante = ordenActual ? (ordenActual.precio_total - totalPagado) : 0;
@@ -229,11 +233,36 @@ export default function Pagos() {
                 <label className="form-label">{t('pay.selectOrder')}</label>
                 <select className="form-input" style={{ backgroundColor: 'var(--bg-input)' }} value={selectedOrden} onChange={e => setSelectedOrden(e.target.value)} required>
                   <option value="">{t('pay.chooseOrder')}</option>
-                  {orders.map((o, index) => (
-                    <option key={o.id} value={o.id}>
-                      {t('pay.order')} #{getFolioNumber(o)} - {o.maquilero_nombre}{o.es_extra === 1 || o.es_extra ? ' (EXTRA)' : ''}
-                    </option>
-                  ))}
+                  
+                  {activeProds.length > 0 && (
+                    <optgroup label={settings.language === 'en' ? 'Active Production' : 'Producción Activa'}>
+                      {activeProds.map(o => (
+                        <option key={o.id} value={o.id}>
+                          {t('pay.order')} #{getFolioNumber(o)} - {o.maquilero_nombre}
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
+
+                  {activeExtras.length > 0 && (
+                    <optgroup label={settings.language === 'en' ? 'Active Extras' : 'Extras Activos'}>
+                      {activeExtras.map(o => (
+                        <option key={o.id} value={o.id}>
+                          {t('pay.order')} #{getFolioNumber(o)} - {o.maquilero_nombre} (EXTRA)
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
+
+                  {archivedOrders.length > 0 && (
+                    <optgroup label={settings.language === 'en' ? 'History / Archived' : 'Historial / Archivadas'}>
+                      {archivedOrders.map(o => (
+                        <option key={o.id} value={o.id}>
+                          {t('pay.order')} #{getFolioNumber(o)} - {o.maquilero_nombre}{o.es_extra === 1 || o.es_extra ? ' (EXTRA)' : ''} ({settings.language === 'en' ? 'Archived' : 'Archivada'})
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
                 </select>
               </div>
 
