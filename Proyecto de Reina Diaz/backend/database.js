@@ -664,6 +664,79 @@ async function initializeDatabase() {
       console.error('Error al restaurar orden:', e);
     }
 
+    try {
+      console.log('--- MIGRACIÓN MANUAL: Resetear orden de Jaqueline Perez Cortes (modelo 723138) a En proceso ---');
+      
+      // 1. Buscar la orden
+      const [orderRows] = await connection.query(`
+        SELECT p.id, p.estado
+        FROM produccion p
+        JOIN maquileros m ON p.maquilero_id = m.id
+        JOIN inventario i ON p.inventario_id = i.id
+        WHERE i.modelo = '723138' AND m.nombre LIKE '%Jaqueline Perez%' AND p.cantidad = 172
+      `);
+
+      if (orderRows.length > 0) {
+        const row = orderRows[0];
+        if (row.estado !== 'En proceso') {
+          const orderId = row.id;
+          console.log(`Orden encontrada con ID: ${orderId}. Estado actual: ${row.estado}. Procediendo a resetear.`);
+
+          // 2. Obtener los pagos asociados a esta orden
+          const [pagos] = await connection.query("SELECT id FROM pagos WHERE produccion_id = ?", [orderId]);
+          const pagoIds = pagos.map(p => p.id);
+
+          if (pagoIds.length > 0) {
+            // 3. Eliminar descuentos personales vinculados a estos pagos
+            await connection.query("DELETE FROM descuentos_personales WHERE pago_id IN (?)", [pagoIds]);
+            
+            // 4. Eliminar los pagos
+            await connection.query("DELETE FROM pagos WHERE id IN (?)", [pagoIds]);
+            console.log(`Eliminados ${pagoIds.length} pagos para la orden ID: ${orderId}`);
+          }
+
+          // 5. Restablecer el estado de la orden en 'produccion'
+          await connection.query(`
+            UPDATE produccion 
+            SET estado = 'En proceso', 
+                cantidad_recibida = NULL, 
+                archivado = 0,
+                fecha_terminado = NULL,
+                fecha_fin = NULL
+            WHERE id = ?
+          `, [orderId]);
+
+          // 6. Restaurar corte a en_inventario = 0
+          await connection.query(`
+            UPDATE inventario i
+            JOIN produccion p ON p.inventario_id = i.id
+            SET i.en_inventario = 0
+            WHERE p.id = ?
+          `, [orderId]);
+
+          // 7. Eliminar registros de camión y plancha
+          const [camionDetalles] = await connection.query("SELECT id FROM camion_detalles WHERE produccion_id = ?", [orderId]);
+          const cdIds = camionDetalles.map(cd => cd.id);
+          if (cdIds.length > 0) {
+            await connection.query("DELETE FROM plancha_devoluciones WHERE camion_detalles_id IN (?)", [cdIds]);
+            await connection.query("DELETE FROM plancha_trabajos WHERE camion_detalles_id IN (?)", [cdIds]);
+            await connection.query("DELETE FROM camion_detalles WHERE id IN (?)", [cdIds]);
+          }
+          await connection.query("DELETE FROM plancha_devoluciones WHERE produccion_id = ?", [orderId]);
+
+          console.log(`Orden ID: ${orderId} reseteada a 'En proceso' con éxito.`);
+        } else {
+          console.log(`La orden de Jaqueline Perez Cortes (modelo 723138) ya se encuentra en estado 'En proceso'. No se requiere acción.`);
+        }
+      } else {
+        console.log("No se encontró la orden de Jaqueline Perez Cortes (modelo 723138, cantidad 172).");
+      }
+      console.log('--- FIN DE MIGRACIÓN MANUAL JAQUELINE ---');
+    } catch (e) {
+      console.error('Error al resetear la orden de Jaqueline:', e);
+    }
+
+
     // --- NUEVO MÓDULO: PLANCHA ---
     try {
       console.log('--- MIGRACIÓN: Creando tablas para el Módulo de Plancha ---');
