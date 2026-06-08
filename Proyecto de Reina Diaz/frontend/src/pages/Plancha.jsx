@@ -63,6 +63,7 @@ const formatDate = (dateStr) => {
 
 export default function Plancha() {
   const { settings, t, formatCurrency } = useSettings();
+  const isEn = settings.language === 'en';
   const { user } = useAuth();
   const userRole = (user?.role || user?.rol || '').toString().toLowerCase().trim();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -978,7 +979,7 @@ export default function Plancha() {
         {/* Banner de Asistencia */}
         {attendanceNotif && (
           <div className="attendance-banner">
-            👤 {attendanceNotif.nombre} - {attendanceNotif.count}/5 asistido {attendanceNotif.registered ? '(Asistencia Registrada)' : '(Ya registrado hoy)'}
+            👤 {attendanceNotif.nombre} - {attendanceNotif.count}/5 {isEn ? 'attended' : 'asistido'} {attendanceNotif.registered ? (isEn ? '(Attendance Registered)' : '(Asistencia Registrada)') : (isEn ? '(Already registered today)' : '(Ya registrado hoy)')}
           </div>
         )}
 
@@ -991,43 +992,43 @@ export default function Plancha() {
           {/* Alta de Planchador */}
           <div className="glass-card">
             <h2 style={{ fontSize: '1.4rem', margin: '0 0 1.5rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <UserPlus color="#3b82f6" /> Alta Planchador
+              <UserPlus color="#3b82f6" /> {isEn ? 'Register Ironer' : 'Alta Planchador'}
             </h2>
             <form onSubmit={handleAgregarPlanchador} style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
               <div className="form-group">
-                <label className="form-label">Nombre del Planchador</label>
+                <label className="form-label">{isEn ? 'Ironer Name' : 'Nombre del Planchador'}</label>
                 <input 
                   type="text" 
                   required 
                   className="form-input" 
-                  placeholder="Ej: Rosa María" 
+                  placeholder={isEn ? 'e.g., Rosa Maria' : 'Ej: Rosa María'} 
                   value={nuevoNombre} 
                   onChange={e => setNuevoNombre(e.target.value)} 
                 />
               </div>
               <div className="form-group">
-                <label className="form-label">Número de Teléfono</label>
+                <label className="form-label">{isEn ? 'Phone Number' : 'Número de Teléfono'}</label>
                 <input 
                   type="tel" 
                   className="form-input" 
-                  placeholder="Ej: 3121234567" 
+                  placeholder={isEn ? 'e.g., 3121234567' : 'Ej: 3121234567'} 
                   value={nuevoTelefono} 
                   onChange={e => setNuevoTelefono(e.target.value)} 
                 />
               </div>
               <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>
-                <Plus size={18} style={{ marginRight: '4px' }} /> Registrar Planchador
+                <Plus size={18} style={{ marginRight: '4px' }} /> {isEn ? 'Register Ironer' : 'Registrar Planchador'}
               </button>
             </form>
           </div>
 
           {/* Listado de Planchadores */}
           <div className="glass-card">
-            <h2 style={{ fontSize: '1.4rem', margin: '0 0 1.5rem 0' }}>Planchadores Activos</h2>
+            <h2 style={{ fontSize: '1.4rem', margin: '0 0 1.5rem 0' }}>{isEn ? 'Active Ironers' : 'Planchadores Activos'}</h2>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1.2rem' }}>
               {planchadores.length === 0 ? (
                 <p style={{ textAlign: 'center', color: '#94a3b8', gridColumn: '1/-1', padding: '2rem' }}>
-                  No hay planchadores registrados.
+                  {isEn ? 'No registered ironers.' : 'No hay planchadores registrados.'}
                 </p>
               ) : (
                 planchadores.map(p => (
@@ -1048,7 +1049,7 @@ export default function Plancha() {
                       <h3 style={{ margin: 0, fontSize: '1.2rem' }}>{p.nombre}</h3>
                       {p.telefono && (
                         <p style={{ color: '#94a3b8', margin: '0.2rem 0 0 0', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <Phone size={12} /> {p.telefono}
+                          <Phone size={12} /> {isEn ? 'Phone' : 'Teléfono'}: {p.telefono}
                         </p>
                       )}
                     </div>
@@ -1059,7 +1060,7 @@ export default function Plancha() {
                         style={{ flex: 1, padding: '6px 12px', fontSize: '0.85rem' }}
                         onClick={() => handleVerHistorialPlanchador(p.id)}
                       >
-                        Ver Historial
+                        {isEn ? 'View History' : 'Ver Historial'}
                       </button>
                       <button 
                         className="btn" 
@@ -1085,11 +1086,11 @@ export default function Plancha() {
       {/* CONTENIDO PESTAÑA 2: MODELOS (LLEGADA Y VERIFICACIÓN) */}
       {activeTab === 'modelos' && (
         <div className="glass-card">
-          <h2 style={{ fontSize: '1.5rem', margin: '0 0 1.5rem 0' }}>Modelos en Tránsito / Colima</h2>
+          <h2 style={{ fontSize: '1.5rem', margin: '0 0 1.5rem 0' }}>{isEn ? 'Models in Transit / Colima' : 'Modelos en Tránsito / Colima'}</h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
             {modelosCamion.length === 0 ? (
               <p style={{ textAlign: 'center', color: '#94a3b8', gridColumn: '1/-1', padding: '3rem' }}>
-                No hay modelos registrados de camiones enviados.
+                {isEn ? 'No registered models from sent trucks.' : 'No hay modelos registrados de camiones enviados.'}
               </p>
             ) : (
               modelosCamion.map(m => (
@@ -1112,11 +1113,11 @@ export default function Plancha() {
                   <div style={{ position: 'absolute', top: '12px', right: '12px' }}>
                     {m.verificado ? (
                       <span className="badge badge-success" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <Unlock size={12} /> Desbloqueado
+                        <Unlock size={12} /> {isEn ? 'Unlocked' : 'Desbloqueado'}
                       </span>
                     ) : (
                       <span className="badge badge-warning" style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(245, 158, 11, 0.1)', color: '#fbbf24' }}>
-                        <Lock size={12} /> Bloqueado
+                        <Lock size={12} /> {isEn ? 'Locked' : 'Bloqueado'}
                       </span>
                     )}
                   </div>
@@ -1135,7 +1136,7 @@ export default function Plancha() {
                       </div>
                     )}
                     <div>
-                      <h3 style={{ margin: 0, fontSize: '1.3rem' }}>Modelo {m.modelo}</h3>
+                      <h3 style={{ margin: 0, fontSize: '1.3rem' }}>{isEn ? 'Model' : 'Modelo'} {m.modelo}</h3>
                     </div>
                   </div>
 
@@ -1144,8 +1145,8 @@ export default function Plancha() {
                     {m.verificado ? (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.9rem' }}>
-                          <span style={{ color: '#94a3b8' }}>Pago de Plancha:</span>
-                          <strong style={{ color: '#34d399', fontSize: '1.1rem' }}>{formatCurrency(m.precio_plancha)} <span style={{ fontSize: '0.75rem', fontWeight: 'normal', color: '#64748b' }}>/ pza</span></strong>
+                          <span style={{ color: '#94a3b8' }}>{isEn ? 'Ironing Pay' : 'Pago de Plancha'}:</span>
+                          <strong style={{ color: '#34d399', fontSize: '1.1rem' }}>{formatCurrency(m.precio_plancha)} <span style={{ fontSize: '0.75rem', fontWeight: 'normal', color: '#64748b' }}>{isEn ? '/ pc' : '/ pza'}</span></strong>
                         </div>
                         {userRole !== 'plancha' && (
                           <button 
@@ -1153,14 +1154,14 @@ export default function Plancha() {
                             style={{ width: '100%', padding: '6px', fontSize: '0.8rem', borderColor: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
                             onClick={() => handleAbrirVerificacion(m)}
                           >
-                            <Edit3 size={12} /> Editar Precio
+                            <Edit3 size={12} /> {isEn ? 'Edit Price' : 'Editar Precio'}
                           </button>
                         )}
                       </div>
                     ) : (
                       userRole === 'plancha' ? (
                         <div style={{ textAlign: 'center', color: '#94a3b8', fontSize: '0.85rem', fontStyle: 'italic', padding: '4px 0' }}>
-                          Pendiente de Verificación
+                          {isEn ? 'Pending Verification' : 'Pendiente de Verificación'}
                         </div>
                       ) : (
                         <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -1169,14 +1170,14 @@ export default function Plancha() {
                             style={{ flex: 1, padding: '8px', fontSize: '0.85rem' }}
                             onClick={() => handleAbrirVerificacion(m)}
                           >
-                            Verificar
+                            {isEn ? 'Verify' : 'Verificar'}
                           </button>
                           <button 
                             className="btn" 
                             style={{ flex: 1, padding: '8px', fontSize: '0.85rem', background: 'rgba(239, 68, 68, 0.15)', color: '#f87171', border: '1px solid rgba(239, 68, 68, 0.3)' }}
                             onClick={() => handleAbrirDevolucion(m)}
                           >
-                            Devolución
+                            {isEn ? 'Return' : 'Devolución'}
                           </button>
                         </div>
                       )
@@ -1200,13 +1201,13 @@ export default function Plancha() {
             {/* Planchadores */}
             <div className="glass-card" style={{ padding: '1.2rem' }}>
               <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Users size={18} color="#3b82f6" /> Planchadores
+                <Users size={18} color="#3b82f6" /> {isEn ? 'Ironers' : 'Planchadores'}
               </h3>
-              <p style={{ fontSize: '0.8rem', color: '#64748b', margin: '-0.5rem 0 1rem 0' }}>Arrastra un planchador hacia un Burro para asignarlo</p>
+              <p style={{ fontSize: '0.8rem', color: '#64748b', margin: '-0.5rem 0 1rem 0' }}>{isEn ? 'Drag an ironer to a Board to assign them' : 'Arrastra un planchador hacia un Burro para asignarlo'}</p>
               
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', maxHeight: '250px', overflowY: 'auto', paddingRight: '4px' }}>
                 {planchadores.length === 0 ? (
-                  <p style={{ fontSize: '0.85rem', color: '#94a3b8', textAlign: 'center' }}>Registra planchadores en su pestaña primero.</p>
+                  <p style={{ fontSize: '0.85rem', color: '#94a3b8', textAlign: 'center' }}>{isEn ? 'Register ironers in their tab first.' : 'Registra planchadores en su pestaña primero.'}</p>
                 ) : (
                   planchadores.map(p => (
                     <div 
@@ -1228,7 +1229,7 @@ export default function Plancha() {
                       }}
                     >
                       <span>{p.nombre}</span>
-                      <span style={{ fontSize: '0.7rem', background: 'rgba(59, 130, 246, 0.2)', padding: '2px 6px', borderRadius: '4px', color: '#93c5fd' }}>PLANCHADOR</span>
+                      <span style={{ fontSize: '0.7rem', background: 'rgba(59, 130, 246, 0.2)', padding: '2px 6px', borderRadius: '4px', color: '#93c5fd' }}>{isEn ? 'IRONER' : 'PLANCHADOR'}</span>
                     </div>
                   ))
                 )}
@@ -1238,14 +1239,14 @@ export default function Plancha() {
             {/* Modelos Disponibles */}
             <div className="glass-card" style={{ padding: '1.2rem' }}>
               <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Layers size={18} color="#10b981" /> Modelos Verificados
+                <Layers size={18} color="#10b981" /> {isEn ? 'Verified Models' : 'Modelos Verificados'}
               </h3>
-              <p style={{ fontSize: '0.8rem', color: '#64748b', margin: '-0.5rem 0 1rem 0' }}>Modelos listos en Colima. Arrástralos a un Burro de su talla</p>
+              <p style={{ fontSize: '0.8rem', color: '#64748b', margin: '-0.5rem 0 1rem 0' }}>{isEn ? 'Models ready in Colima. Drag them to a Board of their size' : 'Modelos listos en Colima. Arrástralos a un Burro de su talla'}</p>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxHeight: '400px', overflowY: 'auto', paddingRight: '4px' }}>
                 {modelosDisponibles.length === 0 ? (
                   <p style={{ fontSize: '0.85rem', color: '#94a3b8', textAlign: 'center' }}>
-                    No hay modelos verificados con piezas disponibles. Verifica camiones en su pestaña.
+                    {isEn ? 'No verified models with available pieces. Verify trucks in their tab.' : 'No hay modelos verificados con piezas disponibles. Verifica camiones en su pestaña.'}
                   </p>
                 ) : (
                   modelosDisponibles.map(m => (
@@ -1278,8 +1279,8 @@ export default function Plancha() {
                           </div>
                         )}
                         <div>
-                          <strong style={{ fontSize: '0.95rem' }}>Mod: {m.modelo}</strong>
-                          <p style={{ margin: 0, fontSize: '0.75rem', color: '#64748b' }}>Precio Plancha: {formatCurrency(m.precio_plancha)}</p>
+                          <strong style={{ fontSize: '0.95rem' }}>{isEn ? 'Mod' : 'Mod'}: {m.modelo}</strong>
+                          <p style={{ margin: 0, fontSize: '0.75rem', color: '#64748b' }}>{isEn ? 'Ironing Price' : 'Precio Plancha'}: {formatCurrency(m.precio_plancha)}</p>
                         </div>
                       </div>
 
@@ -1349,10 +1350,10 @@ export default function Plancha() {
           <div className="glass-card" style={{ padding: '2rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.8rem' }}>
               <h2 style={{ fontSize: '1.6rem', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Flame color="#ef4444" size={24} /> Tablero de Burros
+                <Flame color="#ef4444" size={24} /> {isEn ? 'Ironing Board Dashboard' : 'Tablero de Burros'}
               </h2>
               <span style={{ fontSize: '0.85rem', color: '#64748b', background: 'rgba(255,255,255,0.02)', padding: '4px 10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                1 al 10 repiten tallas: <strong>5, 7, 9, 11, 13</strong> | 11 y 12: <strong>Comodines (Cualquier Talla)</strong>
+                {isEn ? '1 to 10 sizes: 5, 7, 9, 11, 13 | 11 & 12: Wildcards (Any Size)' : '1 al 10 repiten tallas: 5, 7, 9, 11, 13 | 11 y 12: Comodines (Cualquier Talla)'}
               </span>
             </div>
 
@@ -1383,15 +1384,15 @@ export default function Plancha() {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
                       <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px', flex: 1, minWidth: 0 }}>
                         {burro.numero >= 11 ? (
-                          burro.numero === 11 ? 'Burro Muestras - Luis' : 'Burro Supervisora-Olga'
+                          burro.numero === 11 ? (isEn ? 'Samples Board - Luis' : 'Burro Muestras - Luis') : (isEn ? 'Supervisor Board - Olga' : 'Burro Supervisora-Olga')
                         ) : (
                           <div style={{ display: 'flex', alignItems: 'center', gap: '4px', width: '100%' }}>
-                            <span style={{ whiteSpace: 'nowrap' }}>Burro #{burro.numero} -</span>
+                            <span style={{ whiteSpace: 'nowrap' }}>{isEn ? 'Board #' : 'Burro #'}{burro.numero} -</span>
                             <input
                               type="text"
                               value={burrosNames[burro.numero] || ''}
                               onChange={(e) => handleRenameBurro(burro.numero, e.target.value)}
-                              placeholder="Nombre..."
+                              placeholder={isEn ? 'Name...' : 'Nombre...'}
                               style={{
                                 background: 'transparent',
                                 border: 'none',
@@ -1424,7 +1425,7 @@ export default function Plancha() {
                           whiteSpace: 'nowrap'
                         }}
                       >
-                        {burro.numero >= 11 ? 'Todas' : `Talla ${burro.talla}`}
+                        {burro.numero >= 11 ? (isEn ? 'All' : 'Todas') : `${isEn ? 'Size' : 'Talla'} ${burro.talla}`}
                       </span>
                     </div>
 
@@ -1453,7 +1454,7 @@ export default function Plancha() {
                           </button>
                         </div>
                       ) : (
-                        <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Arrastra un planchador aquí</span>
+                        <span style={{ fontSize: '0.8rem', color: '#64748b' }}>{isEn ? 'Drag an ironer here' : 'Arrastra un planchador aquí'}</span>
                       )}
                     </div>
 
@@ -1472,15 +1473,15 @@ export default function Plancha() {
                     >
                       <h4 style={{ margin: 0, fontSize: '0.85rem', color: '#64748b', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '4px' }}>
                         {burro.numero >= 11 
-                          ? 'Modelos a planchar (Cualquier talla):' 
-                          : `Modelos a planchar (Talla ${burro.talla}):`}
+                          ? (isEn ? 'Models to iron (Any size):' : 'Modelos a planchar (Cualquier talla):')
+                          : (isEn ? `Models to iron (Size ${burro.talla}):` : `Modelos a planchar (Talla ${burro.talla}):`)}
                       </h4>
 
                       {!hasModelos ? (
                         <div style={{ margin: 'auto', textAlign: 'center', color: '#64748b', fontSize: '0.8rem' }}>
                           {burro.numero >= 11 
-                            ? 'Arrastra cualquier modelo aquí' 
-                            : `Arrastra un modelo de Talla ${burro.talla} aquí`}
+                            ? (isEn ? 'Drag any model here' : 'Arrastra cualquier modelo aquí') 
+                            : (isEn ? `Drag a model of Size ${burro.talla} here` : `Arrastra un modelo de Talla ${burro.talla} aquí`)}
                         </div>
                       ) : (
                         burro.modelos.map(m => {
@@ -1687,7 +1688,7 @@ export default function Plancha() {
                       style={{ width: '100%', padding: '10px', fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
                       disabled={!hasPlanchador || !hasModelos}
                     >
-                      <Check size={16} /> Finalizar Planchado
+                      <Check size={16} /> {isEn ? 'Finish Ironing' : 'Finalizar Planchado'}
                     </button>
 
                   </div>
@@ -1706,18 +1707,18 @@ export default function Plancha() {
             {/* Formulario de Pagos */}
             <div className="glass-card">
               <h2 style={{ fontSize: '1.4rem', margin: '0 0 1.5rem 0', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Wallet color="#3b82f6" /> Registrar Pago Plancha
+                <Wallet color="#3b82f6" /> {isEn ? 'Register Ironing Payment' : 'Registrar Pago Plancha'}
               </h2>
               <form onSubmit={handleRegistrarPago} style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
                 <div className="form-group">
-                  <label className="form-label">Seleccionar Planchador</label>
+                  <label className="form-label">{isEn ? 'Select Ironer' : 'Seleccionar Planchador'}</label>
                   <select 
                     className="form-input" 
                     value={pagoPlanchadorId} 
                     onChange={e => handleCargarPagosPlanchador(e.target.value)} 
                     required
                   >
-                    <option value="">-- Elige un Planchador --</option>
+                    <option value="">{isEn ? '-- Choose an Ironer --' : '-- Elige un Planchador --'}</option>
                     {planchadores.map(p => (
                       <option key={p.id} value={p.id}>{p.nombre}</option>
                     ))}
@@ -1741,24 +1742,24 @@ export default function Plancha() {
                     .reduce((sum, pt) => sum + parseFloat(pt.total || 0), 0);
                     
                   const asistenciasVal = asistenciasList.reduce((sum, pa) => sum + parseFloat(pa.monto || 0), 0);
-
+ 
                   const cuadreItems = trabajos.filter(pt => pt.talla === 'AJUSTE' && (pt.color?.includes('Cuadre') || pt.color?.includes('Diferencia')));
                   const pagoFijoItems = trabajos.filter(pt => pt.talla === 'AJUSTE' && !(pt.color?.includes('Cuadre') || pt.color?.includes('Diferencia')));
-
+ 
                   return (
                     <div style={{ background: 'rgba(0,0,0,0.02)', padding: '1rem', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.95rem' }}>
-                      <p style={{ margin: 0 }}><strong>Total Ganado:</strong> {formatCurrency(planchadorPagoDetalle.ganado)}</p>
+                      <p style={{ margin: 0 }}><strong>{isEn ? 'Total Earned' : 'Total Ganado'}:</strong> {formatCurrency(planchadorPagoDetalle.ganado)}</p>
                       
                       {regularWork > 0 && (
                         <p style={{ margin: 0, fontSize: '0.85rem', color: '#94a3b8', paddingLeft: '1rem' }}>
-                          • Plancha Regular: <span style={{ color: '#f8fafc' }}>{formatCurrency(regularWork)}</span>
+                          • {isEn ? 'Regular Ironing' : 'Plancha Regular'}: <span style={{ color: '#f8fafc' }}>{formatCurrency(regularWork)}</span>
                         </p>
                       )}
                       
                       {cuadreDif !== 0 && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', paddingLeft: '1rem' }}>
                           <p style={{ margin: 0, fontSize: '0.85rem', color: '#94a3b8' }}>
-                            • Diferencia Cuadre: <span style={{ color: cuadreDif > 0 ? '#34d399' : '#ef4444', fontWeight: 'bold' }}>
+                            • {isEn ? 'Adjustment Difference' : 'Diferencia Cuadre'}: <span style={{ color: cuadreDif > 0 ? '#34d399' : '#ef4444', fontWeight: 'bold' }}>
                               {cuadreDif > 0 ? '+' : ''}{formatCurrency(cuadreDif)}
                             </span>
                           </p>
@@ -1775,7 +1776,7 @@ export default function Plancha() {
                                   size={14} 
                                   color="#ef4444" 
                                   style={{ cursor: 'pointer' }} 
-                                  title="Eliminar ajuste"
+                                  title={isEn ? 'Remove adjustment' : 'Eliminar ajuste'}
                                   onClick={() => handleEliminarAjuste(item.id)}
                                 />
                               </div>
@@ -1787,7 +1788,7 @@ export default function Plancha() {
                       {pagoFijoVal !== 0 && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', paddingLeft: '1rem' }}>
                           <p style={{ margin: 0, fontSize: '0.85rem', color: '#94a3b8' }}>
-                            • Pago Fijo / Apoyos: <span style={{ color: '#60a5fa', fontWeight: 'bold' }}>
+                            • {isEn ? 'Fixed Pay / Support' : 'Pago Fijo / Apoyos'}: <span style={{ color: '#60a5fa', fontWeight: 'bold' }}>
                               {pagoFijoVal > 0 ? '+' : ''}{formatCurrency(pagoFijoVal)}
                             </span>
                           </p>
@@ -1804,7 +1805,7 @@ export default function Plancha() {
                                   size={14} 
                                   color="#ef4444" 
                                   style={{ cursor: 'pointer' }} 
-                                  title="Eliminar pago fijo"
+                                  title={isEn ? 'Remove fixed pay' : 'Eliminar pago fijo'}
                                   onClick={() => handleEliminarAjuste(item.id)}
                                 />
                               </div>
@@ -1816,14 +1817,14 @@ export default function Plancha() {
                       {asistenciasVal > 0 && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', paddingLeft: '1rem' }}>
                           <p style={{ margin: 0, fontSize: '0.85rem', color: '#94a3b8' }}>
-                            • Asistencias: <span style={{ color: '#10b981' }}>
+                            • {isEn ? 'Attendances' : 'Asistencias'}: <span style={{ color: '#10b981' }}>
                               +{formatCurrency(asistenciasVal)}
                             </span>
                           </p>
                           {asistenciasList.map(item => (
                             <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.75rem', color: '#cbd5e1', paddingLeft: '0.5rem', background: 'rgba(255,255,255,0.02)', padding: '4px 8px', borderRadius: '6px' }}>
                               <span>
-                                - Asistencia {formatDate(item.fecha)}
+                                - {isEn ? 'Attendance' : 'Asistencia'} {formatDate(item.fecha)}
                               </span>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                                 <span style={{ fontWeight: 600, color: '#10b981' }}>
@@ -1833,7 +1834,7 @@ export default function Plancha() {
                                   size={14} 
                                   color="#ef4444" 
                                   style={{ cursor: 'pointer' }} 
-                                  title="Eliminar asistencia"
+                                  title={isEn ? 'Remove attendance' : 'Eliminar asistencia'}
                                   onClick={() => handleEliminarAsistencia(item.id)}
                                 />
                               </div>
@@ -1841,52 +1842,52 @@ export default function Plancha() {
                           ))}
                         </div>
                       )}
-
-                      <p style={{ margin: 0, color: '#34d399' }}><strong>Total Pagado:</strong> {formatCurrency(planchadorPagoDetalle.pagado)}</p>
+ 
+                      <p style={{ margin: 0, color: '#34d399' }}><strong>{isEn ? 'Total Paid' : 'Total Pagado'}:</strong> {formatCurrency(planchadorPagoDetalle.pagado)}</p>
                       <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,0.05)', margin: '0.4rem 0' }} />
                       <p style={{ margin: 0, fontSize: '1.1rem', color: planchadorPagoDetalle.pendiente > 0 ? '#ef4444' : '#34d399' }}>
-                        <strong>Saldo Pendiente: {formatCurrency(planchadorPagoDetalle.pendiente)}</strong>
+                        <strong>{isEn ? 'Pending Balance' : 'Saldo Pendiente'}: {formatCurrency(planchadorPagoDetalle.pendiente)}</strong>
                       </p>
                     </div>
                   );
                 })()}
-
+ 
                 <div className="form-group">
-                  <label className="form-label">Tipo de Pago</label>
+                  <label className="form-label">{isEn ? 'Payment Type' : 'Tipo de Pago'}</label>
                   <select className="form-input" value="completo" disabled style={{ background: 'rgba(255,255,255,0.05)', cursor: 'not-allowed' }}>
-                    <option value="completo">Pago Completo (Liquidación)</option>
+                    <option value="completo">{isEn ? 'Full Payment (Settlement)' : 'Pago Completo (Liquidación)'}</option>
                   </select>
                 </div>
-
+ 
                 <div className="form-group">
-                  <label className="form-label">Monto del Pago</label>
+                  <label className="form-label">{isEn ? 'Payment Amount' : 'Monto del Pago'}</label>
                   <input 
                     type="number" 
                     step="0.01" 
                     required 
                     className="form-input"
-                    placeholder={planchadorPagoDetalle ? `Sugerido: ${formatCurrency(planchadorPagoDetalle.pendiente)}` : 'Ej: 500'} 
+                    placeholder={planchadorPagoDetalle ? (isEn ? `Suggested: ${formatCurrency(planchadorPagoDetalle.pendiente)}` : `Sugerido: ${formatCurrency(planchadorPagoDetalle.pendiente)}`) : (isEn ? 'e.g. 500' : 'Ej: 500')} 
                     value={montoPago} 
                     onChange={e => setMontoPago(e.target.value)} 
                     disabled={!pagoPlanchadorId}
                   />
                 </div>
-
+ 
                 <button 
                   type="submit" 
                   className="btn btn-primary" 
                   style={{ width: '100%' }}
                   disabled={pagoSubmitting || !pagoPlanchadorId || parseFloat(montoPago || 0) <= 0}
                 >
-                  {pagoSubmitting ? 'Registrando...' : 'Registrar Pago'}
+                  {pagoSubmitting ? (isEn ? 'Registering...' : 'Registrando...') : (isEn ? 'Register Payment' : 'Registrar Pago')}
                 </button>
-
+ 
                 {(() => {
                   const selectedPlanchadorObj = planchadores.find(p => String(p.id) === String(pagoPlanchadorId));
                   const isOlga = selectedPlanchadorObj?.nombre?.toLowerCase().includes('olga');
                   const isLuis = selectedPlanchadorObj?.nombre?.toLowerCase().includes('luis');
                   const restrictAjusteCuadre = isOlga || isLuis;
-
+ 
                   return (
                     <div style={{ display: 'flex', gap: '0.8rem', marginTop: '0.5rem' }}>
                       <button 
@@ -1911,7 +1912,7 @@ export default function Plancha() {
                         }}
                         disabled={restrictAjusteCuadre}
                       >
-                        <Plus size={16} /> Pago Fijo
+                        <Plus size={16} /> {isEn ? 'Fixed Pay' : 'Pago Fijo'}
                       </button>
                       <button 
                         type="button" 
@@ -1935,7 +1936,7 @@ export default function Plancha() {
                         }}
                         disabled={restrictAjusteCuadre}
                       >
-                        <Calculator size={16} /> Cuadre Semanal
+                        <Calculator size={16} /> {isEn ? 'Weekly Adj.' : 'Cuadre Semanal'}
                       </button>
                     </div>
                   );
@@ -1946,13 +1947,13 @@ export default function Plancha() {
             {/* Descarga de Reportes de Nómina PDF */}
             <div className="glass-card" style={{ padding: '1.5rem' }}>
               <h3 style={{ margin: '0 0 1.2rem 0', fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <History size={18} color="#0ea5e9" /> Reporte de Nómina PDF
+                <History size={18} color="#0ea5e9" /> {isEn ? 'Payroll PDF Report' : 'Reporte de Nómina PDF'}
               </h3>
-              <p style={{ fontSize: '0.8rem', color: '#64748b', margin: '-0.5rem 0 1.2rem 0' }}>Descarga un reporte consolidado en PDF de las ganancias y nómina de los planchadores</p>
+              <p style={{ fontSize: '0.8rem', color: '#64748b', margin: '-0.5rem 0 1.2rem 0' }}>{isEn ? 'Download a consolidated PDF report of ironers earnings and payroll' : 'Descarga un reporte consolidado en PDF de las ganancias y nómina de los planchadores'}</p>
               
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 <div className="form-group">
-                  <label className="form-label">Fecha de Inicio</label>
+                  <label className="form-label">{isEn ? 'Start Date' : 'Fecha de Inicio'}</label>
                   <input 
                     type="date" 
                     className="form-input" 
@@ -1961,7 +1962,7 @@ export default function Plancha() {
                   />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Fecha Fin</label>
+                  <label className="form-label">{isEn ? 'End Date' : 'Fecha Fin'}</label>
                   <input 
                     type="date" 
                     className="form-input" 
@@ -1970,13 +1971,13 @@ export default function Plancha() {
                   />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Planchador (Opcional)</label>
+                  <label className="form-label">{isEn ? 'Ironer (Optional)' : 'Planchador (Opcional)'}</label>
                   <select 
                     className="form-input" 
                     value={reportPlanchadorId} 
                     onChange={e => setReportPlanchadorId(e.target.value)}
                   >
-                    <option value="">-- Todos los Planchadores --</option>
+                    <option value="">{isEn ? '-- All Ironers --' : '-- Todos los Planchadores --'}</option>
                     {planchadores.map(p => (
                       <option key={p.id} value={p.id}>{p.nombre}</option>
                     ))}
@@ -1988,7 +1989,7 @@ export default function Plancha() {
                   style={{ width: '100%', marginTop: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                   onClick={handleDownloadReporte}
                 >
-                  <Download size={16} /> Descargar Reporte (PDF)
+                  <Download size={16} /> {isEn ? 'Download Report (PDF)' : 'Descargar Reporte (PDF)'}
                 </button>
                 <button 
                   type="button" 
@@ -1996,7 +1997,7 @@ export default function Plancha() {
                   style={{ width: '100%', marginTop: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', borderColor: 'rgba(14, 165, 233, 0.4)', color: '#0ea5e9' }}
                   onClick={handleDownloadResumen}
                 >
-                  <FileText size={16} /> Descargar Resumen General (PDF)
+                  <FileText size={16} /> {isEn ? 'Download General Summary (PDF)' : 'Descargar Resumen General (PDF)'}
                 </button>
               </div>
             </div>
@@ -2007,23 +2008,23 @@ export default function Plancha() {
             
             {/* Trabajos por liquidar */}
             <div className="glass-card">
-              <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.2rem' }}>Trabajos terminados pendientes de pago</h3>
+              <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.2rem' }}>{isEn ? 'Completed jobs pending payment' : 'Trabajos terminados pendientes de pago'}</h3>
               <div className="table-wrapper">
                 <table className="data-table">
                   <thead>
                     <tr>
-                      <th>Modelo</th>
-                      <th>Fecha Trabajo</th>
-                      <th>Talla</th>
-                      <th>Pzas</th>
-                      <th>Neto</th>
+                      <th>{isEn ? 'Model' : 'Modelo'}</th>
+                      <th>{isEn ? 'Work Date' : 'Fecha Trabajo'}</th>
+                      <th>{isEn ? 'Size' : 'Talla'}</th>
+                      <th>{isEn ? 'Pcs' : 'Pzas'}</th>
+                      <th>{isEn ? 'Net' : 'Neto'}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {!planchadorPagoDetalle || planchadorPagoDetalle.trabajosPendientes.length === 0 ? (
                       <tr>
                         <td colSpan="5" style={{ textAlign: 'center', color: '#94a3b8' }}>
-                          {!pagoPlanchadorId ? 'Selecciona un planchador para ver sus pendientes.' : 'No hay trabajos pendientes de pago.'}
+                          {!pagoPlanchadorId ? (isEn ? 'Select an ironer to view pending jobs.' : 'Selecciona un planchador para ver sus pendientes.') : (isEn ? 'No jobs pending payment.' : 'No hay trabajos pendientes de pago.')}
                         </td>
                       </tr>
                     ) : (
@@ -2044,9 +2045,9 @@ export default function Plancha() {
                           <td>{formatDate(t.fecha_creacion)}</td>
                           <td>
                             {t.talla === 'AJUSTE' ? (
-                              <span className="badge badge-warning" style={{ background: 'rgba(245, 158, 11, 0.2)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.3)' }}>PAGO FIJO</span>
+                              <span className="badge badge-warning" style={{ background: 'rgba(245, 158, 11, 0.2)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.3)' }}>{isEn ? 'FIXED PAY' : 'PAGO FIJO'}</span>
                             ) : (
-                              <span className="badge badge-info">T{t.talla}</span>
+                              <span className="badge badge-info">{isEn ? 'S' : 'T'}{t.talla}</span>
                             )}
                           </td>
                           <td>{t.piezas}</td>
@@ -2063,22 +2064,22 @@ export default function Plancha() {
 
             {/* Recibos de Pagos */}
             <div className="glass-card">
-              <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.2rem' }}>Recibos de pagos entregados</h3>
+              <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.2rem' }}>{isEn ? 'Issued payment receipts' : 'Recibos de pagos entregados'}</h3>
               <div className="table-wrapper">
                 <table className="data-table">
                   <thead>
                     <tr>
-                      <th>ID Recibo</th>
-                      <th>Fecha de Pago</th>
-                      <th>Tipo</th>
-                      <th>Monto</th>
+                      <th>{isEn ? 'Receipt ID' : 'ID Recibo'}</th>
+                      <th>{isEn ? 'Payment Date' : 'Fecha de Pago'}</th>
+                      <th>{isEn ? 'Type' : 'Tipo'}</th>
+                      <th>{isEn ? 'Amount' : 'Monto'}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {!planchadorPagoDetalle || planchadorPagoDetalle.pagos.length === 0 ? (
                       <tr>
                         <td colSpan="4" style={{ textAlign: 'center', color: '#94a3b8' }}>
-                          {!pagoPlanchadorId ? 'Selecciona un planchador para ver sus recibos.' : 'No se han registrado pagos aún.'}
+                          {!pagoPlanchadorId ? (isEn ? 'Select an ironer to view receipts.' : 'Selecciona un planchador para ver sus recibos.') : (isEn ? 'No payments registered today.' : 'No se han registrado pagos aún.')}
                         </td>
                       </tr>
                     ) : (
@@ -2086,7 +2087,7 @@ export default function Plancha() {
                         <tr key={p.id}>
                           <td>#{planchadorPagoDetalle.pagos.length - index}</td>
                           <td>{formatDate(p.fecha)}</td>
-                          <td><span className="badge badge-info" style={{ textTransform: 'uppercase' }}>{p.tipo_pago}</span></td>
+                          <td><span className="badge badge-info" style={{ textTransform: 'uppercase' }}>{p.tipo_pago === 'completo' ? (isEn ? 'full' : 'completo') : p.tipo_pago}</span></td>
                           <td style={{ color: '#34d399', fontWeight: 'bold' }}>{formatCurrency(p.monto)}</td>
                         </tr>
                       ))
@@ -2106,38 +2107,38 @@ export default function Plancha() {
         <div className="glass-card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
             <h2 style={{ fontSize: '1.5rem', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <History color="#0ea5e9" size={24} /> Historial General de Planchado
+              <History color="#0ea5e9" size={24} /> {isEn ? 'General Ironing History' : 'Historial General de Planchado'}
             </h2>
-            <button className="btn btn-secondary" onClick={fetchHistorialGeneral}>Refrescar Historial</button>
+            <button className="btn btn-secondary" onClick={fetchHistorialGeneral}>{isEn ? 'Refresh History' : 'Refrescar Historial'}</button>
           </div>
           <div className="table-wrapper">
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Fecha y Hora</th>
-                  <th>Foto</th>
-                  <th>Modelo</th>
-                  <th>Color</th>
-                  <th>Talla</th>
-                  <th>Planchador</th>
-                  <th>Burro</th>
-                  <th>Pzas Planchadas</th>
-                  <th>Neto</th>
-                  <th>Pago Fijo</th>
-                  <th>Total</th>
+                  <th>{isEn ? 'Date & Time' : 'Fecha y Hora'}</th>
+                  <th>{isEn ? 'Photo' : 'Foto'}</th>
+                  <th>{isEn ? 'Model' : 'Modelo'}</th>
+                  <th>{isEn ? 'Color' : 'Color'}</th>
+                  <th>{isEn ? 'Size' : 'Talla'}</th>
+                  <th>{isEn ? 'Ironer' : 'Planchador'}</th>
+                  <th>{isEn ? 'Board' : 'Burro'}</th>
+                  <th>{isEn ? 'Ironed Pcs' : 'Pzas Planchadas'}</th>
+                  <th>{isEn ? 'Net' : 'Neto'}</th>
+                  <th>{isEn ? 'Fixed Pay' : 'Pago Fijo'}</th>
+                  <th>{isEn ? 'Total' : 'Total'}</th>
                 </tr>
               </thead>
               <tbody>
                 {historialGeneral.length === 0 ? (
                   <tr>
                     <td colSpan="11" style={{ textAlign: 'center', color: '#94a3b8', padding: '3rem' }}>
-                      No hay registros de planchado en el historial general.
+                      {isEn ? 'No ironing records in general history.' : 'No hay registros de planchado en el historial general.'}
                     </td>
                   </tr>
                 ) : (
                   historialGeneral.map(h => (
                     <tr key={h.id}>
-                      <td>{new Date(h.fecha_terminado || h.fecha_creacion).toLocaleString()}</td>
+                      <td>{new Date(h.fecha_terminado || h.fecha_creacion).toLocaleString(isEn ? 'en-US' : 'es-MX')}</td>
                       <td>
                         {h.modelo_imagen ? (
                           <img 
@@ -2153,13 +2154,13 @@ export default function Plancha() {
                       </td>
                       <td>
                         <strong>{h.modelo_nombre}</strong>
-                        <p style={{ margin: 0, fontSize: '0.75rem', color: '#64748b' }}>Orden: {h.no_orden || 'N/A'}</p>
+                        <p style={{ margin: 0, fontSize: '0.75rem', color: '#64748b' }}>{isEn ? 'Order' : 'Orden'}: {h.no_orden || 'N/A'}</p>
                       </td>
                       <td>{h.color || 'N/A'}</td>
-                      <td><span className="badge badge-info">T{h.talla}</span></td>
+                      <td><span className="badge badge-info">{isEn ? 'S' : 'T'}{h.talla}</span></td>
                       <td><span style={{ fontWeight: 'bold', color: '#38bdf8' }}>{h.planchador_nombre}</span></td>
-                      <td><span style={{ background: 'rgba(255,255,255,0.03)', padding: '2px 8px', borderRadius: '4px' }}>Burro #{h.burro_numero}</span></td>
-                      <td><strong>{h.piezas} pzas</strong></td>
+                      <td><span style={{ background: 'rgba(255,255,255,0.03)', padding: '2px 8px', borderRadius: '4px' }}>{isEn ? 'Board' : 'Burro'} #{h.burro_numero}</span></td>
+                      <td><strong>{h.piezas} {isEn ? 'pcs' : 'pzas'}</strong></td>
                       <td style={{ color: '#34d399', fontWeight: 'bold' }}>{formatCurrency(h.neto)}</td>
                       <td>{formatCurrency(h.ajuste)}</td>
                       <td style={{ color: '#60a5fa', fontWeight: 'bold' }}>{formatCurrency(h.total)}</td>
@@ -2193,7 +2194,7 @@ export default function Plancha() {
             
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
               <div>
-                <h2 style={{ margin: 0, fontSize: '1.6rem' }}>Historial de Planchado</h2>
+                <h2 style={{ margin: 0, fontSize: '1.6rem' }}>{isEn ? 'Ironing History' : 'Historial de Planchado'}</h2>
                 <p style={{ margin: '0.2rem 0 0 0', color: '#60a5fa', fontWeight: 'bold' }}>👤 {planchadorDetalle.nombre}</p>
               </div>
               <button 
@@ -2212,19 +2213,19 @@ export default function Plancha() {
               <table className="data-table">
                 <thead>
                   <tr>
-                    <th>Foto</th>
-                    <th>Modelo</th>
-                    <th>Color</th>
-                    <th>Talla</th>
-                    <th>Pzas-Planchadas</th>
-                    <th>Neto</th>
-                    <th>Pago Fijo</th>
-                    <th>Total</th>
+                    <th>{isEn ? 'Photo' : 'Foto'}</th>
+                    <th>{isEn ? 'Model' : 'Modelo'}</th>
+                    <th>{isEn ? 'Color' : 'Color'}</th>
+                    <th>{isEn ? 'Size' : 'Talla'}</th>
+                    <th>{isEn ? 'Ironed-Pcs' : 'Pzas-Planchadas'}</th>
+                    <th>{isEn ? 'Net' : 'Neto'}</th>
+                    <th>{isEn ? 'Fixed Pay' : 'Pago Fijo'}</th>
+                    <th>{isEn ? 'Total' : 'Total'}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {planchadorDetalle.historial.length === 0 ? (
-                    <tr><td colSpan="8" style={{ textAlign: 'center', color: '#94a3b8' }}>Este planchador no tiene trabajos terminados registrados.</td></tr>
+                    <tr><td colSpan="8" style={{ textAlign: 'center', color: '#94a3b8' }}>{isEn ? 'This ironer has no registered completed jobs.' : 'Este planchador no tiene trabajos terminados registrados.'}</td></tr>
                   ) : (
                     planchadorDetalle.historial.map(h => (
                       <tr key={h.id}>
@@ -2243,10 +2244,10 @@ export default function Plancha() {
                         </td>
                         <td>
                           <strong>{h.modelo_nombre}</strong>
-                          <p style={{ margin: 0, fontSize: '0.75rem', color: '#64748b' }}>Orden: {h.no_orden || 'N/A'}</p>
+                          <p style={{ margin: 0, fontSize: '0.75rem', color: '#64748b' }}>{isEn ? 'Order' : 'Orden'}: {h.no_orden || 'N/A'}</p>
                         </td>
                         <td>{h.color || 'N/A'}</td>
-                        <td><span className="badge badge-info">T{h.talla}</span></td>
+                        <td><span className="badge badge-info">{isEn ? 'S' : 'T'}{h.talla}</span></td>
                         <td>{h.piezas}</td>
                         <td style={{ color: '#34d399', fontWeight: 'bold' }}>{formatCurrency(h.neto)}</td>
                         <td>{formatCurrency(h.ajuste)}</td>
@@ -2283,7 +2284,7 @@ export default function Plancha() {
             
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
               <h2 style={{ margin: 0, fontSize: '1.5rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <ShieldCheck color="#10b981" /> {modeloAVerificar.verificado ? 'Editar Precio de Planchado' : 'Confirmar Llegada'}
+                <ShieldCheck color="#10b981" /> {modeloAVerificar.verificado ? (isEn ? 'Edit Ironing Price' : 'Editar Precio de Planchado') : (isEn ? 'Confirm Arrival' : 'Confirmar Llegada')}
               </h2>
               <button 
                 onClick={() => {
@@ -2306,13 +2307,13 @@ export default function Plancha() {
                 />
               ) : null}
               <div>
-                <h3 style={{ margin: 0, fontSize: '1.2rem' }}>Modelo {modeloAVerificar.modelo}</h3>
-                <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b' }}>No. Orden: {modeloAVerificar.no_orden}</p>
+                <h3 style={{ margin: 0, fontSize: '1.2rem' }}>{isEn ? 'Model' : 'Modelo'} {modeloAVerificar.modelo}</h3>
+                <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b' }}>{isEn ? 'Order No' : 'No. Orden'}: {modeloAVerificar.no_orden}</p>
               </div>
             </div>
 
             <div style={{ marginBottom: '1.5rem' }}>
-              <p style={{ fontSize: '0.9rem', color: '#94a3b8', margin: '0 0 0.8rem 0' }}>Confirma que las siguientes cantidades de piezas por talla llegaron completas a Colima:</p>
+              <p style={{ fontSize: '0.9rem', color: '#94a3b8', margin: '0 0 0.8rem 0' }}>{isEn ? 'Confirm that the following quantities of pieces per size arrived completely in Colima:' : 'Confirma que las siguientes cantidades de piezas por talla llegaron completas a Colima:'}</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 {Object.entries(modeloAVerificar.tallas_cantidades)
                   .sort(([keyA], [keyB]) => {
@@ -2338,7 +2339,7 @@ export default function Plancha() {
                       if (entries.length === 0) return null;
                     return (
                       <div key={key} style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', background: 'rgba(255,255,255,0.01)', padding: '8px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.04)' }}>
-                        <span style={{ fontSize: '0.85rem', color: '#c084fc', fontWeight: 700 }}>Color: {key}</span>
+                        <span style={{ fontSize: '0.85rem', color: '#c084fc', fontWeight: 700 }}>{isEn ? 'Color' : 'Color'}: {key}</span>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
                           {entries.map(([sz, qty]) => (
                             <div 
@@ -2352,7 +2353,7 @@ export default function Plancha() {
                                 fontSize: '0.8rem'
                               }}
                             >
-                              Talla {sz}: <br /><strong>{qty} pzas</strong>
+                              {isEn ? 'Size' : 'Talla'} {sz}: <br /><strong>{qty} {isEn ? 'pcs' : 'pzas'}</strong>
                             </div>
                           ))}
                         </div>
@@ -2371,7 +2372,7 @@ export default function Plancha() {
                           fontSize: '0.85rem'
                         }}
                       >
-                        Talla {key}: <br /><strong>{val} pzas</strong>
+                        {isEn ? 'Size' : 'Talla'} {key}: <br /><strong>{val} {isEn ? 'pcs' : 'pzas'}</strong>
                       </div>
                     );
                   }
@@ -2383,7 +2384,7 @@ export default function Plancha() {
             <form onSubmit={handleConfirmarVerificacion} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
               <div className="form-group">
                 <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  Precio de Planchado por Pieza <AlertCircle size={14} color="#f59e0b" title="¿Cuánto ganará la planchadora por planchar cada pieza de este modelo?" />
+                  {isEn ? 'Ironing Price per Piece ($)' : 'Precio de Planchado por Pieza'} <AlertCircle size={14} color="#f59e0b" title={isEn ? 'How much will the ironer earn for ironing each piece of this model?' : '¿Cuánto ganará la planchadora por planchar cada pieza de este modelo?'} />
                 </label>
                 <div style={{ position: 'relative' }}>
                   <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }}>$</span>
@@ -2394,7 +2395,7 @@ export default function Plancha() {
                     required
                     className="form-input" 
                     style={{ paddingLeft: '24px' }}
-                    placeholder="Ej: 2.50" 
+                    placeholder={isEn ? 'e.g., 2.50' : 'Ej: 2.50'} 
                     value={precioPlanchaInput} 
                     onChange={e => setPrecioPlanchaInput(e.target.value)} 
                   />
@@ -2411,10 +2412,10 @@ export default function Plancha() {
                     setModeloAVerificar(null);
                   }}
                 >
-                  Cancelar
+                  {isEn ? 'Cancel' : 'Cancelar'}
                 </button>
                  <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>
-                  {modeloAVerificar.verificado ? 'Guardar Cambios' : 'Confirmar Llegada'}
+                  {modeloAVerificar.verificado ? (isEn ? 'Save Changes' : 'Guardar Cambios') : (isEn ? 'Confirm Arrival' : 'Confirmar Llegada')}
                 </button>
               </div>
             </form>
@@ -2439,29 +2440,18 @@ export default function Plancha() {
             zIndex: 1000, 
             backdropFilter: 'blur(8px)' 
           }}
-          onMouseUp={() => setIsMouseDownDev(false)}
         >
-          <div 
-            className="glass-card" 
-            style={{ 
-              width: '95%', 
-              maxWidth: '550px', 
-              padding: '2rem', 
-              borderRadius: '20px', 
-              border: '1px solid rgba(255,255,255,0.1)',
-              maxHeight: '90vh',
-              overflowY: 'auto'
-            }}
-          >
+          <div className="glass-card" style={{ width: '95%', maxWidth: '600px', maxHeight: '90vh', overflowY: 'auto', padding: '2rem', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.1)' }}>
             
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <h2 style={{ margin: 0, fontSize: '1.5rem', display: 'flex', alignItems: 'center', gap: '8px', color: '#f87171' }}>
-                <Layers /> Registrar Devolución
+              <h2 style={{ margin: 0, fontSize: '1.5rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <ArrowLeftRight color="#ef4444" /> {isEn ? 'Register Return' : 'Registrar Devolución'}
               </h2>
               <button 
                 onClick={() => {
                   setMostrarDevolucionModal(false);
                   setModeloADevolver(null);
+                  setDevolucionCantidades({});
                 }} 
                 className="btn-icon" 
                 style={{ background: 'rgba(255,255,255,0.05)', color: '#fff', border: 'none', padding: '8px', borderRadius: '50%', cursor: 'pointer' }}
@@ -2479,31 +2469,30 @@ export default function Plancha() {
                 />
               ) : null}
               <div>
-                <h3 style={{ margin: 0, fontSize: '1.2rem' }}>Modelo {modeloADevolver.modelo}</h3>
-                <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b' }}>No. Orden: {modeloADevolver.no_orden}</p>
+                <h3 style={{ margin: 0, fontSize: '1.2rem' }}>{isEn ? 'Model' : 'Modelo'} {modeloADevolver.modelo}</h3>
+                <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b' }}>{isEn ? 'Order No' : 'No. Orden'}: {modeloADevolver.no_orden}</p>
               </div>
             </div>
 
             <div style={{ marginBottom: '1.5rem' }}>
-              <p style={{ fontSize: '0.9rem', color: '#94a3b8', margin: '0 0 0.8rem 0' }}>
-                Selecciona las piezas que se van a devolver. Haz <strong>clic</strong> o mantén presionado y <strong>arrastra</strong> para seleccionar/deseleccionar tallas completas. Haz <strong>doble clic</strong> en una casilla para ingresar una cantidad específica de piezas.
+              <p style={{ fontSize: '0.9rem', color: '#94a3b8', margin: '0 0 1rem 0', lineHeight: '1.4' }}>
+                {isEn ? 'Select the pieces to return. Click or hold and drag to select/deselect complete sizes. Double click a box to enter a specific number of pieces.' : 'Selecciona las piezas que se van a devolver. Haz clic o mantén presionado y arrastra para seleccionar/deseleccionar tallas completas. Haz doble clic en una casilla para ingresar una cantidad específica de piezas.'}
               </p>
               
               <div 
                 style={{ display: 'flex', flexDirection: 'column', gap: '1rem', userSelect: 'none' }}
-                onMouseLeave={() => setIsMouseDownDev(false)}
+                onMouseLeave={handleBlockMouseUp}
               >
                 {(() => {
-                  const firstVal = Object.values(modeloADevolver.tallas_cantidades)[0];
-                  const isNested = (typeof firstVal === 'object' && firstVal !== null);
-
+                  const isNested = Object.values(modeloADevolver.tallas_cantidades).some(v => typeof v === 'object' && v !== null);
+                  
                   if (isNested) {
                     return Object.entries(modeloADevolver.tallas_cantidades).map(([color, tallasObj]) => {
                       const entries = Object.entries(tallasObj).filter(([_, qty]) => qty > 0);
                       if (entries.length === 0) return null;
                       return (
                         <div key={color} style={{ background: 'rgba(255,255,255,0.01)', padding: '10px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.04)' }}>
-                          <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: '#c084fc' }}>Color: {color}</h4>
+                          <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: '#c084fc' }}>{isEn ? 'Color' : 'Color'}: {color}</h4>
                           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem' }}>
                             {entries.map(([talla, maxQty]) => {
                               const currentQty = devolucionCantidades[color]?.[talla] || 0;
@@ -2529,7 +2518,7 @@ export default function Plancha() {
                                     transition: 'all 0.15s ease'
                                   }}
                                 >
-                                  <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Talla {talla}</div>
+                                  <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{isEn ? 'Size' : 'Talla'} {talla}</div>
                                   {isEditing ? (
                                     <input 
                                       type="number"
@@ -2598,7 +2587,7 @@ export default function Plancha() {
                                 transition: 'all 0.15s ease'
                               }}
                             >
-                              <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Talla {talla}</div>
+                              <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{isEn ? 'Size' : 'Talla'} {talla}</div>
                               {isEditing ? (
                                 <input 
                                   type="number"
@@ -2655,10 +2644,10 @@ export default function Plancha() {
                     setDevolucionCantidades({});
                   }}
                 >
-                  Cancelar
+                  {isEn ? 'Cancel' : 'Cancelar'}
                 </button>
                 <button type="submit" className="btn" style={{ flex: 1, background: '#ef4444', color: '#fff' }}>
-                  Confirmar Devolución
+                  {isEn ? 'Confirm Return' : 'Confirmar Devolución'}
                 </button>
               </div>
             </form>
@@ -2668,6 +2657,7 @@ export default function Plancha() {
       )}
 
       {/* MODAL 3: REGISTRAR PAGO FIJO */}
+      {/* MODAL 3: PAGO FIJO */}
       {showAjusteModal && (
         <div 
           style={{ 
@@ -2688,7 +2678,7 @@ export default function Plancha() {
             
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
               <h2 style={{ margin: 0, fontSize: '1.5rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Wallet color="#0ea5e9" /> Registrar Pago Fijo
+                <Wallet color="#0ea5e9" /> {isEn ? 'Register Fixed Pay' : 'Registrar Pago Fijo'}
               </h2>
               <button 
                 onClick={() => {
@@ -2701,26 +2691,26 @@ export default function Plancha() {
                 <X size={20} />
               </button>
             </div>
-
+ 
             <form onSubmit={handleRegistrarAjuste} style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
               
               <div className="form-group">
-                <label className="form-label">Planchador</label>
+                <label className="form-label">{isEn ? 'Ironer' : 'Planchador'}</label>
                 <select 
                   className="form-input" 
                   value={ajustePlanchadorId} 
                   onChange={e => setAjustePlanchadorId(e.target.value)}
                   required
                 >
-                  <option value="">-- Elige un Planchador --</option>
+                  <option value="">{isEn ? '-- Choose an Ironer --' : '-- Elige un Planchador --'}</option>
                   {planchadores.filter(p => !p.nombre.toLowerCase().includes('olga') && !p.nombre.toLowerCase().includes('luis')).map(p => (
                     <option key={p.id} value={p.id}>{p.nombre}</option>
                   ))}
                 </select>
               </div>
-
+ 
               <div className="form-group">
-                <label className="form-label">Razón del Pago Fijo</label>
+                <label className="form-label">{isEn ? 'Reason for Fixed Pay' : 'Razón del Pago Fijo'}</label>
                 <select 
                   className="form-input" 
                   value={ajusteRazon} 
@@ -2729,37 +2719,37 @@ export default function Plancha() {
                     setAjusteParamDias('1');
                   }}
                 >
-                  <option value="Dia adelantado">Día adelantado</option>
-                  <option value="Vacaciones">Vacaciones</option>
-                  <option value="Festivo">Festivo</option>
-                  <option value="Apoyo en calidad">Apoyo en calidad (Corte, Empaque, Limpieza, etc)</option>
+                  <option value="Dia adelantado">{isEn ? 'Day advanced' : 'Día adelantado'}</option>
+                  <option value="Vacaciones">{isEn ? 'Vacation' : 'Vacaciones'}</option>
+                  <option value="Festivo">{isEn ? 'Holiday' : 'Festivo'}</option>
+                  <option value="Apoyo en calidad">{isEn ? 'Quality support (Cutting, Packing, Cleaning, etc)' : 'Apoyo en calidad (Corte, Empaque, Limpieza, etc)'}</option>
                 </select>
               </div>
-
+ 
               {/* Selector de Área de Apoyo solo para Apoyo en calidad */}
               {ajusteRazon === 'Apoyo en calidad' && (
                 <div className="form-group">
-                  <label className="form-label">Área de Apoyo</label>
+                  <label className="form-label">{isEn ? 'Support Area' : 'Área de Apoyo'}</label>
                   <select 
                     className="form-input" 
                     value={ajusteApoyoDetalle} 
                     onChange={e => setAjusteApoyoDetalle(e.target.value)}
                   >
-                    <option value="Corte">Corte</option>
-                    <option value="Empaque">Empaque</option>
-                    <option value="Limpieza">Limpieza</option>
-                    <option value="Avios">Avios</option>
-                    <option value="Terminados">Terminados</option>
-                    <option value="Almacen de ventas">Almacen de ventas</option>
+                    <option value="Corte">{isEn ? 'Cutting' : 'Corte'}</option>
+                    <option value="Empaque">{isEn ? 'Packing' : 'Empaque'}</option>
+                    <option value="Limpieza">{isEn ? 'Cleaning' : 'Limpieza'}</option>
+                    <option value="Avios">{isEn ? 'Supplies' : 'Avios'}</option>
+                    <option value="Terminados">{isEn ? 'Finishing' : 'Terminados'}</option>
+                    <option value="Almacen de ventas">{isEn ? 'Sales Warehouse' : 'Almacen de ventas'}</option>
                   </select>
                 </div>
               )}
-
+ 
               {/* Campos comunes para todos los tipos de ajuste */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div className="form-group">
                   <label className="form-label">
-                    {ajusteRazon === 'Festivo' ? 'Días Festivos' : 'Días'}
+                    {ajusteRazon === 'Festivo' ? (isEn ? 'Holidays' : 'Días Festivos') : (isEn ? 'Days' : 'Días')}
                   </label>
                   <input 
                     type="number" 
@@ -2772,7 +2762,7 @@ export default function Plancha() {
                   />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Tarifa por Día ($)</label>
+                  <label className="form-label">{isEn ? 'Daily Rate ($)' : 'Tarifa por Día ($)'}</label>
                   <input 
                     type="text" 
                     className="form-input" 
@@ -2782,22 +2772,22 @@ export default function Plancha() {
                   />
                 </div>
               </div>
-
+ 
               {/* Mostrar Monto Resultante y Fórmula */}
               {(() => {
                 const dias = parseFloat(ajusteParamDias) || 0;
                 const tarifa = 400;
                 const val = dias * tarifa;
                 let formulaText = '';
-
+ 
                 if (ajusteRazon === 'Dia adelantado' || ajusteRazon === 'Vacaciones') {
-                  formulaText = `${dias} días × $${tarifa}/día`;
+                  formulaText = isEn ? `${dias} days × $${tarifa}/day` : `${dias} días × $${tarifa}/día`;
                 } else if (ajusteRazon === 'Festivo') {
-                  formulaText = `${dias} días festivos × $${tarifa}/día`;
+                  formulaText = isEn ? `${dias} holidays × $${tarifa}/day` : `${dias} días festivos × $${tarifa}/día`;
                 } else if (ajusteRazon === 'Apoyo en calidad') {
-                  formulaText = `${dias} días × $${tarifa}/día en Apoyo calidad`;
+                  formulaText = isEn ? `${dias} days × $${tarifa}/day in Quality Support` : `${dias} días × $${tarifa}/día en Apoyo calidad`;
                 }
-
+ 
                 return (
                   <div 
                     style={{ 
@@ -2811,14 +2801,14 @@ export default function Plancha() {
                       gap: '0.2rem'
                     }}
                   >
-                    <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Fórmula: {formulaText}</span>
+                    <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>{isEn ? 'Formula' : 'Fórmula'}: {formulaText}</span>
                     <span style={{ fontSize: '1.4rem', fontWeight: 'bold', color: '#38bdf8' }}>
                       Total: {formatCurrency(val)}
                     </span>
                   </div>
                 );
               })()}
-
+ 
               <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
                 <button 
                   type="button" 
@@ -2829,13 +2819,17 @@ export default function Plancha() {
                     setAjustePlanchadorId('');
                   }}
                 >
-                  Cancelar
+                  {isEn ? 'Cancel' : 'Cancelar'}
                 </button>
                 <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>
-                  Registrar Pago Fijo
+                  {isEn ? 'Register Fixed Pay' : 'Registrar Pago Fijo'}
                 </button>
               </div>
             </form>
+ 
+          </div>
+        </div>
+      )}
 
           </div>
         </div>
@@ -2862,7 +2856,7 @@ export default function Plancha() {
             
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
               <h2 style={{ margin: 0, fontSize: '1.5rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Calculator color="#10b981" /> Cuadre Semanal de Plancha
+                <Calculator color="#10b981" /> {isEn ? 'Weekly Ironing Adjustment' : 'Cuadre Semanal de Plancha'}
               </h2>
               <button 
                 onClick={() => {
@@ -2876,27 +2870,27 @@ export default function Plancha() {
                 <X size={20} />
               </button>
             </div>
-
+ 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
               
               <div className="form-group">
-                <label className="form-label">Planchador</label>
+                <label className="form-label">{isEn ? 'Ironer' : 'Planchador'}</label>
                 <select 
                   className="form-input" 
                   value={cuadrePlanchadorId} 
                   onChange={e => setCuadrePlanchadorId(e.target.value)}
                   required
                 >
-                  <option value="">-- Elige un Planchador --</option>
+                  <option value="">{isEn ? '-- Choose an Ironer --' : '-- Elige un Planchador --'}</option>
                   {planchadores.filter(p => !p.nombre.toLowerCase().includes('olga') && !p.nombre.toLowerCase().includes('luis')).map(p => (
                     <option key={p.id} value={p.id}>{p.nombre}</option>
                   ))}
                 </select>
               </div>
-
+ 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div className="form-group">
-                  <label className="form-label">Día adelantado</label>
+                  <label className="form-label">{isEn ? 'Day advanced' : 'Día adelantado'}</label>
                   <input 
                     type="date" 
                     required
@@ -2906,7 +2900,7 @@ export default function Plancha() {
                   />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Aplicar diferencia el día</label>
+                  <label className="form-label">{isEn ? 'Apply difference on date' : 'Aplicar diferencia el día'}</label>
                   <input 
                     type="date" 
                     required
@@ -2916,7 +2910,7 @@ export default function Plancha() {
                   />
                 </div>
               </div>
-
+ 
               <button 
                 type="button" 
                 className="btn btn-secondary" 
@@ -2924,14 +2918,14 @@ export default function Plancha() {
                 disabled={!cuadrePlanchadorId}
                 style={{ width: '100%', borderColor: 'rgba(16, 185, 129, 0.4)', color: '#10b981' }}
               >
-                Recargar Plancha Real
+                {isEn ? 'Reload Real Ironing' : 'Recargar Plancha Real'}
               </button>
-
+ 
               <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,0.08)', margin: '0.5rem 0' }} />
-
+ 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
                 <div className="form-group">
-                  <label className="form-label">Día adelantado ($)</label>
+                  <label className="form-label">{isEn ? 'Day advanced ($)' : 'Día adelantado ($)'}</label>
                   <input 
                     type="text" 
                     className="form-input" 
@@ -2941,7 +2935,7 @@ export default function Plancha() {
                   />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Plancha real ($)</label>
+                  <label className="form-label">{isEn ? 'Real ironing ($)' : 'Plancha real ($)'}</label>
                   <input 
                     type="text" 
                     className="form-input" 
@@ -2951,7 +2945,7 @@ export default function Plancha() {
                   />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Diferencia ($)</label>
+                  <label className="form-label">{isEn ? 'Difference ($)' : 'Diferencia ($)'}</label>
                   {(() => {
                     const diaAdelantadoVal = 400;
                     const diferencia = cuadrePlanchaReal - diaAdelantadoVal;
@@ -2972,12 +2966,12 @@ export default function Plancha() {
                   })()}
                 </div>
               </div>
-
+ 
               {/* Resultado del Cuadre */}
               {(() => {
                 const diaAdelantadoVal = 400;
                 const diferencia = cuadrePlanchaReal - diaAdelantadoVal;
-
+ 
                 return (
                   <div 
                     style={{ 
@@ -2988,17 +2982,17 @@ export default function Plancha() {
                       textAlign: 'center'
                     }}
                   >
-                    <div style={{ fontSize: '0.85rem', color: '#94a3b8', marginBottom: '0.2rem' }}>Resultado de Diferencia:</div>
+                    <div style={{ fontSize: '0.85rem', color: '#94a3b8', marginBottom: '0.2rem' }}>{isEn ? 'Difference Result:' : 'Resultado de Diferencia:'}</div>
                     <div style={{ fontSize: '1.6rem', fontWeight: 'bold', color: diferencia > 0 ? '#10b981' : diferencia < 0 ? '#ef4444' : '#fff' }}>
-                      {diferencia > 0 ? `Bono: +${formatCurrency(diferencia)}` : diferencia < 0 ? `Descuento: ${formatCurrency(diferencia)}` : 'Sin Diferencia'}
+                      {diferencia > 0 ? (isEn ? `Bonus: +${formatCurrency(diferencia)}` : `Bono: +${formatCurrency(diferencia)}`) : diferencia < 0 ? (isEn ? `Discount: ${formatCurrency(diferencia)}` : `Descuento: ${formatCurrency(diferencia)}`) : (isEn ? 'No Difference' : 'Sin Diferencia')}
                     </div>
                     <div style={{ marginTop: '0.4rem', fontSize: '0.85rem', color: '#64748b' }}>
-                      {diferencia > 0 ? 'Se sumará la diferencia como un bono en el historial.' : diferencia < 0 ? 'Se restará la diferencia como un descuento en el historial.' : 'No se registrará ningún ajuste financiero.'}
+                      {diferencia > 0 ? (isEn ? 'The difference will be added as a bonus in history.' : 'Se sumará la diferencia como un bono en el historial.') : diferencia < 0 ? (isEn ? 'The difference will be subtracted as a discount in history.' : 'Se restará la diferencia como un descuento en el historial.') : (isEn ? 'No financial adjustment will be registered.' : 'No se registrará ningún ajuste financiero.')}
                     </div>
                   </div>
                 );
               })()}
-
+ 
               <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
                 <button 
                   type="button" 
@@ -3010,7 +3004,7 @@ export default function Plancha() {
                     setCuadrePlanchaReal(0);
                   }}
                 >
-                  Cancelar
+                  {isEn ? 'Cancel' : 'Cancelar'}
                 </button>
                 <button 
                   type="button" 
@@ -3019,15 +3013,15 @@ export default function Plancha() {
                   disabled={!cuadrePlanchadorId}
                   onClick={handleAplicarCuadre}
                 >
-                  Aplicar Cuadre
+                  {isEn ? 'Apply Adjustment' : 'Aplicar Cuadre'}
                 </button>
               </div>
             </div>
-
+ 
           </div>
         </div>
       )}
-
+ 
         </main>
       </div>
     </div>

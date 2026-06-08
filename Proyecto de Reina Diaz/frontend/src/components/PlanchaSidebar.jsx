@@ -27,12 +27,14 @@ export default function PlanchaSidebar({ activeTab, setActiveTab }) {
     }
   };
 
+  const isEn = settings.language === 'en';
+
   const menuItems = [
-    { id: 'plancha', name: 'Burros de Plancha', icon: <Flame size={20} /> },
-    { id: 'modelos', name: 'Modelos Camión', icon: <Layers size={20} /> },
-    { id: 'planchadores', name: 'Planchadores', icon: <Users size={20} /> },
-    { id: 'pagos', name: 'Pagos Plancha', icon: <Wallet size={20} /> },
-    { id: 'historial', name: 'Historial Plancha', icon: <History size={20} /> },
+    { id: 'plancha', name: isEn ? 'Ironing Boards' : 'Burros de Plancha', icon: <Flame size={20} /> },
+    { id: 'modelos', name: isEn ? 'Truck Models' : 'Modelos Camión', icon: <Layers size={20} /> },
+    { id: 'planchadores', name: isEn ? 'Ironers' : 'Planchadores', icon: <Users size={20} /> },
+    { id: 'pagos', name: isEn ? 'Ironing Payments' : 'Pagos Plancha', icon: <Wallet size={20} /> },
+    { id: 'historial', name: isEn ? 'Ironing History' : 'Historial Plancha', icon: <History size={20} /> },
   ];
 
   return (
@@ -100,7 +102,7 @@ export default function PlanchaSidebar({ activeTab, setActiveTab }) {
             fontSize: '0.95rem'
           }}
         >
-          <Home size={18} /> Volver al Inicio
+          <Home size={18} /> {isEn ? 'Back to Home' : 'Volver al Inicio'}
         </Link>
 
         {/* Cerrar Sesión */}
