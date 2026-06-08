@@ -10,13 +10,15 @@ export default function Reportes() {
   const [prodEnd, setProdEnd] = useState('');
   const [payStart, setPayStart] = useState('');
   const [payEnd, setPayEnd] = useState('');
-  const { t } = useSettings();
+  const { settings, t } = useSettings();
+  const lang = settings.language || 'es';
   
   const handleDownloadProduccion = () => {
     let url = `${API_URL}/api/reportes/produccion`;
     const params = new URLSearchParams();
     if (prodStart) params.append('start', prodStart);
     if (prodEnd) params.append('end', prodEnd);
+    params.append('lang', lang);
     const query = params.toString();
     if (query) url += `?${query}`;
     window.open(url, '_blank');
@@ -25,7 +27,7 @@ export default function Reportes() {
   const [invFilter, setInvFilter] = useState('todos');
   
   const handleDownloadInventario = () => {
-    let url = `${API_URL}/api/reportes/inventario?filter=${invFilter}`;
+    let url = `${API_URL}/api/reportes/inventario?filter=${invFilter}&lang=${lang}`;
     window.open(url, '_blank');
   };
 
@@ -34,6 +36,7 @@ export default function Reportes() {
     const params = new URLSearchParams();
     if (startDate) params.append('start', startDate);
     if (endDate) params.append('end', endDate);
+    params.append('lang', lang);
     
     const query = params.toString();
     if (query) url += `?${query}`;
@@ -46,6 +49,7 @@ export default function Reportes() {
     const params = new URLSearchParams();
     if (payStart) params.append('start', payStart);
     if (payEnd) params.append('end', payEnd);
+    params.append('lang', lang);
     const query = params.toString();
     if (query) url += `?${query}`;
     window.open(url, '_blank');

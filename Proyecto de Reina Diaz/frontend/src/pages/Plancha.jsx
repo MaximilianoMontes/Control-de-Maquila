@@ -950,6 +950,7 @@ export default function Plancha() {
     if (reportStart) params.append('start', reportStart);
     if (reportEnd) params.append('end', reportEnd);
     if (reportPlanchadorId) params.append('planchadorId', reportPlanchadorId);
+    params.append('lang', settings.language || 'es');
     const query = params.toString();
     if (query) url += `?${query}`;
     window.open(url, '_blank');
@@ -960,6 +961,7 @@ export default function Plancha() {
     const params = new URLSearchParams();
     if (reportStart) params.append('start', reportStart);
     if (reportEnd) params.append('end', reportEnd);
+    params.append('lang', settings.language || 'es');
     const query = params.toString();
     if (query) url += `?${query}`;
     window.open(url, '_blank');

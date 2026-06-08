@@ -1543,8 +1543,11 @@ app.delete('/api/pagos/:id', authenticateToken, async (req, res) => {
 app.get('/api/pagos/:id/comprobante', authenticateToken, async (req, res) => {
   const userRole = (req.user?.role || req.user?.rol || '').toString().toLowerCase().trim();
   const allowedRoles = ['admin', 'produccion1', 'produccion2'];
+  const lang = req.query.lang || 'es';
+  const tLabel = (esText, enText) => lang === 'en' ? enText : esText;
+
   if (!allowedRoles.includes(userRole)) {
-    return res.status(403).send('Solo los usuarios de administración o producción pueden descargar el comprobante.');
+    return res.status(403).send(tLabel('Solo los usuarios de administración o producción pueden descargar el comprobante.', 'Only administration or production users can download the receipt.'));
   }
 
   const pagoId = req.params.id;
@@ -1562,10 +1565,10 @@ app.get('/api/pagos/:id/comprobante', authenticateToken, async (req, res) => {
     `, [pagoId]);
     const pago = pagos[0];
 
-    if (!pago) return res.status(404).json({ error: 'Pago no encontrado' });
+    if (!pago) return res.status(404).json({ error: tLabel('Pago no encontrado', 'Payment not found') });
 
     if (pago.orden_estado !== 'Terminado' && pago.orden_estado !== 'Terminado Parcial') {
-      return res.status(403).send('Solo se puede generar el comprobante para ordenes terminadas o con pago parcial.');
+      return res.status(403).send(tLabel('Solo se puede generar el comprobante para ordenes terminadas o con pago parcial.', 'Only finished or partially paid orders can generate receipts.'));
     }
 
     const [todosLosPagos] = await db.query("SELECT id FROM pagos WHERE produccion_id = ? ORDER BY id ASC", [pago.produccion_id]);
@@ -1587,30 +1590,30 @@ app.get('/api/pagos/:id/comprobante', authenticateToken, async (req, res) => {
       }
     } catch (e) {}
     
-    doc.fontSize(20).font('Helvetica-Bold').text('COMPROBANTE DE PAGO', { align: 'center' });
+    doc.fontSize(20).font('Helvetica-Bold').text(tLabel('COMPROBANTE DE PAGO', 'PAYMENT RECEIPT'), { align: 'center' });
     doc.moveDown(2); 
 
-    doc.fontSize(12).font('Helvetica').text(`Folio Interno: #${pago.id}`, { align: 'right' });
-    const fechaFormateada = new Date(pago.fecha).toLocaleDateString('es-MX', { 
+    doc.fontSize(12).font('Helvetica').text(`${tLabel('Folio Interno', 'Internal Folio')}: #${pago.id}`, { align: 'right' });
+    const fechaFormateada = new Date(pago.fecha).toLocaleDateString(lang === 'en' ? 'en-US' : 'es-MX', { 
       weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
     });
-    doc.text(`Fecha: ${fechaFormateada}`, { align: 'right' });
+    doc.text(`${tLabel('Fecha', 'Date')}: ${fechaFormateada}`, { align: 'right' });
     doc.moveDown(1.5);
 
-    doc.fontSize(14).font('Helvetica-Bold').text('DATOS DEL MAQUILERO');
-    doc.fontSize(12).font('Helvetica').text(`Nombre: ${pago.maquilero_nombre}`);
+    doc.fontSize(14).font('Helvetica-Bold').text(tLabel('DATOS DEL MAQUILERO', 'TAILOR DETAILS'));
+    doc.fontSize(12).font('Helvetica').text(`${tLabel('Nombre', 'Name')}: ${pago.maquilero_nombre}`);
     doc.moveDown(1);
 
-    doc.fontSize(14).font('Helvetica-Bold').text('DETALLE DEL TRABAJO');
-    doc.fontSize(12).font('Helvetica').text(`Producto / Modelo: ${pago.producto_modelo || 'N/A'}`);
-    doc.text(`Número de Orden: ${pago.no_orden || 'N/A'}`);
+    doc.fontSize(14).font('Helvetica-Bold').text(tLabel('DETALLE DEL TRABAJO', 'JOB DETAILS'));
+    doc.fontSize(12).font('Helvetica').text(`${tLabel('Producto / Modelo', 'Product / Model')}: ${pago.producto_modelo || 'N/A'}`);
+    doc.text(`${tLabel('Número de Orden', 'Order Number')}: ${pago.no_orden || 'N/A'}`);
     
     const cantFinal = pago.cantidad_recibida !== null ? pago.cantidad_recibida : pago.cantidad;
-    doc.text(`Cantidad Maquilada: ${cantFinal} piezas`);
-    doc.text(`Precio de Maquila: $${pago.precio_unitario || 0} por pieza`);
+    doc.text(`${tLabel('Cantidad Maquilada', 'Tailored Quantity')}: ${cantFinal} ${tLabel('piezas', 'pieces')}`);
+    doc.text(`${tLabel('Precio de Maquila', 'Maquila Price')}: $${pago.precio_unitario || 0} ${tLabel('por pieza', 'per piece')}`);
     
     if (pago.ajuste_tipo && pago.ajuste_tipo !== 'ninguno') {
-      const label = pago.ajuste_tipo === 'bono' ? 'BONO EXTRA' : 'DESCUENTO (PENALIZACIÓN)';
+      const label = pago.ajuste_tipo === 'bono' ? tLabel('BONO EXTRA', 'EXTRA BONUS') : tLabel('DESCUENTO (PENALIZACIÓN)', 'DEDUCTION (PENALTY)');
       const sign = pago.ajuste_tipo === 'bono' ? '+' : '-';
       doc.font('Helvetica-Bold').text(`${label} (${pago.ajuste_porcentaje}%): ${sign}$${Number(pago.ajuste_monto || 0).toFixed(2)}`);
       doc.font('Helvetica');
@@ -1618,12 +1621,12 @@ app.get('/api/pagos/:id/comprobante', authenticateToken, async (req, res) => {
     
     doc.moveDown(0.5);
     
-    doc.fontSize(14).font('Helvetica-Bold').text('DETALLE DEL PAGO');
-    doc.fontSize(12).font('Helvetica').text(`Concepto: ${pago.tipo_pago === 'completo' ? 'LIQUIDACIÓN' : 'ABONO'} DE PRODUCCIÓN`);
-    doc.text(`Número de Pago: ${nroPago} de ${todosLosPagos.length}`);
+    doc.fontSize(14).font('Helvetica-Bold').text(tLabel('DETALLE DEL PAGO', 'PAYMENT DETAILS'));
+    doc.fontSize(12).font('Helvetica').text(`${tLabel('Concepto', 'Concept')}: ${pago.tipo_pago === 'completo' ? tLabel('LIQUIDACIÓN', 'SETTLEMENT') : tLabel('ABONO', 'DEPOSIT')} ${tLabel('DE PRODUCCIÓN', 'OF PRODUCTION')}`);
+    doc.text(`${tLabel('Número de Pago', 'Payment Number')}: ${nroPago} ${tLabel('de', 'of')} ${todosLosPagos.length}`);
     doc.moveDown();
 
-    doc.fontSize(18).font('Helvetica-Bold').fillColor('#059669').text(`MONTO PAGADO: $${Number(pago.monto).toLocaleString('es-MX', { minimumFractionDigits: 2 })}`, { align: 'center' });
+    doc.fontSize(18).font('Helvetica-Bold').fillColor('#059669').text(`${tLabel('MONTO PAGADO', 'AMOUNT PAID')}: $${Number(pago.monto).toLocaleString(lang === 'en' ? 'en-US' : 'es-MX', { minimumFractionDigits: 2 })}`, { align: 'center' });
     
     // Cálculo de saldo restante
     const [totalPagadoRows] = await db.query("SELECT SUM(monto) as total FROM pagos WHERE produccion_id = ? AND id <= ?", [pago.produccion_id, pagoId]);
@@ -1634,7 +1637,7 @@ app.get('/api/pagos/:id/comprobante', authenticateToken, async (req, res) => {
     const saldoRestante = Math.max(0, precioTotalOrden - totalPagadoHastaAhora);
 
     doc.moveDown(0.2);
-    doc.fontSize(14).font('Helvetica-Bold').fillColor('#ef4444').text(`SALDO RESTANTE: $${saldoRestante.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`, { align: 'center' });
+    doc.fontSize(14).font('Helvetica-Bold').fillColor('#ef4444').text(`${tLabel('SALDO RESTANTE', 'REMAINING BALANCE')}: $${saldoRestante.toLocaleString(lang === 'en' ? 'en-US' : 'es-MX', { minimumFractionDigits: 2 })}`, { align: 'center' });
     
     doc.fillColor('black');
     doc.moveDown(1.5);
@@ -1644,8 +1647,8 @@ app.get('/api/pagos/:id/comprobante', authenticateToken, async (req, res) => {
     doc.moveTo(370, startY + 40).lineTo(550, startY + 40).stroke();
 
     doc.fontSize(10).font('Helvetica-Bold');
-    doc.text('FIRMA DEL GERENTE', 60, startY + 45, { width: 180, align: 'center' });
-    doc.text('FIRMA DEL MAQUILERO', 370, startY + 45, { width: 180, align: 'center' });
+    doc.text(tLabel('FIRMA DEL GERENTE', 'MANAGER SIGNATURE'), 60, startY + 45, { width: 180, align: 'center' });
+    doc.text(tLabel('FIRMA DEL MAQUILERO', 'TAILOR SIGNATURE'), 370, startY + 45, { width: 180, align: 'center' });
 
     doc.end();
   } catch (error) {
@@ -1656,6 +1659,9 @@ app.get('/api/pagos/:id/comprobante', authenticateToken, async (req, res) => {
 // APIs Reportes
 app.get('/api/reportes/produccion', async (req, res) => {
     const { start, end, date } = req.query;
+    const lang = req.query.lang || 'es';
+    const tLabel = (esText, enText) => lang === 'en' ? enText : esText;
+
     try {
       let query = `
         SELECT p.*, 
@@ -1669,26 +1675,28 @@ app.get('/api/reportes/produccion', async (req, res) => {
         WHERE p.estado = 'Terminado' AND p.es_extra = 0
       `;
       const params = [];
-      let subtitleDate = "Detalle completo de órdenes terminadas";
+      let subtitleDate = "";
 
       if (start && end) {
         if (start === end) {
           query += ` AND p.fecha_fin = ?`;
           params.push(start);
-          subtitleDate = `Reporte del día ${formatDateToDMY(start)}`;
+          subtitleDate = tLabel(`Reporte del día ${formatDateToDMY(start)}`, `Report for ${formatDateToDMY(start)}`);
         } else {
           query += ` AND p.fecha_fin BETWEEN ? AND ?`;
           params.push(start, end);
-          subtitleDate = `Del ${formatDateToDMY(start)} al ${formatDateToDMY(end)}`;
+          subtitleDate = tLabel(`Del ${formatDateToDMY(start)} al ${formatDateToDMY(end)}`, `From ${formatDateToDMY(start)} to ${formatDateToDMY(end)}`);
         }
       } else if (start) {
         query += ` AND p.fecha_fin = ?`;
         params.push(start);
-        subtitleDate = `Reporte del día ${formatDateToDMY(start)}`;
+        subtitleDate = tLabel(`Reporte del día ${formatDateToDMY(start)}`, `Report for ${formatDateToDMY(start)}`);
       } else if (date) {
         query += ` AND p.fecha_fin = ?`;
         params.push(date);
-        subtitleDate = `Reporte del día ${formatDateToDMY(date)}`;
+        subtitleDate = tLabel(`Reporte del día ${formatDateToDMY(date)}`, `Report for ${formatDateToDMY(date)}`);
+      } else {
+        subtitleDate = tLabel("Detalle completo de órdenes terminadas", "Complete detail of finished orders");
       }
       query += ` ORDER BY p.fecha_fin DESC`;
 
@@ -1710,22 +1718,24 @@ app.get('/api/reportes/produccion', async (req, res) => {
     doc.y = 130;
 
     if (orders.length === 0) {
-      doc.fontSize(20).text('Reporte de Órdenes Terminadas', { align: 'center' });
+      doc.fontSize(20).text(tLabel('Reporte de Órdenes Terminadas', 'Finished Production Orders Report'), { align: 'center' });
       doc.moveDown();
-      doc.fontSize(12).text(subtitleDate.includes('el') || subtitleDate.includes('Del') ? `No hay órdenes terminadas ${subtitleDate.toLowerCase()}.` : 'No hay órdenes terminadas.', { align: 'center' });
+      doc.fontSize(12).text(subtitleDate.includes('el') || subtitleDate.includes('Del') || subtitleDate.includes('for') || subtitleDate.includes('From') 
+        ? tLabel(`No hay órdenes terminadas ${subtitleDate.toLowerCase()}.`, `No finished orders found ${subtitleDate.toLowerCase()}.`)
+        : tLabel('No hay órdenes terminadas.', 'No finished orders found.'), { align: 'center' });
     } else {
       const tableConfig = {
-        title: "Reporte de Órdenes Terminadas",
-        subtitle: subtitleDate + " - Generado el " + formatDateToDMY(new Date()),
+        title: tLabel("Reporte de Órdenes Terminadas", "Finished Production Orders Report"),
+        subtitle: subtitleDate + tLabel(" - Generado el ", " - Generated on ") + formatDateToDMY(new Date()),
         headers: [
-          { label: "MAQUILERO", property: "maquilero", width: 110 },
-          { label: "MODELO", property: "modelo", width: 80 },
-          { label: "CODIGO", property: "codigo", width: 110 },
-          { label: "COLOR", property: "color", width: 100 },
-          { label: "CLIENTE", property: "cliente", width: 150 },
-          { label: "ORDEN", property: "orden", width: 90 },
-          { label: "PIEZAS", property: "piezas", width: 60 },
-          { label: "ENTREGA", property: "entrega", width: 100 }
+          { label: tLabel("MAQUILERO", "TAILOR"), property: "maquilero", width: 110 },
+          { label: tLabel("MODELO", "MODEL"), property: "modelo", width: 80 },
+          { label: tLabel("CODIGO", "CODE"), property: "codigo", width: 110 },
+          { label: tLabel("COLOR", "COLOR"), property: "color", width: 100 },
+          { label: tLabel("CLIENTE", "CLIENT"), property: "cliente", width: 150 },
+          { label: tLabel("ORDEN", "ORDER"), property: "orden", width: 90 },
+          { label: tLabel("PIEZAS", "PIECES"), property: "piezas", width: 60 },
+          { label: tLabel("ENTREGA", "DELIVERY"), property: "entrega", width: 100 }
         ],
         datas: orders.map(o => ({
           maquilero: (o.maquilero_nombre || '').toUpperCase(),
@@ -1763,7 +1773,7 @@ app.get('/api/reportes/produccion', async (req, res) => {
 
       const totalPiezas = orders.reduce((sum, o) => sum + (o.cantidad || 0), 0);
       doc.moveDown();
-      doc.fontSize(14).font("Helvetica-Bold").text(`TOTAL DE PIEZAS TERMINADAS: ${totalPiezas}`, { align: 'right' });
+      doc.fontSize(14).font("Helvetica-Bold").text(`${tLabel('TOTAL DE PIEZAS TERMINADAS', 'TOTAL FINISHED PIECES')}: ${totalPiezas}`, { align: 'right' });
     }
 
     doc.end();
@@ -1774,6 +1784,9 @@ app.get('/api/reportes/produccion', async (req, res) => {
 
 app.get('/api/reportes/inventario', async (req, res) => {
   const { filter } = req.query;
+  const lang = req.query.lang || 'es';
+  const tLabel = (esText, enText) => lang === 'en' ? enText : esText;
+
   try {
     let query = `
       SELECT i.*, 
@@ -1807,22 +1820,28 @@ app.get('/api/reportes/inventario', async (req, res) => {
     doc.y = 130;
 
     if (items.length === 0) {
-      doc.fontSize(20).text('Reporte de Estatus de Inventario', { align: 'center' });
+      doc.fontSize(20).text(tLabel('Reporte de Estatus de Inventario', 'Inventory Status Report'), { align: 'center' });
       doc.moveDown();
-      doc.fontSize(12).text('No hay artículos con el criterio seleccionado.', { align: 'center' });
+      doc.fontSize(12).text(tLabel('No hay artículos con el criterio seleccionado.', 'No items found matching the selected criteria.'), { align: 'center' });
     } else {
-      const reportTitle = filter === 'asignados' ? "Reporte de Inventario (Asignados)" : (filter === 'pendientes' ? "Reporte de Inventario (Disponibles)" : "Reporte de Estatus de Inventario");
+      const reportTitle = tLabel(
+        filter === 'asignados' ? "Reporte de Inventario (Asignados)" : (filter === 'pendientes' ? "Reporte de Inventario (Disponibles)" : "Reporte de Estatus de Inventario"),
+        filter === 'asignados' ? "Inventory Report (Assigned)" : (filter === 'pendientes' ? "Inventory Report (Available)" : "Inventory Status Report")
+      );
       const tableConfig = {
         title: reportTitle,
-        subtitle: "Existencias, costos y unidades actuales registrados en almacén - Generado el " + formatDateToDMY(new Date()),
+        subtitle: tLabel(
+          "Existencias, costos y unidades actuales registrados en almacén - Generado el ",
+          "Current stock, costs, and units registered in warehouse - Generated on "
+        ) + formatDateToDMY(new Date()),
         headers: [
-          { label: "MODELO", property: "modelo", width: 80 },
-          { label: "CODIGO", property: "codigo", width: 160 },
-          { label: "COLOR", property: "color", width: 120 },
-          { label: "CLIENTE", property: "cliente", width: 180 },
-          { label: "ORDEN", property: "orden", width: 100 },
-          { label: "PRECIO", property: "precio", width: 80 },
-          { label: "PZAS PROC.", property: "piezas", width: 80 }
+          { label: tLabel("MODELO", "MODEL"), property: "modelo", width: 80 },
+          { label: tLabel("CODIGO", "CODE"), property: "codigo", width: 160 },
+          { label: tLabel("COLOR", "COLOR"), property: "color", width: 120 },
+          { label: tLabel("CLIENTE", "CLIENT"), property: "cliente", width: 180 },
+          { label: tLabel("ORDEN", "ORDER"), property: "orden", width: 100 },
+          { label: tLabel("PRECIO", "PRICE"), property: "precio", width: 80 },
+          { label: tLabel("PZAS PROC.", "PROC. PCS"), property: "piezas", width: 80 }
         ],
         datas: items.map(i => ({
           modelo: '\n\n\n\n\n\n',
@@ -1859,7 +1878,7 @@ app.get('/api/reportes/inventario', async (req, res) => {
 
       const totalPiezas = items.reduce((sum, i) => sum + (i.piezas_en_proceso || 0), 0);
       doc.moveDown();
-      doc.fontSize(14).font("Helvetica-Bold").text(`TOTAL DE PIEZAS EN PROCESO: ${totalPiezas}`, { align: 'right' });
+      doc.fontSize(14).font("Helvetica-Bold").text(`${tLabel('TOTAL DE PIEZAS EN PROCESO', 'TOTAL PIECES IN PROCESS')}: ${totalPiezas}`, { align: 'right' });
     }
 
     doc.end();
@@ -1870,6 +1889,9 @@ app.get('/api/reportes/inventario', async (req, res) => {
 
 app.get('/api/reportes/recoleccion', async (req, res) => {
   const { start, end } = req.query;
+  const lang = req.query.lang || 'es';
+  const tLabel = (esText, enText) => lang === 'en' ? enText : esText;
+
   try {
     let query = `
       SELECT p.*, 
@@ -1884,26 +1906,25 @@ app.get('/api/reportes/recoleccion', async (req, res) => {
       WHERE p.archivado = 0 AND p.estado = 'En proceso'
     `;
     const params = [];
-    let subtitleDate = "estimada";
+    let subtitleDateText = "";
 
     if (start && end) {
       if (start === end) {
         query += ` AND p.fecha_fin = ?`;
         params.push(start);
-        subtitleDate = `del día ${formatDateToDMY(start)}`;
+        subtitleDateText = tLabel(`del día ${formatDateToDMY(start)}`, `for ${formatDateToDMY(start)}`);
       } else {
         query += ` AND p.fecha_fin BETWEEN ? AND ?`;
         params.push(start, end);
-        subtitleDate = `del ${formatDateToDMY(start)} al ${formatDateToDMY(end)}`;
+        subtitleDateText = tLabel(`del ${formatDateToDMY(start)} al ${formatDateToDMY(end)}`, `from ${formatDateToDMY(start)} to ${formatDateToDMY(end)}`);
       }
-    } else if (start) {
+    } else if (start || end) {
+      const d = start || end;
       query += ` AND p.fecha_fin = ?`;
-      params.push(start);
-      subtitleDate = `del día ${formatDateToDMY(start)}`;
-    } else if (end) {
-      query += ` AND p.fecha_fin = ?`;
-      params.push(end);
-      subtitleDate = `del día ${formatDateToDMY(end)}`;
+      params.push(d);
+      subtitleDateText = tLabel(`del día ${formatDateToDMY(d)}`, `for ${formatDateToDMY(d)}`);
+    } else {
+      subtitleDateText = tLabel("estimada", "estimated");
     }
     query += ` ORDER BY p.fecha_fin ASC`;
     const [orders] = await db.query(query, params);
@@ -1924,22 +1945,22 @@ app.get('/api/reportes/recoleccion', async (req, res) => {
     doc.y = 130;
 
     if (orders.length === 0) {
-      doc.fontSize(20).text('Reporte de Recolección', { align: 'center' });
+      doc.fontSize(20).text(tLabel('Reporte de Recolección', 'Recollection Report'), { align: 'center' });
       doc.moveDown();
-      doc.fontSize(12).text('No hay entregas programadas.', { align: 'center' });
+      doc.fontSize(12).text(tLabel('No hay entregas programadas.', 'No scheduled deliveries.'), { align: 'center' });
     } else {
       const tableConfig = {
-        title: "Reporte de Recolección",
-        subtitle: `Producción a entregar ${subtitleDate}` + " - Generado el " + formatDateToDMY(new Date()),
+        title: tLabel("Reporte de Recolección", "Recollection Report"),
+        subtitle: tLabel(`Producción a entregar ${subtitleDateText}`, `Production to collect ${subtitleDateText}`) + tLabel(" - Generado el ", " - Generated on ") + formatDateToDMY(new Date()),
         headers: [
-          { label: "MAQUILERO", property: "maquilero", width: 110 },
-          { label: "MODELO", property: "modelo", width: 80 },
-          { label: "CODIGO", property: "codigo", width: 110 },
-          { label: "COLOR", property: "color", width: 100 },
-          { label: "OBSERVACIÓN", property: "observacion", width: 150 },
-          { label: "ORDEN", property: "orden", width: 90 },
-          { label: "PIEZAS", property: "piezas", width: 60 },
-          { label: "ENTREGA", property: "entrega", width: 100 }
+          { label: tLabel("MAQUILERO", "TAILOR"), property: "maquilero", width: 110 },
+          { label: tLabel("MODELO", "MODEL"), property: "modelo", width: 80 },
+          { label: tLabel("CODIGO", "CODE"), property: "codigo", width: 110 },
+          { label: tLabel("COLOR", "COLOR"), property: "color", width: 100 },
+          { label: tLabel("OBSERVACIÓN", "OBSERVATION"), property: "observacion", width: 150 },
+          { label: tLabel("ORDEN", "ORDER"), property: "orden", width: 90 },
+          { label: tLabel("PIEZAS", "PIECES"), property: "piezas", width: 60 },
+          { label: tLabel("ENTREGA", "DELIVERY"), property: "entrega", width: 100 }
         ],
         datas: orders.map(o => ({
           maquilero: (o.maquilero_nombre || '').toUpperCase(),
@@ -1977,7 +1998,7 @@ app.get('/api/reportes/recoleccion', async (req, res) => {
 
       const totalPiezas = orders.reduce((sum, o) => sum + (o.cantidad || 0), 0);
       doc.moveDown();
-      doc.fontSize(14).font("Helvetica-Bold").text(`TOTAL DE PIEZAS A RECOLECTAR: ${totalPiezas}`, { align: 'right' });
+      doc.fontSize(14).font("Helvetica-Bold").text(`${tLabel('TOTAL DE PIEZAS A RECOLECTAR', 'TOTAL PIECES TO COLLECT')}: ${totalPiezas}`, { align: 'right' });
     }
 
     doc.end();
@@ -1989,6 +2010,8 @@ app.get('/api/reportes/recoleccion', async (req, res) => {
 
 app.get('/api/reportes/pagos', async (req, res) => {
   const { start, end } = req.query;
+  const lang = req.query.lang || 'es';
+  const tLabel = (esText, enText) => lang === 'en' ? enText : esText;
   try {
     let query = `
       SELECT pg.*, m.nombre as maquilero_nombre, i.modelo as producto_modelo
@@ -2005,20 +2028,20 @@ app.get('/api/reportes/pagos', async (req, res) => {
       if (start === end) {
         query += ` AND pg.fecha = ?`;
         params.push(start);
-        subtitleDate = `del día ${formatDateToDMY(start)}`;
+        subtitleDate = tLabel(`del día ${formatDateToDMY(start)}`, `for ${formatDateToDMY(start)}`);
       } else {
         query += ` AND pg.fecha BETWEEN ? AND ?`;
         params.push(start, end);
-        subtitleDate = `del ${formatDateToDMY(start)} al ${formatDateToDMY(end)}`;
+        subtitleDate = tLabel(`del ${formatDateToDMY(start)} al ${formatDateToDMY(end)}`, `from ${formatDateToDMY(start)} to ${formatDateToDMY(end)}`);
       }
     } else if (start) {
       query += ` AND pg.fecha >= ?`;
       params.push(start);
-      subtitleDate = `desde ${formatDateToDMY(start)}`;
+      subtitleDate = tLabel(`desde ${formatDateToDMY(start)}`, `since ${formatDateToDMY(start)}`);
     } else if (end) {
       query += ` AND pg.fecha <= ?`;
       params.push(end);
-      subtitleDate = `hasta ${formatDateToDMY(end)}`;
+      subtitleDate = tLabel(`hasta ${formatDateToDMY(end)}`, `until ${formatDateToDMY(end)}`);
     }
     
     query += ` ORDER BY pg.fecha ASC, pg.id ASC`;
@@ -2040,25 +2063,25 @@ app.get('/api/reportes/pagos', async (req, res) => {
     doc.y = 100;
 
     if (rows.length === 0) {
-      doc.fontSize(20).text('Reporte de Pagos', { align: 'center' });
+      doc.fontSize(20).text(tLabel('Reporte de Pagos', 'Payments Report'), { align: 'center' });
       doc.moveDown();
-      doc.fontSize(12).text('No se encontraron pagos en el periodo seleccionado.', { align: 'center' });
+      doc.fontSize(12).text(tLabel('No se encontraron pagos en el periodo seleccionado.', 'No payments found in the selected period.'), { align: 'center' });
     } else {
       const tableConfig = {
-        title: "Reporte de Pagos a Maquileros",
-        subtitle: `Pagos realizados ${subtitleDate}` + " - Generado el " + formatDateToDMY(new Date()),
+        title: tLabel("Reporte de Pagos a Maquileros", "Payments to Tailors Report"),
+        subtitle: tLabel(`Pagos realizados `, `Payments made `) + subtitleDate + tLabel(" - Generado el ", " - Generated on ") + formatDateToDMY(new Date()),
         headers: [
-          { label: "FECHA", property: "fecha", width: 80 },
-          { label: "MAQUILERO", property: "maquilero", width: 160 },
-          { label: "MODELO", property: "modelo", width: 100 },
-          { label: "TIPO", property: "tipo", width: 80 },
-          { label: "MONTO", property: "monto", width: 100 }
+          { label: tLabel("FECHA", "DATE"), property: "fecha", width: 80 },
+          { label: tLabel("MAQUILERO", "TAILOR"), property: "maquilero", width: 160 },
+          { label: tLabel("MODELO", "MODEL"), property: "modelo", width: 100 },
+          { label: tLabel("TIPO", "TYPE"), property: "tipo", width: 80 },
+          { label: tLabel("MONTO", "AMOUNT"), property: "monto", width: 100 }
         ],
         datas: rows.map(r => ({
           fecha: formatDateToDMY(r.fecha),
           maquilero: (r.maquilero_nombre || '').toUpperCase(),
           modelo: r.producto_modelo || '-',
-          tipo: (r.tipo_pago || 'ABONO').toUpperCase(),
+          tipo: (r.tipo_pago === 'completo' ? tLabel('LIQUIDACIÓN', 'SETTLEMENT') : (r.tipo_pago === 'abono' ? tLabel('ABONO', 'DEPOSIT') : (r.tipo_pago || 'ABONO'))).toUpperCase(),
           monto: '$' + Number(r.monto).toFixed(2)
         })),
         options: { padding: 5 }
@@ -2071,7 +2094,7 @@ app.get('/api/reportes/pagos', async (req, res) => {
 
       const totalMonto = rows.reduce((sum, r) => sum + Number(r.monto), 0);
       doc.moveDown();
-      doc.fontSize(14).font("Helvetica-Bold").text(`TOTAL PAGADO EN EL PERIODO: $${totalMonto.toFixed(2)}`, { align: 'right' });
+      doc.fontSize(14).font("Helvetica-Bold").text(`${tLabel('TOTAL PAGADO EN EL PERIODO', 'TOTAL PAID IN THE PERIOD')}: $${totalMonto.toFixed(2)}`, { align: 'right' });
     }
 
     doc.end();
@@ -3250,20 +3273,22 @@ app.get('/api/planchadores/:id/piezas-rango', authenticateToken, async (req, res
 // 10.4 REPORTES DE PAGOS DE PLANCHA EN PDF
 app.get('/api/reportes/plancha/pagos', async (req, res) => {
   const { start, end, planchadorId } = req.query;
+  const lang = req.query.lang || 'es';
+  const tLabel = (esText, enText) => lang === 'en' ? enText : esText;
   try {
     let subtitleDate = "";
     if (start && end) {
       if (start === end) {
-        subtitleDate = `del día ${formatDateToDMY(start)}`;
+        subtitleDate = tLabel(`del día ${formatDateToDMY(start)}`, `for ${formatDateToDMY(start)}`);
       } else {
-        subtitleDate = `del ${formatDateToDMY(start)} al ${formatDateToDMY(end)}`;
+        subtitleDate = tLabel(`del ${formatDateToDMY(start)} al ${formatDateToDMY(end)}`, `from ${formatDateToDMY(start)} to ${formatDateToDMY(end)}`);
       }
     } else if (start) {
-      subtitleDate = `desde ${formatDateToDMY(start)}`;
+      subtitleDate = tLabel(`desde ${formatDateToDMY(start)}`, `since ${formatDateToDMY(start)}`);
     } else if (end) {
-      subtitleDate = `hasta ${formatDateToDMY(end)}`;
+      subtitleDate = tLabel(`hasta ${formatDateToDMY(end)}`, `until ${formatDateToDMY(end)}`);
     } else {
-      subtitleDate = "de todos los tiempos";
+      subtitleDate = tLabel("de todos los tiempos", "all time");
     }
 
     const doc = new PDFDocument({ margin: 20, size: 'A4', layout: 'portrait' });
@@ -3287,7 +3312,7 @@ app.get('/api/reportes/plancha/pagos', async (req, res) => {
       // ----------------------------------------------------
       const [plRow] = await db.query("SELECT nombre FROM planchadores WHERE id = ?", [planchadorId]);
       if (plRow.length === 0) {
-        return res.status(404).json({ error: 'Planchador no encontrado' });
+        return res.status(404).json({ error: tLabel('Planchador no encontrado', 'Ironer not found') });
       }
       const planchadorName = plRow[0].nombre.toUpperCase();
 
@@ -3342,11 +3367,11 @@ app.get('/api/reportes/plancha/pagos', async (req, res) => {
       items.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
 
       if (items.length === 0) {
-        doc.fontSize(20).text('Reporte de Plancha', { align: 'center' });
+        doc.fontSize(20).text(tLabel('Reporte de Plancha', 'Ironing Report'), { align: 'center' });
         doc.moveDown();
         doc.fontSize(16).text(planchadorName, { align: 'center' });
         doc.moveDown();
-        doc.fontSize(12).text('No se encontraron registros en el periodo seleccionado.', { align: 'center' });
+        doc.fontSize(12).text(tLabel('No se encontraron registros en el periodo seleccionado.', 'No records found in the selected period.'), { align: 'center' });
       } else {
         let sumPiezas = 0;
         let sumTotal = 0;
@@ -3356,15 +3381,15 @@ app.get('/api/reportes/plancha/pagos', async (req, res) => {
         }
 
         const tableConfig = {
-          title: `Reporte de Plancha - ${planchadorName}`,
-          subtitle: `Detalle de trabajos y asistencias ${subtitleDate} - Generado el ${formatDateUTC(localNow)}`,
+          title: tLabel(`Reporte de Plancha - ${planchadorName}`, `Ironing Report - ${planchadorName}`),
+          subtitle: tLabel(`Detalle de trabajos y asistencias `, `Detail of jobs and assistance `) + subtitleDate + tLabel(" - Generado el ", " - Generated on ") + formatDateUTC(localNow),
           headers: [
-            { label: "FECHA", property: "fecha", width: 70 },
-            { label: "MODELO", property: "modelo", width: 140 },
-            { label: "COLOR", property: "color", width: 100 },
-            { label: "TALLA", property: "talla", width: 60 },
-            { label: "PIEZAS", property: "piezas", width: 70 },
-            { label: "TOTAL", property: "total", width: 80 }
+            { label: tLabel("FECHA", "DATE"), property: "fecha", width: 70 },
+            { label: tLabel("MODELO", "MODEL"), property: "modelo", width: 140 },
+            { label: tLabel("COLOR", "COLOR"), property: "color", width: 100 },
+            { label: tLabel("TALLA", "SIZE"), property: "talla", width: 60 },
+            { label: tLabel("PIEZAS", "PIECES"), property: "piezas", width: 70 },
+            { label: tLabel("TOTAL", "TOTAL"), property: "total", width: 80 }
           ],
           datas: [
             ...items.map(i => ({
@@ -3377,7 +3402,7 @@ app.get('/api/reportes/plancha/pagos', async (req, res) => {
             })),
             {
               fecha: '',
-              modelo: 'TOTAL',
+              modelo: tLabel('TOTAL', 'TOTAL'),
               color: '',
               talla: '',
               piezas: String(sumPiezas),
@@ -3399,7 +3424,7 @@ app.get('/api/reportes/plancha/pagos', async (req, res) => {
         });
 
         doc.moveDown();
-        doc.fontSize(14).font("Helvetica-Bold").text(`TOTAL PAGADO EN EL PERIODO: $${sumTotal.toFixed(2)}`, { align: 'right' });
+        doc.fontSize(14).font("Helvetica-Bold").text(`${tLabel('TOTAL PAGADO EN EL PERIODO', 'TOTAL PAID IN THE PERIOD')}: $${sumTotal.toFixed(2)}`, { align: 'right' });
       }
     } else {
       // ----------------------------------------------------
@@ -3457,9 +3482,9 @@ app.get('/api/reportes/plancha/pagos', async (req, res) => {
       );
 
       if (payments.length === 0) {
-        doc.fontSize(20).text('Reporte de Pagos de Plancha', { align: 'center' });
+        doc.fontSize(20).text(tLabel('Reporte de Pagos de Plancha', 'Ironing Payments Report'), { align: 'center' });
         doc.moveDown();
-        doc.fontSize(12).text('No se encontraron registros de pagos en el periodo seleccionado.', { align: 'center' });
+        doc.fontSize(12).text(tLabel('No se encontraron registros de pagos en el periodo seleccionado.', 'No payment records found in the selected period.'), { align: 'center' });
       } else {
         const paymentIds = payments.map(p => p.id);
 
@@ -3631,17 +3656,17 @@ app.get('/api/reportes/plancha/pagos', async (req, res) => {
         }
 
         const tableConfig = {
-          title: "Reporte de Pagos de Plancha",
-          subtitle: `Pagos registrados ${subtitleDate}` + " - Generado el " + formatDateUTC(localNow),
+          title: tLabel("Reporte de Pagos de Plancha", "Ironing Payments Report"),
+          subtitle: tLabel(`Pagos registrados `, `Payments recorded `) + subtitleDate + tLabel(" - Generado el ", " - Generated on ") + formatDateUTC(localNow),
           headers: [
-            { label: "FECHA", property: "fecha", width: 60 },
-            { label: "PLANCHADOR", property: "nombre", width: 110 },
-            { label: "PIEZAS", property: "piezas", width: 45 },
-            { label: "PRODUCCIÓN", property: "produccion", width: 65 },
-            { label: "BONO", property: "bono", width: 50 },
-            { label: "PAGO FIJO", property: "pago_fijo", width: 65 },
-            { label: "DIF. DÍA ADELANTADO", property: "dif_dia_adelantado", width: 75 },
-            { label: "TOTAL", property: "total", width: 60 }
+            { label: tLabel("FECHA", "DATE"), property: "fecha", width: 60 },
+            { label: tLabel("PLANCHADOR", "IRONER"), property: "nombre", width: 110 },
+            { label: tLabel("PIEZAS", "PIECES"), property: "piezas", width: 45 },
+            { label: tLabel("PRODUCCIÓN", "PRODUCTION"), property: "produccion", width: 65 },
+            { label: tLabel("BONO", "BONUS"), property: "bono", width: 50 },
+            { label: tLabel("PAGO FIJO", "FIXED PAYMENT"), property: "pago_fijo", width: 65 },
+            { label: tLabel("DIF. DÍA ADELANTADO", "ADVANCE DAY DIFF."), property: "dif_dia_adelantado", width: 75 },
+            { label: tLabel("TOTAL", "TOTAL"), property: "total", width: 60 }
           ],
           datas: [
             ...consolidatedRows.map(r => ({
@@ -3656,7 +3681,7 @@ app.get('/api/reportes/plancha/pagos', async (req, res) => {
             })),
             {
               fecha: '',
-              nombre: 'TOTAL',
+              nombre: tLabel('TOTAL', 'TOTAL'),
               piezas: String(sumPiezas),
               produccion: '$' + sumProduccion.toFixed(2),
               bono: '$' + sumBono.toFixed(2),
@@ -3680,7 +3705,7 @@ app.get('/api/reportes/plancha/pagos', async (req, res) => {
         });
 
         doc.moveDown();
-        doc.fontSize(14).font("Helvetica-Bold").text(`TOTAL PAGADO EN EL PERIODO: $${sumTotal.toFixed(2)}`, { align: 'right' });
+        doc.fontSize(14).font("Helvetica-Bold").text(`${tLabel('TOTAL PAGADO EN EL PERIODO', 'TOTAL PAID IN THE PERIOD')}: $${sumTotal.toFixed(2)}`, { align: 'right' });
       }
     }
 
@@ -3694,6 +3719,8 @@ app.get('/api/reportes/plancha/pagos', async (req, res) => {
 // 10.5 REPORTE RESUMEN GENERAL DE PLANCHADORES EN PDF
 app.get('/api/reportes/plancha/resumen', async (req, res) => {
   const { start, end } = req.query;
+  const lang = req.query.lang || 'es';
+  const tLabel = (esText, enText) => lang === 'en' ? enText : esText;
   try {
     const [allPlanchadores] = await db.query("SELECT id, nombre FROM planchadores ORDER BY nombre ASC");
     const planchadores = allPlanchadores.filter(p => 
@@ -3703,13 +3730,13 @@ app.get('/api/reportes/plancha/resumen', async (req, res) => {
     
     let subtitleDate = "";
     if (start && end) {
-      subtitleDate = `del ${formatDateToDMY(start)} al ${formatDateToDMY(end)}`;
+      subtitleDate = tLabel(`del ${formatDateToDMY(start)} al ${formatDateToDMY(end)}`, `from ${formatDateToDMY(start)} to ${formatDateToDMY(end)}`);
     } else if (start) {
-      subtitleDate = `desde ${formatDateToDMY(start)}`;
+      subtitleDate = tLabel(`desde ${formatDateToDMY(start)}`, `since ${formatDateToDMY(start)}`);
     } else if (end) {
-      subtitleDate = `hasta ${formatDateToDMY(end)}`;
+      subtitleDate = tLabel(`hasta ${formatDateToDMY(end)}`, `until ${formatDateToDMY(end)}`);
     } else {
-      subtitleDate = "de todos los tiempos";
+      subtitleDate = tLabel("de todos los tiempos", "all time");
     }
 
     const rowsData = [];
@@ -3857,16 +3884,16 @@ app.get('/api/reportes/plancha/resumen', async (req, res) => {
     };
 
     const tableConfig = {
-      title: "Resumen General de Planchadores",
-      subtitle: `Resumen de actividades y saldos ${subtitleDate} - Generado el ${formatDateUTC(localNow)}`,
+      title: tLabel("Resumen General de Planchadores", "Ironers General Summary"),
+      subtitle: tLabel(`Resumen de actividades y saldos `, `Summary of activities and balances `) + subtitleDate + tLabel(" - Generado el ", " - Generated on ") + formatDateUTC(localNow),
       headers: [
-        { label: "PLANCHADOR", property: "nombre", width: 190 },
-        { label: "TOTAL PIEZAS", property: "piezas", width: 90 },
-        { label: "PLANCHA REGULAR", property: "regular", width: 105 },
-        { label: "ASISTENCIAS", property: "asistencias", width: 100 },
-        { label: "PAGO FIJO", property: "pago_fijo", width: 100 },
-        { label: "DIF. CUADRE", property: "cuadre", width: 100 },
-        { label: "TOTAL PAGADO", property: "pagado", width: 110 }
+        { label: tLabel("PLANCHADOR", "IRONER"), property: "nombre", width: 190 },
+        { label: tLabel("TOTAL PIEZAS", "TOTAL PIECES"), property: "piezas", width: 90 },
+        { label: tLabel("PLANCHA REGULAR", "REGULAR IRONING"), property: "regular", width: 105 },
+        { label: tLabel("ASISTENCIAS", "ASSISTANCE"), property: "asistencias", width: 100 },
+        { label: tLabel("PAGO FIJO", "FIXED PAYMENT"), property: "pago_fijo", width: 100 },
+        { label: tLabel("DIF. CUADRE", "BALANCE DIFF."), property: "cuadre", width: 100 },
+        { label: tLabel("TOTAL PAGADO", "TOTAL PAID"), property: "pagado", width: 110 }
       ],
       datas: [
         ...rowsData.map(r => ({
@@ -3879,7 +3906,7 @@ app.get('/api/reportes/plancha/resumen', async (req, res) => {
           pagado: '$' + r.pagado.toFixed(2)
         })),
         {
-          nombre: 'TOTAL',
+          nombre: tLabel('TOTAL', 'TOTAL'),
           piezas: String(sumPiezas),
           regular: '$' + sumRegular.toFixed(2),
           asistencias: '$' + sumAsistencias.toFixed(2),
