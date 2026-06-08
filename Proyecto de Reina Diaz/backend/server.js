@@ -45,6 +45,17 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
+// Debug endpoint to check DB logs
+app.get('/api/debug-database-state', async (req, res) => {
+  try {
+    const [history] = await db.query("SELECT * FROM historial ORDER BY id DESC LIMIT 150");
+    const [invReal] = await db.query("SELECT * FROM inventario_real");
+    res.json({ history, invReal });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Helper para formatear fechas a DD/MM/YYYY
 const formatDateToDMY = (dateVal) => {
   if (!dateVal) return '-';
