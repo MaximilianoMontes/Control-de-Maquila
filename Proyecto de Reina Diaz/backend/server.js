@@ -48,9 +48,10 @@ const authenticateToken = (req, res, next) => {
 // Debug endpoint to check DB logs
 app.get('/api/debug-database-state', async (req, res) => {
   try {
-    const [history] = await db.query("SELECT * FROM historial ORDER BY id DESC LIMIT 150");
-    const [invReal] = await db.query("SELECT * FROM inventario_real");
-    res.json({ history, invReal });
+    const [shipmentLogs] = await db.query(
+      "SELECT * FROM historial WHERE description LIKE '%camion%' OR description LIKE '%camión%' OR description LIKE '%Subió%' OR description LIKE '%Subio%' ORDER BY id DESC"
+    );
+    res.json({ shipmentLogs });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
