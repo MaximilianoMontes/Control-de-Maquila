@@ -362,7 +362,7 @@ export default function Pagos() {
                                 </button>
                               ) : (
                                 <a 
-                                  href={`${API_URL}/api/pagos/${p.id}/comprobante?token=${localStorage.getItem('token')}`}
+                                  href={`${API_URL}/api/pagos/${p.id}/comprobante?token=${localStorage.getItem('token')}&lang=${settings.language || 'es'}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="btn-icon"
