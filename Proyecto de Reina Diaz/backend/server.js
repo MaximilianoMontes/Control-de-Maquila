@@ -50,7 +50,7 @@ app.get('/api/debug-database-state', async (req, res) => {
   try {
     const [invReal] = await db.query("SELECT id, numero, modelo, piezas, no_orden FROM inventario_real");
     const [produccion] = await db.query(`
-      SELECT p.id, p.no_orden, p.estado, i.modelo, p.cantidad_producida 
+      SELECT p.id, i.no_orden, p.estado, i.modelo, p.cantidad_producida 
       FROM produccion p 
       LEFT JOIN inventario i ON p.inventario_id = i.id
     `);
