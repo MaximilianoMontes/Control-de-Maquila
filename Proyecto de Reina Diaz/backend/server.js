@@ -1876,7 +1876,8 @@ app.get('/api/reportes/recoleccion', async (req, res) => {
         m.nombre as maquilero_nombre, m.imagen as maquilero_imagen,
         i.modelo as producto_modelo, i.numero as producto_codigo,
         i.color as producto_color, i.cliente as producto_cliente,
-        i.no_orden as inventario_orden, i.imagen as producto_imagen
+        i.no_orden as inventario_orden, i.imagen as producto_imagen,
+        i.observaciones as producto_observaciones
       FROM produccion p 
       JOIN maquileros m ON p.maquilero_id = m.id 
       LEFT JOIN inventario i ON p.inventario_id = i.id
@@ -1935,7 +1936,7 @@ app.get('/api/reportes/recoleccion', async (req, res) => {
           { label: "MODELO", property: "modelo", width: 80 },
           { label: "CODIGO", property: "codigo", width: 110 },
           { label: "COLOR", property: "color", width: 100 },
-          { label: "CLIENTE", property: "cliente", width: 150 },
+          { label: "OBSERVACIÓN", property: "observacion", width: 150 },
           { label: "ORDEN", property: "orden", width: 90 },
           { label: "PIEZAS", property: "piezas", width: 60 },
           { label: "ENTREGA", property: "entrega", width: 100 }
@@ -1950,7 +1951,7 @@ app.get('/api/reportes/recoleccion', async (req, res) => {
                 return Array.isArray(arr) ? arr.map(c => c.color).join(', ') : (o.producto_color || '-');
              } catch(e) { return o.producto_color || '-'; }
           })(),
-          cliente: o.producto_cliente || '-',
+          observacion: o.producto_observaciones || '-',
           orden: o.inventario_orden || '-',
           piezas: String(o.cantidad || 0),
           entrega: formatDateToDMY(o.fecha_fin)
