@@ -48,8 +48,13 @@ const authenticateToken = (req, res, next) => {
 // Debug endpoint to check DB logs
 app.get('/api/debug-database-state', async (req, res) => {
   try {
+    const [countRows] = await db.query("SELECT COUNT(*) as total FROM historial");
     const [history] = await db.query("SELECT * FROM historial ORDER BY id DESC LIMIT 2000");
-    res.json({ history });
+    res.json({
+      deployCheck: "hello-v2",
+      totalHistoryRows: countRows[0].total,
+      history
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
