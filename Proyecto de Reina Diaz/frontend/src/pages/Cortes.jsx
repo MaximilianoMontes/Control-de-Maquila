@@ -245,7 +245,7 @@ export default function Cortes() {
                     <tr key={item.id}>
                       <td>
                         {imgSrc
-                          ? <img src={imgSrc} alt={item.modelo} className="img-zoom" style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 8, border: '1px solid #e2e8f0' }} />
+                          ? <img src={imgSrc} alt={item.modelo} className="img-zoom" style={{ width: 48, height: 48, objectFit: 'contain', backgroundColor: '#ffffff', borderRadius: 8, border: '1px solid #e2e8f0' }} />
                           : canEdit
                             ? <button className="btn btn-secondary" style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem' }} onClick={() => setEditImageItem(item)}>+ Foto</button>
                             : <div style={{ width: 48, height: 48, background: '#f1f5f9', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><ImageIcon size={20} color="#cbd5e1" /></div>

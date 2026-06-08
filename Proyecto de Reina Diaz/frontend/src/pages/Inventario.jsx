@@ -164,7 +164,7 @@ export default function Inventario() {
                           <img 
                             src={imgSrc} 
                             alt={item.modelo} 
-                            style={{ width: 44, height: 44, objectFit: 'cover', borderRadius: 8, border: '1px solid #e2e8f0', cursor: 'zoom-in' }} 
+                            style={{ width: 44, height: 44, objectFit: 'contain', backgroundColor: '#ffffff', borderRadius: 8, border: '1px solid #e2e8f0', cursor: 'zoom-in' }} 
                             onClick={() => setSelectedImage(imgSrc)}
                           />
                         ) : (

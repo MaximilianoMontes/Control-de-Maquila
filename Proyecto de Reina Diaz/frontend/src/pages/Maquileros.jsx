@@ -357,7 +357,7 @@ export default function Maquileros() {
                                   <img 
                                     src={pImg} 
                                     alt="" 
-                                    style={{ width: 35, height: 35, borderRadius: 4, objectFit: 'cover', cursor: 'zoom-in' }} 
+                                    style={{ width: 35, height: 35, borderRadius: 4, objectFit: 'contain', backgroundColor: '#ffffff', cursor: 'zoom-in' }} 
                                     onClick={() => setSelectedImage(pImg)}
                                   />
                                 ) : (

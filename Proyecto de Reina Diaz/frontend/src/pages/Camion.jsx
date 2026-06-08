@@ -486,7 +486,7 @@ export default function Camion() {
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                       {img ? (
-                        <img src={img} alt="" style={{ width: 44, height: 44, borderRadius: 6, objectFit: 'cover' }} />
+                        <img src={img} alt="" style={{ width: 44, height: 44, borderRadius: 6, objectFit: 'contain', backgroundColor: '#ffffff' }} />
                       ) : (
                         <div style={{ width: 44, height: 44, background: 'rgba(255,255,255,0.05)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                           <Truck size={20} color="var(--text-secondary)" />
@@ -847,7 +847,7 @@ export default function Camion() {
                       <tr key={d.id}>
                         <td>
                           {img ? (
-                            <img src={img} alt="" style={{ width: 40, height: 40, borderRadius: 6, objectFit: 'cover' }} />
+                            <img src={img} alt="" style={{ width: 40, height: 40, borderRadius: 6, objectFit: 'contain', backgroundColor: '#ffffff' }} />
                           ) : (
                             <div style={{ width: 40, height: 40, background: 'rgba(255,255,255,0.05)', borderRadius: 6 }} />
                           )}
