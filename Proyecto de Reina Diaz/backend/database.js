@@ -943,6 +943,49 @@ async function initializeDatabase() {
       console.error("Migration Error: Failed to restore missing cuts to inventario_real:", e);
     }
 
+    // Manual one-time migration to reset plancha and camion test data
+    try {
+      await connection.query(`
+        CREATE TABLE IF NOT EXISTS migrations_run (
+          migration_name VARCHAR(255) PRIMARY KEY
+        );
+      `);
+
+      const [run] = await connection.query("SELECT 1 FROM migrations_run WHERE migration_name = 'reset_plancha_test_data'");
+      if (run.length === 0) {
+        console.log('--- MIGRACIÓN MANUAL: Resetear todo lo de plancha y camiones (pruebas) ---');
+
+        // 1. Restaurar piezas en inventario_real
+        const [camionItems] = await connection.query("SELECT modelo, no_orden, piezas FROM camion_detalles");
+        console.log(`Restaurando stock a inventario_real para ${camionItems.length} registros de camión...`);
+        for (const item of camionItems) {
+          if (item.piezas > 0) {
+            await connection.query(`
+              UPDATE inventario_real 
+              SET piezas = piezas + ? 
+              WHERE no_orden = ? AND modelo = ?
+            `, [item.piezas, item.no_orden || '', item.modelo || '']);
+          }
+        }
+
+        // 2. Limpiar tablas
+        console.log('Vaciando tablas de plancha, camión y devoluciones...');
+        await connection.query("DELETE FROM plancha_devoluciones");
+        await connection.query("DELETE FROM plancha_trabajos");
+        await connection.query("DELETE FROM planchador_asistencias");
+        await connection.query("DELETE FROM planchador_pagos");
+        await connection.query("DELETE FROM camion_detalles");
+        await connection.query("DELETE FROM camiones");
+        await connection.query("DELETE FROM camion_borrador");
+
+        // Registrar migración completada
+        await connection.query("INSERT INTO migrations_run (migration_name) VALUES ('reset_plancha_test_data')");
+        console.log('--- FIN DE MIGRACIÓN MANUAL: Resetear plancha completado ---');
+      }
+    } catch (e) {
+      console.error('Error al resetear plancha:', e);
+    }
+
     connection.release();
     console.log('Database initialization complete.');
   } catch (error) {
