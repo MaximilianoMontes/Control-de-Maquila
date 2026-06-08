@@ -2826,11 +2826,6 @@ export default function Plancha() {
                 </button>
               </div>
             </form>
- 
-          </div>
-        </div>
-      )}
-
           </div>
         </div>
       )}
