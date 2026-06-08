@@ -2831,7 +2831,7 @@ export default function Plancha() {
         </div>
       )}
 
-          </div>
+          </main>
         </div>
       )}
 
