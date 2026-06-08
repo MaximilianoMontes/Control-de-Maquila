@@ -1030,6 +1030,28 @@ async function initializeDatabase() {
       console.error('Error al revertir stock de plancha:', e);
     }
 
+    // Archive plancha test production orders (set archivado = 3)
+    try {
+      const [run] = await connection.query("SELECT 1 FROM migrations_run WHERE migration_name = 'archive_plancha_test_orders'");
+      if (run.length === 0) {
+        console.log('--- MIGRACIÓN MANUAL: Archivar órdenes de producción de prueba de plancha ---');
+        
+        const ids = [10, 11, 12, 23, 28, 31, 46, 61, 62, 69, 76, 105, 106, 112, 113, 114, 115, 116, 118];
+        
+        await connection.query(
+          "UPDATE produccion SET archivado = 3 WHERE id IN (?)",
+          [ids]
+        );
+        
+        console.log(`Actualizadas ${ids.length} órdenes de producción a archivado = 3`);
+
+        await connection.query("INSERT INTO migrations_run (migration_name) VALUES ('archive_plancha_test_orders')");
+        console.log('--- FIN DE MIGRACIÓN MANUAL: Archivar órdenes completado ---');
+      }
+    } catch (e) {
+      console.error('Error al archivar órdenes de prueba:', e);
+    }
+
     connection.release();
     console.log('Database initialization complete.');
   } catch (error) {
