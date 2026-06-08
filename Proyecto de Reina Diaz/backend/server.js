@@ -48,12 +48,16 @@ const authenticateToken = (req, res, next) => {
 // Debug endpoint to check DB logs
 app.get('/api/debug-database-state', async (req, res) => {
   try {
-    const [countRows] = await db.query("SELECT COUNT(*) as total FROM historial");
-    const [history] = await db.query("SELECT * FROM historial ORDER BY id DESC LIMIT 2000");
+    const [invReal] = await db.query("SELECT id, numero, modelo, piezas, no_orden FROM inventario_real");
+    const [produccion] = await db.query(`
+      SELECT p.id, p.no_orden, p.estado, i.modelo, p.cantidad_producida 
+      FROM produccion p 
+      LEFT JOIN inventario i ON p.inventario_id = i.id
+    `);
     res.json({
-      deployCheck: "hello-v2",
-      totalHistoryRows: countRows[0].total,
-      history
+      deployCheck: "hello-v3",
+      invReal,
+      produccion
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
