@@ -976,20 +976,7 @@ async function initializeDatabase() {
       if (run.length === 0) {
         console.log('--- MIGRACIÓN MANUAL: Resetear todo lo de plancha y camiones (pruebas) ---');
 
-        // 1. Restaurar piezas en inventario_real
-        const [camionItems] = await connection.query("SELECT modelo, no_orden, piezas FROM camion_detalles");
-        console.log(`Restaurando stock a inventario_real para ${camionItems.length} registros de camión...`);
-        for (const item of camionItems) {
-          if (item.piezas > 0) {
-            await connection.query(`
-              UPDATE inventario_real 
-              SET piezas = piezas + ? 
-              WHERE no_orden = ? AND modelo = ?
-            `, [item.piezas, item.no_orden || '', item.modelo || '']);
-          }
-        }
-
-        // 2. Limpiar tablas
+        // Limpiar tablas
         console.log('Vaciando tablas de plancha, camión y devoluciones...');
         await connection.query("DELETE FROM plancha_devoluciones");
         await connection.query("DELETE FROM plancha_trabajos");
@@ -1005,6 +992,42 @@ async function initializeDatabase() {
       }
     } catch (e) {
       console.error('Error al resetear plancha:', e);
+    }
+
+    // Revert stock restoration in inventario_real
+    try {
+      const [run] = await connection.query("SELECT 1 FROM migrations_run WHERE migration_name = 'revert_plancha_stock_restore'");
+      if (run.length === 0) {
+        console.log('--- MIGRACIÓN MANUAL: Revertir restauración incorrecta de stock en inventario_real ---');
+        
+        const updates = [
+          { modelo: '541349', no_orden: 'E04113', piezas: 50 },
+          { modelo: '723119', no_orden: 'E04063', piezas: 232 },
+          { modelo: '526260', no_orden: 'E04059', piezas: 268 },
+          { modelo: '554258', no_orden: 'E04071', piezas: 280 },
+          { modelo: '501476', no_orden: 'E03984', piezas: 290 },
+          { modelo: '532148', no_orden: 'E04049', piezas: 250 },
+          { modelo: '532046', no_orden: 'E04002', piezas: 210 },
+          { modelo: '554296', no_orden: 'E04047', piezas: 192 },
+          { modelo: '554232', no_orden: 'E04114', piezas: 100 },
+          { modelo: '723053', no_orden: 'E04046', piezas: 192 },
+          { modelo: '752935', no_orden: 'E03918', piezas: 184 },
+          { modelo: '752935', no_orden: 'E03951', piezas: 184 }
+        ];
+
+        for (const u of updates) {
+          await connection.query(
+            "UPDATE inventario_real SET piezas = GREATEST(0, piezas - ?) WHERE no_orden = ? AND modelo = ?",
+            [u.piezas, u.no_orden, u.modelo]
+          );
+          console.log(`Revertido: modelo ${u.modelo}, no_orden ${u.no_orden}, restadas ${u.piezas} piezas`);
+        }
+
+        await connection.query("INSERT INTO migrations_run (migration_name) VALUES ('revert_plancha_stock_restore')");
+        console.log('--- FIN DE MIGRACIÓN MANUAL: Revertido con éxito ---');
+      }
+    } catch (e) {
+      console.error('Error al revertir stock de plancha:', e);
     }
 
     connection.release();

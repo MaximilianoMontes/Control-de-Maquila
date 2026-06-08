@@ -45,24 +45,7 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-// Debug endpoint to check DB logs
-app.get('/api/debug-database-state', async (req, res) => {
-  try {
-    const [invReal] = await db.query("SELECT id, numero, modelo, piezas, no_orden FROM inventario_real");
-    const [produccion] = await db.query(`
-      SELECT p.id, i.no_orden, p.estado, i.modelo, p.cantidad 
-      FROM produccion p 
-      LEFT JOIN inventario i ON p.inventario_id = i.id
-    `);
-    res.json({
-      deployCheck: "hello-v4",
-      invReal,
-      produccion
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+
 
 // Helper para formatear fechas a DD/MM/YYYY
 const formatDateToDMY = (dateVal) => {
