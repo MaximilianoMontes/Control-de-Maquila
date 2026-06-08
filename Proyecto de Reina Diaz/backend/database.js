@@ -17,6 +17,27 @@ async function initializeDatabase() {
     const connection = await pool.getConnection();
     console.log('Connected to MySQL database.');
 
+    // Debug: Dump database tables for inspection
+    try {
+      const fs = require('fs');
+      const path = require('path');
+      const [historyRows] = await connection.query("SELECT * FROM historial ORDER BY id DESC LIMIT 150");
+      const [invRealRows] = await connection.query("SELECT * FROM inventario_real");
+      const [prodRows] = await connection.query("SELECT * FROM produccion");
+      
+      const debugFolder = path.join(__dirname, '..', 'scratch');
+      if (!fs.existsSync(debugFolder)) {
+        fs.mkdirSync(debugFolder, { recursive: true });
+      }
+      
+      fs.writeFileSync(path.join(debugFolder, 'history.json'), JSON.stringify(historyRows, null, 2));
+      fs.writeFileSync(path.join(debugFolder, 'inv_real.json'), JSON.stringify(invRealRows, null, 2));
+      fs.writeFileSync(path.join(debugFolder, 'produccion.json'), JSON.stringify(prodRows, null, 2));
+      console.log("Debug files written successfully to scratch directory.");
+    } catch (e) {
+      console.error("Failed to write debug files:", e);
+    }
+
     // Initialize tables
     await connection.query(`
       CREATE TABLE IF NOT EXISTS users (
