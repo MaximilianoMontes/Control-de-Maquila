@@ -279,7 +279,7 @@ export default function Produccion() {
                             <img 
                               src={prodImg} 
                               alt="" 
-                              style={{ width: 32, height: 32, borderRadius: 4, objectFit: 'cover', cursor: 'zoom-in' }} 
+                              style={{ width: 32, height: 32, borderRadius: 4, objectFit: 'contain', backgroundColor: '#ffffff', cursor: 'zoom-in' }} 
                               onClick={() => setSelectedImage(prodImg)}
                             />
                           ) : (

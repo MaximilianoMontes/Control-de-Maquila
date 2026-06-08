@@ -78,14 +78,23 @@ const logActivity = async (userId, action, target, description) => {
 // Helper para procesar y comprimir imágenes
 const processImage = async (file) => {
   if (!file) return null;
-  const fileName = 'compressed-' + Date.now() + '.jpg';
+  const ext = file.mimetype === 'image/png' ? 'png' : (file.mimetype === 'image/webp' ? 'webp' : 'jpg');
+  const fileName = 'compressed-' + Date.now() + '.' + ext;
   const outputPath = path.join(uploadDir, fileName);
   
   try {
-    await sharp(file.path)
-      .resize(1200, null, { withoutEnlargement: true }) // Máximo 1200px de ancho
-      .jpeg({ quality: 80 }) // 80% de calidad para ahorrar espacio
-      .toFile(outputPath);
+    let pipeline = sharp(file.path)
+      .resize(1200, 1200, { fit: 'inside', withoutEnlargement: true }); // Fits within 1200x1200px maintaining aspect ratio
+      
+    if (ext === 'png') {
+      pipeline = pipeline.png({ compressionLevel: 8 });
+    } else if (ext === 'webp') {
+      pipeline = pipeline.webp({ quality: 80 });
+    } else {
+      pipeline = pipeline.jpeg({ quality: 80 });
+    }
+    
+    await pipeline.toFile(outputPath);
       
     // Borrar el archivo original sin comprimir para no duplicar espacio
     fs.unlink(file.path, (err) => {

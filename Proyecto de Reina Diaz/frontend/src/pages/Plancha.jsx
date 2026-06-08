@@ -1127,7 +1127,7 @@ export default function Plancha() {
                       <img 
                         src={`${API_URL}${m.imagen}`} 
                         alt={m.modelo} 
-                        style={{ width: '60px', height: '60px', borderRadius: '8px', objectFit: 'cover', background: '#000' }} 
+                        style={{ width: '60px', height: '60px', borderRadius: '8px', objectFit: 'contain', background: '#ffffff' }} 
                       />
                     ) : (
                       <div style={{ width: '60px', height: '60px', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -1270,7 +1270,7 @@ export default function Plancha() {
                           <img 
                             src={`${API_URL}${m.imagen}`} 
                             alt={m.modelo} 
-                            style={{ width: '40px', height: '40px', borderRadius: '6px', objectFit: 'cover', background: '#000' }} 
+                            style={{ width: '40px', height: '40px', borderRadius: '6px', objectFit: 'contain', background: '#ffffff' }} 
                           />
                         ) : (
                           <div style={{ width: '40px', height: '40px', borderRadius: '6px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -1518,7 +1518,7 @@ export default function Plancha() {
                                 <img 
                                   src={`${API_URL}${m.imagen}`} 
                                   alt={m.modelo} 
-                                  style={{ width: '32px', height: '32px', borderRadius: '4px', objectFit: 'cover', background: '#000' }} 
+                                  style={{ width: '32px', height: '32px', borderRadius: '4px', objectFit: 'contain', background: '#ffffff' }} 
                                 />
                               ) : (
                                 <div style={{ width: '32px', height: '32px', borderRadius: '4px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -2035,7 +2035,7 @@ export default function Plancha() {
                                 <img 
                                   src={`${API_URL}${t.modelo_imagen}`} 
                                   alt={t.modelo_nombre} 
-                                  style={{ width: '28px', height: '28px', borderRadius: '4px', objectFit: 'cover', background: '#000' }} 
+                                  style={{ width: '28px', height: '28px', borderRadius: '4px', objectFit: 'contain', background: '#ffffff' }} 
                                 />
                               ) : null}
                               <strong>{t.modelo_nombre || t.color}</strong>
@@ -2143,7 +2143,7 @@ export default function Plancha() {
                           <img 
                             src={`${API_URL}${h.modelo_imagen}`} 
                             alt={h.modelo_nombre} 
-                            style={{ width: '40px', height: '40px', borderRadius: '6px', objectFit: 'cover', background: '#000' }} 
+                            style={{ width: '40px', height: '40px', borderRadius: '6px', objectFit: 'contain', background: '#ffffff' }} 
                           />
                         ) : (
                           <div style={{ width: '40px', height: '40px', borderRadius: '6px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -2233,7 +2233,7 @@ export default function Plancha() {
                             <img 
                               src={`${API_URL}${h.modelo_imagen}`} 
                               alt={h.modelo_nombre} 
-                              style={{ width: '40px', height: '40px', borderRadius: '6px', objectFit: 'cover', background: '#000' }} 
+                              style={{ width: '40px', height: '40px', borderRadius: '6px', objectFit: 'contain', background: '#ffffff' }} 
                             />
                           ) : (
                             <div style={{ width: '40px', height: '40px', borderRadius: '6px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -2302,7 +2302,7 @@ export default function Plancha() {
                 <img 
                   src={`${API_URL}${modeloAVerificar.imagen}`} 
                   alt={modeloAVerificar.modelo} 
-                  style={{ width: '50px', height: '50px', borderRadius: '6px', objectFit: 'cover', background: '#000' }} 
+                  style={{ width: '50px', height: '50px', borderRadius: '6px', objectFit: 'contain', background: '#ffffff' }} 
                 />
               ) : null}
               <div>
@@ -2475,7 +2475,7 @@ export default function Plancha() {
                 <img 
                   src={`${API_URL}${modeloADevolver.imagen}`} 
                   alt={modeloADevolver.modelo} 
-                  style={{ width: '50px', height: '50px', borderRadius: '6px', objectFit: 'cover', background: '#000' }} 
+                  style={{ width: '50px', height: '50px', borderRadius: '6px', objectFit: 'contain', background: '#ffffff' }} 
                 />
               ) : null}
               <div>
