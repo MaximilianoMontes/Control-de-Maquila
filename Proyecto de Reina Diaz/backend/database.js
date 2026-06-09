@@ -1138,7 +1138,48 @@ async function initializeDatabase() {
     }
 
 
+    // DEBUG MIGRATION: Query history and production info for truck #19
+    try {
+      const [run] = await connection.query("SELECT 1 FROM migrations_run WHERE migration_name = 'debug_restore_truck_19_v1'");
+      if (run.length === 0) {
+        console.log('--- MIGRACIÓN MANUAL: Debug truck #19 ---');
+        
+        // 1. Get history logs matching truck #19 or target models
+        const [historyRows] = await connection.query(
+          "SELECT id, action, target, description, timestamp FROM historial WHERE description LIKE '%camión #19%' OR description LIKE '%526285%' OR description LIKE '%723175%' OR description LIKE '%723053%' OR description LIKE '%752935%' ORDER BY id DESC"
+        );
+        
+        // 2. Get production orders for target models
+        const [prodRows] = await connection.query(`
+          SELECT p.id as produccion_id, p.cantidad, p.cantidad_recibida, p.estado, p.archivado, i.modelo, i.no_orden, i.color
+          FROM produccion p
+          JOIN inventario i ON p.inventario_id = i.id
+          WHERE i.modelo IN ('526285', '723175', '723053', '752935')
+        `);
+        
+        const debugData = {
+          history: historyRows,
+          production: prodRows
+        };
+        
+        const debugStr = JSON.stringify(debugData, null, 2);
+        console.log('DEBUG TRUCK 19 DATA:', debugStr);
+        
+        // Write to truck #19 observaciones
+        await connection.query(
+          "UPDATE camiones SET observaciones = CONCAT(COALESCE(observaciones, ''), '\n\n=== DEBUG DATA ===\n', ?) WHERE id = 19",
+          [debugStr]
+        );
+        
+        await connection.query("INSERT INTO migrations_run (migration_name) VALUES ('debug_restore_truck_19_v1')");
+        console.log('--- FIN DE MIGRACIÓN MANUAL: Debug truck #19 ---');
+      }
+    } catch (e) {
+      console.error('Error in debug migration:', e);
+    }
+
     connection.release();
+
     console.log('Database initialization complete.');
 
   } catch (error) {
