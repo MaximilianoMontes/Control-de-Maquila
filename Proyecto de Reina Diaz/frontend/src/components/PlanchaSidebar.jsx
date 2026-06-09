@@ -14,7 +14,7 @@ import { useSettings } from '../context/SettingsContext';
 
 export default function PlanchaSidebar({ activeTab, setActiveTab }) {
   const { logout } = useAuth();
-  const { t } = useSettings();
+  const { t, settings } = useSettings();
   const location = useLocation();
   const navigate = useNavigate();
   const isPlanchaPage = location.pathname === '/plancha';
