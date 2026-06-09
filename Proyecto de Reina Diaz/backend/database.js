@@ -1207,6 +1207,16 @@ async function initializeDatabase() {
             else if (modelo === '752935') precioPlancha = 5.00;
           }
 
+          // Check if the camion exists in camiones table to prevent foreign key violation
+          const [camionExists] = await connection.query(
+            "SELECT id FROM camiones WHERE id = ?",
+            [camionId]
+          );
+          if (camionExists.length === 0) {
+            console.log(`Camión #${camionId} no existe en la base de datos, saltando.`);
+            continue;
+          }
+
           // Check if this record already exists in camion_detalles to prevent duplicates
           const [exists] = await connection.query(
             "SELECT id FROM camion_detalles WHERE camion_id = ? AND modelo = ? AND produccion_id = ? AND piezas = ?",
