@@ -778,6 +778,17 @@ async function initializeDatabase() {
       if (u3.affectedRows > 0) {
         console.log("Corrección: Orden ID 18 (Mas Procesos) restaurada a 'Terminado'.");
       }
+
+      // 4. Restaurar orden de Jose Luis (ID 13, UI #1) a 'Terminado' y registrar su pago
+      const [pagoExist] = await connection.query("SELECT id FROM pagos WHERE produccion_id = 13");
+      if (pagoExist.length === 0) {
+        await connection.query("INSERT INTO pagos (produccion_id, monto, fecha, tipo_pago) VALUES (13, 3520.00, '2026-06-09', 'completo')");
+        console.log("Corrección: Pago de $3,520.00 insertado para la orden ID 13 (Jose Luis).");
+      }
+      const [u4] = await connection.query("UPDATE produccion SET estado = 'Terminado', fecha_terminado = '2026-06-09 00:00:00' WHERE id = 13 AND estado = 'En proceso'");
+      if (u4.affectedRows > 0) {
+        console.log("Corrección: Orden ID 13 (Jose Luis) restaurada a 'Terminado'.");
+      }
     } catch (e) {
       console.error('Error en migración manual correctiva:', e);
     }
