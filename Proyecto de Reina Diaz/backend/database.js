@@ -1115,6 +1115,28 @@ async function initializeDatabase() {
       console.error('Error al archivar órdenes sobrantes del camión:', e);
     }
 
+    // REVERT: Restore 526285, 723175, 723053, 752935 back to archivado=0 (visible in truck list)
+    try {
+      const [run] = await connection.query("SELECT 1 FROM migrations_run WHERE migration_name = 'revert_archive_leftover_truck_orders_v1'");
+      if (run.length === 0) {
+        console.log('--- MIGRACIÓN MANUAL: Revertir archivado permanente de órdenes sobrantes ---');
+
+        // IDs: 23 (526285), 46 (723175), 61 (723053), 105 (752935), 106 (752935)
+        const idsToRestore = [23, 46, 61, 105, 106];
+
+        await connection.query(
+          "UPDATE produccion SET archivado = 0 WHERE id IN (?)",
+          [idsToRestore]
+        );
+        console.log('Producción restaurada a archivado=0 para IDs:', idsToRestore);
+
+        await connection.query("INSERT INTO migrations_run (migration_name) VALUES ('revert_archive_leftover_truck_orders_v1')");
+        console.log('--- FIN DE MIGRACIÓN MANUAL: Órdenes restauradas ---');
+      }
+    } catch (e) {
+      console.error('Error al revertir archivado de órdenes:', e);
+    }
+
 
     connection.release();
     console.log('Database initialization complete.');
