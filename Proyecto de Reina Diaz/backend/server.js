@@ -227,26 +227,6 @@ app.get('/api/historial', authenticateToken, async (req, res) => {
   }
 });
 
-// Temporary debug route to check restore status
-app.get('/api/check-restore-status', async (req, res) => {
-  try {
-    const [run] = await db.query("SELECT * FROM migrations_run WHERE migration_name = 'restore_truck_19_details_final_v1'");
-    const [camion] = await db.query("SELECT observaciones FROM camiones WHERE id = 19");
-    const [detalles] = await db.query("SELECT id, modelo, piezas, verificado FROM camion_detalles WHERE camion_id = 19");
-    const [activeProds] = await db.query("SELECT id, estado, archivado FROM produccion WHERE id IN (23, 46, 61, 105, 106)");
-    
-    res.json({
-      migrationRun: run.length > 0,
-      migrationError: global.migrationError || null,
-      observaciones: camion[0]?.observaciones || null,
-      detalles: detalles,
-      activeProds: activeProds
-    });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
 // APIs Maquileros
 app.get('/api/maquileros', async (req, res) => {
   try {
