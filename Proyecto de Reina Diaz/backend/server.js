@@ -995,6 +995,13 @@ app.post('/api/camiones', authenticateToken, async (req, res) => {
       console.error("Error running autoArchiveOrders after truck commit:", e);
     }
 
+    // Sincronizar inventario físico después de subir al camión
+    try {
+      await syncPhysicalInventory(connection);
+    } catch (e) {
+      console.error("Error running syncPhysicalInventory after truck commit:", e);
+    }
+
     res.json({ success: true, camionId });
   } catch (error) {
     await connection.rollback();
@@ -1053,6 +1060,24 @@ const autoArchiveOrders = async () => {
     }
   } catch (error) {
     console.error("Error running auto-archive:", error);
+  }
+};
+
+const syncPhysicalInventory = async (connection) => {
+  const conn = connection || db;
+  try {
+    await conn.query(`
+      UPDATE inventario_real ir
+      JOIN inventario i ON i.no_orden = ir.no_orden AND i.modelo = ir.modelo
+      SET ir.piezas = i.piezas_en_proceso - COALESCE((
+        SELECT SUM(cd.piezas) 
+        FROM camion_detalles cd 
+        WHERE cd.no_orden = ir.no_orden AND cd.modelo = ir.modelo
+      ), 0)
+    `);
+    console.log("Sincronización de inventario físico completada con éxito.");
+  } catch (error) {
+    console.error("Error running syncPhysicalInventory:", error);
   }
 };
 
@@ -1397,6 +1422,11 @@ app.delete('/api/produccion/:id', authenticateToken, async (req, res) => {
       await db.query("UPDATE produccion SET archivado = 3 WHERE id = ?", [req.params.id]);
       await checkAndMoveToInventory(req.params.id, req.user.id);
       await logActivity(req.user.id, 'EDIT', 'PRODUCCION', `Ocultó orden terminada de ${old.modelo || 'ID '+req.params.id} (evitó borrado de historial)`);
+      try {
+        await syncPhysicalInventory();
+      } catch (e) {
+        console.error("Error running syncPhysicalInventory:", e);
+      }
       return res.json({ success: true, archived: true });
     }
 
@@ -1411,6 +1441,12 @@ app.delete('/api/produccion/:id', authenticateToken, async (req, res) => {
       throw error;
     } finally {
       connection.release();
+    }
+
+    try {
+      await syncPhysicalInventory();
+    } catch (e) {
+      console.error("Error running syncPhysicalInventory:", e);
     }
 
     await logActivity(req.user.id, 'BAJA', 'PRODUCCION', `Eliminó orden de ${old.modelo || 'ID '+req.params.id}`);
@@ -1515,13 +1551,13 @@ app.delete('/api/pagos/:id', authenticateToken, async (req, res) => {
     // 3.5. Update order status based on remaining payments
     const [remainingPagos] = await connection.query("SELECT tipo_pago FROM pagos WHERE produccion_id = ?", [pago.produccion_id]);
     if (remainingPagos.length === 0) {
-      await connection.query("UPDATE produccion SET estado = 'En proceso', fecha_terminado = NULL WHERE id = ?", [pago.produccion_id]);
+      await connection.query("UPDATE produccion SET estado = 'En proceso', fecha_terminado = NULL, archivado = 0 WHERE id = ?", [pago.produccion_id]);
     } else {
       const hasCompleto = remainingPagos.some(p => p.tipo_pago === 'completo');
       if (hasCompleto) {
         await connection.query("UPDATE produccion SET estado = 'Terminado' WHERE id = ?", [pago.produccion_id]);
       } else {
-        await connection.query("UPDATE produccion SET estado = 'Terminado Parcial', fecha_terminado = NULL WHERE id = ?", [pago.produccion_id]);
+        await connection.query("UPDATE produccion SET estado = 'Terminado Parcial', fecha_terminado = NULL, archivado = 0 WHERE id = ?", [pago.produccion_id]);
       }
     }
 
@@ -1538,6 +1574,12 @@ app.delete('/api/pagos/:id', authenticateToken, async (req, res) => {
     // 5. Update archiving and inventory status dynamically
     await checkAndMoveToInventory(pago.produccion_id, req.user.id);
     await autoArchiveOrders();
+
+    try {
+      await syncPhysicalInventory(connection);
+    } catch (e) {
+      console.error("Error running syncPhysicalInventory after payment delete:", e);
+    }
 
     res.json({ success: true, message: 'Pago eliminado y descuentos restaurados' });
   } catch (error) {
@@ -2755,6 +2797,13 @@ app.post('/api/plancha/modelos/:id/devolver', authenticateToken, async (req, res
     );
 
     await connection.commit();
+
+    try {
+      await syncPhysicalInventory();
+    } catch (e) {
+      console.error("Error running syncPhysicalInventory after devolution:", e);
+    }
+
     res.json({ success: true, totalDevolver });
   } catch (error) {
     await connection.rollback();
@@ -3968,9 +4017,14 @@ app.get('/api/plancha/historial', authenticateToken, async (req, res) => {
 // Debug payments removed
 
 if (require.main === module) {
-  app.listen(PORT, '0.0.0.0', () => {
+  app.listen(PORT, '0.0.0.0', async () => {
     console.log(`Server running on http://0.0.0.0:${PORT}`);
+    try {
+      await syncPhysicalInventory();
+    } catch (e) {
+      console.error("Error en sincronización inicial de inventario:", e);
+    }
   });
 }
 
-module.exports = { app, checkAndMoveToInventory, autoArchiveOrders };
+module.exports = { app, checkAndMoveToInventory, autoArchiveOrders, syncPhysicalInventory };
