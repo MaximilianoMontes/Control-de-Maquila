@@ -1079,8 +1079,46 @@ async function initializeDatabase() {
       console.error('Error al restaurar órdenes sobrantes de camión V2:', e);
     }
 
+    // Permanently archive 526285, 723175, 723053, 752935 (archivado = 3 = eliminado permanente)
+    try {
+      const [run] = await connection.query("SELECT 1 FROM migrations_run WHERE migration_name = 'archive_leftover_truck_orders_v1'");
+      if (run.length === 0) {
+        console.log('--- MIGRACIÓN MANUAL: Archivar permanentemente órdenes sobrantes del camión ---');
+
+        // IDs: 23 (526285), 46 (723175), 61 (723053), 105 (752935), 106 (752935)
+        const idsToArchive = [23, 46, 61, 105, 106];
+
+        // 1. Set archivado = 3 (eliminado permanente - no aparece en ninguna lista)
+        await connection.query(
+          "UPDATE produccion SET archivado = 3 WHERE id IN (?)",
+          [idsToArchive]
+        );
+        console.log('Producción archivada permanentemente (archivado=3) para IDs:', idsToArchive);
+
+        // 2. Limpiar camion_detalles para que no aparezcan en la lista del camión
+        await connection.query(
+          "DELETE FROM camion_detalles WHERE produccion_id IN (?)",
+          [idsToArchive]
+        );
+        console.log('Registros de camion_detalles eliminados para IDs:', idsToArchive);
+
+        // 3. Limpiar plancha_trabajos relacionados si los hay
+        await connection.query(
+          "DELETE pt FROM plancha_trabajos pt INNER JOIN camion_detalles cd ON pt.camion_detalles_id = cd.id WHERE cd.produccion_id IN (?)",
+          [idsToArchive]
+        );
+
+        await connection.query("INSERT INTO migrations_run (migration_name) VALUES ('archive_leftover_truck_orders_v1')");
+        console.log('--- FIN DE MIGRACIÓN MANUAL: Órdenes archivadas permanentemente ---');
+      }
+    } catch (e) {
+      console.error('Error al archivar órdenes sobrantes del camión:', e);
+    }
+
+
     connection.release();
     console.log('Database initialization complete.');
+
   } catch (error) {
     console.error('Error initializing database:', error);
   }
