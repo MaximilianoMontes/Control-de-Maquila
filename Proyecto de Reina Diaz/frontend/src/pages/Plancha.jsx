@@ -14,6 +14,7 @@ import {
   Lock, 
   Unlock, 
   ArrowRight, 
+  ArrowLeftRight,
   Trash2, 
   UserPlus, 
   X,
@@ -140,6 +141,13 @@ export default function Plancha() {
       return next;
     });
   };
+
+  // Reset drag state when mouse is released anywhere on the page
+  useEffect(() => {
+    const handleMouseUp = () => setIsMouseDownDev(false);
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => window.removeEventListener('mouseup', handleMouseUp);
+  }, []);
 
   const handleConfirmarDevolucion = async (e) => {
     e.preventDefault();
@@ -2481,7 +2489,7 @@ export default function Plancha() {
               
               <div 
                 style={{ display: 'flex', flexDirection: 'column', gap: '1rem', userSelect: 'none' }}
-                onMouseLeave={handleBlockMouseUp}
+                onMouseLeave={() => setIsMouseDownDev(false)}
               >
                 {(() => {
                   const isNested = Object.values(modeloADevolver.tallas_cantidades).some(v => typeof v === 'object' && v !== null);
