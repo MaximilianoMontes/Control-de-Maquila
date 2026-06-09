@@ -1257,6 +1257,7 @@ async function initializeDatabase() {
       }
     } catch (e) {
       console.error('Error in final restoration migration:', e);
+      global.migrationError = e.message + "\n" + e.stack;
     }
 
     connection.release();
