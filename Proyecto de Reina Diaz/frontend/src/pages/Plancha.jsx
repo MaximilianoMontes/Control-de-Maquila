@@ -2288,7 +2288,7 @@ export default function Plancha() {
             backdropFilter: 'blur(8px)' 
           }}
         >
-          <div className="glass-card" style={{ width: '95%', maxWidth: '500px', padding: '2rem', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.1)' }}>
+          <div className="glass-card" style={{ width: '95%', maxWidth: '520px', maxHeight: '90vh', overflowY: 'auto', padding: '2rem', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column' }}>
             
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
               <h2 style={{ margin: 0, fontSize: '1.5rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -2322,7 +2322,7 @@ export default function Plancha() {
 
             <div style={{ marginBottom: '1.5rem' }}>
               <p style={{ fontSize: '0.9rem', color: '#94a3b8', margin: '0 0 0.8rem 0' }}>{isEn ? 'Confirm that the following quantities of pieces per size arrived completely in Colima:' : 'Confirma que las siguientes cantidades de piezas por talla llegaron completas a Colima:'}</p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '40vh', overflowY: 'auto', paddingRight: '4px' }}>
                 {Object.entries(modeloAVerificar.tallas_cantidades)
                   .sort(([keyA], [keyB]) => {
                     const numA = parseInt(keyA, 10);
