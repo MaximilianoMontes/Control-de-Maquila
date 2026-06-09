@@ -227,18 +227,6 @@ app.get('/api/historial', authenticateToken, async (req, res) => {
   }
 });
 
-app.get('/api/debug-order-13', async (req, res) => {
-  try {
-    const [camionDetalles] = await db.query("SELECT * FROM camion_detalles WHERE produccion_id = 13");
-    const [produccion] = await db.query("SELECT * FROM produccion WHERE id = 13");
-    const [pagos] = await db.query("SELECT * FROM pagos WHERE produccion_id = 13");
-    const [historial] = await db.query("SELECT * FROM historial WHERE description LIKE '%740990%' OR description LIKE '%Jose Luis%' OR description LIKE '%orden 13%' OR description LIKE '%ID 13%' ORDER BY id DESC");
-    res.json({ camionDetalles, produccion, pagos, historial });
-  } catch(e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
 app.get('/api/maquileros', async (req, res) => {
   try {
     const [maquileros] = await db.query("SELECT * FROM maquileros");
