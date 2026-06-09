@@ -1054,12 +1054,12 @@ async function initializeDatabase() {
 
     // Restore specific target orders to the truck list (unarchive and reset 541349 shipped count)
     try {
-      const [run] = await connection.query("SELECT 1 FROM migrations_run WHERE migration_name = 'restore_truck_target_orders'");
+      const [run] = await connection.query("SELECT 1 FROM migrations_run WHERE migration_name = 'restore_truck_target_orders_v2'");
       if (run.length === 0) {
-        console.log('--- MIGRACIÓN MANUAL: Restaurar órdenes sobrantes de camión ---');
+        console.log('--- MIGRACIÓN MANUAL: Restaurar órdenes sobrantes de camión V2 ---');
         
-        // 1. Unarchive the production orders: 23 (526285), 46 (723175), 61 (723053), 76 (541349)
-        const targetIds = [23, 46, 61, 76];
+        // 1. Unarchive target production orders: 23 (526285), 46 (723175), 61 (723053), 76 (541349), 69 (752995), 105 (752935), 106 (752935)
+        const targetIds = [23, 46, 61, 76, 69, 105, 106];
         await connection.query(
           "UPDATE produccion SET archivado = 0 WHERE id IN (?)",
           [targetIds]
@@ -1072,11 +1072,11 @@ async function initializeDatabase() {
         );
         console.log('Eliminados registros de camion_detalles para produccion_id 76');
 
-        await connection.query("INSERT INTO migrations_run (migration_name) VALUES ('restore_truck_target_orders')");
-        console.log('--- FIN DE MIGRACIÓN MANUAL: Restauración completada ---');
+        await connection.query("INSERT INTO migrations_run (migration_name) VALUES ('restore_truck_target_orders_v2')");
+        console.log('--- FIN DE MIGRACIÓN MANUAL: Restauración V2 completada ---');
       }
     } catch (e) {
-      console.error('Error al restaurar órdenes sobrantes de camión:', e);
+      console.error('Error al restaurar órdenes sobrantes de camión V2:', e);
     }
 
     connection.release();
