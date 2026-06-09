@@ -1138,44 +1138,125 @@ async function initializeDatabase() {
     }
 
 
-    // DEBUG MIGRATION: Query history and production info for truck #19
+    // FINAL MIGRATION: Restore deleted truck shipments and permanently archive target orders (archivado = 3)
     try {
-      const [run] = await connection.query("SELECT 1 FROM migrations_run WHERE migration_name = 'debug_restore_truck_19_v1'");
+      const [run] = await connection.query("SELECT 1 FROM migrations_run WHERE migration_name = 'restore_truck_19_details_final_v1'");
       if (run.length === 0) {
-        console.log('--- MIGRACIÓN MANUAL: Debug truck #19 ---');
-        
-        // 1. Get history logs matching truck #19 or target models
-        const [historyRows] = await connection.query(
-          "SELECT id, action, target, description, timestamp FROM historial WHERE description LIKE '%camión #19%' OR description LIKE '%526285%' OR description LIKE '%723175%' OR description LIKE '%723053%' OR description LIKE '%752935%' ORDER BY id DESC"
-        );
-        
-        // 2. Get production orders for target models
+        console.log('--- MIGRACIÓN MANUAL: Restaurar envíos de camión y archivar órdenes ---');
+
+        const targetIds = [23, 46, 61, 105, 106];
+
+        // 1. Get production order details
         const [prodRows] = await connection.query(`
-          SELECT p.id as produccion_id, p.cantidad, p.cantidad_recibida, p.estado, p.archivado, i.modelo, i.no_orden, i.color
+          SELECT p.id as produccion_id, p.cantidad, p.cantidad_recibida, p.estado, p.archivado, 
+                 i.modelo, i.no_orden, i.color as variantes_json, i.precio, i.numero, i.temporada, i.cliente
           FROM produccion p
           JOIN inventario i ON p.inventario_id = i.id
-          WHERE i.modelo IN ('526285', '723175', '723053', '752935')
-        `);
-        
-        const debugData = {
-          history: historyRows,
-          production: prodRows
-        };
-        
-        const debugStr = JSON.stringify(debugData, null, 2);
-        console.log('DEBUG TRUCK 19 DATA:', debugStr);
-        
-        // Write to truck #19 observaciones
-        await connection.query(
-          "UPDATE camiones SET observaciones = CONCAT(COALESCE(observaciones, ''), '\n\n=== DEBUG DATA ===\n', ?) WHERE id = 19",
-          [debugStr]
+          WHERE p.id IN (?)
+        `, [targetIds]);
+
+        const prodLookup = {};
+        prodRows.forEach(r => {
+          prodLookup[r.produccion_id] = r;
+        });
+
+        // 2. Query history logs matching the target models and truck shipments
+        const [historyRows] = await connection.query(
+          "SELECT description FROM historial WHERE action = 'EDIT' AND target = 'INVENTARIO_REAL' AND description LIKE 'Subió al camión %' ORDER BY id ASC"
         );
-        
-        await connection.query("INSERT INTO migrations_run (migration_name) VALUES ('debug_restore_truck_19_v1')");
-        console.log('--- FIN DE MIGRACIÓN MANUAL: Debug truck #19 ---');
+
+        // 3. Recreate missing camion_detalles rows
+        for (const log of historyRows) {
+          const regex = /Subió al camión #(\d+)\s+\(([^)]+)\)\s+(\d+)\s+piezas del modelo\s+(\S+)\s+\(Tallas:\s*(.+)\)/;
+          const match = log.description.match(regex);
+          if (!match) continue;
+
+          const camionId = parseInt(match[1]);
+          const fechaEnvio = match[2];
+          const piezas = parseInt(match[3]);
+          const modelo = match[4];
+          const tallas_cantidades = match[5];
+
+          // Determine the correct produccion_id for target models
+          let produccionId = null;
+          if (modelo === '526285') produccionId = 23;
+          else if (modelo === '723175') produccionId = 46;
+          else if (modelo === '723053') produccionId = 61;
+          else if (modelo === '752935') {
+            if (piezas === 92) produccionId = 106;
+            else if (piezas === 96 || piezas === 20) produccionId = 105;
+          }
+
+          if (!produccionId) continue;
+
+          const prodInfo = prodLookup[produccionId];
+          if (!prodInfo) continue;
+
+          // Set verified status to 1 (since they were verified) and use correct precio_plancha
+          const verificado = 1;
+          let precioPlancha = 0.00;
+          if (camionId === 19) {
+            if (modelo === '526285') precioPlancha = 7.00;
+            else if (modelo === '723175') precioPlancha = 5.00;
+            else if (modelo === '723053') precioPlancha = 8.00;
+            else if (modelo === '752935') precioPlancha = 5.00;
+          } else {
+            if (modelo === '526285') precioPlancha = 5.00;
+            else if (modelo === '723175') precioPlancha = 5.00;
+            else if (modelo === '723053') precioPlancha = 7.00;
+            else if (modelo === '752935') precioPlancha = 5.00;
+          }
+
+          // Check if this record already exists in camion_detalles to prevent duplicates
+          const [exists] = await connection.query(
+            "SELECT id FROM camion_detalles WHERE camion_id = ? AND modelo = ? AND produccion_id = ? AND piezas = ?",
+            [camionId, modelo, produccionId, piezas]
+          );
+
+          if (exists.length === 0) {
+            await connection.query(`
+              INSERT INTO camion_detalles 
+              (camion_id, numero, temporada, modelo, precio, color, cliente, no_orden, piezas, tallas_cantidades, produccion_id, precio_plancha, verificado)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `, [
+              camionId,
+              prodInfo.numero || null,
+              prodInfo.temporada || null,
+              prodInfo.modelo || null,
+              parseFloat(prodInfo.precio) || 0,
+              prodInfo.variantes_json || null,
+              prodInfo.cliente || null,
+              prodInfo.no_orden || null,
+              piezas,
+              tallas_cantidades,
+              produccionId,
+              precioPlancha,
+              verificado
+            ]);
+            console.log(`Restaurado camion_detalles: Camion #${camionId}, Modelo ${modelo}, Piezas ${piezas}, Produccion ID ${produccionId}`);
+          }
+        }
+
+        // 4. Archive production orders with archivado = 3 (permanent archive)
+        await connection.query(
+          "UPDATE produccion SET archivado = 3 WHERE id IN (?)",
+          [targetIds]
+        );
+        console.log('Órdenes de producción archivadas permanentemente (archivado=3):', targetIds);
+
+        // 5. Clean up truck #19 observaciones (remove the debug block)
+        const [truck] = await connection.query("SELECT observaciones FROM camiones WHERE id = 19");
+        if (truck.length > 0 && truck[0].observaciones) {
+          const cleanObs = truck[0].observaciones.split('\n\n=== DEBUG DATA ===')[0];
+          await connection.query("UPDATE camiones SET observaciones = ? WHERE id = 19", [cleanObs]);
+          console.log('Observaciones de camión #19 limpiadas.');
+        }
+
+        await connection.query("INSERT INTO migrations_run (migration_name) VALUES ('restore_truck_19_details_final_v1')");
+        console.log('--- FIN DE MIGRACIÓN MANUAL: Restauración completada ---');
       }
     } catch (e) {
-      console.error('Error in debug migration:', e);
+      console.error('Error in final restoration migration:', e);
     }
 
     connection.release();
