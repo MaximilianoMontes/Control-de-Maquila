@@ -789,6 +789,12 @@ async function initializeDatabase() {
       if (u4.affectedRows > 0) {
         console.log("Corrección: Orden ID 13 (Jose Luis) restaurada a 'Terminado'.");
       }
+
+      // 5. Corregir stock negativo del modelo 541349 en inventario_real (causado por doble-subida/reset manual)
+      const [u5] = await connection.query("UPDATE inventario_real SET piezas = 0 WHERE id = 111 AND piezas = -50");
+      if (u5.affectedRows > 0) {
+        console.log("Corrección: Stock negativo de modelo 541349 restablecido a 0.");
+      }
     } catch (e) {
       console.error('Error en migración manual correctiva:', e);
     }
