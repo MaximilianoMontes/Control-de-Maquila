@@ -227,20 +227,7 @@ app.get('/api/historial', authenticateToken, async (req, res) => {
   }
 });
 
-// APIs Maquileros
-app.get('/api/debug-order-11', async (req, res) => {
-  try {
-    const [juanOrtiz] = await db.query('SELECT p.* FROM produccion p JOIN inventario i ON p.inventario_id = i.id WHERE i.modelo = "752943" AND p.cantidad = 180');
-    const [joseLuis] = await db.query('SELECT p.* FROM produccion p JOIN inventario i ON p.inventario_id = i.id WHERE i.modelo = "740990"');
-    const [jaquelinePerez] = await db.query('SELECT p.* FROM produccion p JOIN inventario i ON p.inventario_id = i.id WHERE i.modelo = "723138" AND p.cantidad = 172');
-    const [antonioJavier] = await db.query('SELECT p.* FROM produccion p JOIN inventario i ON p.inventario_id = i.id WHERE i.modelo = "740987"');
-    const [masProcesos] = await db.query('SELECT p.* FROM produccion p JOIN inventario i ON p.inventario_id = i.id WHERE i.modelo = "731147"');
-    const [allPagos] = await db.query('SELECT * FROM pagos WHERE produccion_id IN (SELECT id FROM produccion)');
-    res.json({ juanOrtiz, joseLuis, jaquelinePerez, antonioJavier, masProcesos, allPagos });
-  } catch(e) {
-    res.status(500).json({ error: e.message });
-  }
-});
+
 
 app.get('/api/maquileros', async (req, res) => {
   try {
