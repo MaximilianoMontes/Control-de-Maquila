@@ -228,6 +228,17 @@ app.get('/api/historial', authenticateToken, async (req, res) => {
 });
 
 // APIs Maquileros
+app.get('/api/debug-order-11', async (req, res) => {
+  try {
+    const [prod] = await db.query('SELECT * FROM produccion WHERE id = 67');
+    const [pagos] = await db.query('SELECT * FROM pagos WHERE produccion_id = 67');
+    const [camion] = await db.query('SELECT * FROM camion_detalles WHERE produccion_id = 67');
+    res.json({ prod: prod[0], pagos, camion });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 app.get('/api/maquileros', async (req, res) => {
   try {
     const [maquileros] = await db.query("SELECT * FROM maquileros");
