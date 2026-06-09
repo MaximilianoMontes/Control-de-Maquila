@@ -237,6 +237,7 @@ app.get('/api/check-restore-status', async (req, res) => {
     
     res.json({
       migrationRun: run.length > 0,
+      migrationError: global.migrationError || null,
       observaciones: camion[0]?.observaciones || null,
       detalles: detalles,
       activeProds: activeProds
