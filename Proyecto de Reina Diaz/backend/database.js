@@ -1266,6 +1266,7 @@ async function initializeDatabase() {
 
   } catch (error) {
     console.error('Error initializing database:', error);
+    global.migrationError = "OUTER ERROR: " + error.message + "\n" + error.stack;
   }
 }
 
