@@ -331,6 +331,7 @@ async function initializeDatabase() {
       console.error('Error al migrar roles:', e);
     }
 
+    /*
     try {
       console.log('--- MIGRACIÓN MANUAL: Eliminación de órdenes duplicadas/erróneas ---');
       
@@ -755,6 +756,30 @@ async function initializeDatabase() {
       console.log('--- FIN DE MIGRACIÓN MANUAL JAQUELINE ---');
     } catch (e) {
       console.error('Error al resetear la orden de Jaqueline:', e);
+    }
+    */
+
+    try {
+      console.log('--- MIGRACIÓN MANUAL CORRECTIVA: Restaurar estados de pagos completados (Evitar re-ejecuciones de resets) ---');
+      // 1. Restaurar orden de Juan Ortiz (ID 67, UI #11) a 'Terminado' (tiene pago completo de 13860 y está subida al camión)
+      const [u1] = await connection.query("UPDATE produccion SET estado = 'Terminado', fecha_terminado = '2026-06-09 00:00:00' WHERE id = 67 AND estado = 'En proceso'");
+      if (u1.affectedRows > 0) {
+        console.log("Corrección: Orden ID 67 (Juan Ortiz) restaurada a 'Terminado'.");
+      }
+      
+      // 2. Restaurar orden de Antonio Javier (ID 42) a 'Terminado' (tiene pagos y estaba terminada originalmente)
+      const [u2] = await connection.query("UPDATE produccion SET estado = 'Terminado', fecha_terminado = '2026-06-08 00:00:00' WHERE id = 42 AND estado = 'En proceso'");
+      if (u2.affectedRows > 0) {
+        console.log("Corrección: Orden ID 42 (Antonio Javier) restaurada a 'Terminado'.");
+      }
+
+      // 3. Restaurar orden de Mas Procesos (ID 18) a 'Terminado' (tiene pago completo y estaba terminada originalmente)
+      const [u3] = await connection.query("UPDATE produccion SET estado = 'Terminado', fecha_terminado = '2026-06-06 00:00:00' WHERE id = 18 AND estado = 'En proceso'");
+      if (u3.affectedRows > 0) {
+        console.log("Corrección: Orden ID 18 (Mas Procesos) restaurada a 'Terminado'.");
+      }
+    } catch (e) {
+      console.error('Error en migración manual correctiva:', e);
     }
 
 
