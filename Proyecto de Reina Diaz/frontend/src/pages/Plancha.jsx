@@ -1547,9 +1547,14 @@ export default function Plancha() {
                     ) : (
                       <div style={{ width: '60px', height: '80px', background: 'var(--bg-input)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Layers color="#cbd5e1" /></div>
                     )}
-                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                    <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                       <div>
-                        <h4 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '0.95rem' }}>{m.modelo}</h4>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                          <h4 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '0.95rem' }}>{m.modelo}</h4>
+                          <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#10b981', background: 'rgba(16,185,129,0.1)', padding: '2px 6px', borderRadius: '4px' }}>
+                            {Object.values(m.tallas_disponibles || {}).reduce((a, b) => a + b, 0)} pz
+                          </span>
+                        </div>
                         <p style={{ margin: '4px 0', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{formatCurrency(m.precio_plancha)}/pza</p>
                         <button onClick={() => { 
                           if (!activeBurroScanner) {
@@ -1560,11 +1565,29 @@ export default function Plancha() {
                           handleDropOnBurro(null, activeBurroScanner - 1, { type: 'modelo', data: m });
                         }} style={{ background: '#3b82f6', color: 'var(--bg-card)', border: 'none', borderRadius: '6px', padding: '4px 12px', fontSize: '0.75rem', cursor: 'pointer', alignSelf: 'flex-start', marginTop: '4px' }}>Asignar</button>
                       </div>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                        {Object.entries(m.tallas_disponibles).filter(([_, q]) => q > 0).map(([t, q]) => (
-                          <span key={t} style={{ background: 'var(--bg-input)', color: 'var(--text-secondary)', fontSize: '0.7rem', padding: '2px 6px', borderRadius: '4px', fontWeight: '600' }}>T{t}: {q}</span>
-                        ))}
-                      </div>
+                      
+                      {m.tallas_colores_disponibles && Object.keys(m.tallas_colores_disponibles).length > 0 ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '8px' }}>
+                          {Object.entries(m.tallas_colores_disponibles).map(([colorName, colorTallas]) => {
+                            const availableForColor = Object.entries(colorTallas || {}).filter(([_, q]) => q > 0);
+                            if (availableForColor.length === 0) return null;
+                            return (
+                              <div key={colorName} style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
+                                <span style={{ fontSize: '0.65rem', color: 'var(--text-primary)', fontWeight: 'bold', textTransform: 'uppercase' }}>{colorName}:</span>
+                                {availableForColor.map(([t, q]) => (
+                                  <span key={t} style={{ background: 'var(--bg-input)', color: 'var(--text-secondary)', fontSize: '0.65rem', padding: '2px 4px', borderRadius: '4px', fontWeight: '600' }}>T{t}: {q}</span>
+                                ))}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '8px' }}>
+                          {Object.entries(m.tallas_disponibles).filter(([_, q]) => q > 0).map(([t, q]) => (
+                            <span key={t} style={{ background: 'var(--bg-input)', color: 'var(--text-secondary)', fontSize: '0.7rem', padding: '2px 6px', borderRadius: '4px', fontWeight: '600' }}>T{t}: {q}</span>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
