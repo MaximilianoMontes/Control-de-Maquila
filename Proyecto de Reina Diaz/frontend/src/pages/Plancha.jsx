@@ -510,7 +510,8 @@ export default function Plancha() {
 
     if (!activeBurroScannerRef.current) {
       playBeep('error');
-      alert(`Modelo ${modeloMatch.modelo} detectado. Escanea primero un Burro para asignarlo.`);
+      setSearchTerm(modeloMatch.modelo);
+      alert(`Modelo ${modeloMatch.modelo} detectado. Escanea primero un Burro para asignarlo, o selecciónalo de la lista para asignarlo manualmente.`);
       return;
     }
 
@@ -722,23 +723,24 @@ export default function Plancha() {
     e.dataTransfer.setData('text/plain', ''); // Requerido por Firefox
   };
 
-  const handleDropOnBurro = (e, index) => {
-    e.preventDefault();
-    if (!draggedItem) return;
+  const handleDropOnBurro = (e, index, directItem = null) => {
+    if (e) e.preventDefault();
+    const currentItem = directItem || draggedItem;
+    if (!currentItem) return;
 
     const newBurros = [...burrosState];
     const burro = newBurros[index];
 
-    if (draggedItem.type === 'planchador') {
+    if (currentItem.type === 'planchador') {
       // Asignar planchador al burro
       burro.planchador = {
-        id: draggedItem.data.id,
-        nombre: draggedItem.data.nombre
+        id: currentItem.data.id,
+        nombre: currentItem.data.nombre
       };
       // Registrar la asistencia de forma automática al asignar al burro
-      registrarAsistencia(draggedItem.data.id, draggedItem.data.nombre);
-    } else if (draggedItem.type === 'modelo') {
-      const model = draggedItem.data;
+      registrarAsistencia(currentItem.data.id, currentItem.data.nombre);
+    } else if (currentItem.type === 'modelo') {
+      const model = currentItem.data;
       
       let selectedTalla = "";
       if (burro.numero >= 11) {
@@ -973,6 +975,8 @@ export default function Plancha() {
       m => m.id === modelId && m.color === color && m.talla === talla
     );
     if (model) {
+      if (val > model.maxPiezas) val = model.maxPiezas;
+      if (val < 1) val = 1;
       model.piezas = val;
       setBurrosState(newBurros);
     }
@@ -1496,7 +1500,12 @@ export default function Plancha() {
 
             <div style={{ background: 'var(--bg-card)', borderRadius: '16px', border: '1px solid var(--border-color)', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', padding: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
               <h4 style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: '0 0 0.5rem 0' }}>{isEn ? 'Unassigned' : 'Sin asignar'}</h4>
-              <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#f59e0b' }}>{modelosDisponibles.length}</div>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                <span style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#f59e0b' }}>{modelosDisponibles.length}</span>
+                <span style={{ fontSize: '1rem', color: 'var(--text-secondary)' }}>
+                  ({modelosDisponibles.reduce((acc, m) => acc + Object.values(m.tallas_disponibles||{}).reduce((a,b)=>a+b,0), 0)} pz)
+                </span>
+              </div>
             </div>
           </div>
 
@@ -1542,7 +1551,14 @@ export default function Plancha() {
                       <div>
                         <h4 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '0.95rem' }}>{m.modelo}</h4>
                         <p style={{ margin: '4px 0', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{formatCurrency(m.precio_plancha)}/pza</p>
-                        <button onClick={() => { playBeep('success'); alert('Escanea un burro o arrástralo manualmente para asignar.'); }} style={{ background: '#3b82f6', color: 'var(--bg-card)', border: 'none', borderRadius: '6px', padding: '4px 12px', fontSize: '0.75rem', cursor: 'pointer', alignSelf: 'flex-start', marginTop: '4px' }}>Asignar</button>
+                        <button onClick={() => { 
+                          if (!activeBurroScanner) {
+                            playBeep('error');
+                            alert('Primero haz clic en un burro para seleccionarlo y poder asignar el modelo con este botón.');
+                            return;
+                          }
+                          handleDropOnBurro(null, activeBurroScanner - 1, { type: 'modelo', data: m });
+                        }} style={{ background: '#3b82f6', color: 'var(--bg-card)', border: 'none', borderRadius: '6px', padding: '4px 12px', fontSize: '0.75rem', cursor: 'pointer', alignSelf: 'flex-start', marginTop: '4px' }}>Asignar</button>
                       </div>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
                         {Object.entries(m.tallas_disponibles).filter(([_, q]) => q > 0).map(([t, q]) => (
@@ -1626,8 +1642,11 @@ export default function Plancha() {
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Planchando:</p>
                               <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-primary)', fontWeight: '600', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{burro.planchador.nombre}</p>
+                              <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+                                <button onClick={(e) => { e.stopPropagation(); handleVerDetallePlanchador(burro.planchador.id); }} style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6', border: '1px solid rgba(59,130,246,0.2)', borderRadius: '4px', padding: '2px 8px', fontSize: '0.65rem', cursor: 'pointer', fontWeight: '600' }}>Detalle</button>
+                                <button onClick={(e) => { e.stopPropagation(); handleRemovePlanchadorFromBurro(index); }} style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '4px', padding: '2px 8px', fontSize: '0.65rem', cursor: 'pointer', fontWeight: '600' }}>Reasignar</button>
+                              </div>
                             </div>
-                            <button onClick={() => handleRemovePlanchadorFromBurro(index)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted, #94a3b8)', padding: '4px' }}><X size={16} /></button>
                           </>
                         ) : (
                           <div style={{ flex: 1, textAlign: 'center', color: 'var(--text-muted, #94a3b8)', fontSize: '0.85rem' }}>Arrastra un operario aquí</div>
