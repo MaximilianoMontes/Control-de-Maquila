@@ -832,6 +832,7 @@ export default function Plancha() {
     }
 
     setBurrosState(newBurros);
+    setActiveBurroScanner(index + 1);
     setDraggedItem(null);
   };
 
