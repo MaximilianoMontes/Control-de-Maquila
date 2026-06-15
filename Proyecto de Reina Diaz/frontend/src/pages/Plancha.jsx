@@ -445,7 +445,8 @@ export default function Plancha() {
       }
     }
 
-    const planchadorEncontrado = planchadoresRef.current.find(p => p.nombre.toLowerCase() === code.toLowerCase());
+    let planchadorNameCode = codeUpper.startsWith('P-') ? codeUpper.slice(2) : codeUpper;
+    const planchadorEncontrado = planchadoresRef.current.find(p => p.nombre.toUpperCase() === planchadorNameCode.trim());
     if (planchadorEncontrado) {
       if (!activeBurroScannerRef.current) {
         playBeep('error');
