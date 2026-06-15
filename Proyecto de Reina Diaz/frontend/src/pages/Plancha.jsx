@@ -523,7 +523,6 @@ export default function Plancha() {
     const newBurros = [...burrosStateRef.current];
 
     // --- Lógica para decodificar color y talla del código de barras ---
-    const codeUpper = code.toUpperCase();
     const modelUpper = modeloMatch.modelo.toUpperCase();
     const suffixIndex = codeUpper.indexOf(modelUpper);
     const suffix = suffixIndex !== -1 ? codeUpper.substring(suffixIndex + modelUpper.length) : "";
