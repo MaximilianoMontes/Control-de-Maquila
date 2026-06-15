@@ -518,53 +518,97 @@ export default function Plancha() {
     const currentBurro = burrosStateRef.current[burroIdx];
 
     let selectedTalla = null;
-    const availableTallas = Object.entries(modeloMatch.tallas_disponibles || {}).filter(([t, q]) => q > 0);
-    
-    if (availableTallas.length === 1) {
-      selectedTalla = availableTallas[0][0];
-    } else if (availableTallas.length > 1) {
-      if (currentBurro.numero < 11) {
-        const match = availableTallas.find(([t]) => normalizeTalla(t) === normalizeTalla(currentBurro.talla));
-        if (match) selectedTalla = match[0];
-      }
-      if (!selectedTalla) {
-        selectedTalla = prompt(`El modelo ${modeloMatch.modelo} tiene varias tallas. Ingresa la talla a asignar:`);
-        if (!selectedTalla) {
-          playBeep('error');
-          return;
-        }
-      }
-    } else {
-      playBeep('error');
-      alert(`El modelo ${modeloMatch.modelo} no tiene piezas disponibles.`);
-      return;
-    }
-
-    const newBurros = [...burrosStateRef.current];
-    const normTalla = normalizeTalla(selectedTalla);
     let selectedColor = "";
     let stockDeEseColorYTalla = 0;
+    const newBurros = [...burrosStateRef.current];
 
-    if (modeloMatch.tallas_colores_disponibles) {
-      const foundColorEntry = Object.entries(modeloMatch.tallas_colores_disponibles).find(
-        ([color, tallasObj]) => {
-          const matchingColorTallaKey = Object.keys(tallasObj || {}).find(
+    // --- Lógica para decodificar color y talla del código de barras ---
+    const codeUpper = code.toUpperCase();
+    const modelUpper = modeloMatch.modelo.toUpperCase();
+    const suffixIndex = codeUpper.indexOf(modelUpper);
+    const suffix = suffixIndex !== -1 ? codeUpper.substring(suffixIndex + modelUpper.length) : "";
+
+    let decodedColor = null;
+    let decodedTalla = null;
+
+    if (modeloMatch.tallas_colores_disponibles && suffix) {
+      const availableColors = Object.keys(modeloMatch.tallas_colores_disponibles);
+      for (const c of availableColors) {
+        const cPrefix3 = c.toUpperCase().substring(0, 3);
+        const cPrefix4 = c.toUpperCase().substring(0, 4);
+        if (suffix.includes(cPrefix4) || suffix.includes(cPrefix3)) {
+          decodedColor = c;
+          break;
+        }
+      }
+
+      if (decodedColor) {
+        const colorTallasObj = modeloMatch.tallas_colores_disponibles[decodedColor] || {};
+        const availableTallasForColor = Object.keys(colorTallasObj);
+        const sortedTallas = [...availableTallasForColor].sort((a,b) => b.length - a.length);
+        for (const t of sortedTallas) {
+          const tNorm = normalizeTalla(t);
+          if (suffix.includes(t.toUpperCase()) || suffix.includes(tNorm) || suffix.includes("0" + tNorm)) {
+            decodedTalla = t;
+            break;
+          }
+        }
+      }
+    }
+
+    if (decodedColor && decodedTalla) {
+      selectedColor = decodedColor;
+      selectedTalla = decodedTalla;
+      const colorTallasObj = modeloMatch.tallas_colores_disponibles[selectedColor] || {};
+      const matchingKey = Object.keys(colorTallasObj).find(k => normalizeTalla(k) === normalizeTalla(selectedTalla));
+      stockDeEseColorYTalla = matchingKey ? colorTallasObj[matchingKey] : 0;
+    } else {
+      // Fallback si no viene color y talla en el código
+      const availableTallas = Object.entries(modeloMatch.tallas_disponibles || {}).filter(([t, q]) => q > 0);
+      
+      if (availableTallas.length === 1) {
+        selectedTalla = availableTallas[0][0];
+      } else if (availableTallas.length > 1) {
+        if (currentBurro.numero < 11) {
+          const match = availableTallas.find(([t]) => normalizeTalla(t) === normalizeTalla(currentBurro.talla));
+          if (match) selectedTalla = match[0];
+        }
+        if (!selectedTalla) {
+          selectedTalla = prompt(`El modelo ${modeloMatch.modelo} tiene varias tallas. Ingresa la talla a asignar:`);
+          if (!selectedTalla) {
+            playBeep('error');
+            return;
+          }
+        }
+      } else {
+        playBeep('error');
+        alert(`El modelo ${modeloMatch.modelo} no tiene piezas disponibles.`);
+        return;
+      }
+
+      const normTalla = normalizeTalla(selectedTalla);
+
+      if (modeloMatch.tallas_colores_disponibles) {
+        const foundColorEntry = Object.entries(modeloMatch.tallas_colores_disponibles).find(
+          ([color, tallasObj]) => {
+            const matchingColorTallaKey = Object.keys(tallasObj || {}).find(
+              k => normalizeTalla(k) === normTalla
+            );
+            const stockVal = matchingColorTallaKey ? (tallasObj[matchingColorTallaKey] || 0) : 0;
+            const alreadyAssigned = newBurros[burroIdx].modelos.some(
+              m => m.id === modeloMatch.id && m.color === color && m.talla === selectedTalla
+            );
+            return stockVal > 0 && !alreadyAssigned;
+          }
+        );
+        if (foundColorEntry) {
+          selectedColor = foundColorEntry[0];
+          const colorTallasObj = foundColorEntry[1];
+          const matchingColorTallaKey = Object.keys(colorTallasObj || {}).find(
             k => normalizeTalla(k) === normTalla
           );
-          const stockVal = matchingColorTallaKey ? (tallasObj[matchingColorTallaKey] || 0) : 0;
-          const alreadyAssigned = newBurros[burroIdx].modelos.some(
-            m => m.id === modeloMatch.id && m.color === color && m.talla === selectedTalla
-          );
-          return stockVal > 0 && !alreadyAssigned;
+          stockDeEseColorYTalla = matchingColorTallaKey ? (colorTallasObj[matchingColorTallaKey] || 0) : 0;
         }
-      );
-      if (foundColorEntry) {
-        selectedColor = foundColorEntry[0];
-        const colorTallasObj = foundColorEntry[1];
-        const matchingColorTallaKey = Object.keys(colorTallasObj || {}).find(
-          k => normalizeTalla(k) === normTalla
-        );
-        stockDeEseColorYTalla = matchingColorTallaKey ? (colorTallasObj[matchingColorTallaKey] || 0) : 0;
       }
     }
 
