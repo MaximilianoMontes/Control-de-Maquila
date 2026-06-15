@@ -541,15 +541,54 @@ export default function Plancha() {
     }
 
     const newBurros = [...burrosStateRef.current];
-    const existingModelIdx = newBurros[burroIdx].modelos.findIndex(m => m.id === modeloMatch.id && m.talla === selectedTalla);
+    const normTalla = normalizeTalla(selectedTalla);
+    let selectedColor = "";
+    let stockDeEseColorYTalla = 0;
+
+    if (modeloMatch.tallas_colores_disponibles) {
+      const foundColorEntry = Object.entries(modeloMatch.tallas_colores_disponibles).find(
+        ([color, tallasObj]) => {
+          const matchingColorTallaKey = Object.keys(tallasObj || {}).find(
+            k => normalizeTalla(k) === normTalla
+          );
+          const stockVal = matchingColorTallaKey ? (tallasObj[matchingColorTallaKey] || 0) : 0;
+          const alreadyAssigned = newBurros[burroIdx].modelos.some(
+            m => m.id === modeloMatch.id && m.color === color && m.talla === selectedTalla
+          );
+          return stockVal > 0 && !alreadyAssigned;
+        }
+      );
+      if (foundColorEntry) {
+        selectedColor = foundColorEntry[0];
+        const colorTallasObj = foundColorEntry[1];
+        const matchingColorTallaKey = Object.keys(colorTallasObj || {}).find(
+          k => normalizeTalla(k) === normTalla
+        );
+        stockDeEseColorYTalla = matchingColorTallaKey ? (colorTallasObj[matchingColorTallaKey] || 0) : 0;
+      }
+    }
+
+    if (stockDeEseColorYTalla <= 0) {
+      playBeep('error');
+      alert(`Todas las variantes de color disponibles del modelo ${modeloMatch.modelo} para la Talla ${selectedTalla} ya han sido agregadas a este burro.`);
+      return;
+    }
+
+    const existingModelIdx = newBurros[burroIdx].modelos.findIndex(m => m.id === modeloMatch.id && m.color === selectedColor && m.talla === selectedTalla);
     
     if (existingModelIdx !== -1) {
       playBeep('success');
     } else {
       newBurros[burroIdx].modelos.push({
-        ...modeloMatch,
+        id: modeloMatch.id,
+        modelo: modeloMatch.modelo,
+        imagen: modeloMatch.imagen,
+        color: selectedColor,
         talla: selectedTalla,
-        asignadas: 1
+        piezas: 1,
+        maxPiezas: stockDeEseColorYTalla,
+        tallas_colores_disponibles: modeloMatch.tallas_colores_disponibles,
+        precio_plancha: modeloMatch.precio_plancha
       });
       setBurrosState(newBurros);
       playBeep('success');
@@ -742,7 +781,8 @@ export default function Plancha() {
         talla: selectedTalla,
         piezas: 1,
         maxPiezas: stockDeEseColorYTalla,
-        tallas_colores_disponibles: model.tallas_colores_disponibles
+        tallas_colores_disponibles: model.tallas_colores_disponibles,
+        precio_plancha: model.precio_plancha
       });
     }
 
