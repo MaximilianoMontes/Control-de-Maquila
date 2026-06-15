@@ -1401,7 +1401,7 @@ export default function Plancha() {
                   placeholder={isEn ? "Search model..." : "Buscar modelo..."} 
                   value={searchQuery} 
                   onChange={e => setSearchQuery(e.target.value)} 
-                  style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: '1px solid var(--border-color, #e2e8f0)', background: 'var(--bg-elevated, #f8fafc)', color: 'var(--text-primary, #0f172a)', outline: 'none' }} 
+                  style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: '1px solid var(--border-color, #e2e8f0)', background: 'var(--bg-input)', color: 'var(--text-primary)', outline: 'none' }} 
                 />
               </div>
 
@@ -1412,7 +1412,7 @@ export default function Plancha() {
                     draggable
                     onDragStart={(e) => handleDragStart(e, 'modelo', m)}
                     style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '1rem', display: 'flex', gap: '1rem', cursor: 'grab', boxShadow: '0 2px 4px rgba(0,0,0,0.02)', transition: 'all 0.2s' }}
-                    onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.borderColor = '#cbd5e1'; }}
+                    onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.borderColor = 'var(--primary-color)'; }}
                     onMouseOut={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = 'var(--border-color)'; }}
                   >
                     {m.imagen ? (
@@ -1424,7 +1424,7 @@ export default function Plancha() {
                       <div>
                         <h4 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '0.95rem' }}>{m.modelo}</h4>
                         <p style={{ margin: '4px 0', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{formatCurrency(m.precio_plancha)}/pza</p>
-                        <button onClick={() => { playBeep('success'); alert('Escanea un burro o arrástralo manualmente para asignar.'); }} style={{ background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '6px', padding: '4px 12px', fontSize: '0.75rem', cursor: 'pointer', alignSelf: 'flex-start', marginTop: '4px' }}>Asignar</button>
+                        <button onClick={() => { playBeep('success'); alert('Escanea un burro o arrástralo manualmente para asignar.'); }} style={{ background: '#3b82f6', color: 'var(--bg-card)', border: 'none', borderRadius: '6px', padding: '4px 12px', fontSize: '0.75rem', cursor: 'pointer', alignSelf: 'flex-start', marginTop: '4px' }}>Asignar</button>
                       </div>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
                         {Object.entries(m.tallas_disponibles).filter(([_, q]) => q > 0).map(([t, q]) => (
@@ -1440,7 +1440,7 @@ export default function Plancha() {
                      <h4 style={{ margin: '0 0 1rem 0', fontSize: '0.8rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: '600' }}>Operarios (Planchadores)</h4>
                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                        {planchadores.map(p => (
-                         <div key={p.id} draggable onDragStart={(e) => handleDragStart(e, 'planchador', p)} style={{ padding: '0.8rem', background: 'var(--bg-input)', border: '1px solid var(--border-color)', borderRadius: '8px', cursor: 'grab', display: 'flex', alignItems: 'center', gap: '0.8rem', fontSize: '0.9rem', color: 'var(--text-primary)', fontWeight: '500', transition: 'background 0.2s' }} onMouseOver={e => e.currentTarget.style.background = '#f1f5f9'} onMouseOut={e => e.currentTarget.style.background = '#f8fafc'}>
+                         <div key={p.id} draggable onDragStart={(e) => handleDragStart(e, 'planchador', p)} style={{ padding: '0.8rem', background: 'var(--bg-input)', border: '1px solid var(--border-color)', borderRadius: '8px', cursor: 'grab', display: 'flex', alignItems: 'center', gap: '0.8rem', fontSize: '0.9rem', color: 'var(--text-primary)', fontWeight: '500', transition: 'background 0.2s' }} onMouseOver={e => e.currentTarget.style.opacity = '0.8'} onMouseOut={e => e.currentTarget.style.opacity = '1'}>
                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#dbeafe', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>{p.nombre.charAt(0)}</div>
                            {p.nombre}
                          </div>
@@ -1573,8 +1573,8 @@ export default function Plancha() {
                           padding: '0.8rem', 
                           border: 'none', 
                           borderRadius: '8px', 
-                          background: (!hasPlanchador || !hasModelos) ? '#f1f5f9' : '#2563eb', 
-                          color: (!hasPlanchador || !hasModelos) ? '#94a3b8' : '#fff', 
+                          background: (!hasPlanchador || !hasModelos) ? 'var(--bg-input)' : '#2563eb', 
+                          color: (!hasPlanchador || !hasModelos) ? '#94a3b8' : 'var(--bg-card)', 
                           fontWeight: '600', 
                           cursor: (!hasPlanchador || !hasModelos) ? 'not-allowed' : 'pointer',
                           transition: 'all 0.2s',
@@ -1594,22 +1594,22 @@ export default function Plancha() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
               {/* Detalle de Asignación */}
               <div style={{ background: 'var(--bg-card, #fff)', borderRadius: '16px', border: '1px solid var(--border-color, #e2e8f0)', padding: '1.5rem' }}>
-                <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', color: 'var(--text-primary, #0f172a)' }}>Detalle de Asignación</h3>
-                <div style={{ background: 'var(--bg-elevated, #f8fafc)', borderRadius: '8px', padding: '1rem', border: '1px solid var(--border-color, #e2e8f0)', fontSize: '0.9rem', color: 'var(--text-secondary, #334155)' }}>
+                <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', color: 'var(--text-primary)' }}>Detalle de Asignación</h3>
+                <div style={{ background: 'var(--bg-input)', borderRadius: '8px', padding: '1rem', border: '1px solid var(--border-color, #e2e8f0)', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
                   {activeBurroScanner ? (
                     <>
                       <p style={{ margin: '0 0 0.5rem 0' }}><strong>Burro Seleccionado:</strong> #{activeBurroScanner}</p>
-                      <p style={{ margin: 0, color: 'var(--text-muted, #64748b)' }}>Escanea operario o prenda para asignar al Burro #{activeBurroScanner}.</p>
+                      <p style={{ margin: 0, color: 'var(--text-secondary)' }}>Escanea operario o prenda para asignar al Burro #{activeBurroScanner}.</p>
                     </>
                   ) : (
-                    <p style={{ margin: 0, color: 'var(--text-muted, #64748b)' }}>Escanea un burro (Ej. B-01) o usa arrastrar y soltar para comenzar a asignar.</p>
+                    <p style={{ margin: 0, color: 'var(--text-secondary)' }}>Escanea un burro (Ej. B-01) o usa arrastrar y soltar para comenzar a asignar.</p>
                   )}
                 </div>
               </div>
 
               {/* Carga Operario */}
               <div style={{ background: 'var(--bg-card, #fff)', borderRadius: '16px', border: '1px solid var(--border-color, #e2e8f0)', padding: '1.5rem' }}>
-                <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', color: 'var(--text-primary, #0f172a)' }}>Carga Operario</h3>
+                <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', color: 'var(--text-primary)' }}>Carga Operario</h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
                   {planchadores.slice(0, 8).map(p => {
                     let piezasAsignadas = 0;
@@ -1619,8 +1619,8 @@ export default function Plancha() {
                       }
                     });
                     return (
-                      <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.8rem', background: 'var(--bg-elevated, #f8fafc)', borderRadius: '8px', border: '1px solid var(--border-color, #e2e8f0)' }}>
-                        <span style={{ fontSize: '0.9rem', color: 'var(--text-primary, #0f172a)', fontWeight: '500' }}>{p.nombre}</span>
+                      <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.8rem', background: 'var(--bg-input)', borderRadius: '8px', border: '1px solid var(--border-color, #e2e8f0)' }}>
+                        <span style={{ fontSize: '0.9rem', color: 'var(--text-primary)', fontWeight: '500' }}>{p.nombre}</span>
                         <span style={{ fontSize: '0.85rem', color: '#10b981', fontWeight: 'bold', background: 'rgba(16, 185, 129, 0.1)', padding: '2px 8px', borderRadius: '12px' }}>{piezasAsignadas} pzas</span>
                       </div>
                     );
@@ -1686,7 +1686,7 @@ export default function Plancha() {
                       
                       {regularWork > 0 && (
                         <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted, #94a3b8)', paddingLeft: '1rem' }}>
-                          • {isEn ? 'Regular Ironing' : 'Plancha Regular'}: <span style={{ color: '#f8fafc' }}>{formatCurrency(regularWork)}</span>
+                          • {isEn ? 'Regular Ironing' : 'Plancha Regular'}: <span style={{ color: 'var(--bg-input)' }}>{formatCurrency(regularWork)}</span>
                         </p>
                       )}
                       
@@ -2137,7 +2137,7 @@ export default function Plancha() {
                   setPlanchadorDetalle(null);
                 }} 
                 className="btn-icon" 
-                style={{ background: 'rgba(255,255,255,0.05)', color: '#fff', border: 'none', padding: '8px', borderRadius: '50%', cursor: 'pointer' }}
+                style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--bg-card)', border: 'none', padding: '8px', borderRadius: '50%', cursor: 'pointer' }}
               >
                 <X size={20} />
               </button>
@@ -2226,7 +2226,7 @@ export default function Plancha() {
                   setModeloAVerificar(null);
                 }} 
                 className="btn-icon" 
-                style={{ background: 'rgba(255,255,255,0.05)', color: '#fff', border: 'none', padding: '8px', borderRadius: '50%', cursor: 'pointer' }}
+                style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--bg-card)', border: 'none', padding: '8px', borderRadius: '50%', cursor: 'pointer' }}
               >
                 <X size={20} />
               </button>
@@ -2388,7 +2388,7 @@ export default function Plancha() {
                   setDevolucionCantidades({});
                 }} 
                 className="btn-icon" 
-                style={{ background: 'rgba(255,255,255,0.05)', color: '#fff', border: 'none', padding: '8px', borderRadius: '50%', cursor: 'pointer' }}
+                style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--bg-card)', border: 'none', padding: '8px', borderRadius: '50%', cursor: 'pointer' }}
               >
                 <X size={20} />
               </button>
@@ -2483,7 +2483,7 @@ export default function Plancha() {
                                       }}
                                     />
                                   ) : (
-                                    <div style={{ fontWeight: 'bold', fontSize: '0.85rem', color: isSelected ? '#f87171' : '#fff', marginTop: '2px' }}>
+                                    <div style={{ fontWeight: 'bold', fontSize: '0.85rem', color: isSelected ? '#f87171' : 'var(--bg-card)', marginTop: '2px' }}>
                                       {currentQty} / {maxQty}
                                     </div>
                                   )}
@@ -2552,7 +2552,7 @@ export default function Plancha() {
                                   }}
                                 />
                               ) : (
-                                <div style={{ fontWeight: 'bold', fontSize: '0.85rem', color: isSelected ? '#f87171' : '#fff', marginTop: '2px' }}>
+                                <div style={{ fontWeight: 'bold', fontSize: '0.85rem', color: isSelected ? '#f87171' : 'var(--bg-card)', marginTop: '2px' }}>
                                   {currentQty} / {maxQty}
                                 </div>
                               )}
@@ -2580,7 +2580,7 @@ export default function Plancha() {
                 >
                   {isEn ? 'Cancel' : 'Cancelar'}
                 </button>
-                <button type="submit" className="btn" style={{ flex: 1, background: '#ef4444', color: '#fff' }}>
+                <button type="submit" className="btn" style={{ flex: 1, background: '#ef4444', color: 'var(--bg-card)' }}>
                   {isEn ? 'Confirm Return' : 'Confirmar Devolución'}
                 </button>
               </div>
@@ -2620,7 +2620,7 @@ export default function Plancha() {
                   setAjustePlanchadorId('');
                 }} 
                 className="btn-icon" 
-                style={{ background: 'rgba(255,255,255,0.05)', color: '#fff', border: 'none', padding: '8px', borderRadius: '50%', cursor: 'pointer' }}
+                style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--bg-card)', border: 'none', padding: '8px', borderRadius: '50%', cursor: 'pointer' }}
               >
                 <X size={20} />
               </button>
@@ -2794,7 +2794,7 @@ export default function Plancha() {
                   setCuadrePlanchaReal(0);
                 }} 
                 className="btn-icon" 
-                style={{ background: 'rgba(255,255,255,0.05)', color: '#fff', border: 'none', padding: '8px', borderRadius: '50%', cursor: 'pointer' }}
+                style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--bg-card)', border: 'none', padding: '8px', borderRadius: '50%', cursor: 'pointer' }}
               >
                 <X size={20} />
               </button>
@@ -2888,7 +2888,7 @@ export default function Plancha() {
                           background: 'rgba(255,255,255,0.05)', 
                           cursor: 'not-allowed', 
                           fontWeight: 'bold', 
-                          color: diferencia > 0 ? '#10b981' : diferencia < 0 ? '#ef4444' : '#fff' 
+                          color: diferencia > 0 ? '#10b981' : diferencia < 0 ? '#ef4444' : 'var(--bg-card)' 
                         }} 
                       />
                     );
@@ -2912,7 +2912,7 @@ export default function Plancha() {
                     }}
                   >
                     <div style={{ fontSize: '0.85rem', color: 'var(--text-muted, #94a3b8)', marginBottom: '0.2rem' }}>{isEn ? 'Difference Result:' : 'Resultado de Diferencia:'}</div>
-                    <div style={{ fontSize: '1.6rem', fontWeight: 'bold', color: diferencia > 0 ? '#10b981' : diferencia < 0 ? '#ef4444' : '#fff' }}>
+                    <div style={{ fontSize: '1.6rem', fontWeight: 'bold', color: diferencia > 0 ? '#10b981' : diferencia < 0 ? '#ef4444' : 'var(--bg-card)' }}>
                       {diferencia > 0 ? (isEn ? `Bonus: +${formatCurrency(diferencia)}` : `Bono: +${formatCurrency(diferencia)}`) : diferencia < 0 ? (isEn ? `Discount: ${formatCurrency(diferencia)}` : `Descuento: ${formatCurrency(diferencia)}`) : (isEn ? 'No Difference' : 'Sin Diferencia')}
                     </div>
                     <div style={{ marginTop: '0.4rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
