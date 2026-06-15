@@ -107,7 +107,7 @@ export default function Maquileros() {
     } catch (e) { alert('Error al guardar'); }
   };
 
-  const Avatar = ({ imagen, nombre, size = 40, showZoom = true }) => {
+  const Avatar = ({ imagen, nombre, size = 120, showZoom = true }) => {
     const src = getImgSrc(imagen);
     if (src) return (
       <img 
@@ -272,7 +272,7 @@ export default function Maquileros() {
               {/* Columna Izquierda: Perfil y Calificación */}
               <div style={{ borderRight: '1px solid #e2e8f0', paddingRight: '2rem' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '1.5rem', textAlign: 'center' }}>
-                  <Avatar imagen={selectedMaquilero.imagen} nombre={selectedMaquilero.nombre} size={100} showZoom={true} />
+                  <Avatar imagen={selectedMaquilero.imagen} nombre={selectedMaquilero.nombre} size={300} showZoom={true} />
                   <h3 style={{ marginTop: '1rem', marginBottom: '0.25rem', fontSize: '1.25rem', width: '100%' }}>{selectedMaquilero.nombre}</h3>
                   
                   {/* Calificación Visual */}
@@ -357,11 +357,11 @@ export default function Maquileros() {
                                   <img 
                                     src={pImg} 
                                     alt="" 
-                                    style={{ width: 35, height: 35, borderRadius: 4, objectFit: 'contain', backgroundColor: '#ffffff', cursor: 'zoom-in' }} 
+                                    style={{ width: 105, height: 105, borderRadius: 4, objectFit: 'contain', backgroundColor: '#ffffff', cursor: 'zoom-in' }} 
                                     onClick={() => setSelectedImage(pImg)}
                                   />
                                 ) : (
-                                  <div style={{ width: 35, height: 35, borderRadius: 4, background: '#f1f5f9' }} />
+                                  <div style={{ width: 105, height: 105, borderRadius: 4, background: '#f1f5f9' }} />
                                 )}
                               </td>
                               <td style={{ fontWeight: 600 }}>{h.producto_modelo}</td>
@@ -412,12 +412,12 @@ export default function Maquileros() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '1.5rem' }}>
                 <div style={{ flexShrink: 0 }}>
                   {imagenFile ? (
-                    <img src={URL.createObjectURL(imagenFile)} alt="preview" style={{ width: 84, height: 84, borderRadius: '50%', objectFit: 'cover', border: '2px solid #e2e8f0' }} />
+                    <img src={URL.createObjectURL(imagenFile)} alt="preview" style={{ width: 252, height: 252, borderRadius: '50%', objectFit: 'cover', border: '2px solid #e2e8f0' }} />
                   ) : editMode && maquileros.find(m => m.id === editingId)?.imagen ? (
-                    <img src={getImgSrc(maquileros.find(m => m.id === editingId)?.imagen)} alt="actual" style={{ width: 84, height: 84, borderRadius: '50%', objectFit: 'cover', border: '2px solid #e2e8f0' }} />
+                    <img src={getImgSrc(maquileros.find(m => m.id === editingId)?.imagen)} alt="actual" style={{ width: 252, height: 252, borderRadius: '50%', objectFit: 'cover', border: '2px solid #e2e8f0' }} />
                   ) : (
-                    <div style={{ width: 84, height: 84, borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px dashed #cbd5e1' }}>
-                      <User size={40} color="#94a3b8" />
+                    <div style={{ width: 252, height: 252, borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px dashed #cbd5e1' }}>
+                      <User size={120} color="#94a3b8" />
                     </div>
                   )}
                 </div>
