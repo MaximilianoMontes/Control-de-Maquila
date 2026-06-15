@@ -359,6 +359,167 @@ export default function Plancha() {
     }
   }, [activeTab]);
 
+  // --- BARCODE SCANNER LOGIC ---
+  const activeBurroScannerRef = useRef(null);
+  const burrosStateRef = useRef(burrosState);
+  const planchadoresRef = useRef(planchadores);
+  const modelosDisponiblesRef = useRef(modelosDisponibles);
+  const modelosCamionRef = useRef(modelosCamion);
+  
+  const [activeBurroScanner, setActiveBurroScanner] = useState(null);
+
+  useEffect(() => { activeBurroScannerRef.current = activeBurroScanner; }, [activeBurroScanner]);
+  useEffect(() => { burrosStateRef.current = burrosState; }, [burrosState]);
+  useEffect(() => { planchadoresRef.current = planchadores; }, [planchadores]);
+  useEffect(() => { modelosDisponiblesRef.current = modelosDisponibles; }, [modelosDisponibles]);
+  useEffect(() => { modelosCamionRef.current = modelosCamion; }, [modelosCamion]);
+
+  const playBeep = (type = 'success') => {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      if (type === 'success') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(800, ctx.currentTime);
+        gain.gain.setValueAtTime(0.1, ctx.currentTime);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.15);
+      } else {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(200, ctx.currentTime);
+        gain.gain.setValueAtTime(0.1, ctx.currentTime);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.3);
+      }
+    } catch(e) {}
+  };
+
+  useEffect(() => {
+    if (activeTab !== 'plancha') return;
+
+    let buffer = '';
+    let timeout = null;
+
+    const handleKeyDown = (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+
+      if (e.key === 'Enter') {
+        if (buffer.length > 0) {
+          const code = buffer.trim();
+          buffer = '';
+          handleScannedCode(code);
+        }
+        return;
+      }
+
+      if (e.key.length > 1) return;
+
+      buffer += e.key;
+      clearTimeout(timeout);
+      timeout = setTimeout(() => {
+        buffer = '';
+      }, 300);
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      clearTimeout(timeout);
+    };
+  }, [activeTab]);
+
+  const handleScannedCode = async (code) => {
+    if (code.toUpperCase().startsWith('B-')) {
+      const numStr = code.split('-')[1];
+      const num = parseInt(numStr, 10);
+      if (!isNaN(num) && num >= 1 && num <= 12) {
+        setActiveBurroScanner(num);
+        playBeep('success');
+        return;
+      }
+    }
+
+    const planchadorEncontrado = planchadoresRef.current.find(p => p.nombre.toLowerCase() === code.toLowerCase());
+    if (planchadorEncontrado) {
+      if (!activeBurroScannerRef.current) {
+        playBeep('error');
+        alert("Escanea primero un Burro para asignarle al planchador.");
+        return;
+      }
+      const burroIdx = activeBurroScannerRef.current - 1;
+      const newBurros = [...burrosStateRef.current];
+      newBurros[burroIdx].planchador = planchadorEncontrado;
+      setBurrosState(newBurros);
+      playBeep('success');
+      return;
+    }
+
+    let exactMatches = modelosDisponiblesRef.current.filter(m => code.toUpperCase().includes(m.modelo.toUpperCase()));
+    
+    if (exactMatches.length === 0) {
+      // Saltar candado si existe en camión
+      exactMatches = modelosCamionRef.current.filter(m => code.toUpperCase().includes(m.modelo.toUpperCase()));
+    }
+
+    if (exactMatches.length === 0) {
+      playBeep('error');
+      alert(`Modelo no encontrado en Colima: ${code}`);
+      return;
+    }
+
+    const modeloMatch = exactMatches[0];
+
+    if (!activeBurroScannerRef.current) {
+      playBeep('error');
+      alert(`Modelo ${modeloMatch.modelo} detectado. Escanea primero un Burro para asignarlo.`);
+      return;
+    }
+
+    const burroIdx = activeBurroScannerRef.current - 1;
+    const currentBurro = burrosStateRef.current[burroIdx];
+
+    let selectedTalla = null;
+    const availableTallas = Object.entries(modeloMatch.tallas_disponibles || {}).filter(([t, q]) => q > 0);
+    
+    if (availableTallas.length === 1) {
+      selectedTalla = availableTallas[0][0];
+    } else if (availableTallas.length > 1) {
+      if (currentBurro.numero < 11) {
+        const match = availableTallas.find(([t]) => normalizeTalla(t) === normalizeTalla(currentBurro.talla));
+        if (match) selectedTalla = match[0];
+      }
+      if (!selectedTalla) {
+        selectedTalla = prompt(`El modelo ${modeloMatch.modelo} tiene varias tallas. Ingresa la talla a asignar:`);
+        if (!selectedTalla) {
+          playBeep('error');
+          return;
+        }
+      }
+    } else {
+      playBeep('error');
+      alert(`El modelo ${modeloMatch.modelo} no tiene piezas disponibles.`);
+      return;
+    }
+
+    const newBurros = [...burrosStateRef.current];
+    const existingModelIdx = newBurros[burroIdx].modelos.findIndex(m => m.id === modeloMatch.id && m.talla === selectedTalla);
+    
+    if (existingModelIdx !== -1) {
+      playBeep('success');
+    } else {
+      newBurros[burroIdx].modelos.push({
+        ...modeloMatch,
+        talla: selectedTalla,
+        asignadas: 1
+      });
+      setBurrosState(newBurros);
+      playBeep('success');
+    }
+  };
+
   // --- MÉTODOS PLANCHADORES ---
   const handleAgregarPlanchador = async (e) => {
     e.preventDefault();
@@ -1201,507 +1362,223 @@ export default function Plancha() {
 
       {/* CONTENIDO PESTAÑA 3: INTERFAZ DE PLANCHA (ANVIL DRAG & DROP) */}
       {activeTab === 'plancha' && (
-        <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: '2rem', alignItems: 'start' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', fontFamily: 'Inter, sans-serif' }}>
           
-          {/* Side panel de elementos arrastrables */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', position: 'sticky', top: '0', zIndex: 10, maxHeight: 'calc(100vh - 140px)', overflowY: 'auto', paddingRight: '6px' }}>
-            
-            {/* Planchadores */}
-            <div className="glass-card" style={{ padding: '1.2rem' }}>
-              <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Users size={18} color="#3b82f6" /> {isEn ? 'Ironers' : 'Planchadores'}
-              </h3>
-              <p style={{ fontSize: '0.8rem', color: '#64748b', margin: '-0.5rem 0 1rem 0' }}>{isEn ? 'Drag an ironer to a Board to assign them' : 'Arrastra un planchador hacia un Burro para asignarlo'}</p>
-              
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', maxHeight: '250px', overflowY: 'auto', paddingRight: '4px' }}>
-                {planchadores.length === 0 ? (
-                  <p style={{ fontSize: '0.85rem', color: '#94a3b8', textAlign: 'center' }}>{isEn ? 'Register ironers in their tab first.' : 'Registra planchadores en su pestaña primero.'}</p>
-                ) : (
-                  planchadores.map(p => (
-                    <div 
-                      key={p.id}
-                      draggable
-                      onDragStart={(e) => handleDragStart(e, 'planchador', p)}
-                      className="glass-card"
-                      style={{ 
-                        padding: '10px 14px', 
-                        cursor: 'grab', 
-                        background: 'rgba(59, 130, 246, 0.05)',
-                        border: '1px dashed rgba(59, 130, 246, 0.3)',
-                        borderRadius: '8px',
-                        fontSize: '0.95rem',
-                        fontWeight: 'bold',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between'
-                      }}
-                    >
-                      <span>{p.nombre}</span>
-                      <span style={{ fontSize: '0.7rem', background: 'rgba(59, 130, 246, 0.2)', padding: '2px 6px', borderRadius: '4px', color: '#93c5fd' }}>{isEn ? 'IRONER' : 'PLANCHADOR'}</span>
-                    </div>
-                  ))
-                )}
-              </div>
+          {/* KPIs Top */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+            <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', padding: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+              <h4 style={{ color: '#64748b', fontSize: '0.9rem', margin: '0 0 0.5rem 0' }}>{isEn ? 'Active Boards' : 'Burros activos'}</h4>
+              <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#0f172a' }}>{burrosState.filter(b => b.planchador).length}</div>
             </div>
-
-            {/* Modelos Disponibles */}
-            <div className="glass-card" style={{ padding: '1.2rem' }}>
-              <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Layers size={18} color="#10b981" /> {isEn ? 'Verified Models' : 'Modelos Verificados'}
-              </h3>
-              <p style={{ fontSize: '0.8rem', color: '#64748b', margin: '-0.5rem 0 1rem 0' }}>{isEn ? 'Models ready in Colima. Drag them to a Board of their size' : 'Modelos listos en Colima. Arrástralos a un Burro de su talla'}</p>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxHeight: '400px', overflowY: 'auto', paddingRight: '4px' }}>
-                {modelosDisponibles.length === 0 ? (
-                  <p style={{ fontSize: '0.85rem', color: '#94a3b8', textAlign: 'center' }}>
-                    {isEn ? 'No verified models with available pieces. Verify trucks in their tab.' : 'No hay modelos verificados con piezas disponibles. Verifica camiones en su pestaña.'}
-                  </p>
-                ) : (
-                  modelosDisponibles.map(m => (
-                    <div 
-                      key={m.id}
-                      draggable
-                      onDragStart={(e) => handleDragStart(e, 'modelo', m)}
-                      className="glass-card"
-                      style={{ 
-                        padding: '12px', 
-                        cursor: 'grab', 
-                        background: 'rgba(16, 185, 129, 0.03)',
-                        border: '1px dashed rgba(16, 185, 129, 0.25)',
-                        borderRadius: '10px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '0.5rem'
-                      }}
-                    >
-                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                        {m.imagen ? (
-                          <img 
-                            src={`${API_URL}${m.imagen}`} 
-                            alt={m.modelo} 
-                            style={{ width: '40px', height: '40px', borderRadius: '6px', objectFit: 'contain', background: '#ffffff' }} 
-                          />
-                        ) : (
-                          <div style={{ width: '40px', height: '40px', borderRadius: '6px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <Layers size={18} color="#64748b" />
-                          </div>
-                        )}
-                        <div>
-                          <strong style={{ fontSize: '0.95rem' }}>{isEn ? 'Mod' : 'Mod'}: {m.modelo}</strong>
-                          <p style={{ margin: 0, fontSize: '0.75rem', color: '#64748b' }}>{isEn ? 'Ironing Price' : 'Precio Plancha'}: {formatCurrency(m.precio_plancha)}</p>
-                        </div>
-                      </div>
-
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                        {Object.entries(m.tallas_disponibles)
-                          .sort(([tallaA], [tallaB]) => {
-                            const numA = parseInt(tallaA, 10);
-                            const numB = parseInt(tallaB, 10);
-                            if (isNaN(numA) && isNaN(numB)) return tallaA.localeCompare(tallaB);
-                            if (isNaN(numA)) return 1;
-                            if (isNaN(numB)) return -1;
-                            return numA - numB;
-                          })
-                          .map(([talla, qty]) => {
-                            if (qty <= 0) return null;
-
-                          // Calcular desglose de colores para esta talla (normalizado)
-                          const normT = normalizeTalla(talla);
-                          const colorPieces = [];
-                          if (m.tallas_colores_disponibles) {
-                            Object.entries(m.tallas_colores_disponibles).forEach(([col, tallasObj]) => {
-                              const matchingKey = Object.keys(tallasObj || {}).find(k => normalizeTalla(k) === normT);
-                              const cQty = matchingKey ? (tallasObj[matchingKey] || 0) : 0;
-                              if (cQty > 0) {
-                                colorPieces.push(`${col || 'Único'}: ${cQty}`);
-                              }
-                            });
-                          }
-
-                          return (
-                            <div 
-                              key={talla} 
-                              style={{ 
-                                display: 'flex',
-                                flexDirection: 'column',
-                                background: 'rgba(255,255,255,0.02)', 
-                                border: '1px solid rgba(255,255,255,0.05)',
-                                padding: '4px 8px',
-                                borderRadius: '6px',
-                                fontSize: '0.75rem',
-                                minWidth: '85px',
-                                gap: '2px'
-                              }}
-                            >
-                              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '2px', marginBottom: '2px' }}>
-                                <span style={{ color: '#64748b', fontWeight: 'bold' }}>T{talla}</span>
-                                <strong style={{ color: '#10b981' }}>{qty}</strong>
-                              </div>
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', fontSize: '0.65rem', color: '#94a3b8' }}>
-                                {colorPieces.map(cp => (
-                                  <span key={cp}>{cp}</span>
-                                ))}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
+            <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', padding: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+              <h4 style={{ color: '#64748b', fontSize: '0.9rem', margin: '0 0 0.5rem 0' }}>{isEn ? 'Assigned Models' : 'Modelos asignados'}</h4>
+              <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#10b981' }}>{burrosState.reduce((sum, b) => sum + b.modelos.length, 0)}</div>
             </div>
-
+            <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', padding: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+              <h4 style={{ color: '#64748b', fontSize: '0.9rem', margin: '0 0 0.5rem 0' }}>{isEn ? 'Ironers on Shift' : 'Operarios en turno'}</h4>
+              <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#8b5cf6' }}>{planchadores.length}</div>
+            </div>
+            <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', padding: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+              <h4 style={{ color: '#64748b', fontSize: '0.9rem', margin: '0 0 0.5rem 0' }}>{isEn ? 'Unassigned' : 'Sin asignar'}</h4>
+              <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#f59e0b' }}>{modelosDisponibles.length}</div>
+            </div>
           </div>
 
-          {/* Tablero de 10 Burros de Plancha (Anvil Dashboard) */}
-          <div className="glass-card" style={{ padding: '2rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.8rem' }}>
-              <h2 style={{ fontSize: '1.6rem', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Flame color="#ef4444" size={24} /> {isEn ? 'Ironing Board Dashboard' : 'Tablero de Burros'}
-              </h2>
-              <span style={{ fontSize: '0.85rem', color: '#64748b', background: 'rgba(255,255,255,0.02)', padding: '4px 10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                {isEn ? '1 to 10 sizes: 5, 7, 9, 11, 13 | 11 & 12: Wildcards (Any Size)' : '1 al 10 repiten tallas: 5, 7, 9, 11, 13 | 11 y 12: Comodines (Cualquier Talla)'}
-              </span>
+          {/* Main Content Grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: '1.5rem', alignItems: 'start' }}>
+            
+            {/* Left Column: Pendientes */}
+            <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', height: 'calc(100vh - 250px)' }}>
+              <div style={{ padding: '1.5rem', borderBottom: '1px solid #e2e8f0' }}>
+                <h3 style={{ margin: 0, fontSize: '1.2rem', color: '#0f172a', display: 'flex', alignItems: 'center' }}>
+                  {isEn ? 'Pending Models' : 'Modelos pendientes'} 
+                  <span style={{ background: '#f1f5f9', color: '#475569', padding: '2px 8px', borderRadius: '12px', fontSize: '0.8rem', marginLeft: 'auto', fontWeight: '600' }}>{modelosDisponibles.length}</span>
+                </h3>
+                <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>Arrastra un modelo a un burro disponible</p>
+              </div>
+              
+              <div style={{ overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                {modelosDisponibles.map(m => (
+                  <div 
+                    key={m.id}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, 'modelo', m)}
+                    style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1rem', display: 'flex', gap: '1rem', cursor: 'grab', boxShadow: '0 2px 4px rgba(0,0,0,0.02)', transition: 'all 0.2s' }}
+                    onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.borderColor = '#cbd5e1'; }}
+                    onMouseOut={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = '#e2e8f0'; }}
+                  >
+                    {m.imagen ? (
+                      <img src={`${API_URL}${m.imagen}`} style={{ width: '60px', height: '80px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #e2e8f0' }} />
+                    ) : (
+                      <div style={{ width: '60px', height: '80px', background: '#f1f5f9', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Layers color="#cbd5e1" /></div>
+                    )}
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                      <div>
+                        <h4 style={{ margin: 0, color: '#0f172a', fontSize: '0.95rem' }}>{m.modelo}</h4>
+                        <p style={{ margin: '4px 0', fontSize: '0.8rem', color: '#64748b' }}>{formatCurrency(m.precio_plancha)}/pza</p>
+                      </div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                        {Object.entries(m.tallas_disponibles).filter(([_, q]) => q > 0).map(([t, q]) => (
+                          <span key={t} style={{ background: '#f1f5f9', color: '#475569', fontSize: '0.7rem', padding: '2px 6px', borderRadius: '4px', fontWeight: '600' }}>T{t}: {q}</span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                
+                {planchadores.length > 0 && (
+                  <div style={{ marginTop: '0.5rem', paddingTop: '1.5rem', borderTop: '1px dashed #e2e8f0' }}>
+                     <h4 style={{ margin: '0 0 1rem 0', fontSize: '0.8rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: '600' }}>Operarios (Planchadores)</h4>
+                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                       {planchadores.map(p => (
+                         <div key={p.id} draggable onDragStart={(e) => handleDragStart(e, 'planchador', p)} style={{ padding: '0.8rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', cursor: 'grab', display: 'flex', alignItems: 'center', gap: '0.8rem', fontSize: '0.9rem', color: '#334155', fontWeight: '500', transition: 'background 0.2s' }} onMouseOver={e => e.currentTarget.style.background = '#f1f5f9'} onMouseOut={e => e.currentTarget.style.background = '#f8fafc'}>
+                           <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#dbeafe', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>{p.nombre.charAt(0)}</div>
+                           {p.nombre}
+                         </div>
+                       ))}
+                     </div>
+                  </div>
+                )}
+              </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.5rem' }}>
-              {burrosState.map((burro, index) => {
-                const hasPlanchador = !!burro.planchador;
-                const hasModelos = burro.modelos.length > 0;
+            {/* Right Column: Mapa de Burros */}
+            <div style={{ background: '#f8fafc', borderRadius: '16px', border: '1px solid #e2e8f0', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h3 style={{ margin: 0, fontSize: '1.2rem', color: '#0f172a' }}>{isEn ? 'Board Map' : 'Mapa de burros'}</h3>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#10b981' }}></div>
+                  <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Activos</span>
+                  <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#cbd5e1', marginLeft: '8px' }}></div>
+                  <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Disponibles</span>
+                </div>
+              </div>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
+                {burrosState.map((burro, index) => {
+                  const hasPlanchador = !!burro.planchador;
+                  const hasModelos = burro.modelos.length > 0;
+                  const isActiveScanner = activeBurroScanner === burro.numero;
 
-                return (
-                  <div 
-                    key={burro.numero}
-                    onDragOver={e => e.preventDefault()}
-                    onDrop={e => handleDropOnBurro(e, index)}
-                    className="glass-card"
-                    style={{ 
-                      borderRadius: '16px',
-                      border: `1.5px solid ${hasPlanchador ? 'rgba(59, 130, 246, 0.3)' : 'rgba(255,255,255,0.06)'}`,
-                      background: hasPlanchador ? 'rgba(59, 130, 246, 0.01)' : 'rgba(0,0,0,0.1)',
-                      padding: '1.2rem',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '1rem',
-                      transition: 'all 0.2s ease',
-                      boxShadow: hasPlanchador ? '0 8px 32px rgba(59, 130, 246, 0.05)' : 'none'
-                    }}
-                  >
-                    {/* Indicador de Talla y Número de Burro */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px', flex: 1, minWidth: 0 }}>
-                        {burro.numero >= 11 ? (
-                          burro.numero === 11 ? (isEn ? 'Samples Board - Luis' : 'Burro Muestras - Luis') : (isEn ? 'Supervisor Board - Olga' : 'Burro Supervisora-Olga')
-                        ) : (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', width: '100%' }}>
-                            <span style={{ whiteSpace: 'nowrap' }}>{isEn ? 'Board #' : 'Burro #'}{burro.numero} -</span>
-                            <input
-                              type="text"
-                              value={burrosNames[burro.numero] || ''}
-                              onChange={(e) => handleRenameBurro(burro.numero, e.target.value)}
-                              placeholder={isEn ? 'Name...' : 'Nombre...'}
-                              style={{
-                                background: 'transparent',
-                                border: 'none',
-                                borderBottom: '1px dashed rgba(255,255,255,0.2)',
-                                color: '#f8fafc',
-                                fontSize: '1.05rem',
-                                fontWeight: 'bold',
-                                width: '100%',
-                                minWidth: '80px',
-                                padding: '0 2px',
-                                outline: 'none',
-                              }}
-                            />
-                          </div>
-                        )}
-                      </span>
-                      <span 
-                        style={{ 
-                          fontSize: '0.9rem', 
-                          fontWeight: 'bold', 
-                          background: burro.numero >= 11 
-                            ? 'linear-gradient(135deg, #10b981, #059669)'
-                            : 'linear-gradient(135deg, #f59e0b, #d97706)',
-                          color: '#fff',
-                          padding: '3px 12px',
-                          borderRadius: '20px',
-                          boxShadow: burro.numero >= 11
-                            ? '0 2px 10px rgba(16, 185, 129, 0.3)'
-                            : '0 2px 10px rgba(217, 119, 6, 0.3)',
-                          whiteSpace: 'nowrap'
-                        }}
-                      >
-                        {burro.numero >= 11 ? (isEn ? 'All' : 'Todas') : `${isEn ? 'Size' : 'Talla'} ${burro.talla}`}
-                      </span>
-                    </div>
-
-                    {/* Zona Drop Planchador */}
+                  return (
                     <div 
+                      key={burro.numero}
+                      onDragOver={e => e.preventDefault()}
+                      onDrop={e => handleDropOnBurro(e, index)}
                       style={{ 
-                        border: '1.5px dashed rgba(255,255,255,0.08)',
-                        background: 'rgba(255,255,255,0.01)',
-                        borderRadius: '10px',
-                        padding: '10px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        minHeight: '50px',
-                        position: 'relative'
-                      }}
-                    >
-                      {hasPlanchador ? (
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-                          <span style={{ fontWeight: 'bold', color: '#60a5fa', fontSize: '0.95rem' }}>👤 {burro.planchador.nombre}</span>
-                          <button 
-                            onClick={() => handleRemovePlanchadorFromBurro(index)}
-                            style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '2px' }}
-                          >
-                            <X size={16} />
-                          </button>
-                        </div>
-                      ) : (
-                        <span style={{ fontSize: '0.8rem', color: '#64748b' }}>{isEn ? 'Drag an ironer here' : 'Arrastra un planchador aquí'}</span>
-                      )}
-                    </div>
-
-                    {/* Zona Drop Modelos (Lista Acumulativa) */}
-                    <div 
-                      style={{ 
-                        border: '1.5px dashed rgba(255,255,255,0.08)',
-                        background: 'rgba(255,255,255,0.01)',
-                        borderRadius: '10px',
-                        padding: '12px',
-                        minHeight: '120px',
+                        background: '#fff',
+                        border: isActiveScanner ? '2px solid #3b82f6' : hasPlanchador ? '1px solid #cbd5e1' : '1px dashed #cbd5e1',
+                        borderRadius: '16px',
+                        padding: '1.2rem',
                         display: 'flex',
                         flexDirection: 'column',
-                        gap: '0.8rem'
+                        gap: '1rem',
+                        boxShadow: isActiveScanner ? '0 0 0 4px rgba(59, 130, 246, 0.1)' : '0 1px 3px rgba(0,0,0,0.05)',
+                        position: 'relative',
+                        transition: 'all 0.2s'
                       }}
                     >
-                      <h4 style={{ margin: 0, fontSize: '0.85rem', color: '#64748b', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '4px' }}>
-                        {burro.numero >= 11 
-                          ? (isEn ? 'Models to iron (Any size):' : 'Modelos a planchar (Cualquier talla):')
-                          : (isEn ? `Models to iron (Size ${burro.talla}):` : `Modelos a planchar (Talla ${burro.talla}):`)}
-                      </h4>
-
-                      {!hasModelos ? (
-                        <div style={{ margin: 'auto', textAlign: 'center', color: '#64748b', fontSize: '0.8rem' }}>
-                          {burro.numero >= 11 
-                            ? (isEn ? 'Drag any model here' : 'Arrastra cualquier modelo aquí') 
-                            : (isEn ? `Drag a model of Size ${burro.talla} here` : `Arrastra un modelo de Talla ${burro.talla} aquí`)}
+                      {/* Header */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <h4 style={{ margin: 0, fontSize: '1.1rem', color: '#0f172a' }}>Burro {String(burro.numero).padStart(2, '0')}</h4>
+                          <span style={{ fontSize: '0.7rem', fontWeight: 'bold', background: burro.numero >= 11 ? '#ecfdf5' : '#fff7ed', color: burro.numero >= 11 ? '#059669' : '#ea580c', padding: '2px 8px', borderRadius: '12px' }}>
+                            {burro.numero >= 11 ? 'Comodín' : `Talla ${burro.talla}`}
+                          </span>
                         </div>
-                      ) : (
-                        burro.modelos.map(m => {
-                          const normTalla = normalizeTalla(burro.numero >= 11 ? m.talla : burro.talla);
-                          const availableColors = [];
-                          if (m.tallas_colores_disponibles) {
-                            Object.entries(m.tallas_colores_disponibles).forEach(([col, tallasObj]) => {
-                              const matchingColorTallaKey = Object.keys(tallasObj || {}).find(
-                                k => normalizeTalla(k) === normTalla
-                              );
-                              const qty = matchingColorTallaKey ? (tallasObj[matchingColorTallaKey] || 0) : 0;
-                              if (qty > 0 || col === m.color) {
-                                availableColors.push({
-                                  color: col,
-                                  qty: qty
-                                });
-                              }
-                            });
-                          }
+                        <span style={{ fontSize: '0.75rem', fontWeight: '600', color: hasPlanchador ? '#10b981' : '#94a3b8' }}>
+                          {hasPlanchador ? 'Activo' : 'Disponible'}
+                        </span>
+                      </div>
 
-                          return (
-                            <div 
-                              key={`${m.id}_${m.color}_${m.talla}`} 
-                              style={{ 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                gap: '8px', 
-                                background: 'rgba(255,255,255,0.02)',
-                                padding: '6px 8px',
-                                borderRadius: '8px',
-                                border: '1px solid rgba(255,255,255,0.04)'
-                              }}
-                            >
-                              {m.imagen ? (
-                                <img 
-                                  src={`${API_URL}${m.imagen}`} 
-                                  alt={m.modelo} 
-                                  style={{ width: '32px', height: '32px', borderRadius: '4px', objectFit: 'contain', background: '#ffffff' }} 
-                                />
-                              ) : (
-                                <div style={{ width: '32px', height: '32px', borderRadius: '4px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                  <Layers size={14} color="#64748b" />
-                                </div>
-                              )}
+                      {/* Planchador Zone */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', padding: '0.8rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid transparent', minHeight: '60px' }}>
+                        {hasPlanchador ? (
+                          <>
+                            <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#dbeafe', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', flexShrink: 0 }}>{burro.planchador.nombre.charAt(0)}</div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <p style={{ margin: 0, fontSize: '0.75rem', color: '#64748b' }}>Planchando:</p>
+                              <p style={{ margin: 0, fontSize: '0.9rem', color: '#0f172a', fontWeight: '600', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{burro.planchador.nombre}</p>
+                            </div>
+                            <button onClick={() => handleRemovePlanchadorFromBurro(index)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: '4px' }}><X size={16} /></button>
+                          </>
+                        ) : (
+                          <div style={{ flex: 1, textAlign: 'center', color: '#94a3b8', fontSize: '0.85rem' }}>Arrastra un operario aquí</div>
+                        )}
+                      </div>
 
-                              <div style={{ flex: 1, minWidth: 0 }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                  <strong style={{ fontSize: '0.85rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Mod {m.modelo}</strong>
-                                  <button 
-                                    onClick={() => handleRemoveModeloFromBurro(index, m.id, m.color, m.talla)}
-                                    style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '2px' }}
-                                  >
-                                    <X size={14} />
-                                  </button>
-                                </div>
-
-                                {/* Selector de Talla (Solo para burros wildcard) */}
-                                {burro.numero >= 11 && (
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
-                                    <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Talla:</span>
-                                    <select
-                                      value={m.talla}
-                                      onChange={(e) => handleChangeModeloTalla(index, m.id, m.color, m.talla, e.target.value)}
-                                      style={{
-                                        background: 'rgba(0, 0, 0, 0.4)',
-                                        border: '1px solid rgba(255, 255, 255, 0.1)',
-                                        color: '#f59e0b',
-                                        borderRadius: '4px',
-                                        fontSize: '0.8rem',
-                                        fontWeight: 'bold',
-                                        padding: '1px 4px',
-                                        outline: 'none',
-                                        cursor: 'pointer'
-                                      }}
-                                    >
-                                      {(() => {
-                                        const uniqueTallas = Object.entries(m.tallas_colores_disponibles || {}).reduce((acc, [col, tallasObj]) => {
-                                          Object.entries(tallasObj || {}).forEach(([t, qty]) => {
-                                            if (qty > 0 && !acc.includes(t)) {
-                                              acc.push(t);
-                                            }
-                                          });
-                                          return acc;
-                                        }, []);
-                                        if (m.talla && !uniqueTallas.includes(m.talla)) {
-                                          uniqueTallas.push(m.talla);
-                                        }
-                                        uniqueTallas.sort((tallaA, tallaB) => {
-                                          const numA = parseInt(tallaA, 10);
-                                          const numB = parseInt(tallaB, 10);
-                                          if (isNaN(numA) && isNaN(numB)) return tallaA.localeCompare(tallaB);
-                                          if (isNaN(numA)) return 1;
-                                          if (isNaN(numB)) return -1;
-                                          return numA - numB;
-                                        });
-                                        return uniqueTallas.map(t => (
-                                          <option key={t} value={t} style={{ background: '#1e293b', color: '#fff' }}>
-                                            T{t}
-                                          </option>
-                                        ));
-                                      })()}
-                                    </select>
-                                  </div>
+                      {/* Models Zone */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', minHeight: '120px', background: '#f8fafc', borderRadius: '8px', padding: '0.8rem', border: '1px dashed #cbd5e1' }}>
+                        {!hasModelos ? (
+                          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#cbd5e1' }}>
+                            <Layers size={24} style={{ marginBottom: '8px' }} />
+                            <span style={{ fontSize: '0.8rem' }}>Suelta un modelo aquí</span>
+                          </div>
+                        ) : (
+                          burro.modelos.map(m => (
+                            <div key={`${m.id}_${m.color}_${m.talla}`} style={{ background: '#fff', borderRadius: '8px', padding: '0.8rem', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '0.8rem', boxShadow: '0 1px 2px rgba(0,0,0,0.02)' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                <span style={{ fontSize: '0.85rem', fontWeight: '700', color: '#334155' }}>MOD-{m.modelo}</span>
+                                <button onClick={() => handleRemoveModeloFromBurro(index, m.id, m.color, m.talla)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', padding: '2px' }}><X size={14} /></button>
+                              </div>
+                              
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                {burro.numero >= 11 ? (
+                                  <select value={m.talla} onChange={(e) => handleChangeModeloTalla(index, m.id, m.color, m.talla, e.target.value)} style={{ fontSize: '0.75rem', padding: '2px 4px', borderRadius: '4px', border: '1px solid #cbd5e1', outline: 'none' }}>
+                                    {Object.keys(m.tallas_disponibles).map(t => <option key={t} value={t}>T{t}</option>)}
+                                  </select>
+                                ) : (
+                                  <span style={{ fontSize: '0.75rem', background: '#f1f5f9', color: '#475569', padding: '2px 6px', borderRadius: '4px', fontWeight: '600' }}>T{m.talla}</span>
                                 )}
-
-                                {/* Selector o Tag de Color */}
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
-                                  <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Color:</span>
-                                  {availableColors.length <= 1 ? (
-                                    <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#a78bfa' }}>
-                                      {m.color || 'Único'}
-                                    </span>
-                                  ) : (
-                                    <select
-                                      value={m.color}
-                                      onChange={(e) => handleChangeModeloColor(index, m.id, m.color, e.target.value, m.talla)}
-                                      style={{
-                                        background: 'rgba(0, 0, 0, 0.4)',
-                                        border: '1px solid rgba(255, 255, 255, 0.1)',
-                                        color: '#a78bfa',
-                                        borderRadius: '4px',
-                                        fontSize: '0.8rem',
-                                        fontWeight: 'bold',
-                                        padding: '1px 4px',
-                                        outline: 'none',
-                                        cursor: 'pointer'
-                                      }}
-                                    >
-                                      {availableColors.map(c => (
-                                        <option key={c.color} value={c.color} style={{ background: '#1e293b', color: '#fff' }}>
-                                          {c.color || 'Único'} ({c.qty} pzs)
-                                        </option>
-                                      ))}
-                                    </select>
-                                  )}
-                                </div>
-
-                                {/* Controles de más y menos */}
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
-                                  <button 
-                                    onClick={() => handleUpdatePiezas(index, m.id, m.color, m.talla, -1)}
-                                    className="btn"
-                                    style={{ padding: '2px 8px', minWidth: 0, fontSize: '0.75rem', background: 'rgba(255,255,255,0.05)', border: 'none' }}
-                                    disabled={!m.piezas || m.piezas <= 1}
-                                  >
-                                    -
-                                  </button>
-                                  <input
-                                    type="number"
-                                    min="1"
-                                    max={m.maxPiezas}
-                                    value={m.piezas}
-                                    onChange={(e) => {
-                                      const val = parseInt(e.target.value, 10);
-                                      if (!isNaN(val)) {
-                                        const clamped = Math.max(1, Math.min(val, m.maxPiezas));
-                                        handleSetPiezas(index, m.id, m.color, m.talla, clamped);
-                                      } else {
-                                        handleSetPiezas(index, m.id, m.color, m.talla, '');
-                                      }
-                                    }}
-                                    onBlur={(e) => {
-                                      const val = parseInt(e.target.value, 10);
-                                      if (isNaN(val) || val < 1) {
-                                        handleSetPiezas(index, m.id, m.color, m.talla, 1);
-                                      }
-                                    }}
-                                    style={{
-                                      width: '45px',
-                                      background: 'rgba(255,255,255,0.05)',
-                                      border: '1px solid rgba(255,255,255,0.1)',
-                                      borderRadius: '4px',
-                                      color: '#fff',
-                                      textAlign: 'center',
-                                      fontSize: '0.85rem',
-                                      fontWeight: 'bold',
-                                      padding: '2px',
-                                      marginRight: '2px'
-                                    }}
-                                  />
-                                  <span style={{ fontSize: '0.85rem', fontWeight: 'normal', color: '#64748b', marginRight: '4px' }}>
-                                    / {m.maxPiezas}
-                                  </span>
-                                  <button 
-                                    onClick={() => handleUpdatePiezas(index, m.id, m.color, m.talla, 1)}
-                                    className="btn"
-                                    style={{ padding: '2px 8px', minWidth: 0, fontSize: '0.75rem', background: 'rgba(255,255,255,0.05)', border: 'none' }}
-                                    disabled={!m.piezas || m.piezas >= m.maxPiezas}
-                                  >
-                                    +
-                                  </button>
+                                
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: '#f1f5f9', borderRadius: '6px', padding: '2px' }}>
+                                  <button onClick={() => handleUpdatePiezas(index, m.id, m.color, m.talla, -1)} style={{ border: 'none', background: '#fff', width: '22px', height: '22px', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 1px 1px rgba(0,0,0,0.05)' }}>-</button>
+                                  <input type="number" value={m.piezas} onChange={(e) => handleSetPiezas(index, m.id, m.color, m.talla, parseInt(e.target.value)||1)} style={{ width: '32px', border: 'none', background: 'transparent', textAlign: 'center', fontSize: '0.8rem', fontWeight: '700', color: '#0f172a', outline: 'none' }} />
+                                  <span style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: '600' }}>/ {m.maxPiezas}</span>
+                                  <button onClick={() => handleUpdatePiezas(index, m.id, m.color, m.talla, 1)} style={{ border: 'none', background: '#fff', width: '22px', height: '22px', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 1px 1px rgba(0,0,0,0.05)' }}>+</button>
                                 </div>
                               </div>
+
+                              {/* Progress Bar */}
+                              <div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: '#64748b', marginBottom: '4px', fontWeight: '600' }}>
+                                  <span>{m.piezas} / {m.maxPiezas} pz</span>
+                                  <span>{Math.round((m.piezas/m.maxPiezas)*100)}%</span>
+                                </div>
+                                <div style={{ width: '100%', height: '6px', background: '#e2e8f0', borderRadius: '3px', overflow: 'hidden' }}>
+                                  <div style={{ width: `${(m.piezas/m.maxPiezas)*100}%`, height: '100%', background: '#10b981', transition: 'width 0.3s ease' }}></div>
+                                </div>
+                              </div>
+
                             </div>
-                          );
-                        })
-                      )}
+                          ))
+                        )}
+                      </div>
+
+                      {/* Footer Action */}
+                      <button 
+                        onClick={() => handleFinalizarPlanchado(index)}
+                        disabled={!hasPlanchador || !hasModelos}
+                        style={{ 
+                          width: '100%', 
+                          padding: '0.8rem', 
+                          border: 'none', 
+                          borderRadius: '8px', 
+                          background: (!hasPlanchador || !hasModelos) ? '#f1f5f9' : '#2563eb', 
+                          color: (!hasPlanchador || !hasModelos) ? '#94a3b8' : '#fff', 
+                          fontWeight: '600', 
+                          cursor: (!hasPlanchador || !hasModelos) ? 'not-allowed' : 'pointer',
+                          transition: 'all 0.2s',
+                          marginTop: 'auto',
+                          boxShadow: (!hasPlanchador || !hasModelos) ? 'none' : '0 2px 4px rgba(37, 99, 235, 0.2)'
+                        }}
+                      >
+                        Confirmar asignación
+                      </button>
                     </div>
-
-                    {/* Botón Finalizar Planchado */}
-                    <button 
-                      onClick={() => handleFinalizarPlanchado(index)}
-                      className="btn btn-primary"
-                      style={{ width: '100%', padding: '10px', fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
-                      disabled={!hasPlanchador || !hasModelos}
-                    >
-                      <Check size={16} /> {isEn ? 'Finish Ironing' : 'Finalizar Planchado'}
-                    </button>
-
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>
