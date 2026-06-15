@@ -407,7 +407,8 @@ export default function Plancha() {
     const handleKeyDown = (e) => {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
 
-      if (e.key === 'Enter') {
+      if (e.key === 'Enter' || e.key === 'Tab') {
+        if (e.key === 'Tab') e.preventDefault();
         if (buffer.length > 0) {
           const code = buffer.trim();
           buffer = '';
@@ -433,8 +434,9 @@ export default function Plancha() {
   }, [activeTab]);
 
   const handleScannedCode = async (code) => {
-    if (code.toUpperCase().startsWith('B-')) {
-      const numStr = code.split('-')[1];
+    const codeUpper = code.toUpperCase();
+    if (codeUpper.startsWith('B-') || codeUpper.startsWith('BURRO')) {
+      const numStr = codeUpper.replace('BURRO', '').replace('B-', '');
       const num = parseInt(numStr, 10);
       if (!isNaN(num) && num >= 1 && num <= 12) {
         setActiveBurroScanner(num);
