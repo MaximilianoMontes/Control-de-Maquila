@@ -70,6 +70,7 @@ export default function Plancha() {
   const [searchParams, setSearchParams] = useSearchParams();
   const initialTab = searchParams.get('tab') || 'plancha';
   const [activeTab, setActiveTab] = useState(initialTab);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     const tab = searchParams.get('tab');
@@ -1374,10 +1375,7 @@ export default function Plancha() {
               <h4 style={{ color: '#64748b', fontSize: '0.9rem', margin: '0 0 0.5rem 0' }}>{isEn ? 'Assigned Models' : 'Modelos asignados'}</h4>
               <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#10b981' }}>{burrosState.reduce((sum, b) => sum + b.modelos.length, 0)}</div>
             </div>
-            <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', padding: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-              <h4 style={{ color: '#64748b', fontSize: '0.9rem', margin: '0 0 0.5rem 0' }}>{isEn ? 'Ironers on Shift' : 'Operarios en turno'}</h4>
-              <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#8b5cf6' }}>{planchadores.length}</div>
-            </div>
+
             <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', padding: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
               <h4 style={{ color: '#64748b', fontSize: '0.9rem', margin: '0 0 0.5rem 0' }}>{isEn ? 'Unassigned' : 'Sin asignar'}</h4>
               <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#f59e0b' }}>{modelosDisponibles.length}</div>
@@ -1385,7 +1383,7 @@ export default function Plancha() {
           </div>
 
           {/* Main Content Grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: '1.5rem', alignItems: 'start' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr 300px', gap: '1.5rem', alignItems: 'start' }}>
             
             {/* Left Column: Pendientes */}
             <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', height: 'calc(100vh - 250px)' }}>
@@ -1394,11 +1392,21 @@ export default function Plancha() {
                   {isEn ? 'Pending Models' : 'Modelos pendientes'} 
                   <span style={{ background: '#f1f5f9', color: '#475569', padding: '2px 8px', borderRadius: '12px', fontSize: '0.8rem', marginLeft: 'auto', fontWeight: '600' }}>{modelosDisponibles.length}</span>
                 </h3>
-                <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>Arrastra un modelo a un burro disponible</p>
+                <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>Arrastra un modelo a un burro disponible o usa Asignar</p>
               </div>
               
+              <div style={{ padding: '1rem 1.5rem 0 1.5rem' }}>
+                <input 
+                  type="text" 
+                  placeholder={isEn ? "Search model..." : "Buscar modelo..."} 
+                  value={searchQuery} 
+                  onChange={e => setSearchQuery(e.target.value)} 
+                  style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: '1px solid var(--border-color, #e2e8f0)', background: 'var(--bg-elevated, #f8fafc)', color: 'var(--text-primary, #0f172a)', outline: 'none' }} 
+                />
+              </div>
+
               <div style={{ overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                {modelosDisponibles.map(m => (
+                {modelosDisponibles.filter(m => m.modelo.toLowerCase().includes(searchQuery.toLowerCase())).map(m => (
                   <div 
                     key={m.id}
                     draggable
@@ -1416,6 +1424,7 @@ export default function Plancha() {
                       <div>
                         <h4 style={{ margin: 0, color: '#0f172a', fontSize: '0.95rem' }}>{m.modelo}</h4>
                         <p style={{ margin: '4px 0', fontSize: '0.8rem', color: '#64748b' }}>{formatCurrency(m.precio_plancha)}/pza</p>
+                        <button onClick={() => { playBeep('success'); alert('Escanea un burro o arrástralo manualmente para asignar.'); }} style={{ background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '6px', padding: '4px 12px', fontSize: '0.75rem', cursor: 'pointer', alignSelf: 'flex-start', marginTop: '4px' }}>Asignar</button>
                       </div>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
                         {Object.entries(m.tallas_disponibles).filter(([_, q]) => q > 0).map(([t, q]) => (
@@ -1580,6 +1589,46 @@ export default function Plancha() {
                 })}
               </div>
             </div>
+
+            {/* Third Column: Detalle y Carga Operario */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              {/* Detalle de Asignación */}
+              <div style={{ background: 'var(--bg-card, #fff)', borderRadius: '16px', border: '1px solid var(--border-color, #e2e8f0)', padding: '1.5rem' }}>
+                <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', color: 'var(--text-primary, #0f172a)' }}>Detalle de Asignación</h3>
+                <div style={{ background: 'var(--bg-elevated, #f8fafc)', borderRadius: '8px', padding: '1rem', border: '1px solid var(--border-color, #e2e8f0)', fontSize: '0.9rem', color: 'var(--text-secondary, #334155)' }}>
+                  {activeBurroScanner ? (
+                    <>
+                      <p style={{ margin: '0 0 0.5rem 0' }}><strong>Burro Seleccionado:</strong> #{activeBurroScanner}</p>
+                      <p style={{ margin: 0, color: 'var(--text-muted, #64748b)' }}>Escanea operario o prenda para asignar al Burro #{activeBurroScanner}.</p>
+                    </>
+                  ) : (
+                    <p style={{ margin: 0, color: 'var(--text-muted, #64748b)' }}>Escanea un burro (Ej. B-01) o usa arrastrar y soltar para comenzar a asignar.</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Carga Operario */}
+              <div style={{ background: 'var(--bg-card, #fff)', borderRadius: '16px', border: '1px solid var(--border-color, #e2e8f0)', padding: '1.5rem' }}>
+                <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', color: 'var(--text-primary, #0f172a)' }}>Carga Operario</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                  {planchadores.slice(0, 8).map(p => {
+                    let piezasAsignadas = 0;
+                    burrosState.forEach(b => {
+                      if (b.planchador && b.planchador.id === p.id) {
+                        b.modelos.forEach(m => piezasAsignadas += (parseInt(m.piezas)||0));
+                      }
+                    });
+                    return (
+                      <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.8rem', background: 'var(--bg-elevated, #f8fafc)', borderRadius: '8px', border: '1px solid var(--border-color, #e2e8f0)' }}>
+                        <span style={{ fontSize: '0.9rem', color: 'var(--text-primary, #0f172a)', fontWeight: '500' }}>{p.nombre}</span>
+                        <span style={{ fontSize: '0.85rem', color: '#10b981', fontWeight: 'bold', background: 'rgba(16, 185, 129, 0.1)', padding: '2px 8px', borderRadius: '12px' }}>{piezasAsignadas} pzas</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
       )}
