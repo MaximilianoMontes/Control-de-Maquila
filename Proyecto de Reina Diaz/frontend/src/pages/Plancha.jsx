@@ -1757,13 +1757,57 @@ export default function Plancha() {
               <div style={{ background: 'var(--bg-card, #fff)', borderRadius: '16px', border: '1px solid var(--border-color, #e2e8f0)', padding: '1.5rem' }}>
                 <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', color: 'var(--text-primary)' }}>Detalle de Asignación</h3>
                 <div style={{ background: 'var(--bg-input)', borderRadius: '8px', padding: '1rem', border: '1px solid var(--border-color, #e2e8f0)', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                  {activeBurroScanner ? (
-                    <>
-                      <p style={{ margin: '0 0 0.5rem 0' }}><strong>Burro Seleccionado:</strong> #{activeBurroScanner}</p>
-                      <p style={{ margin: 0, color: 'var(--text-secondary)' }}>Escanea operario o prenda para asignar al Burro #{activeBurroScanner}.</p>
-                    </>
-                  ) : (
-                    <p style={{ margin: 0, color: 'var(--text-secondary)' }}>Escanea un burro (Ej. B-01) o usa arrastrar y soltar para comenzar a asignar.</p>
+                  {activeBurroScanner && burrosState[activeBurroScanner - 1] ? (() => {
+                    const activeBurroObj = burrosState[activeBurroScanner - 1];
+                    const totalPiezas = activeBurroObj.modelos.reduce((acc, m) => acc + m.piezas, 0);
+                    return (
+                      <>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem' }}>
+                          <h4 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '1rem' }}>Burro #{activeBurroScanner}</h4>
+                          <span style={{ fontSize: '0.7rem', background: '#dbeafe', color: '#2563eb', padding: '2px 8px', borderRadius: '12px', fontWeight: 'bold', textTransform: 'uppercase' }}>Activo</span>
+                        </div>
+                        
+                        {activeBurroObj.planchador ? (
+                          <div style={{ marginBottom: '1rem', padding: '0.6rem', background: 'var(--bg-card)', borderRadius: '6px', border: '1px solid rgba(59,130,246,0.3)', borderLeft: '3px solid #3b82f6' }}>
+                            <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Planchador Asignado</p>
+                            <p style={{ margin: '2px 0 0 0', fontSize: '0.95rem', color: 'var(--text-primary)', fontWeight: '700' }}>{activeBurroObj.planchador.nombre}</p>
+                          </div>
+                        ) : (
+                          <div style={{ marginBottom: '1rem', padding: '0.6rem', background: 'rgba(245,158,11,0.1)', borderRadius: '6px', border: '1px dashed rgba(245,158,11,0.4)' }}>
+                            <p style={{ margin: 0, fontSize: '0.8rem', color: '#d97706', fontWeight: '600', textAlign: 'center' }}>Esperando Planchador...</p>
+                          </div>
+                        )}
+
+                        {activeBurroObj.modelos.length > 0 ? (
+                          <div>
+                            <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Modelos en Burro ({activeBurroObj.modelos.length})</p>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '180px', overflowY: 'auto', paddingRight: '4px' }}>
+                              {activeBurroObj.modelos.map((m, i) => (
+                                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem', padding: '0.5rem', background: 'var(--bg-card)', borderRadius: '4px', border: '1px solid var(--border-color)', boxShadow: '0 1px 2px rgba(0,0,0,0.02)' }}>
+                                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                    <span style={{ color: 'var(--text-primary)', fontWeight: '600' }}>{m.modelo}</span>
+                                    <span style={{ color: 'var(--text-secondary)', fontSize: '0.7rem' }}>{m.color ? `${m.color} - ` : ''}T{m.talla}</span>
+                                  </div>
+                                  <span style={{ color: '#10b981', fontWeight: 'bold', background: 'rgba(16,185,129,0.1)', padding: '2px 6px', borderRadius: '4px' }}>{m.piezas} pz</span>
+                                </div>
+                              ))}
+                            </div>
+                            <div style={{ marginTop: '0.8rem', paddingTop: '0.8rem', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: '600' }}>Total a Planchar:</span>
+                              <span style={{ fontSize: '1.1rem', color: '#10b981', fontWeight: 'bold' }}>{totalPiezas} pz</span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div style={{ padding: '1rem', background: 'var(--bg-card)', borderRadius: '6px', border: '1px dashed var(--border-color)', textAlign: 'center' }}>
+                            <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Escanea o arrastra prendas para agregarlas a este burro.</p>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })() : (
+                    <div style={{ textAlign: 'center', padding: '1.5rem 0' }}>
+                      <p style={{ margin: 0, color: 'var(--text-secondary)' }}>Escanea un burro (Ej. B-01) o usa arrastrar y soltar para comenzar a asignar.</p>
+                    </div>
                   )}
                 </div>
               </div>
