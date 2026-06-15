@@ -450,10 +450,35 @@ export default function Plancha() {
     const normalizeStr = (str) => str.replace(/[^A-Z0-9]/ig, '').toUpperCase();
     const scanNorm = normalizeStr(planchadorNameCode);
 
-    const planchadorEncontrado = planchadoresRef.current.find(p => {
+    let planchadorEncontrado = null;
+    let maxScore = 0;
+
+    for (const p of planchadoresRef.current) {
+      const dbWords = p.nombre.toUpperCase().replace(/[^A-Z0-9 ]/ig, '').split(/\s+/).filter(w => w.length >= 3);
+      let score = 0;
+      
+      for (const word of dbWords) {
+        // Tomar hasta 5 letras para tolerar truncamiento en el código de barras
+        const wordTrunc = word.substring(0, 5); 
+        if (scanNorm.includes(wordTrunc)) {
+          score += wordTrunc.length;
+        }
+      }
+      
       const dbNorm = normalizeStr(p.nombre);
-      return dbNorm.includes(scanNorm) || scanNorm.includes(dbNorm);
-    });
+      if (dbNorm.includes(scanNorm) || scanNorm.includes(dbNorm)) {
+        score += 100; // Bonus enorme si hay coincidencia casi exacta
+      }
+
+      if (score > maxScore) {
+        maxScore = score;
+        planchadorEncontrado = p;
+      }
+    }
+
+    if (maxScore < 3) {
+      planchadorEncontrado = null; // No hubo suficientes coincidencias
+    }
     if (planchadorEncontrado) {
       if (!activeBurroScannerRef.current) {
         playBeep('error');
