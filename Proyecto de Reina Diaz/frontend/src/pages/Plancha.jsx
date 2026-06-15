@@ -445,8 +445,15 @@ export default function Plancha() {
       }
     }
 
-    let planchadorNameCode = codeUpper.startsWith('P-') ? codeUpper.slice(2) : codeUpper;
-    const planchadorEncontrado = planchadoresRef.current.find(p => p.nombre.toUpperCase() === planchadorNameCode.trim());
+    let planchadorNameCode = codeUpper.startsWith('P-') ? codeUpper.slice(2).trim() : codeUpper.trim();
+    
+    const normalizeStr = (str) => str.replace(/[^A-Z0-9]/ig, '').toUpperCase();
+    const scanNorm = normalizeStr(planchadorNameCode);
+
+    const planchadorEncontrado = planchadoresRef.current.find(p => {
+      const dbNorm = normalizeStr(p.nombre);
+      return dbNorm.includes(scanNorm) || scanNorm.includes(dbNorm);
+    });
     if (planchadorEncontrado) {
       if (!activeBurroScannerRef.current) {
         playBeep('error');
