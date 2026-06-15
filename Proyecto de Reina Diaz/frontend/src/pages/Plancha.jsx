@@ -1197,7 +1197,7 @@ export default function Plancha() {
             <h2 style={{ fontSize: '1.4rem', margin: '0 0 1.5rem 0' }}>{isEn ? 'Active Ironers' : 'Planchadores Activos'}</h2>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1.2rem' }}>
               {planchadores.length === 0 ? (
-                <p style={{ textAlign: 'center', color: '#94a3b8', gridColumn: '1/-1', padding: '2rem' }}>
+                <p style={{ textAlign: 'center', color: 'var(--text-muted, #94a3b8)', gridColumn: '1/-1', padding: '2rem' }}>
                   {isEn ? 'No registered ironers.' : 'No hay planchadores registrados.'}
                 </p>
               ) : (
@@ -1218,7 +1218,7 @@ export default function Plancha() {
                     <div>
                       <h3 style={{ margin: 0, fontSize: '1.2rem' }}>{p.nombre}</h3>
                       {p.telefono && (
-                        <p style={{ color: '#94a3b8', margin: '0.2rem 0 0 0', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <p style={{ color: 'var(--text-muted, #94a3b8)', margin: '0.2rem 0 0 0', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
                           <Phone size={12} /> {isEn ? 'Phone' : 'Teléfono'}: {p.telefono}
                         </p>
                       )}
@@ -1259,7 +1259,7 @@ export default function Plancha() {
           <h2 style={{ fontSize: '1.5rem', margin: '0 0 1.5rem 0' }}>{isEn ? 'Models in Transit / Colima' : 'Modelos en Tránsito / Colima'}</h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
             {modelosCamion.length === 0 ? (
-              <p style={{ textAlign: 'center', color: '#94a3b8', gridColumn: '1/-1', padding: '3rem' }}>
+              <p style={{ textAlign: 'center', color: 'var(--text-muted, #94a3b8)', gridColumn: '1/-1', padding: '3rem' }}>
                 {isEn ? 'No registered models from sent trucks.' : 'No hay modelos registrados de camiones enviados.'}
               </p>
             ) : (
@@ -1298,7 +1298,7 @@ export default function Plancha() {
                       <img 
                         src={`${API_URL}${m.imagen}`} 
                         alt={m.modelo} 
-                        style={{ width: '60px', height: '60px', borderRadius: '8px', objectFit: 'contain', background: '#ffffff' }} 
+                        style={{ width: '60px', height: '60px', borderRadius: '8px', objectFit: 'contain', background: 'var(--bg-card)' }} 
                       />
                     ) : (
                       <div style={{ width: '60px', height: '60px', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -1315,8 +1315,8 @@ export default function Plancha() {
                     {m.verificado ? (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.9rem' }}>
-                          <span style={{ color: '#94a3b8' }}>{isEn ? 'Ironing Pay' : 'Pago de Plancha'}:</span>
-                          <strong style={{ color: '#34d399', fontSize: '1.1rem' }}>{formatCurrency(m.precio_plancha)} <span style={{ fontSize: '0.75rem', fontWeight: 'normal', color: '#64748b' }}>{isEn ? '/ pc' : '/ pza'}</span></strong>
+                          <span style={{ color: 'var(--text-muted, #94a3b8)' }}>{isEn ? 'Ironing Pay' : 'Pago de Plancha'}:</span>
+                          <strong style={{ color: '#34d399', fontSize: '1.1rem' }}>{formatCurrency(m.precio_plancha)} <span style={{ fontSize: '0.75rem', fontWeight: 'normal', color: 'var(--text-secondary)' }}>{isEn ? '/ pc' : '/ pza'}</span></strong>
                         </div>
                         {userRole !== 'plancha' && (
                           <button 
@@ -1330,7 +1330,7 @@ export default function Plancha() {
                       </div>
                     ) : (
                       userRole === 'plancha' ? (
-                        <div style={{ textAlign: 'center', color: '#94a3b8', fontSize: '0.85rem', fontStyle: 'italic', padding: '4px 0' }}>
+                        <div style={{ textAlign: 'center', color: 'var(--text-muted, #94a3b8)', fontSize: '0.85rem', fontStyle: 'italic', padding: '4px 0' }}>
                           {isEn ? 'Pending Verification' : 'Pendiente de Verificación'}
                         </div>
                       ) : (
@@ -1367,17 +1367,17 @@ export default function Plancha() {
           
           {/* KPIs Top */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-            <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', padding: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-              <h4 style={{ color: '#64748b', fontSize: '0.9rem', margin: '0 0 0.5rem 0' }}>{isEn ? 'Active Boards' : 'Burros activos'}</h4>
-              <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#0f172a' }}>{burrosState.filter(b => b.planchador).length}</div>
+            <div style={{ background: 'var(--bg-card)', borderRadius: '16px', border: '1px solid var(--border-color)', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', padding: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+              <h4 style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: '0 0 0.5rem 0' }}>{isEn ? 'Active Boards' : 'Burros activos'}</h4>
+              <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>{burrosState.filter(b => b.planchador).length}</div>
             </div>
-            <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', padding: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-              <h4 style={{ color: '#64748b', fontSize: '0.9rem', margin: '0 0 0.5rem 0' }}>{isEn ? 'Assigned Models' : 'Modelos asignados'}</h4>
+            <div style={{ background: 'var(--bg-card)', borderRadius: '16px', border: '1px solid var(--border-color)', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', padding: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+              <h4 style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: '0 0 0.5rem 0' }}>{isEn ? 'Assigned Models' : 'Modelos asignados'}</h4>
               <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#10b981' }}>{burrosState.reduce((sum, b) => sum + b.modelos.length, 0)}</div>
             </div>
 
-            <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', padding: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-              <h4 style={{ color: '#64748b', fontSize: '0.9rem', margin: '0 0 0.5rem 0' }}>{isEn ? 'Unassigned' : 'Sin asignar'}</h4>
+            <div style={{ background: 'var(--bg-card)', borderRadius: '16px', border: '1px solid var(--border-color)', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', padding: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+              <h4 style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: '0 0 0.5rem 0' }}>{isEn ? 'Unassigned' : 'Sin asignar'}</h4>
               <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#f59e0b' }}>{modelosDisponibles.length}</div>
             </div>
           </div>
@@ -1386,13 +1386,13 @@ export default function Plancha() {
           <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr 300px', gap: '1.5rem', alignItems: 'start' }}>
             
             {/* Left Column: Pendientes */}
-            <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', height: 'calc(100vh - 250px)' }}>
-              <div style={{ padding: '1.5rem', borderBottom: '1px solid #e2e8f0' }}>
-                <h3 style={{ margin: 0, fontSize: '1.2rem', color: '#0f172a', display: 'flex', alignItems: 'center' }}>
+            <div style={{ background: 'var(--bg-card)', borderRadius: '16px', border: '1px solid var(--border-color)', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', height: 'calc(100vh - 250px)' }}>
+              <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border-color)' }}>
+                <h3 style={{ margin: 0, fontSize: '1.2rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center' }}>
                   {isEn ? 'Pending Models' : 'Modelos pendientes'} 
-                  <span style={{ background: '#f1f5f9', color: '#475569', padding: '2px 8px', borderRadius: '12px', fontSize: '0.8rem', marginLeft: 'auto', fontWeight: '600' }}>{modelosDisponibles.length}</span>
+                  <span style={{ background: 'var(--bg-input)', color: 'var(--text-secondary)', padding: '2px 8px', borderRadius: '12px', fontSize: '0.8rem', marginLeft: 'auto', fontWeight: '600' }}>{modelosDisponibles.length}</span>
                 </h3>
-                <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>Arrastra un modelo a un burro disponible o usa Asignar</p>
+                <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Arrastra un modelo a un burro disponible o usa Asignar</p>
               </div>
               
               <div style={{ padding: '1rem 1.5rem 0 1.5rem' }}>
@@ -1411,24 +1411,24 @@ export default function Plancha() {
                     key={m.id}
                     draggable
                     onDragStart={(e) => handleDragStart(e, 'modelo', m)}
-                    style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1rem', display: 'flex', gap: '1rem', cursor: 'grab', boxShadow: '0 2px 4px rgba(0,0,0,0.02)', transition: 'all 0.2s' }}
+                    style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '1rem', display: 'flex', gap: '1rem', cursor: 'grab', boxShadow: '0 2px 4px rgba(0,0,0,0.02)', transition: 'all 0.2s' }}
                     onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.borderColor = '#cbd5e1'; }}
-                    onMouseOut={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = '#e2e8f0'; }}
+                    onMouseOut={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = 'var(--border-color)'; }}
                   >
                     {m.imagen ? (
-                      <img src={`${API_URL}${m.imagen}`} style={{ width: '60px', height: '80px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #e2e8f0' }} />
+                      <img src={`${API_URL}${m.imagen}`} style={{ width: '60px', height: '80px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--border-color)' }} />
                     ) : (
-                      <div style={{ width: '60px', height: '80px', background: '#f1f5f9', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Layers color="#cbd5e1" /></div>
+                      <div style={{ width: '60px', height: '80px', background: 'var(--bg-input)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Layers color="#cbd5e1" /></div>
                     )}
                     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                       <div>
-                        <h4 style={{ margin: 0, color: '#0f172a', fontSize: '0.95rem' }}>{m.modelo}</h4>
-                        <p style={{ margin: '4px 0', fontSize: '0.8rem', color: '#64748b' }}>{formatCurrency(m.precio_plancha)}/pza</p>
+                        <h4 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '0.95rem' }}>{m.modelo}</h4>
+                        <p style={{ margin: '4px 0', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{formatCurrency(m.precio_plancha)}/pza</p>
                         <button onClick={() => { playBeep('success'); alert('Escanea un burro o arrástralo manualmente para asignar.'); }} style={{ background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '6px', padding: '4px 12px', fontSize: '0.75rem', cursor: 'pointer', alignSelf: 'flex-start', marginTop: '4px' }}>Asignar</button>
                       </div>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
                         {Object.entries(m.tallas_disponibles).filter(([_, q]) => q > 0).map(([t, q]) => (
-                          <span key={t} style={{ background: '#f1f5f9', color: '#475569', fontSize: '0.7rem', padding: '2px 6px', borderRadius: '4px', fontWeight: '600' }}>T{t}: {q}</span>
+                          <span key={t} style={{ background: 'var(--bg-input)', color: 'var(--text-secondary)', fontSize: '0.7rem', padding: '2px 6px', borderRadius: '4px', fontWeight: '600' }}>T{t}: {q}</span>
                         ))}
                       </div>
                     </div>
@@ -1436,11 +1436,11 @@ export default function Plancha() {
                 ))}
                 
                 {planchadores.length > 0 && (
-                  <div style={{ marginTop: '0.5rem', paddingTop: '1.5rem', borderTop: '1px dashed #e2e8f0' }}>
-                     <h4 style={{ margin: '0 0 1rem 0', fontSize: '0.8rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: '600' }}>Operarios (Planchadores)</h4>
+                  <div style={{ marginTop: '0.5rem', paddingTop: '1.5rem', borderTop: '1px dashed var(--border-color)' }}>
+                     <h4 style={{ margin: '0 0 1rem 0', fontSize: '0.8rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: '600' }}>Operarios (Planchadores)</h4>
                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                        {planchadores.map(p => (
-                         <div key={p.id} draggable onDragStart={(e) => handleDragStart(e, 'planchador', p)} style={{ padding: '0.8rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', cursor: 'grab', display: 'flex', alignItems: 'center', gap: '0.8rem', fontSize: '0.9rem', color: '#334155', fontWeight: '500', transition: 'background 0.2s' }} onMouseOver={e => e.currentTarget.style.background = '#f1f5f9'} onMouseOut={e => e.currentTarget.style.background = '#f8fafc'}>
+                         <div key={p.id} draggable onDragStart={(e) => handleDragStart(e, 'planchador', p)} style={{ padding: '0.8rem', background: 'var(--bg-input)', border: '1px solid var(--border-color)', borderRadius: '8px', cursor: 'grab', display: 'flex', alignItems: 'center', gap: '0.8rem', fontSize: '0.9rem', color: 'var(--text-primary)', fontWeight: '500', transition: 'background 0.2s' }} onMouseOver={e => e.currentTarget.style.background = '#f1f5f9'} onMouseOut={e => e.currentTarget.style.background = '#f8fafc'}>
                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#dbeafe', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>{p.nombre.charAt(0)}</div>
                            {p.nombre}
                          </div>
@@ -1452,14 +1452,14 @@ export default function Plancha() {
             </div>
 
             {/* Right Column: Mapa de Burros */}
-            <div style={{ background: '#f8fafc', borderRadius: '16px', border: '1px solid #e2e8f0', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            <div style={{ background: 'var(--bg-input)', borderRadius: '16px', border: '1px solid var(--border-color)', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h3 style={{ margin: 0, fontSize: '1.2rem', color: '#0f172a' }}>{isEn ? 'Board Map' : 'Mapa de burros'}</h3>
+                <h3 style={{ margin: 0, fontSize: '1.2rem', color: 'var(--text-primary)' }}>{isEn ? 'Board Map' : 'Mapa de burros'}</h3>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#10b981' }}></div>
-                  <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Activos</span>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Activos</span>
                   <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#cbd5e1', marginLeft: '8px' }}></div>
-                  <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Disponibles</span>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Disponibles</span>
                 </div>
               </div>
               
@@ -1475,7 +1475,7 @@ export default function Plancha() {
                       onDragOver={e => e.preventDefault()}
                       onDrop={e => handleDropOnBurro(e, index)}
                       style={{ 
-                        background: '#fff',
+                        background: 'var(--bg-card)',
                         border: isActiveScanner ? '2px solid #3b82f6' : hasPlanchador ? '1px solid #cbd5e1' : '1px dashed #cbd5e1',
                         borderRadius: '16px',
                         padding: '1.2rem',
@@ -1490,7 +1490,7 @@ export default function Plancha() {
                       {/* Header */}
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <h4 style={{ margin: 0, fontSize: '1.1rem', color: '#0f172a' }}>Burro {String(burro.numero).padStart(2, '0')}</h4>
+                          <h4 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-primary)' }}>Burro {String(burro.numero).padStart(2, '0')}</h4>
                           <span style={{ fontSize: '0.7rem', fontWeight: 'bold', background: burro.numero >= 11 ? '#ecfdf5' : '#fff7ed', color: burro.numero >= 11 ? '#059669' : '#ea580c', padding: '2px 8px', borderRadius: '12px' }}>
                             {burro.numero >= 11 ? 'Comodín' : `Talla ${burro.talla}`}
                           </span>
@@ -1501,56 +1501,56 @@ export default function Plancha() {
                       </div>
 
                       {/* Planchador Zone */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', padding: '0.8rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid transparent', minHeight: '60px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', padding: '0.8rem', background: 'var(--bg-input)', borderRadius: '8px', border: '1px solid transparent', minHeight: '60px' }}>
                         {hasPlanchador ? (
                           <>
                             <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#dbeafe', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', flexShrink: 0 }}>{burro.planchador.nombre.charAt(0)}</div>
                             <div style={{ flex: 1, minWidth: 0 }}>
-                              <p style={{ margin: 0, fontSize: '0.75rem', color: '#64748b' }}>Planchando:</p>
-                              <p style={{ margin: 0, fontSize: '0.9rem', color: '#0f172a', fontWeight: '600', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{burro.planchador.nombre}</p>
+                              <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Planchando:</p>
+                              <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-primary)', fontWeight: '600', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{burro.planchador.nombre}</p>
                             </div>
-                            <button onClick={() => handleRemovePlanchadorFromBurro(index)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: '4px' }}><X size={16} /></button>
+                            <button onClick={() => handleRemovePlanchadorFromBurro(index)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted, #94a3b8)', padding: '4px' }}><X size={16} /></button>
                           </>
                         ) : (
-                          <div style={{ flex: 1, textAlign: 'center', color: '#94a3b8', fontSize: '0.85rem' }}>Arrastra un operario aquí</div>
+                          <div style={{ flex: 1, textAlign: 'center', color: 'var(--text-muted, #94a3b8)', fontSize: '0.85rem' }}>Arrastra un operario aquí</div>
                         )}
                       </div>
 
                       {/* Models Zone */}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', minHeight: '120px', background: '#f8fafc', borderRadius: '8px', padding: '0.8rem', border: '1px dashed #cbd5e1' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', minHeight: '120px', background: 'var(--bg-input)', borderRadius: '8px', padding: '0.8rem', border: '1px dashed var(--border-color)' }}>
                         {!hasModelos ? (
-                          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#cbd5e1' }}>
+                          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted, #94a3b8)' }}>
                             <Layers size={24} style={{ marginBottom: '8px' }} />
                             <span style={{ fontSize: '0.8rem' }}>Suelta un modelo aquí</span>
                           </div>
                         ) : (
                           burro.modelos.map(m => (
-                            <div key={`${m.id}_${m.color}_${m.talla}`} style={{ background: '#fff', borderRadius: '8px', padding: '0.8rem', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '0.8rem', boxShadow: '0 1px 2px rgba(0,0,0,0.02)' }}>
+                            <div key={`${m.id}_${m.color}_${m.talla}`} style={{ background: 'var(--bg-card)', borderRadius: '8px', padding: '0.8rem', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '0.8rem', boxShadow: '0 1px 2px rgba(0,0,0,0.02)' }}>
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                <span style={{ fontSize: '0.85rem', fontWeight: '700', color: '#334155' }}>MOD-{m.modelo}</span>
+                                <span style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-primary)' }}>MOD-{m.modelo}</span>
                                 <button onClick={() => handleRemoveModeloFromBurro(index, m.id, m.color, m.talla)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', padding: '2px' }}><X size={14} /></button>
                               </div>
                               
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                                 {burro.numero >= 11 ? (
-                                  <select value={m.talla} onChange={(e) => handleChangeModeloTalla(index, m.id, m.color, m.talla, e.target.value)} style={{ fontSize: '0.75rem', padding: '2px 4px', borderRadius: '4px', border: '1px solid #cbd5e1', outline: 'none' }}>
+                                  <select value={m.talla} onChange={(e) => handleChangeModeloTalla(index, m.id, m.color, m.talla, e.target.value)} style={{ fontSize: '0.75rem', padding: '2px 4px', borderRadius: '4px', border: '1px solid var(--border-color)', outline: 'none' }}>
                                     {Object.keys(m.tallas_disponibles).map(t => <option key={t} value={t}>T{t}</option>)}
                                   </select>
                                 ) : (
-                                  <span style={{ fontSize: '0.75rem', background: '#f1f5f9', color: '#475569', padding: '2px 6px', borderRadius: '4px', fontWeight: '600' }}>T{m.talla}</span>
+                                  <span style={{ fontSize: '0.75rem', background: 'var(--bg-input)', color: 'var(--text-secondary)', padding: '2px 6px', borderRadius: '4px', fontWeight: '600' }}>T{m.talla}</span>
                                 )}
                                 
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: '#f1f5f9', borderRadius: '6px', padding: '2px' }}>
-                                  <button onClick={() => handleUpdatePiezas(index, m.id, m.color, m.talla, -1)} style={{ border: 'none', background: '#fff', width: '22px', height: '22px', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 1px 1px rgba(0,0,0,0.05)' }}>-</button>
-                                  <input type="number" value={m.piezas} onChange={(e) => handleSetPiezas(index, m.id, m.color, m.talla, parseInt(e.target.value)||1)} style={{ width: '32px', border: 'none', background: 'transparent', textAlign: 'center', fontSize: '0.8rem', fontWeight: '700', color: '#0f172a', outline: 'none' }} />
-                                  <span style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: '600' }}>/ {m.maxPiezas}</span>
-                                  <button onClick={() => handleUpdatePiezas(index, m.id, m.color, m.talla, 1)} style={{ border: 'none', background: '#fff', width: '22px', height: '22px', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 1px 1px rgba(0,0,0,0.05)' }}>+</button>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'var(--bg-input)', borderRadius: '6px', padding: '2px' }}>
+                                  <button onClick={() => handleUpdatePiezas(index, m.id, m.color, m.talla, -1)} style={{ border: 'none', background: 'var(--bg-card)', width: '22px', height: '22px', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 1px 1px rgba(0,0,0,0.05)' }}>-</button>
+                                  <input type="number" value={m.piezas} onChange={(e) => handleSetPiezas(index, m.id, m.color, m.talla, parseInt(e.target.value)||1)} style={{ width: '32px', border: 'none', background: 'transparent', textAlign: 'center', fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-primary)', outline: 'none' }} />
+                                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted, #94a3b8)', fontWeight: '600' }}>/ {m.maxPiezas}</span>
+                                  <button onClick={() => handleUpdatePiezas(index, m.id, m.color, m.talla, 1)} style={{ border: 'none', background: 'var(--bg-card)', width: '22px', height: '22px', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 1px 1px rgba(0,0,0,0.05)' }}>+</button>
                                 </div>
                               </div>
 
                               {/* Progress Bar */}
                               <div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: '#64748b', marginBottom: '4px', fontWeight: '600' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--text-secondary)', marginBottom: '4px', fontWeight: '600' }}>
                                   <span>{m.piezas} / {m.maxPiezas} pz</span>
                                   <span>{Math.round((m.piezas/m.maxPiezas)*100)}%</span>
                                 </div>
@@ -1685,20 +1685,20 @@ export default function Plancha() {
                       <p style={{ margin: 0 }}><strong>{isEn ? 'Total Earned' : 'Total Ganado'}:</strong> {formatCurrency(planchadorPagoDetalle.ganado)}</p>
                       
                       {regularWork > 0 && (
-                        <p style={{ margin: 0, fontSize: '0.85rem', color: '#94a3b8', paddingLeft: '1rem' }}>
+                        <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted, #94a3b8)', paddingLeft: '1rem' }}>
                           • {isEn ? 'Regular Ironing' : 'Plancha Regular'}: <span style={{ color: '#f8fafc' }}>{formatCurrency(regularWork)}</span>
                         </p>
                       )}
                       
                       {cuadreDif !== 0 && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', paddingLeft: '1rem' }}>
-                          <p style={{ margin: 0, fontSize: '0.85rem', color: '#94a3b8' }}>
+                          <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted, #94a3b8)' }}>
                             • {isEn ? 'Adjustment Difference' : 'Diferencia Cuadre'}: <span style={{ color: cuadreDif > 0 ? '#34d399' : '#ef4444', fontWeight: 'bold' }}>
                               {cuadreDif > 0 ? '+' : ''}{formatCurrency(cuadreDif)}
                             </span>
                           </p>
                           {cuadreItems.map(item => (
-                            <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.75rem', color: '#cbd5e1', paddingLeft: '0.5rem', background: 'rgba(255,255,255,0.02)', padding: '4px 8px', borderRadius: '6px' }}>
+                            <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-muted, #94a3b8)', paddingLeft: '0.5rem', background: 'rgba(255,255,255,0.02)', padding: '4px 8px', borderRadius: '6px' }}>
                               <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '180px' }} title={item.color}>
                                 - {item.color || 'Ajuste'}
                               </span>
@@ -1721,13 +1721,13 @@ export default function Plancha() {
                       
                       {pagoFijoVal !== 0 && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', paddingLeft: '1rem' }}>
-                          <p style={{ margin: 0, fontSize: '0.85rem', color: '#94a3b8' }}>
+                          <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted, #94a3b8)' }}>
                             • {isEn ? 'Fixed Pay / Support' : 'Pago Fijo / Apoyos'}: <span style={{ color: '#60a5fa', fontWeight: 'bold' }}>
                               {pagoFijoVal > 0 ? '+' : ''}{formatCurrency(pagoFijoVal)}
                             </span>
                           </p>
                           {pagoFijoItems.map(item => (
-                            <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.75rem', color: '#cbd5e1', paddingLeft: '0.5rem', background: 'rgba(255,255,255,0.02)', padding: '4px 8px', borderRadius: '6px' }}>
+                            <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-muted, #94a3b8)', paddingLeft: '0.5rem', background: 'rgba(255,255,255,0.02)', padding: '4px 8px', borderRadius: '6px' }}>
                               <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '180px' }} title={item.color}>
                                 - {item.color || 'Apoyo'}
                               </span>
@@ -1750,13 +1750,13 @@ export default function Plancha() {
                       
                       {asistenciasVal > 0 && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', paddingLeft: '1rem' }}>
-                          <p style={{ margin: 0, fontSize: '0.85rem', color: '#94a3b8' }}>
+                          <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted, #94a3b8)' }}>
                             • {isEn ? 'Attendances' : 'Asistencias'}: <span style={{ color: '#10b981' }}>
                               +{formatCurrency(asistenciasVal)}
                             </span>
                           </p>
                           {asistenciasList.map(item => (
-                            <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.75rem', color: '#cbd5e1', paddingLeft: '0.5rem', background: 'rgba(255,255,255,0.02)', padding: '4px 8px', borderRadius: '6px' }}>
+                            <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-muted, #94a3b8)', paddingLeft: '0.5rem', background: 'rgba(255,255,255,0.02)', padding: '4px 8px', borderRadius: '6px' }}>
                               <span>
                                 - {isEn ? 'Attendance' : 'Asistencia'} {formatDate(item.fecha)}
                               </span>
@@ -1883,7 +1883,7 @@ export default function Plancha() {
               <h3 style={{ margin: '0 0 1.2rem 0', fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <History size={18} color="#0ea5e9" /> {isEn ? 'Payroll PDF Report' : 'Reporte de Nómina PDF'}
               </h3>
-              <p style={{ fontSize: '0.8rem', color: '#64748b', margin: '-0.5rem 0 1.2rem 0' }}>{isEn ? 'Download a consolidated PDF report of ironers earnings and payroll' : 'Descarga un reporte consolidado en PDF de las ganancias y nómina de los planchadores'}</p>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '-0.5rem 0 1.2rem 0' }}>{isEn ? 'Download a consolidated PDF report of ironers earnings and payroll' : 'Descarga un reporte consolidado en PDF de las ganancias y nómina de los planchadores'}</p>
               
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 <div className="form-group">
@@ -1957,7 +1957,7 @@ export default function Plancha() {
                   <tbody>
                     {!planchadorPagoDetalle || planchadorPagoDetalle.trabajosPendientes.length === 0 ? (
                       <tr>
-                        <td colSpan="5" style={{ textAlign: 'center', color: '#94a3b8' }}>
+                        <td colSpan="5" style={{ textAlign: 'center', color: 'var(--text-muted, #94a3b8)' }}>
                           {!pagoPlanchadorId ? (isEn ? 'Select an ironer to view pending jobs.' : 'Selecciona un planchador para ver sus pendientes.') : (isEn ? 'No jobs pending payment.' : 'No hay trabajos pendientes de pago.')}
                         </td>
                       </tr>
@@ -1970,7 +1970,7 @@ export default function Plancha() {
                                 <img 
                                   src={`${API_URL}${t.modelo_imagen}`} 
                                   alt={t.modelo_nombre} 
-                                  style={{ width: '28px', height: '28px', borderRadius: '4px', objectFit: 'contain', background: '#ffffff' }} 
+                                  style={{ width: '28px', height: '28px', borderRadius: '4px', objectFit: 'contain', background: 'var(--bg-card)' }} 
                                 />
                               ) : null}
                               <strong>{t.modelo_nombre || t.color}</strong>
@@ -2012,7 +2012,7 @@ export default function Plancha() {
                   <tbody>
                     {!planchadorPagoDetalle || planchadorPagoDetalle.pagos.length === 0 ? (
                       <tr>
-                        <td colSpan="4" style={{ textAlign: 'center', color: '#94a3b8' }}>
+                        <td colSpan="4" style={{ textAlign: 'center', color: 'var(--text-muted, #94a3b8)' }}>
                           {!pagoPlanchadorId ? (isEn ? 'Select an ironer to view receipts.' : 'Selecciona un planchador para ver sus recibos.') : (isEn ? 'No payments registered today.' : 'No se han registrado pagos aún.')}
                         </td>
                       </tr>
@@ -2065,7 +2065,7 @@ export default function Plancha() {
               <tbody>
                 {historialGeneral.length === 0 ? (
                   <tr>
-                    <td colSpan="11" style={{ textAlign: 'center', color: '#94a3b8', padding: '3rem' }}>
+                    <td colSpan="11" style={{ textAlign: 'center', color: 'var(--text-muted, #94a3b8)', padding: '3rem' }}>
                       {isEn ? 'No ironing records in general history.' : 'No hay registros de planchado en el historial general.'}
                     </td>
                   </tr>
@@ -2078,7 +2078,7 @@ export default function Plancha() {
                           <img 
                             src={`${API_URL}${h.modelo_imagen}`} 
                             alt={h.modelo_nombre} 
-                            style={{ width: '40px', height: '40px', borderRadius: '6px', objectFit: 'contain', background: '#ffffff' }} 
+                            style={{ width: '40px', height: '40px', borderRadius: '6px', objectFit: 'contain', background: 'var(--bg-card)' }} 
                           />
                         ) : (
                           <div style={{ width: '40px', height: '40px', borderRadius: '6px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -2088,7 +2088,7 @@ export default function Plancha() {
                       </td>
                       <td>
                         <strong>{h.modelo_nombre}</strong>
-                        <p style={{ margin: 0, fontSize: '0.75rem', color: '#64748b' }}>{isEn ? 'Order' : 'Orden'}: {h.no_orden || 'N/A'}</p>
+                        <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{isEn ? 'Order' : 'Orden'}: {h.no_orden || 'N/A'}</p>
                       </td>
                       <td>{h.color || 'N/A'}</td>
                       <td><span className="badge badge-info">{isEn ? 'S' : 'T'}{h.talla}</span></td>
@@ -2159,7 +2159,7 @@ export default function Plancha() {
                 </thead>
                 <tbody>
                   {planchadorDetalle.historial.length === 0 ? (
-                    <tr><td colSpan="8" style={{ textAlign: 'center', color: '#94a3b8' }}>{isEn ? 'This ironer has no registered completed jobs.' : 'Este planchador no tiene trabajos terminados registrados.'}</td></tr>
+                    <tr><td colSpan="8" style={{ textAlign: 'center', color: 'var(--text-muted, #94a3b8)' }}>{isEn ? 'This ironer has no registered completed jobs.' : 'Este planchador no tiene trabajos terminados registrados.'}</td></tr>
                   ) : (
                     planchadorDetalle.historial.map(h => (
                       <tr key={h.id}>
@@ -2168,7 +2168,7 @@ export default function Plancha() {
                             <img 
                               src={`${API_URL}${h.modelo_imagen}`} 
                               alt={h.modelo_nombre} 
-                              style={{ width: '40px', height: '40px', borderRadius: '6px', objectFit: 'contain', background: '#ffffff' }} 
+                              style={{ width: '40px', height: '40px', borderRadius: '6px', objectFit: 'contain', background: 'var(--bg-card)' }} 
                             />
                           ) : (
                             <div style={{ width: '40px', height: '40px', borderRadius: '6px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -2178,7 +2178,7 @@ export default function Plancha() {
                         </td>
                         <td>
                           <strong>{h.modelo_nombre}</strong>
-                          <p style={{ margin: 0, fontSize: '0.75rem', color: '#64748b' }}>{isEn ? 'Order' : 'Orden'}: {h.no_orden || 'N/A'}</p>
+                          <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{isEn ? 'Order' : 'Orden'}: {h.no_orden || 'N/A'}</p>
                         </td>
                         <td>{h.color || 'N/A'}</td>
                         <td><span className="badge badge-info">{isEn ? 'S' : 'T'}{h.talla}</span></td>
@@ -2237,17 +2237,17 @@ export default function Plancha() {
                 <img 
                   src={`${API_URL}${modeloAVerificar.imagen}`} 
                   alt={modeloAVerificar.modelo} 
-                  style={{ width: '50px', height: '50px', borderRadius: '6px', objectFit: 'contain', background: '#ffffff' }} 
+                  style={{ width: '50px', height: '50px', borderRadius: '6px', objectFit: 'contain', background: 'var(--bg-card)' }} 
                 />
               ) : null}
               <div>
                 <h3 style={{ margin: 0, fontSize: '1.2rem' }}>{isEn ? 'Model' : 'Modelo'} {modeloAVerificar.modelo}</h3>
-                <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b' }}>{isEn ? 'Order No' : 'No. Orden'}: {modeloAVerificar.no_orden}</p>
+                <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{isEn ? 'Order No' : 'No. Orden'}: {modeloAVerificar.no_orden}</p>
               </div>
             </div>
 
             <div style={{ marginBottom: '1.5rem' }}>
-              <p style={{ fontSize: '0.9rem', color: '#94a3b8', margin: '0 0 0.8rem 0' }}>{isEn ? 'Confirm that the following quantities of pieces per size arrived completely in Colima:' : 'Confirma que las siguientes cantidades de piezas por talla llegaron completas a Colima:'}</p>
+              <p style={{ fontSize: '0.9rem', color: 'var(--text-muted, #94a3b8)', margin: '0 0 0.8rem 0' }}>{isEn ? 'Confirm that the following quantities of pieces per size arrived completely in Colima:' : 'Confirma que las siguientes cantidades de piezas por talla llegaron completas a Colima:'}</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '40vh', overflowY: 'auto', paddingRight: '4px' }}>
                 {Object.entries(modeloAVerificar.tallas_cantidades)
                   .sort(([keyA], [keyB]) => {
@@ -2321,7 +2321,7 @@ export default function Plancha() {
                   {isEn ? 'Ironing Price per Piece ($)' : 'Precio de Planchado por Pieza'} <AlertCircle size={14} color="#f59e0b" title={isEn ? 'How much will the ironer earn for ironing each piece of this model?' : '¿Cuánto ganará la planchadora por planchar cada pieza de este modelo?'} />
                 </label>
                 <div style={{ position: 'relative' }}>
-                  <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }}>$</span>
+                  <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted, #94a3b8)' }}>$</span>
                   <input 
                     type="number" 
                     step="0.01" 
@@ -2399,17 +2399,17 @@ export default function Plancha() {
                 <img 
                   src={`${API_URL}${modeloADevolver.imagen}`} 
                   alt={modeloADevolver.modelo} 
-                  style={{ width: '50px', height: '50px', borderRadius: '6px', objectFit: 'contain', background: '#ffffff' }} 
+                  style={{ width: '50px', height: '50px', borderRadius: '6px', objectFit: 'contain', background: 'var(--bg-card)' }} 
                 />
               ) : null}
               <div>
                 <h3 style={{ margin: 0, fontSize: '1.2rem' }}>{isEn ? 'Model' : 'Modelo'} {modeloADevolver.modelo}</h3>
-                <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b' }}>{isEn ? 'Order No' : 'No. Orden'}: {modeloADevolver.no_orden}</p>
+                <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{isEn ? 'Order No' : 'No. Orden'}: {modeloADevolver.no_orden}</p>
               </div>
             </div>
 
             <div style={{ marginBottom: '1.5rem' }}>
-              <p style={{ fontSize: '0.9rem', color: '#94a3b8', margin: '0 0 1rem 0', lineHeight: '1.4' }}>
+              <p style={{ fontSize: '0.9rem', color: 'var(--text-muted, #94a3b8)', margin: '0 0 1rem 0', lineHeight: '1.4' }}>
                 {isEn ? 'Select the pieces to return. Click or hold and drag to select/deselect complete sizes. Double click a box to enter a specific number of pieces.' : 'Selecciona las piezas que se van a devolver. Haz clic o mantén presionado y arrastra para seleccionar/deseleccionar tallas completas. Haz doble clic en una casilla para ingresar una cantidad específica de piezas.'}
               </p>
               
@@ -2452,7 +2452,7 @@ export default function Plancha() {
                                     transition: 'all 0.15s ease'
                                   }}
                                 >
-                                  <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{isEn ? 'Size' : 'Talla'} {talla}</div>
+                                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted, #94a3b8)' }}>{isEn ? 'Size' : 'Talla'} {talla}</div>
                                   {isEditing ? (
                                     <input 
                                       type="number"
@@ -2521,7 +2521,7 @@ export default function Plancha() {
                                 transition: 'all 0.15s ease'
                               }}
                             >
-                              <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{isEn ? 'Size' : 'Talla'} {talla}</div>
+                              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted, #94a3b8)' }}>{isEn ? 'Size' : 'Talla'} {talla}</div>
                               {isEditing ? (
                                 <input 
                                   type="number"
@@ -2735,7 +2735,7 @@ export default function Plancha() {
                       gap: '0.2rem'
                     }}
                   >
-                    <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>{isEn ? 'Formula' : 'Fórmula'}: {formulaText}</span>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted, #94a3b8)' }}>{isEn ? 'Formula' : 'Fórmula'}: {formulaText}</span>
                     <span style={{ fontSize: '1.4rem', fontWeight: 'bold', color: '#38bdf8' }}>
                       Total: {formatCurrency(val)}
                     </span>
@@ -2911,11 +2911,11 @@ export default function Plancha() {
                       textAlign: 'center'
                     }}
                   >
-                    <div style={{ fontSize: '0.85rem', color: '#94a3b8', marginBottom: '0.2rem' }}>{isEn ? 'Difference Result:' : 'Resultado de Diferencia:'}</div>
+                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted, #94a3b8)', marginBottom: '0.2rem' }}>{isEn ? 'Difference Result:' : 'Resultado de Diferencia:'}</div>
                     <div style={{ fontSize: '1.6rem', fontWeight: 'bold', color: diferencia > 0 ? '#10b981' : diferencia < 0 ? '#ef4444' : '#fff' }}>
                       {diferencia > 0 ? (isEn ? `Bonus: +${formatCurrency(diferencia)}` : `Bono: +${formatCurrency(diferencia)}`) : diferencia < 0 ? (isEn ? `Discount: ${formatCurrency(diferencia)}` : `Descuento: ${formatCurrency(diferencia)}`) : (isEn ? 'No Difference' : 'Sin Diferencia')}
                     </div>
-                    <div style={{ marginTop: '0.4rem', fontSize: '0.85rem', color: '#64748b' }}>
+                    <div style={{ marginTop: '0.4rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
                       {diferencia > 0 ? (isEn ? 'The difference will be added as a bonus in history.' : 'Se sumará la diferencia como un bono en el historial.') : diferencia < 0 ? (isEn ? 'The difference will be subtracted as a discount in history.' : 'Se restará la diferencia como un descuento en el historial.') : (isEn ? 'No financial adjustment will be registered.' : 'No se registrará ningún ajuste financiero.')}
                     </div>
                   </div>
