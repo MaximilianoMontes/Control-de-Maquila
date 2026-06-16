@@ -1736,6 +1736,17 @@ export default function Plancha() {
                               <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
                                 <button onClick={(e) => { e.stopPropagation(); handleVerDetallePlanchador(burro.planchador.id); }} style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6', border: '1px solid rgba(59,130,246,0.2)', borderRadius: '4px', padding: '2px 8px', fontSize: '0.65rem', cursor: 'pointer', fontWeight: '600' }}>Detalle</button>
                                 <button onClick={(e) => { e.stopPropagation(); handleRemovePlanchadorFromBurro(index); }} style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '4px', padding: '2px 8px', fontSize: '0.65rem', cursor: 'pointer', fontWeight: '600' }}>Reasignar</button>
+                                <button 
+                                  onClick={(e) => { e.stopPropagation(); registrarAsistencia(burro.planchador.id, burro.planchador.nombre); }} 
+                                  disabled={asistenciasHoy.includes(burro.planchador.id) || (burro.planchador.nombre && burro.planchador.nombre.toLowerCase().includes('olga'))}
+                                  style={{ 
+                                    background: asistenciasHoy.includes(burro.planchador.id) ? 'rgba(245, 158, 11, 0.1)' : 'rgba(239, 68, 68, 0.1)', 
+                                    color: asistenciasHoy.includes(burro.planchador.id) ? '#f59e0b' : '#ef4444', 
+                                    border: `1px solid ${asistenciasHoy.includes(burro.planchador.id) ? 'rgba(245, 158, 11, 0.2)' : 'rgba(239, 68, 68, 0.2)'}`, 
+                                    borderRadius: '4px', padding: '2px 8px', fontSize: '0.65rem', cursor: asistenciasHoy.includes(burro.planchador.id) ? 'not-allowed' : 'pointer', fontWeight: '600' 
+                                  }}>
+                                  {asistenciasHoy.includes(burro.planchador.id) ? 'Falta (Registrada)' : 'Falta'}
+                                </button>
                               </div>
                             </div>
                           </>
@@ -2157,9 +2168,15 @@ export default function Plancha() {
                     <div style={{ background: 'rgba(0,0,0,0.02)', padding: '1rem', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.95rem' }}>
                       <p style={{ margin: 0 }}><strong>{isEn ? 'Total Earned' : 'Total Ganado'}:</strong> {formatCurrency(planchadorPagoDetalle.ganado)}</p>
                       
+                      {planchadorPagoDetalle.bonoBase > 0 && (
+                        <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted, #94a3b8)', paddingLeft: '1rem' }}>
+                          • {isEn ? 'Base Bonus' : 'Base Quincenal'}: <span style={{ color: '#60a5fa', fontWeight: 'bold' }}>+{formatCurrency(planchadorPagoDetalle.bonoBase)}</span>
+                        </p>
+                      )}
+
                       {regularWork > 0 && (
                         <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted, #94a3b8)', paddingLeft: '1rem' }}>
-                          • {isEn ? 'Regular Ironing' : 'Plancha Regular'}: <span style={{ color: 'var(--bg-input)' }}>{formatCurrency(regularWork)}</span>
+                          • {isEn ? 'Regular Ironing' : 'Plancha Regular'}: <span style={{ color: 'var(--bg-input)' }}>+{formatCurrency(regularWork)}</span>
                         </p>
                       )}
                       
@@ -2221,27 +2238,27 @@ export default function Plancha() {
                         </div>
                       )}
                       
-                      {asistenciasVal > 0 && (
+                      {asistenciasVal < 0 && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', paddingLeft: '1rem' }}>
                           <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted, #94a3b8)' }}>
-                            • {isEn ? 'Attendances' : 'Asistencias'}: <span style={{ color: '#10b981' }}>
-                              +{formatCurrency(asistenciasVal)}
+                            • {isEn ? 'Absences' : 'Faltas'}: <span style={{ color: '#ef4444' }}>
+                              {formatCurrency(asistenciasVal)}
                             </span>
                           </p>
                           {asistenciasList.map(item => (
                             <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-muted, #94a3b8)', paddingLeft: '0.5rem', background: 'rgba(255,255,255,0.02)', padding: '4px 8px', borderRadius: '6px' }}>
                               <span>
-                                - {isEn ? 'Attendance' : 'Asistencia'} {formatDate(item.fecha)}
+                                - {isEn ? 'Absence' : 'Falta'} {formatDate(item.fecha)}
                               </span>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                <span style={{ fontWeight: 600, color: '#10b981' }}>
-                                  +{formatCurrency(item.monto)}
+                                <span style={{ fontWeight: 600, color: '#ef4444' }}>
+                                  {formatCurrency(item.monto)}
                                 </span>
                                 <MinusCircle 
                                   size={14} 
                                   color="#ef4444" 
                                   style={{ cursor: 'pointer' }} 
-                                  title={isEn ? 'Remove attendance' : 'Eliminar asistencia'}
+                                  title={isEn ? 'Remove absence' : 'Eliminar falta'}
                                   onClick={() => handleEliminarAsistencia(item.id)}
                                 />
                               </div>
@@ -2355,14 +2372,14 @@ export default function Plancha() {
             {pagoPlanchadorId && (
               <div className="glass-card" style={{ padding: '1.5rem', marginTop: '1.5rem' }}>
                 <h3 style={{ margin: '0 0 1.2rem 0', fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                   Gestión de Asistencias
+                   Gestión de Faltas
                 </h3>
                 <form onSubmit={handleAddAsistenciaManual} style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', alignItems: 'flex-end' }}>
                   <div className="form-group" style={{ flex: 1 }}>
-                    <label className="form-label">Agregar Asistencia Manual (Fecha)</label>
+                    <label className="form-label">Agregar Falta Manual (Fecha)</label>
                     <input type="date" className="form-input" value={fechaManualAsistencia} onChange={e => setFechaManualAsistencia(e.target.value)} required />
                   </div>
-                  <button type="submit" className="btn btn-primary" style={{ padding: '0.6rem 1.2rem' }}>Agregar</button>
+                  <button type="submit" className="btn btn-primary" style={{ padding: '0.6rem 1.2rem', background: '#ef4444', borderColor: '#ef4444' }}>Registrar Falta</button>
                 </form>
                 
                 {historialAsistencias.length > 0 ? (

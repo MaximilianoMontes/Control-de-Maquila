@@ -28,6 +28,9 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 const SECRET_KEY = process.env.SECRET_KEY || 'minierp_secret_key_super_secure';
 
+// TEMPORARY DB CLEANUP FOR FALTAS SYSTEM
+db.query("DELETE FROM planchador_asistencias WHERE monto > 0").then(() => console.log('Cleaned up old positive asistencias')).catch(e => console.error('Error cleaning db', e));
+
 app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -3082,13 +3085,15 @@ app.get('/api/planchadores/:id/pagos', authenticateToken, async (req, res) => {
 
     const pendingWorksSum = trabajosPendientes.reduce((sum, pt) => sum + parseFloat(pt.total || 0), 0);
     const pendingAsistenciasSum = asistenciasPendientes.reduce((sum, pa) => sum + parseFloat(pa.monto || 0), 0);
-    const pendiente = pendingWorksSum + pendingAsistenciasSum;
+    const bonoBase = 500;
+    const pendiente = pendingWorksSum + pendingAsistenciasSum + bonoBase;
     const ganado = pagado + pendiente;
 
     res.json({
       ganado,
       pagado,
       pendiente,
+      bonoBase,
       pagos,
       trabajosPendientes,
       asistenciasPendientes
@@ -3166,7 +3171,7 @@ app.post('/api/planchadores/:id/asistencia', authenticateToken, async (req, res)
     let newlyRegistered = false;
     if (existing.length === 0) {
       await db.query(
-        `INSERT INTO planchador_asistencias (planchador_id, fecha, monto) VALUES (?, ${insertDateValue}, 50.00)`,
+        `INSERT INTO planchador_asistencias (planchador_id, fecha, monto) VALUES (?, ${insertDateValue}, -50.00)`,
         queryParamsInsert
       );
       newlyRegistered = true;
