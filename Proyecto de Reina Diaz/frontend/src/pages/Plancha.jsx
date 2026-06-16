@@ -1764,8 +1764,9 @@ export default function Plancha() {
                     const totalPiezasAsignadas = activeBurroObj.modelos.reduce((acc, m) => acc + m.piezas, 0);
                     const totalMaxPiezas = activeBurroObj.modelos.reduce((acc, m) => acc + m.maxPiezas, 0) || 1;
                     const progresoCarga = Math.min(100, Math.round((totalPiezasAsignadas / totalMaxPiezas) * 100));
+                    const avanceTrabajo = 0; // El trabajo inicia en 0% al asignar
 
-                    const minutosPorPieza = 4;
+                    const minutosPorPieza = 5;
                     const minutosEstimados = totalPiezasAsignadas * minutosPorPieza;
                     const horasEstimadas = Math.floor(minutosEstimados / 60);
                     const minsRestantes = minutosEstimados % 60;
@@ -1938,13 +1939,13 @@ export default function Plancha() {
                           </div>
                           
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', fontSize: '0.8rem' }}>
-                            <span style={{ color: 'var(--text-primary)' }}>Carga del burro</span>
+                            <span style={{ color: 'var(--text-primary)' }}>Avance proyectado</span>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1, margin: '0 1rem' }}>
                               <div style={{ flex: 1, height: '6px', background: 'var(--border-color)', borderRadius: '3px', overflow: 'hidden' }}>
-                                <div style={{ width: `${progresoCarga}%`, height: '100%', background: '#10b981', borderRadius: '3px' }}></div>
+                                <div style={{ width: `${avanceTrabajo}%`, height: '100%', background: '#10b981', borderRadius: '3px' }}></div>
                               </div>
                             </div>
-                            <span style={{ color: 'var(--text-primary)', fontWeight: 'bold' }}>{progresoCarga}%</span>
+                            <span style={{ color: 'var(--text-primary)', fontWeight: 'bold' }}>{avanceTrabajo}%</span>
                           </div>
                           
                           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.8rem' }}>
