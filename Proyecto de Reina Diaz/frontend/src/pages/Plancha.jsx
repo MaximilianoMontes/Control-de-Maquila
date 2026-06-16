@@ -823,6 +823,7 @@ export default function Plancha() {
         talla: selectedTalla,
         piezas: 1,
         maxPiezas: stockDeEseColorYTalla,
+        tallas_disponibles: model.tallas_disponibles,
         tallas_colores_disponibles: model.tallas_colores_disponibles,
         precio_plancha: model.precio_plancha
       });
@@ -1708,7 +1709,7 @@ export default function Plancha() {
                               
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                                   <select value={m.talla} onChange={(e) => handleChangeModeloTalla(index, m.id, m.color, m.talla, e.target.value)} style={{ fontSize: '0.75rem', padding: '2px 4px', borderRadius: '4px', border: '1px solid var(--border-color)', outline: 'none' }}>
-                                    {Object.keys(m.tallas_disponibles).map(t => <option key={t} value={t}>T{t}</option>)}
+                                    {Object.keys(m.tallas_disponibles || {}).map(t => <option key={t} value={t}>T{t}</option>)}
                                   </select>
                                 
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'var(--bg-input)', borderRadius: '6px', padding: '2px' }}>
