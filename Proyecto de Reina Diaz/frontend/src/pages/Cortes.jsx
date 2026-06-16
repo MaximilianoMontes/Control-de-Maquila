@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { Plus, X, UploadCloud, Search, Image as ImageIcon, Pencil, Trash2, RefreshCw, MessageSquare, PlusCircle } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import API_URL from '../config';
@@ -16,6 +16,7 @@ export default function Cortes() {
   const { user } = useAuth();
   const { t, formatCurrency } = useSettings();
   const navigate = useNavigate();
+  const location = useLocation();
   const userRole = (user?.role || user?.rol || '').toString().toLowerCase().trim();
   const canEdit = userRole === 'admin' || userRole === 'inventario1';
   const [items, setItems] = useState([]);
@@ -84,6 +85,13 @@ export default function Cortes() {
     setImagenFile(null);
     setIsModalOpen(true);
   };
+
+  useEffect(() => {
+    if (location.state?.reprogramItem) {
+      openReprogram(location.state.reprogramItem, { stopPropagation: () => {} });
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   const prepareForm = (item) => {
     let parsedVariantes = [{ color: '', cantidad: '' }];

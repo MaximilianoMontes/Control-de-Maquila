@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Search, Image as ImageIcon, Trash2, Calendar, ClipboardList } from 'lucide-react';
+import { Search, Image as ImageIcon, Trash2, Calendar, ClipboardList, RefreshCw } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import API_URL from '../config';
@@ -25,6 +26,7 @@ export default function Inventario() {
   const [items, setItems] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchItems();
@@ -194,9 +196,14 @@ export default function Inventario() {
                       <td>{displayDate(item.fecha_ingreso)}</td>
                       {canEdit && (
                         <td>
-                          <button className="btn-icon" onClick={() => handleDelete(item.id)} title="Eliminar del stock" style={{ color: '#ef4444' }}>
-                            <Trash2 size={18} />
-                          </button>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <button className="btn-icon" onClick={() => navigate('/cortes', { state: { reprogramItem: item } })} title="Reprogramar" style={{ color: '#8b5cf6' }}>
+                              <RefreshCw size={18} />
+                            </button>
+                            <button className="btn-icon" onClick={() => handleDelete(item.id)} title="Eliminar del stock" style={{ color: '#ef4444' }}>
+                              <Trash2 size={18} />
+                            </button>
+                          </div>
                         </td>
                       )}
                     </tr>
