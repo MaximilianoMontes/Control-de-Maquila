@@ -744,20 +744,16 @@ export default function Plancha() {
       const model = currentItem.data;
       
       let selectedTalla = "";
-      if (burro.numero >= 11) {
-        // Encontrar la primera talla con stock disponible > 0
-        const foundTallaEntry = Object.entries(model.tallas_disponibles || {}).find(
-          ([t, disp]) => disp > 0
-        );
-        if (!foundTallaEntry) {
-          alert(`El modelo ${model.modelo} no tiene piezas disponibles en ninguna talla.`);
-          setDraggedItem(null);
-          return;
-        }
-        selectedTalla = foundTallaEntry[0];
-      } else {
-        selectedTalla = burro.talla;
+      // Todos los burros son comodines ahora, tomar la primera talla disponible
+      const foundTallaEntry = Object.entries(model.tallas_disponibles || {}).find(
+        ([t, disp]) => disp > 0
+      );
+      if (!foundTallaEntry) {
+        alert(`El modelo ${model.modelo} no tiene piezas disponibles en ninguna talla.`);
+        setDraggedItem(null);
+        return;
       }
+      selectedTalla = foundTallaEntry[0];
 
       const normTalla = normalizeTalla(selectedTalla);
 
@@ -1043,6 +1039,23 @@ export default function Plancha() {
       }
     } catch (e) {
       console.error(e);
+    }
+  };
+
+  const handleDeleteTrabajo = async (id) => {
+    if (!window.confirm("¿Estás seguro de eliminar este trabajo? Las piezas regresarán a estar pendientes.")) return;
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(`${API_URL}/api/plancha/trabajos/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (pagoPlanchadorId) {
+        handleCargarPagosPlanchador(pagoPlanchadorId);
+      }
+      fetchModelosDisponibles();
+    } catch (e) {
+      console.error(e);
+      alert(e.response?.data?.error || 'Error al eliminar');
     }
   };
 
@@ -1650,8 +1663,8 @@ export default function Plancha() {
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                           <h4 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-primary)' }}>Burro {String(burro.numero).padStart(2, '0')}</h4>
-                          <span style={{ fontSize: '0.7rem', fontWeight: 'bold', background: burro.numero >= 11 ? '#ecfdf5' : '#fff7ed', color: burro.numero >= 11 ? '#059669' : '#ea580c', padding: '2px 8px', borderRadius: '12px' }}>
-                            {burro.numero >= 11 ? 'Comodín' : `Talla ${burro.talla}`}
+                          <span style={{ fontSize: '0.7rem', fontWeight: 'bold', background: '#ecfdf5', color: '#059669', padding: '2px 8px', borderRadius: '12px' }}>
+                            Comodín
                           </span>
                         </div>
                         <span style={{ fontSize: '0.75rem', fontWeight: '600', color: hasPlanchador ? '#10b981' : '#94a3b8' }}>
@@ -1689,18 +1702,14 @@ export default function Plancha() {
                           burro.modelos.map(m => (
                             <div key={`${m.id}_${m.color}_${m.talla}`} style={{ background: 'var(--bg-card)', borderRadius: '8px', padding: '0.8rem', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '0.8rem', boxShadow: '0 1px 2px rgba(0,0,0,0.02)' }}>
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                <span style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-primary)' }}>MOD-{m.modelo}</span>
+                                <span style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-primary)' }}>{m.modelo} ({m.color || 'Único'} - T{m.talla})</span>
                                 <button onClick={() => handleRemoveModeloFromBurro(index, m.id, m.color, m.talla)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', padding: '2px' }}><X size={14} /></button>
                               </div>
                               
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                                {burro.numero >= 11 ? (
                                   <select value={m.talla} onChange={(e) => handleChangeModeloTalla(index, m.id, m.color, m.talla, e.target.value)} style={{ fontSize: '0.75rem', padding: '2px 4px', borderRadius: '4px', border: '1px solid var(--border-color)', outline: 'none' }}>
                                     {Object.keys(m.tallas_disponibles).map(t => <option key={t} value={t}>T{t}</option>)}
                                   </select>
-                                ) : (
-                                  <span style={{ fontSize: '0.75rem', background: 'var(--bg-input)', color: 'var(--text-secondary)', padding: '2px 6px', borderRadius: '4px', fontWeight: '600' }}>T{m.talla}</span>
-                                )}
                                 
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'var(--bg-input)', borderRadius: '6px', padding: '2px' }}>
                                   <button onClick={() => handleUpdatePiezas(index, m.id, m.color, m.talla, -1)} style={{ border: 'none', background: 'var(--bg-card)', width: '22px', height: '22px', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 1px 1px rgba(0,0,0,0.05)' }}>-</button>
@@ -2358,6 +2367,7 @@ export default function Plancha() {
                       <th>{isEn ? 'Size' : 'Talla'}</th>
                       <th>{isEn ? 'Pcs' : 'Pzas'}</th>
                       <th>{isEn ? 'Net' : 'Neto'}</th>
+                      <th></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -2393,6 +2403,15 @@ export default function Plancha() {
                           <td>{t.piezas}</td>
                           <td style={{ color: t.neto < 0 ? '#ef4444' : '#34d399', fontWeight: 'bold' }}>
                             {t.neto < 0 ? '-' : ''}{formatCurrency(Math.abs(t.neto))}
+                          </td>
+                          <td>
+                            <button 
+                              onClick={() => handleDeleteTrabajo(t.id)} 
+                              style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                              title="Eliminar trabajo y regresar piezas a pendientes"
+                            >
+                              <Trash2 size={16} />
+                            </button>
                           </td>
                         </tr>
                       ))
