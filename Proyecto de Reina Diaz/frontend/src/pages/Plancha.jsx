@@ -837,6 +837,7 @@ export default function Plancha() {
 
       // Agregar modelo al burro con 1 pieza
       burro.modelos.push({
+        uid: Date.now() + Math.random().toString().slice(2, 6),
         id: model.id,
         modelo: model.modelo,
         imagen: model.imagen,
@@ -855,25 +856,26 @@ export default function Plancha() {
     setDraggedItem(null);
   };
 
-  const handleChangeModeloColor = (burroIndex, modelId, oldColor, newColor, modelTalla) => {
-    if (oldColor === newColor) return;
+  const handleChangeModeloColor = (burroIndex, uid, newColor) => {
     const newBurros = [...burrosState];
     const burro = newBurros[burroIndex];
-    const talla = (burro.is_comodin || burro.numero >= 11) ? modelTalla : burro.talla;
+    
+    const model = burro.modelos.find(m => m.uid === uid);
+    if (!model) return;
+    if (model.color === newColor) return;
+
+    const talla = model.talla;
     const normTalla = normalizeTalla(talla);
 
     // Verificar si el modelo con el nuevo color ya está en este burro para esta talla
     const duplicate = !burro.is_comodin && burro.modelos.some(
-      m => m.id === modelId && m.color === newColor && m.talla === talla
+      m => m.id === model.id && m.color === newColor && m.talla === talla && m.uid !== uid
     );
     if (duplicate) {
       alert(`La variante de color "${newColor || 'Único'}" ya está en la lista de este burro.`);
       return;
     }
 
-    const model = burro.modelos.find(
-      m => m.id === modelId && m.color === oldColor && m.talla === talla
-    );
     if (model) {
       let stockDeEseColorYTalla = 0;
       if (model.tallas_colores_disponibles && model.tallas_colores_disponibles[newColor]) {
@@ -893,20 +895,20 @@ export default function Plancha() {
     }
   };
 
-  const handleChangeModeloTalla = (burroIndex, modelId, color, oldTalla, newTalla) => {
-    if (oldTalla === newTalla) return;
+  const handleChangeModeloTalla = (burroIndex, uid, newTalla) => {
     const newBurros = [...burrosState];
     const burro = newBurros[burroIndex];
-    const normTalla = normalizeTalla(newTalla);
-
-    const model = burro.modelos.find(
-      m => m.id === modelId && m.color === color && m.talla === oldTalla
-    );
+    
+    const model = burro.modelos.find(m => m.uid === uid);
     if (!model) return;
+    if (model.talla === newTalla) return;
+
+    const normTalla = normalizeTalla(newTalla);
+    const color = model.color;
 
     // Verificar si el modelo con la nueva talla y el color actual ya está en este burro
     const duplicate = !burro.is_comodin && burro.modelos.some(
-      m => m.id === modelId && m.color === color && m.talla === newTalla
+      m => m.id === model.id && m.color === color && m.talla === newTalla && m.uid !== uid
     );
     if (duplicate) {
       alert(`El modelo ${model.modelo} con la Talla ${newTalla} y color ${color || 'Único'} ya está en este burro.`);
@@ -967,35 +969,31 @@ export default function Plancha() {
     setBurrosState(newBurros);
   };
 
-  const handleRemoveModeloFromBurro = (burroIndex, modelId, color, talla) => {
+  const handleRemoveModeloFromBurro = (burroIndex, uid) => {
     const newBurros = [...burrosState];
     newBurros[burroIndex].modelos = newBurros[burroIndex].modelos.filter(
-      m => !(m.id === modelId && m.color === color && m.talla === talla)
+      m => m.uid !== uid
     );
     setBurrosState(newBurros);
   };
 
-  const handleUpdatePiezas = (burroIndex, modelId, color, talla, delta) => {
+  const handleUpdatePiezas = (burroIndex, uid, delta) => {
     const newBurros = [...burrosState];
-    const model = newBurros[burroIndex].modelos.find(
-      m => m.id === modelId && m.color === color && m.talla === talla
-    );
+    const model = newBurros[burroIndex].modelos.find(m => m.uid === uid);
     if (model) {
       const newVal = model.piezas + delta;
-      if (newVal >= 1 && newVal <= model.maxPiezas) {
+      if (newVal >= 1 && (newBurros[burroIndex].is_comodin || newVal <= model.maxPiezas)) {
         model.piezas = newVal;
         setBurrosState(newBurros);
       }
     }
   };
 
-  const handleSetPiezas = (burroIndex, modelId, color, talla, val) => {
+  const handleSetPiezas = (burroIndex, uid, val) => {
     const newBurros = [...burrosState];
-    const model = newBurros[burroIndex].modelos.find(
-      m => m.id === modelId && m.color === color && m.talla === talla
-    );
+    const model = newBurros[burroIndex].modelos.find(m => m.uid === uid);
     if (model) {
-      if (val > model.maxPiezas) val = model.maxPiezas;
+      if (!newBurros[burroIndex].is_comodin && val > model.maxPiezas) val = model.maxPiezas;
       if (val < 1) val = 1;
       model.piezas = val;
       setBurrosState(newBurros);
@@ -1727,21 +1725,21 @@ export default function Plancha() {
                           </div>
                         ) : (
                           burro.modelos.map(m => (
-                            <div key={`${m.id}_${m.color}_${m.talla}`} style={{ background: 'var(--bg-card)', borderRadius: '8px', padding: '0.8rem', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '0.8rem', boxShadow: '0 1px 2px rgba(0,0,0,0.02)' }}>
+                            <div key={m.uid} style={{ background: 'var(--bg-card)', borderRadius: '8px', padding: '0.8rem', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '0.8rem', boxShadow: '0 1px 2px rgba(0,0,0,0.02)' }}>
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                 <span style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-primary)' }}>{m.modelo} ({m.color || 'Único'} - T{m.talla})</span>
-                                <button onClick={() => handleRemoveModeloFromBurro(index, m.id, m.color, m.talla)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', padding: '2px' }}><X size={14} /></button>
+                                <button onClick={() => handleRemoveModeloFromBurro(index, m.uid)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', padding: '2px' }}><X size={14} /></button>
                               </div>
                               
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                                   {m.tallas_colores_disponibles && Object.keys(m.tallas_colores_disponibles).length > 1 && (
-                                    <select value={m.color} onChange={(e) => handleChangeModeloColor(index, m.id, m.color, e.target.value, m.talla)} style={{ fontSize: '0.75rem', padding: '2px 4px', borderRadius: '4px', border: '1px solid var(--border-color)', outline: 'none' }}>
+                                    <select value={m.color} onChange={(e) => handleChangeModeloColor(index, m.uid, e.target.value)} style={{ fontSize: '0.75rem', padding: '2px 4px', borderRadius: '4px', border: '1px solid var(--border-color)', outline: 'none' }}>
                                       {Object.keys(m.tallas_colores_disponibles).map(c => (
                                         <option key={c} value={c}>{c}</option>
                                       ))}
                                     </select>
                                   )}
-                                  <select value={m.talla} onChange={(e) => handleChangeModeloTalla(index, m.id, m.color, m.talla, e.target.value)} style={{ fontSize: '0.75rem', padding: '2px 4px', borderRadius: '4px', border: '1px solid var(--border-color)', outline: 'none' }}>
+                                  <select value={m.talla} onChange={(e) => handleChangeModeloTalla(index, m.uid, e.target.value)} style={{ fontSize: '0.75rem', padding: '2px 4px', borderRadius: '4px', border: '1px solid var(--border-color)', outline: 'none' }}>
                                     {Object.entries(m.color && m.tallas_colores_disponibles && m.tallas_colores_disponibles[m.color] ? m.tallas_colores_disponibles[m.color] : (m.tallas_disponibles || {}))
                                       .filter(([t, q]) => burro.is_comodin || q > 0 || t === m.talla)
                                       .sort((a,b) => sortTallasFunc(a[0], b[0]))
@@ -1749,10 +1747,10 @@ export default function Plancha() {
                                   </select>
                                 
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'var(--bg-input)', borderRadius: '6px', padding: '2px' }}>
-                                  <button onClick={() => handleUpdatePiezas(index, m.id, m.color, m.talla, -1)} style={{ border: 'none', background: 'var(--bg-card)', width: '22px', height: '22px', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 1px 1px rgba(0,0,0,0.05)' }}>-</button>
-                                  <input type="number" value={m.piezas} onChange={(e) => handleSetPiezas(index, m.id, m.color, m.talla, parseInt(e.target.value)||1)} style={{ width: '32px', border: 'none', background: 'transparent', textAlign: 'center', fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-primary)', outline: 'none' }} />
+                                  <button onClick={() => handleUpdatePiezas(index, m.uid, -1)} style={{ border: 'none', background: 'var(--bg-card)', width: '22px', height: '22px', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 1px 1px rgba(0,0,0,0.05)' }}>-</button>
+                                  <input type="number" value={m.piezas} onChange={(e) => handleSetPiezas(index, m.uid, parseInt(e.target.value)||1)} style={{ width: '32px', border: 'none', background: 'transparent', textAlign: 'center', fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-primary)', outline: 'none' }} />
                                   <span style={{ fontSize: '0.7rem', color: 'var(--text-muted, #94a3b8)', fontWeight: '600' }}>/ {m.maxPiezas}</span>
-                                  <button onClick={() => handleUpdatePiezas(index, m.id, m.color, m.talla, 1)} style={{ border: 'none', background: 'var(--bg-card)', width: '22px', height: '22px', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 1px 1px rgba(0,0,0,0.05)' }}>+</button>
+                                  <button onClick={() => handleUpdatePiezas(index, m.uid, 1)} style={{ border: 'none', background: 'var(--bg-card)', width: '22px', height: '22px', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 1px 1px rgba(0,0,0,0.05)' }}>+</button>
                                 </div>
                               </div>
 
@@ -1900,12 +1898,12 @@ export default function Plancha() {
                                   <span style={{ color: 'var(--text-primary)', fontWeight: '500', fontSize: '0.8rem' }}>{m.modelo} <span style={{ fontSize:'0.7rem', color:'var(--text-secondary)'}}>({m.color || 'Único'} - T{m.talla})</span></span>
                                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                     <button 
-                                      onClick={() => handleUpdatePiezas(activeBurroScanner - 1, m.id, m.color, m.talla, -1)}
+                                      onClick={() => handleUpdatePiezas(activeBurroScanner - 1, m.uid, -1)}
                                       style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', width: '22px', height: '22px', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems:'center', justifyContent:'center' }}
                                     ><MinusCircle size={12} /></button>
                                     <span style={{ fontWeight: 'bold', width: '24px', textAlign: 'center', fontSize: '0.8rem' }}>{m.piezas}</span>
                                     <button 
-                                      onClick={() => handleUpdatePiezas(activeBurroScanner - 1, m.id, m.color, m.talla, 1)}
+                                      onClick={() => handleUpdatePiezas(activeBurroScanner - 1, m.uid, 1)}
                                       style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', width: '22px', height: '22px', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems:'center', justifyContent:'center' }}
                                     ><Plus size={12} /></button>
                                   </div>
