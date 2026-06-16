@@ -2439,12 +2439,12 @@ export default function Plancha() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginTop: '0.5rem' }}>
                   <div style={{ display: 'flex', gap: '1rem', alignItems: 'stretch' }}>
                     {analisisData.modelo_imagen && (
-                      <div style={{ width: '100px', flexShrink: 0, borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border-color)', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <div style={{ width: '100px', flexShrink: 0, borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border-color)', background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <img 
-                          src={`${API_URL}/uploads/${analisisData.modelo_imagen}`} 
+                          src={`${API_URL}${analisisData.modelo_imagen}`} 
                           alt="Modelo" 
-                          style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
-                          onError={(e) => { e.target.style.display = 'none'; }}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                          onError={(e) => { e.target.style.display = 'none'; e.target.parentElement.style.display = 'none'; }}
                         />
                       </div>
                     )}
