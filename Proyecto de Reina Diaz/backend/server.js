@@ -3143,18 +3143,31 @@ app.post('/api/plancha/pagos', authenticateToken, async (req, res) => {
 // 10.1 REGISTRAR ASISTENCIA DE PLANCHADOR
 app.post('/api/planchadores/:id/asistencia', authenticateToken, async (req, res) => {
   const planchadorId = req.params.id;
+  const fecha = req.body.fecha;
   try {
-    // 1. Verificar si ya tiene registrada la asistencia para el día de hoy
+    let dateCondition = "fecha = CURDATE()";
+    let insertDateValue = "CURDATE()";
+    let queryParamsExisting = [planchadorId];
+    let queryParamsInsert = [planchadorId];
+
+    if (fecha) {
+      dateCondition = "fecha = ?";
+      insertDateValue = "?";
+      queryParamsExisting.push(fecha);
+      queryParamsInsert.push(fecha);
+    }
+
+    // 1. Verificar si ya tiene registrada la asistencia para el día especificado o de hoy
     const [existing] = await db.query(
-      "SELECT id FROM planchador_asistencias WHERE planchador_id = ? AND fecha = CURDATE()",
-      [planchadorId]
+      `SELECT id FROM planchador_asistencias WHERE planchador_id = ? AND ${dateCondition}`,
+      queryParamsExisting
     );
 
     let newlyRegistered = false;
     if (existing.length === 0) {
       await db.query(
-        "INSERT INTO planchador_asistencias (planchador_id, fecha, monto) VALUES (?, CURDATE(), 50.00)",
-        [planchadorId]
+        `INSERT INTO planchador_asistencias (planchador_id, fecha, monto) VALUES (?, ${insertDateValue}, 50.00)`,
+        queryParamsInsert
       );
       newlyRegistered = true;
     }
@@ -3176,6 +3189,29 @@ app.post('/api/planchadores/:id/asistencia', authenticateToken, async (req, res)
       asistencias_count: count,
       monto: 50.00
     });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 10.1.1 OBTENER ASISTENCIAS DE HOY
+app.get('/api/plancha/asistencias/hoy', authenticateToken, async (req, res) => {
+  try {
+    const [asistencias] = await db.query("SELECT planchador_id FROM planchador_asistencias WHERE fecha = CURDATE()");
+    res.json(asistencias.map(a => a.planchador_id));
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 10.1.2 OBTENER HISTORIAL DE ASISTENCIAS DE UN PLANCHADOR
+app.get('/api/planchadores/:id/asistencias', authenticateToken, async (req, res) => {
+  try {
+    const [asistencias] = await db.query(
+      "SELECT id, fecha, monto, pago_id FROM planchador_asistencias WHERE planchador_id = ? ORDER BY fecha DESC LIMIT 50",
+      [req.params.id]
+    );
+    res.json(asistencias);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
