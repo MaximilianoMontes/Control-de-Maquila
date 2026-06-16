@@ -23,7 +23,8 @@ import {
   Calculator,
   FileText,
   Edit3,
-  MinusCircle
+  MinusCircle,
+  Clock
 } from 'lucide-react';
 import { useSettings } from '../context/SettingsContext';
 import { useAuth } from '../context/AuthContext';
