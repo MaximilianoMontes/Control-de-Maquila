@@ -1839,11 +1839,6 @@ export default function Plancha() {
                         {/* Detalles Stats */}
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', fontSize: '0.8rem' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ color: 'var(--text-secondary)' }}>Orden / Envío</span>
-                            <span style={{ color: 'var(--text-primary)', fontWeight: '500' }}>{activeModel && activeModel.camion_id ? `#ENV-${activeModel.camion_id}` : 'N/A'}</span>
-                          </div>
-                          
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <span style={{ color: 'var(--text-secondary)' }}>Prioridad</span>
                             <select 
                               value={activeBurroObj.prioridad || 'Normal'}
