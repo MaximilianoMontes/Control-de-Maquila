@@ -1765,6 +1765,23 @@ export default function Plancha() {
                     const totalMaxPiezas = activeBurroObj.modelos.reduce((acc, m) => acc + m.maxPiezas, 0) || 1;
                     const progresoCarga = Math.min(100, Math.round((totalPiezasAsignadas / totalMaxPiezas) * 100));
 
+                    const minutosPorPieza = 4;
+                    const minutosEstimados = totalPiezasAsignadas * minutosPorPieza;
+                    const horasEstimadas = Math.floor(minutosEstimados / 60);
+                    const minsRestantes = minutosEstimados % 60;
+                    const tiempoTexto = horasEstimadas > 0 ? `${horasEstimadas}h ${minsRestantes}m` : `${minsRestantes} min`;
+                    
+                    let horaFinEst = "--:--";
+                    if (minutosEstimados > 0) {
+                      const now = new Date();
+                      now.setMinutes(now.getMinutes() + minutosEstimados);
+                      horaFinEst = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    }
+
+                    const prioridadActual = activeBurroObj.prioridad || 'Normal';
+                    const prioridadColor = prioridadActual === 'Urgente' ? '#ef4444' : prioridadActual === 'Alta' ? '#f97316' : prioridadActual === 'Baja' ? '#3b82f6' : '#10b981';
+                    const prioridadBg = prioridadActual === 'Urgente' ? '#fee2e2' : prioridadActual === 'Alta' ? '#ffedd5' : prioridadActual === 'Baja' ? '#dbeafe' : '#d1fae5';
+
                     return (
                       <div style={{ padding: '1.2rem', display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
                         {/* Cabecera / Modelo Activo */}
@@ -1780,10 +1797,9 @@ export default function Plancha() {
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                 <h4 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '1rem', fontWeight: 'bold' }}>{activeModel.modelo}</h4>
-                                <span style={{ fontSize: '0.65rem', background: '#fee2e2', color: '#ef4444', padding: '2px 8px', borderRadius: '12px', fontWeight: 'bold' }}>Alta</span>
+                                <span style={{ fontSize: '0.65rem', background: prioridadBg, color: prioridadColor, padding: '2px 8px', borderRadius: '12px', fontWeight: 'bold' }}>{prioridadActual}</span>
                               </div>
                               <p style={{ margin: '2px 0 0 0', fontSize: '0.85rem', color: 'var(--text-primary)', fontWeight: '600' }}>{activeModel.color ? `${activeModel.color}` : 'Variante Única'} - T{activeModel.talla}</p>
-                              <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Línea Ejecutiva</p>
                             </div>
                           </div>
                         ) : (
@@ -1793,28 +1809,68 @@ export default function Plancha() {
                         )}
 
                         {/* Detalles Stats */}
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.8rem 1rem', fontSize: '0.8rem' }}>
-                          <div style={{ color: 'var(--text-secondary)' }}>Cliente / Línea</div>
-                          <div style={{ color: 'var(--text-primary)', textAlign: 'right', fontWeight: '500' }}>Moda Plus</div>
-                          
-                          <div style={{ color: 'var(--text-secondary)' }}>Orden</div>
-                          <div style={{ color: 'var(--text-primary)', textAlign: 'right', fontWeight: '500' }}>#ORD-10245</div>
-                          
-                          <div style={{ color: 'var(--text-secondary)' }}>Piezas totales</div>
-                          <div style={{ color: 'var(--text-primary)', textAlign: 'right', fontWeight: '500' }}>{activeModel ? activeModel.maxPiezas : 0}</div>
-                          
-                          <div style={{ color: 'var(--text-secondary)' }}>Piezas asignadas</div>
-                          <div style={{ color: 'var(--text-primary)', textAlign: 'right', fontWeight: '500' }}>{totalPiezasAsignadas}</div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.8rem 1rem', fontSize: '0.8rem', alignItems: 'center' }}>
+                          <div style={{ color: 'var(--text-secondary)' }}>Orden / Envío</div>
+                          <div style={{ color: 'var(--text-primary)', textAlign: 'right', fontWeight: '500' }}>{activeModel && activeModel.camion_id ? `#ENV-${activeModel.camion_id}` : 'N/A'}</div>
                           
                           <div style={{ color: 'var(--text-secondary)' }}>Prioridad</div>
                           <div style={{ textAlign: 'right' }}>
-                            <span style={{ fontSize: '0.7rem', background: '#fee2e2', color: '#ef4444', padding: '2px 6px', borderRadius: '4px', fontWeight: '600' }}>Alta</span>
+                            <select 
+                              value={activeBurroObj.prioridad || 'Normal'}
+                              onChange={(e) => {
+                                const newBurros = [...burrosState];
+                                newBurros[activeBurroScanner - 1].prioridad = e.target.value;
+                                setBurrosState(newBurros);
+                              }}
+                              style={{ padding: '0.3rem', borderRadius: '4px', border: '1px solid var(--border-color)', background: 'var(--bg-input)', color: 'var(--text-primary)', fontSize: '0.75rem', outline: 'none', width: '100%', maxWidth: '100px' }}
+                            >
+                              <option value="Baja">Baja</option>
+                              <option value="Normal">Normal</option>
+                              <option value="Alta">Alta</option>
+                              <option value="Urgente">Urgente</option>
+                            </select>
                           </div>
                           
                           <div style={{ color: 'var(--text-secondary)' }}>Fecha límite</div>
-                          <div style={{ color: 'var(--text-primary)', textAlign: 'right', fontWeight: '500', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px' }}>
-                            <Clock size={12} /> Hoy 14:00
+                          <div style={{ textAlign: 'right' }}>
+                            <input 
+                              type="datetime-local" 
+                              value={activeBurroObj.fecha_limite || ''}
+                              onChange={(e) => {
+                                const newBurros = [...burrosState];
+                                newBurros[activeBurroScanner - 1].fecha_limite = e.target.value;
+                                setBurrosState(newBurros);
+                              }}
+                              style={{ padding: '0.3rem', borderRadius: '4px', border: '1px solid var(--border-color)', background: 'var(--bg-input)', color: 'var(--text-primary)', fontSize: '0.75rem', outline: 'none', width: '100%' }}
+                            />
                           </div>
+                        </div>
+
+                        {/* Manipulacion de Piezas */}
+                        <div style={{ marginTop: '0.5rem' }}>
+                          <p style={{ margin: '0 0 0.5rem 0', color: 'var(--text-secondary)', fontSize: '0.75rem', fontWeight: 'bold' }}>Modelos Asignados (Piezas a Planchar)</p>
+                          {activeBurroObj.modelos.length > 0 ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', maxHeight: '120px', overflowY: 'auto', paddingRight: '4px' }}>
+                              {activeBurroObj.modelos.map((m, idx) => (
+                                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-input)', padding: '0.5rem', borderRadius: '6px' }}>
+                                  <span style={{ color: 'var(--text-primary)', fontWeight: '500', fontSize: '0.8rem' }}>{m.modelo} <span style={{ fontSize:'0.7rem', color:'var(--text-secondary)'}}>({m.color || 'Único'} - T{m.talla})</span></span>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <button 
+                                      onClick={() => handleUpdatePiezas(activeBurroScanner - 1, m.id, m.piezas, -1, m.maxPiezas)}
+                                      style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', width: '22px', height: '22px', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems:'center', justifyContent:'center' }}
+                                    ><MinusCircle size={12} /></button>
+                                    <span style={{ fontWeight: 'bold', width: '24px', textAlign: 'center', fontSize: '0.8rem' }}>{m.piezas}</span>
+                                    <button 
+                                      onClick={() => handleUpdatePiezas(activeBurroScanner - 1, m.id, m.piezas, 1, m.maxPiezas)}
+                                      style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', width: '22px', height: '22px', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems:'center', justifyContent:'center' }}
+                                    ><Plus size={12} /></button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)', fontStyle: 'italic' }}>Sin modelos</p>
+                          )}
                         </div>
 
                         {/* Asignar a */}
@@ -1865,14 +1921,19 @@ export default function Plancha() {
                             <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '4px', fontWeight: '600' }}>Hora estimada de finalización</label>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', width: '100%', padding: '0.6rem', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-input)', color: 'var(--text-primary)', fontSize: '0.85rem' }}>
                               <Clock size={14} color="var(--text-secondary)" />
-                              <span>Hoy 14:30</span>
+                              <span>{horaFinEst === "--:--" ? "N/A" : horaFinEst}</span>
                             </div>
                           </div>
                         </div>
 
                         {/* Proyección */}
                         <div style={{ background: 'var(--bg-input)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-                          <p style={{ margin: '0 0 0.8rem 0', fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: '600' }}>Proyección después de asignar</p>
+                          <p style={{ margin: '0 0 0.8rem 0', fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: '600' }}>Análisis de Proyección</p>
+                          
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', fontSize: '0.8rem' }}>
+                            <span style={{ color: 'var(--text-primary)' }}>Tiempo estimado</span>
+                            <span style={{ color: '#10b981', fontWeight: 'bold' }}>{tiempoTexto}</span>
+                          </div>
                           
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', fontSize: '0.8rem' }}>
                             <span style={{ color: 'var(--text-primary)' }}>Carga del burro</span>
@@ -1885,13 +1946,13 @@ export default function Plancha() {
                           </div>
                           
                           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.8rem' }}>
-                            <span style={{ color: 'var(--text-secondary)' }}>Piezas estimadas</span>
-                            <span style={{ color: 'var(--text-primary)', fontWeight: '600' }}>{totalPiezasAsignadas} / {activeModel ? activeModel.maxPiezas : 0}</span>
+                            <span style={{ color: 'var(--text-secondary)' }}>Piezas vs Cap. Original</span>
+                            <span style={{ color: 'var(--text-primary)', fontWeight: '600' }}>{totalPiezasAsignadas} / {totalMaxPiezas}</span>
                           </div>
                           
                           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
-                            <span style={{ color: 'var(--text-secondary)' }}>Eficiencia estimada</span>
-                            <span style={{ color: 'var(--text-primary)', fontWeight: '600' }}>92%</span>
+                            <span style={{ color: 'var(--text-secondary)' }}>Eficiencia Operario</span>
+                            <span style={{ color: 'var(--text-primary)', fontWeight: '600' }}>{activeBurroObj.planchador ? '95%' : 'N/A'}</span>
                           </div>
                         </div>
 
