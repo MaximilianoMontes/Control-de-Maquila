@@ -1730,8 +1730,8 @@ export default function Plancha() {
                               
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                                   <select value={m.talla} onChange={(e) => handleChangeModeloTalla(index, m.id, m.color, m.talla, e.target.value)} style={{ fontSize: '0.75rem', padding: '2px 4px', borderRadius: '4px', border: '1px solid var(--border-color)', outline: 'none' }}>
-                                    {Object.entries(m.tallas_disponibles || {})
-                                      .filter(([t, q]) => q > 0 || t === m.talla)
+                                    {Object.entries(m.color && m.tallas_colores_disponibles && m.tallas_colores_disponibles[m.color] ? m.tallas_colores_disponibles[m.color] : (m.tallas_disponibles || {}))
+                                      .filter(([t, q]) => burro.is_comodin || q > 0 || t === m.talla)
                                       .sort((a,b) => sortTallasFunc(a[0], b[0]))
                                       .map(([t, _]) => <option key={t} value={t}>T{t}</option>)}
                                   </select>
