@@ -630,7 +630,7 @@ export default function Plancha() {
         imagen: modeloMatch.imagen,
         color: selectedColor,
         talla: selectedTalla,
-        piezas: Math.min(5, stockDeEseColorYTalla),
+        piezas: 1,
         maxPiezas: stockDeEseColorYTalla,
         tallas_colores_disponibles: modeloMatch.tallas_colores_disponibles,
         precio_plancha: modeloMatch.precio_plancha
@@ -744,10 +744,10 @@ export default function Plancha() {
       const model = currentItem.data;
       
       let selectedTalla = "";
-      // Todos los burros son comodines ahora, tomar la primera talla disponible
-      const foundTallaEntry = Object.entries(model.tallas_disponibles || {}).find(
-        ([t, disp]) => disp > 0
-      );
+      // Todos los burros son comodines ahora, tomar la primera talla disponible (la menor)
+      const foundTallaEntry = Object.entries(model.tallas_disponibles || {})
+        .filter(([t, disp]) => disp > 0)
+        .sort((a,b) => a[0].localeCompare(b[0], undefined, {numeric: true}))[0];
       if (!foundTallaEntry) {
         alert(`El modelo ${model.modelo} no tiene piezas disponibles en ninguna talla.`);
         setDraggedItem(null);
@@ -821,7 +821,7 @@ export default function Plancha() {
         imagen: model.imagen,
         color: selectedColor,
         talla: selectedTalla,
-        piezas: Math.min(5, stockDeEseColorYTalla),
+        piezas: 1,
         maxPiezas: stockDeEseColorYTalla,
         tallas_disponibles: model.tallas_disponibles,
         tallas_colores_disponibles: model.tallas_colores_disponibles,
@@ -1715,9 +1715,9 @@ export default function Plancha() {
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                                   <select value={m.talla} onChange={(e) => handleChangeModeloTalla(index, m.id, m.color, m.talla, e.target.value)} style={{ fontSize: '0.75rem', padding: '2px 4px', borderRadius: '4px', border: '1px solid var(--border-color)', outline: 'none' }}>
                                     {Object.entries(m.tallas_disponibles || {})
-                                      .filter(([_, q]) => q > 0)
+                                      .filter(([t, q]) => q > 0 || t === m.talla)
                                       .sort((a,b) => a[0].localeCompare(b[0], undefined, {numeric: true}))
-                                      .map(([t, q]) => <option key={t} value={t}>T{t}</option>)}
+                                      .map(([t, _]) => <option key={t} value={t}>T{t}</option>)}
                                   </select>
                                 
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'var(--bg-input)', borderRadius: '6px', padding: '2px' }}>
