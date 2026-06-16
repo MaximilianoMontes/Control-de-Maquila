@@ -4045,7 +4045,14 @@ app.get('/api/plancha/analisis', authenticateToken, async (req, res) => {
         }
       } else {
         // Modelo general
-        if (cd.tallas_disponibles) {
+        if (cd.tallas_colores_disponibles && Object.keys(typeof cd.tallas_colores_disponibles === 'string' ? JSON.parse(cd.tallas_colores_disponibles) : cd.tallas_colores_disponibles).length > 0) {
+           const tc = typeof cd.tallas_colores_disponibles === 'string' ? JSON.parse(cd.tallas_colores_disponibles) : cd.tallas_colores_disponibles;
+           Object.values(tc).forEach(colorObj => {
+               if (colorObj) {
+                   Object.values(colorObj).forEach(q => total_piezas += parseInt(q) || 0);
+               }
+           });
+        } else if (cd.tallas_disponibles) {
            const td = typeof cd.tallas_disponibles === 'string' ? JSON.parse(cd.tallas_disponibles) : cd.tallas_disponibles;
            Object.values(td).forEach(q => total_piezas += parseInt(q) || 0);
         }
