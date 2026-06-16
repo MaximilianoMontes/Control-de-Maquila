@@ -106,6 +106,7 @@ export default function Plancha() {
   const [modeloAVerificar, setModeloAVerificar] = useState(null);
   const [precioPlanchaInput, setPrecioPlanchaInput] = useState('');
   const [mostrarVerificarModal, setMostrarVerificarModal] = useState(false);
+  const [searchModelosCamion, setSearchModelosCamion] = useState('');
 
   // Estado pestaña Modelos (Devolución)
   const [mostrarDevolucionModal, setMostrarDevolucionModal] = useState(false);
@@ -1442,13 +1443,24 @@ export default function Plancha() {
       {activeTab === 'modelos' && (
         <div className="glass-card">
           <h2 style={{ fontSize: '1.5rem', margin: '0 0 1.5rem 0' }}>{isEn ? 'Models in Transit / Colima' : 'Modelos en Tránsito / Colima'}</h2>
+          
+          <div style={{ marginBottom: '1.5rem' }}>
+            <input 
+              type="text" 
+              placeholder={isEn ? 'Search by model...' : 'Buscar por modelo...'}
+              value={searchModelosCamion} 
+              onChange={e => setSearchModelosCamion(e.target.value)} 
+              style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: '1px solid var(--border-color, #e2e8f0)', background: 'var(--bg-input)', color: 'var(--text-primary)', outline: 'none' }} 
+            />
+          </div>
+
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
-            {modelosCamion.length === 0 ? (
+            {modelosCamion.filter(m => m.modelo.toLowerCase().includes(searchModelosCamion.toLowerCase())).length === 0 ? (
               <p style={{ textAlign: 'center', color: 'var(--text-muted, #94a3b8)', gridColumn: '1/-1', padding: '3rem' }}>
                 {isEn ? 'No registered models from sent trucks.' : 'No hay modelos registrados de camiones enviados.'}
               </p>
             ) : (
-              modelosCamion.map(m => (
+              modelosCamion.filter(m => m.modelo.toLowerCase().includes(searchModelosCamion.toLowerCase())).map(m => (
                 <div 
                   key={m.id} 
                   className="glass-card" 
