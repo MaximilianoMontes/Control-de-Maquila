@@ -2234,7 +2234,7 @@ export default function Plancha() {
                           {pagoFijoItems.map(item => (
                             <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-muted, #94a3b8)', paddingLeft: '0.5rem', background: 'rgba(255,255,255,0.02)', padding: '4px 8px', borderRadius: '6px' }}>
                               <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '220px' }} title={item.color}>
-                                - {item.color || 'Apoyo'} {item.fecha_creacion ? `(${formatDate(item.fecha_creacion)})` : ''}
+                                - {item.fecha_creacion ? `[${formatDate(item.fecha_creacion)}] ` : ''}{item.color || 'Apoyo'}
                               </span>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                                 <span style={{ fontWeight: 600, color: '#60a5fa' }}>
