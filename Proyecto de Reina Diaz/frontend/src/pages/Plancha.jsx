@@ -1789,7 +1789,7 @@ export default function Plancha() {
                           <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
                             <div style={{ width: '70px', height: '90px', borderRadius: '8px', background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '1px solid var(--border-color)' }}>
                               {activeModel.imagen ? (
-                                <img src={activeModel.imagen} alt={activeModel.modelo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                <img src={`${API_URL}${activeModel.imagen}`} alt={activeModel.modelo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                               ) : (
                                 <Layers color="#cbd5e1" size={32} />
                               )}
@@ -1809,12 +1809,14 @@ export default function Plancha() {
                         )}
 
                         {/* Detalles Stats */}
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.8rem 1rem', fontSize: '0.8rem', alignItems: 'center' }}>
-                          <div style={{ color: 'var(--text-secondary)' }}>Orden / Envío</div>
-                          <div style={{ color: 'var(--text-primary)', textAlign: 'right', fontWeight: '500' }}>{activeModel && activeModel.camion_id ? `#ENV-${activeModel.camion_id}` : 'N/A'}</div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', fontSize: '0.8rem' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ color: 'var(--text-secondary)' }}>Orden / Envío</span>
+                            <span style={{ color: 'var(--text-primary)', fontWeight: '500' }}>{activeModel && activeModel.camion_id ? `#ENV-${activeModel.camion_id}` : 'N/A'}</span>
+                          </div>
                           
-                          <div style={{ color: 'var(--text-secondary)' }}>Prioridad</div>
-                          <div style={{ textAlign: 'right' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ color: 'var(--text-secondary)' }}>Prioridad</span>
                             <select 
                               value={activeBurroObj.prioridad || 'Normal'}
                               onChange={(e) => {
@@ -1822,7 +1824,7 @@ export default function Plancha() {
                                 newBurros[activeBurroScanner - 1].prioridad = e.target.value;
                                 setBurrosState(newBurros);
                               }}
-                              style={{ padding: '0.3rem', borderRadius: '4px', border: '1px solid var(--border-color)', background: 'var(--bg-input)', color: 'var(--text-primary)', fontSize: '0.75rem', outline: 'none', width: '100%', maxWidth: '100px' }}
+                              style={{ padding: '0.3rem', borderRadius: '4px', border: '1px solid var(--border-color)', background: 'var(--bg-input)', color: 'var(--text-primary)', fontSize: '0.75rem', outline: 'none', minWidth: '90px' }}
                             >
                               <option value="Baja">Baja</option>
                               <option value="Normal">Normal</option>
@@ -1831,8 +1833,8 @@ export default function Plancha() {
                             </select>
                           </div>
                           
-                          <div style={{ color: 'var(--text-secondary)' }}>Fecha límite</div>
-                          <div style={{ textAlign: 'right' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ color: 'var(--text-secondary)' }}>Fecha límite</span>
                             <input 
                               type="datetime-local" 
                               value={activeBurroObj.fecha_limite || ''}
@@ -1841,7 +1843,7 @@ export default function Plancha() {
                                 newBurros[activeBurroScanner - 1].fecha_limite = e.target.value;
                                 setBurrosState(newBurros);
                               }}
-                              style={{ padding: '0.3rem', borderRadius: '4px', border: '1px solid var(--border-color)', background: 'var(--bg-input)', color: 'var(--text-primary)', fontSize: '0.75rem', outline: 'none', width: '100%' }}
+                              style={{ padding: '0.3rem', borderRadius: '4px', border: '1px solid var(--border-color)', background: 'var(--bg-input)', color: 'var(--text-primary)', fontSize: '0.75rem', outline: 'none', maxWidth: '170px' }}
                             />
                           </div>
                         </div>
@@ -1856,12 +1858,12 @@ export default function Plancha() {
                                   <span style={{ color: 'var(--text-primary)', fontWeight: '500', fontSize: '0.8rem' }}>{m.modelo} <span style={{ fontSize:'0.7rem', color:'var(--text-secondary)'}}>({m.color || 'Único'} - T{m.talla})</span></span>
                                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                     <button 
-                                      onClick={() => handleUpdatePiezas(activeBurroScanner - 1, m.id, m.piezas, -1, m.maxPiezas)}
+                                      onClick={() => handleUpdatePiezas(activeBurroScanner - 1, m.id, m.color, m.talla, -1)}
                                       style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', width: '22px', height: '22px', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems:'center', justifyContent:'center' }}
                                     ><MinusCircle size={12} /></button>
                                     <span style={{ fontWeight: 'bold', width: '24px', textAlign: 'center', fontSize: '0.8rem' }}>{m.piezas}</span>
                                     <button 
-                                      onClick={() => handleUpdatePiezas(activeBurroScanner - 1, m.id, m.piezas, 1, m.maxPiezas)}
+                                      onClick={() => handleUpdatePiezas(activeBurroScanner - 1, m.id, m.color, m.talla, 1)}
                                       style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', width: '22px', height: '22px', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems:'center', justifyContent:'center' }}
                                     ><Plus size={12} /></button>
                                   </div>
