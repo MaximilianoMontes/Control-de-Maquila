@@ -854,7 +854,7 @@ export default function Plancha() {
     if (oldColor === newColor) return;
     const newBurros = [...burrosState];
     const burro = newBurros[burroIndex];
-    const talla = burro.numero >= 11 ? modelTalla : burro.talla;
+    const talla = (burro.is_comodin || burro.numero >= 11) ? modelTalla : burro.talla;
     const normTalla = normalizeTalla(talla);
 
     // Verificar si el modelo con el nuevo color ya está en este burro para esta talla
