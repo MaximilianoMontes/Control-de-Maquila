@@ -4024,37 +4024,41 @@ app.get('/api/plancha/analisis', authenticateToken, async (req, res) => {
 
     // 1. Obtener los detalles del camión para este modelo
     const [camionDetalles] = await db.query(
-      `SELECT * FROM camion_detalles WHERE modelo LIKE ? AND verificado = 1`,
+      `SELECT * FROM camion_detalles WHERE modelo LIKE ?`,
       [`%${modelo}%`]
     );
 
     let total_piezas = 0;
     
     camionDetalles.forEach(cd => {
+      let originalTallas = {};
+      try {
+        originalTallas = cd.tallas_cantidades ? JSON.parse(cd.tallas_cantidades) : {};
+      } catch (e) {
+        originalTallas = {};
+      }
+
+      const firstVal = Object.values(originalTallas)[0];
+      const isNested = (typeof firstVal === 'object' && firstVal !== null);
+
       if (color && talla) {
-        if (cd.tallas_colores_disponibles) {
-          const tc = typeof cd.tallas_colores_disponibles === 'string' ? JSON.parse(cd.tallas_colores_disponibles) : cd.tallas_colores_disponibles;
-          if (tc[color] && tc[color][talla]) {
-            total_piezas += parseInt(tc[color][talla]) || 0;
+        if (isNested) {
+          if (originalTallas[color] && originalTallas[color][talla]) {
+            total_piezas += parseInt(originalTallas[color][talla]) || 0;
           }
-        } else if (cd.color === color && cd.tallas_disponibles) {
-           const td = typeof cd.tallas_disponibles === 'string' ? JSON.parse(cd.tallas_disponibles) : cd.tallas_disponibles;
-           if (td[talla]) {
-             total_piezas += parseInt(td[talla]) || 0;
-           }
+        } else if (cd.color === color && originalTallas[talla]) {
+          total_piezas += parseInt(originalTallas[talla]) || 0;
         }
       } else {
         // Modelo general
-        if (cd.tallas_colores_disponibles && Object.keys(typeof cd.tallas_colores_disponibles === 'string' ? JSON.parse(cd.tallas_colores_disponibles) : cd.tallas_colores_disponibles).length > 0) {
-           const tc = typeof cd.tallas_colores_disponibles === 'string' ? JSON.parse(cd.tallas_colores_disponibles) : cd.tallas_colores_disponibles;
-           Object.values(tc).forEach(colorObj => {
-               if (colorObj) {
-                   Object.values(colorObj).forEach(q => total_piezas += parseInt(q) || 0);
-               }
-           });
-        } else if (cd.tallas_disponibles) {
-           const td = typeof cd.tallas_disponibles === 'string' ? JSON.parse(cd.tallas_disponibles) : cd.tallas_disponibles;
-           Object.values(td).forEach(q => total_piezas += parseInt(q) || 0);
+        if (isNested) {
+          Object.values(originalTallas).forEach(colorObj => {
+            if (colorObj) {
+              Object.values(colorObj).forEach(q => total_piezas += parseInt(q) || 0);
+            }
+          });
+        } else {
+          Object.values(originalTallas).forEach(q => total_piezas += parseInt(q) || 0);
         }
       }
     });
