@@ -54,6 +54,15 @@ const normalizeTalla = (t) => {
   return isNaN(num) ? t.trim() : num.toString();
 };
 
+const sortTallasFunc = (a, b) => {
+  const numA = parseInt(a, 10);
+  const numB = parseInt(b, 10);
+  if (!isNaN(numA) && !isNaN(numB)) {
+    return numA - numB;
+  }
+  return a.toString().localeCompare(b.toString());
+};
+
 const formatDate = (dateStr) => {
   if (!dateStr) return '';
   const cleanDate = dateStr.split('T')[0];
@@ -747,7 +756,7 @@ export default function Plancha() {
       // Todos los burros son comodines ahora, tomar la primera talla disponible (la menor)
       const foundTallaEntry = Object.entries(model.tallas_disponibles || {})
         .filter(([t, disp]) => disp > 0)
-        .sort((a,b) => a[0].localeCompare(b[0], undefined, {numeric: true}))[0];
+        .sort((a,b) => sortTallasFunc(a[0], b[0]))[0];
       if (!foundTallaEntry) {
         alert(`El modelo ${model.modelo} no tiene piezas disponibles en ninguna talla.`);
         setDraggedItem(null);
@@ -1587,7 +1596,7 @@ export default function Plancha() {
                           {Object.entries(m.tallas_colores_disponibles).map(([colorName, colorTallas]) => {
                             const availableForColor = Object.entries(colorTallas || {})
                               .filter(([_, q]) => q > 0)
-                              .sort((a,b) => a[0].localeCompare(b[0], undefined, {numeric: true}));
+                              .sort((a,b) => sortTallasFunc(a[0], b[0]));
                             if (availableForColor.length === 0) return null;
                             return (
                               <div key={colorName} style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
@@ -1603,7 +1612,7 @@ export default function Plancha() {
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '8px' }}>
                           {Object.entries(m.tallas_disponibles)
                             .filter(([_, q]) => q > 0)
-                            .sort((a,b) => a[0].localeCompare(b[0], undefined, {numeric: true}))
+                            .sort((a,b) => sortTallasFunc(a[0], b[0]))
                             .map(([t, q]) => (
                             <span key={t} style={{ background: 'var(--bg-input)', color: 'var(--text-secondary)', fontSize: '0.7rem', padding: '2px 6px', borderRadius: '4px', fontWeight: '600' }}>T{t}: {q}</span>
                           ))}
@@ -1716,7 +1725,7 @@ export default function Plancha() {
                                   <select value={m.talla} onChange={(e) => handleChangeModeloTalla(index, m.id, m.color, m.talla, e.target.value)} style={{ fontSize: '0.75rem', padding: '2px 4px', borderRadius: '4px', border: '1px solid var(--border-color)', outline: 'none' }}>
                                     {Object.entries(m.tallas_disponibles || {})
                                       .filter(([t, q]) => q > 0 || t === m.talla)
-                                      .sort((a,b) => a[0].localeCompare(b[0], undefined, {numeric: true}))
+                                      .sort((a,b) => sortTallasFunc(a[0], b[0]))
                                       .map(([t, _]) => <option key={t} value={t}>T{t}</option>)}
                                   </select>
                                 
