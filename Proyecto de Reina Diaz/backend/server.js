@@ -4024,9 +4024,11 @@ app.get('/api/plancha/analisis', authenticateToken, async (req, res) => {
 
     // 1. Obtener los detalles del camión para este modelo
     const [camionDetalles] = await db.query(
-      `SELECT * FROM camion_detalles WHERE modelo LIKE ?`,
+      `SELECT cd.*, (SELECT imagen FROM inventario WHERE modelo = cd.modelo LIMIT 1) as imagen FROM camion_detalles cd WHERE cd.modelo LIKE ?`,
       [`%${modelo}%`]
     );
+    
+    const modelo_imagen = camionDetalles.find(cd => cd.imagen)?.imagen || null;
 
     let total_piezas = 0;
     
@@ -4103,7 +4105,8 @@ app.get('/api/plancha/analisis', authenticateToken, async (req, res) => {
       total_piezas,
       total_planchado,
       faltantes: Math.max(0, total_piezas - total_planchado),
-      historial
+      historial,
+      modelo_imagen
     });
   } catch (error) {
     res.status(500).json({ error: error.message });

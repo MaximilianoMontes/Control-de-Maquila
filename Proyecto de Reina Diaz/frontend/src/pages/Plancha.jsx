@@ -2437,18 +2437,30 @@ export default function Plancha() {
               
               {analisisData && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginTop: '0.5rem' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
-                    <div style={{ background: 'var(--bg-input)', padding: '1rem', borderRadius: '8px', textAlign: 'center', border: '1px solid var(--border-color)' }}>
-                      <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: '600', textTransform: 'uppercase' }}>{isEn ? 'Total Pieces' : 'Total de Piezas'}</p>
-                      <p style={{ margin: 0, fontSize: '1.8rem', fontWeight: '800', color: '#0ea5e9' }}>{analisisData.total_piezas}</p>
-                    </div>
-                    <div style={{ background: 'var(--bg-input)', padding: '1rem', borderRadius: '8px', textAlign: 'center', border: '1px solid var(--border-color)' }}>
-                      <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: '600', textTransform: 'uppercase' }}>{isEn ? 'Total Ironed' : 'Total Planchado'}</p>
-                      <p style={{ margin: 0, fontSize: '1.8rem', fontWeight: '800', color: '#10b981' }}>{analisisData.total_planchado}</p>
-                    </div>
-                    <div style={{ background: 'var(--bg-input)', padding: '1rem', borderRadius: '8px', textAlign: 'center', border: '1px solid var(--border-color)' }}>
-                      <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: '600', textTransform: 'uppercase' }}>{isEn ? 'Remaining' : 'Faltantes'}</p>
-                      <p style={{ margin: 0, fontSize: '1.8rem', fontWeight: '800', color: analisisData.faltantes > 0 ? '#f59e0b' : '#10b981' }}>{analisisData.faltantes}</p>
+                  <div style={{ display: 'flex', gap: '1rem', alignItems: 'stretch' }}>
+                    {analisisData.modelo_imagen && (
+                      <div style={{ width: '100px', flexShrink: 0, borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border-color)', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <img 
+                          src={`${API_URL}/uploads/${analisisData.modelo_imagen}`} 
+                          alt="Modelo" 
+                          style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
+                          onError={(e) => { e.target.style.display = 'none'; }}
+                        />
+                      </div>
+                    )}
+                    <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
+                      <div style={{ background: 'var(--bg-input)', padding: '1rem', borderRadius: '8px', textAlign: 'center', border: '1px solid var(--border-color)' }}>
+                        <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: '600', textTransform: 'uppercase' }}>{isEn ? 'Total Pieces' : 'Total de Piezas'}</p>
+                        <p style={{ margin: 0, fontSize: '1.8rem', fontWeight: '800', color: '#0ea5e9' }}>{analisisData.total_piezas}</p>
+                      </div>
+                      <div style={{ background: 'var(--bg-input)', padding: '1rem', borderRadius: '8px', textAlign: 'center', border: '1px solid var(--border-color)' }}>
+                        <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: '600', textTransform: 'uppercase' }}>{isEn ? 'Total Ironed' : 'Total Planchado'}</p>
+                        <p style={{ margin: 0, fontSize: '1.8rem', fontWeight: '800', color: '#10b981' }}>{analisisData.total_planchado}</p>
+                      </div>
+                      <div style={{ background: 'var(--bg-input)', padding: '1rem', borderRadius: '8px', textAlign: 'center', border: '1px solid var(--border-color)' }}>
+                        <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: '600', textTransform: 'uppercase' }}>{isEn ? 'Remaining' : 'Faltantes'}</p>
+                        <p style={{ margin: 0, fontSize: '1.8rem', fontWeight: '800', color: analisisData.faltantes > 0 ? '#f59e0b' : '#10b981' }}>{analisisData.faltantes}</p>
+                      </div>
                     </div>
                   </div>
                   
