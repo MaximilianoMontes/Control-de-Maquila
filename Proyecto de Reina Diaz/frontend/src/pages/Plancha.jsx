@@ -310,7 +310,29 @@ export default function Plancha() {
   const [analisisLoading, setAnalisisLoading] = useState(false);
   const [analisisError, setAnalisisError] = useState('');
 
+  // Asistencias
+  const [asistenciasHoy, setAsistenciasHoy] = useState([]);
+  const [historialAsistencias, setHistorialAsistencias] = useState([]);
+  const [fechaManualAsistencia, setFechaManualAsistencia] = useState('');
+
   // Carga inicial
+  const fetchAsistenciasHoy = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.get(`${API_URL}/api/plancha/asistencias/hoy`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setAsistenciasHoy(res.data);
+    } catch (e) {
+      console.error('Error fetching asistencias hoy', e);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'plancha') {
+      fetchAsistenciasHoy();
+    }
+  }, [activeTab]);
   useEffect(() => {
     fetchPlanchadores();
     fetchModelosCamion();
@@ -750,13 +772,8 @@ export default function Plancha() {
     const burro = newBurros[index];
 
     if (currentItem.type === 'planchador') {
-      // Asignar planchador al burro
-      burro.planchador = {
-        id: currentItem.data.id,
-        nombre: currentItem.data.nombre
-      };
-      // Registrar la asistencia de forma automática al asignar al burro
-      registrarAsistencia(currentItem.data.id, currentItem.data.nombre);
+      newBurros[index].planchador = currentItem.data;
+      setBurrosState(newBurros);
     } else if (currentItem.type === 'modelo') {
       const model = currentItem.data;
       
@@ -1045,6 +1062,7 @@ export default function Plancha() {
     if (!id) {
       setPlanchadorPagoDetalle(null);
       setMontoPago('');
+      setHistorialAsistencias([]);
       return;
     }
     try {
@@ -1057,6 +1075,11 @@ export default function Plancha() {
       if (res.data && res.data.pendiente !== undefined) {
         setMontoPago(res.data.pendiente.toString());
       }
+
+      const resHist = await axios.get(`${API_URL}/api/planchadores/${id}/asistencias`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setHistorialAsistencias(resHist.data);
     } catch (e) {
       console.error(e);
     }
@@ -1134,33 +1157,38 @@ export default function Plancha() {
 
   // --- MÉTODOS EXTRA (ASISTENCIAS, AJUSTES, CUADRE, REPORTES) ---
   
-  const registrarAsistencia = async (planchadorId, nombre) => {
-    if (nombre && nombre.toLowerCase().includes('olga')) {
-      console.log("Olga no puede tener asistencias.");
-      return;
-    }
+  const registrarAsistencia = async (planchadorId, nombre, fecha = null) => {
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.post(`${API_URL}/api/planchadores/${planchadorId}/asistencia`, {}, {
+      const payload = fecha ? { fecha } : {};
+      const res = await axios.post(`${API_URL}/api/planchadores/${planchadorId}/asistencia`, payload, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
-      // Mostrar banner por 5 segundos
-      setAttendanceNotif({
-        nombre,
-        count: res.data.asistencias_count,
-        registered: res.data.registered
-      });
-      
-      setTimeout(() => {
-        setAttendanceNotif(null);
-      }, 5000);
-
-      // Recargar planchadores para actualizar saldos si se requiere
+      if (!fecha) {
+        setAttendanceNotif({
+          nombre,
+          count: res.data.asistencias_count,
+          registered: res.data.registered
+        });
+        setTimeout(() => setAttendanceNotif(null), 5000);
+        if (res.data.registered) setAsistenciasHoy(prev => [...prev, planchadorId]);
+      } else {
+        alert('Asistencia agregada correctamente');
+        handleCargarPagosPlanchador(planchadorId);
+      }
       fetchPlanchadores();
     } catch (e) {
       console.error("Error registrando asistencia:", e);
+      alert(e.response?.data?.error || 'Error registrando asistencia');
     }
+  };
+
+  const handleAddAsistenciaManual = (e) => {
+    e.preventDefault();
+    if (!pagoPlanchadorId || !fechaManualAsistencia) return;
+    const planchador = planchadores.find(p => String(p.id) === String(pagoPlanchadorId));
+    registrarAsistencia(pagoPlanchadorId, planchador?.nombre, fechaManualAsistencia);
   };
 
   const handleRegistrarAjuste = async (e) => {
@@ -1941,14 +1969,14 @@ export default function Plancha() {
                                 const newBurros = [...burrosState];
                                 if (!val) {
                                   newBurros[activeBurroScanner - 1].planchador = null;
+                                  setBurrosState(newBurros);
                                 } else {
                                   const p = planchadores.find(pl => pl.id === parseInt(val));
                                   if (p) {
-                                    newBurros[activeBurroScanner - 1].planchador = { id: p.id, nombre: p.nombre };
-                                    registrarAsistencia(p.id, p.nombre);
+                                    newBurros[activeBurroScanner - 1].planchador = p;
+                                    setBurrosState(newBurros);
                                   }
                                 }
-                                setBurrosState(newBurros);
                               }}
                               style={{ width: '100%', padding: '0.6rem', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-input)', color: 'var(--text-primary)', fontSize: '0.85rem', outline: 'none' }}
                             >
@@ -2322,6 +2350,55 @@ export default function Plancha() {
                 })()}
               </form>
             </div>
+
+            {/* Manejo de Asistencias Manuales */}
+            {pagoPlanchadorId && (
+              <div className="glass-card" style={{ padding: '1.5rem', marginTop: '1.5rem' }}>
+                <h3 style={{ margin: '0 0 1.2rem 0', fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                   Gestión de Asistencias
+                </h3>
+                <form onSubmit={handleAddAsistenciaManual} style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', alignItems: 'flex-end' }}>
+                  <div className="form-group" style={{ flex: 1 }}>
+                    <label className="form-label">Agregar Asistencia Manual (Fecha)</label>
+                    <input type="date" className="form-input" value={fechaManualAsistencia} onChange={e => setFechaManualAsistencia(e.target.value)} required />
+                  </div>
+                  <button type="submit" className="btn btn-primary" style={{ padding: '0.6rem 1.2rem' }}>Agregar</button>
+                </form>
+                
+                {historialAsistencias.length > 0 ? (
+                  <div className="table-wrapper">
+                    <table className="data-table" style={{ fontSize: '0.85rem' }}>
+                      <thead>
+                        <tr>
+                          <th>Fecha</th>
+                          <th>Monto</th>
+                          <th>Estatus</th>
+                          <th>Acciones</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {historialAsistencias.map(a => (
+                          <tr key={a.id}>
+                            <td>{new Date(a.fecha + 'T12:00:00Z').toLocaleDateString()}</td>
+                            <td>${Number(a.monto).toFixed(2)}</td>
+                            <td>
+                              {a.pago_id ? <span className="badge badge-success">Pagado (Recibo #{a.pago_id})</span> : <span className="badge badge-warning">Pendiente</span>}
+                            </td>
+                            <td>
+                              {!a.pago_id && (
+                                <button type="button" onClick={() => handleEliminarAsistencia(a.id)} className="btn" style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444', padding: '4px 8px', fontSize: '0.75rem', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '4px' }}>Eliminar</button>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>No hay asistencias recientes.</p>
+                )}
+              </div>
+            )}
 
             {/* Descarga de Reportes de Nómina PDF */}
             <div className="glass-card" style={{ padding: '1.5rem' }}>
