@@ -1585,7 +1585,9 @@ export default function Plancha() {
                       {m.tallas_colores_disponibles && Object.keys(m.tallas_colores_disponibles).length > 0 ? (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '8px' }}>
                           {Object.entries(m.tallas_colores_disponibles).map(([colorName, colorTallas]) => {
-                            const availableForColor = Object.entries(colorTallas || {}).filter(([_, q]) => q > 0);
+                            const availableForColor = Object.entries(colorTallas || {})
+                              .filter(([_, q]) => q > 0)
+                              .sort((a,b) => a[0].localeCompare(b[0], undefined, {numeric: true}));
                             if (availableForColor.length === 0) return null;
                             return (
                               <div key={colorName} style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
@@ -1599,7 +1601,10 @@ export default function Plancha() {
                         </div>
                       ) : (
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '8px' }}>
-                          {Object.entries(m.tallas_disponibles).filter(([_, q]) => q > 0).map(([t, q]) => (
+                          {Object.entries(m.tallas_disponibles)
+                            .filter(([_, q]) => q > 0)
+                            .sort((a,b) => a[0].localeCompare(b[0], undefined, {numeric: true}))
+                            .map(([t, q]) => (
                             <span key={t} style={{ background: 'var(--bg-input)', color: 'var(--text-secondary)', fontSize: '0.7rem', padding: '2px 6px', borderRadius: '4px', fontWeight: '600' }}>T{t}: {q}</span>
                           ))}
                         </div>
@@ -1709,7 +1714,9 @@ export default function Plancha() {
                               
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                                   <select value={m.talla} onChange={(e) => handleChangeModeloTalla(index, m.id, m.color, m.talla, e.target.value)} style={{ fontSize: '0.75rem', padding: '2px 4px', borderRadius: '4px', border: '1px solid var(--border-color)', outline: 'none' }}>
-                                    {Object.keys(m.tallas_disponibles || {}).map(t => <option key={t} value={t}>T{t}</option>)}
+                                    {Object.keys(m.tallas_disponibles || {})
+                                      .sort((a,b) => a.localeCompare(b, undefined, {numeric: true}))
+                                      .map(t => <option key={t} value={t}>T{t}</option>)}
                                   </select>
                                 
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'var(--bg-input)', borderRadius: '6px', padding: '2px' }}>
