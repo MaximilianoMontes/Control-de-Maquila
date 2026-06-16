@@ -2395,13 +2395,19 @@ export default function Plancha() {
                       setAnalisisError('');
                       
                       let searchParams = `modelo=${code}`;
-                      if (code.length > 6 && !/^\d+$/.test(code)) {
-                        const parsed = parseCode(code);
-                        if (parsed) {
-                          searchParams = `modelo=${parsed.modelo}&color=${parsed.color}&talla=${parsed.talla}`;
-                        } else {
-                          // Si no lo pudo parsear bien, intentamos mandar el código directo como modelo
-                          searchParams = `modelo=${code}`;
+                      if (code.length > 6) {
+                        const match = code.match(/(\d{6})/);
+                        if (match) {
+                          const modeloParsed = match[1];
+                          const suffix = code.substring(code.indexOf(modeloParsed) + 6);
+                          const colorMatch = suffix.match(/[A-Z]+/i);
+                          const tallaMatch = suffix.match(/\d+$/);
+                          
+                          if (colorMatch && tallaMatch) {
+                            searchParams = `modelo=${modeloParsed}&color=${colorMatch[0].toUpperCase()}&talla=${tallaMatch[0]}`;
+                          } else {
+                            searchParams = `modelo=${modeloParsed}`;
+                          }
                         }
                       }
                       
