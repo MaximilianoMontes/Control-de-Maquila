@@ -302,6 +302,12 @@ export default function Plancha() {
   const [reportEnd, setReportEnd] = useState('');
   const [reportPlanchadorId, setReportPlanchadorId] = useState('');
 
+  // Analítica
+  const [analisisSearchCode, setAnalisisSearchCode] = useState('');
+  const [analisisData, setAnalisisData] = useState(null);
+  const [analisisLoading, setAnalisisLoading] = useState(false);
+  const [analisisError, setAnalisisError] = useState('');
+
   // Carga inicial
   useEffect(() => {
     fetchPlanchadores();
@@ -2367,6 +2373,110 @@ export default function Plancha() {
 
           {/* Historial de Pagos y Trabajos pendientes */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+            
+            {/* Buscador Analítico */}
+            <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <h3 style={{ margin: 0, fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Search size={18} color="#0ea5e9" /> {isEn ? 'Model Analytics Search' : 'Buscador Analítico de Modelo'}
+              </h3>
+              
+              <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                <input 
+                  type="text" 
+                  className="form-input" 
+                  placeholder={isEn ? "Scan or type code (e.g. 725539 or V725539VER09)" : "Escanea o ingresa código (ej. 725539 o V725539VER09)"}
+                  value={analisisSearchCode}
+                  onChange={e => setAnalisisSearchCode(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      const code = analisisSearchCode.trim();
+                      if (!code) return;
+                      setAnalisisLoading(true);
+                      setAnalisisError('');
+                      
+                      let searchParams = `modelo=${code}`;
+                      if (code.length > 6 && !/^\d+$/.test(code)) {
+                        const parsed = parseCode(code);
+                        if (parsed) {
+                          searchParams = `modelo=${parsed.modelo}&color=${parsed.color}&talla=${parsed.talla}`;
+                        } else {
+                          // Si no lo pudo parsear bien, intentamos mandar el código directo como modelo
+                          searchParams = `modelo=${code}`;
+                        }
+                      }
+                      
+                      fetch(`${API_URL}/api/plancha/analisis?${searchParams}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                      })
+                      .then(res => res.json())
+                      .then(data => {
+                        setAnalisisLoading(false);
+                        if (data.error) setAnalisisError(data.error);
+                        else setAnalisisData(data);
+                      })
+                      .catch(err => {
+                        setAnalisisLoading(false);
+                        setAnalisisError(err.message);
+                      });
+                    }
+                  }}
+                  style={{ flex: 1, fontSize: '1.1rem', padding: '0.8rem' }}
+                />
+              </div>
+              
+              {analisisLoading && <div style={{ color: 'var(--text-secondary)' }}>Cargando análisis...</div>}
+              {analisisError && <div style={{ color: '#ef4444' }}>{analisisError}</div>}
+              
+              {analisisData && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginTop: '0.5rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
+                    <div style={{ background: 'var(--bg-input)', padding: '1rem', borderRadius: '8px', textAlign: 'center', border: '1px solid var(--border-color)' }}>
+                      <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: '600', textTransform: 'uppercase' }}>{isEn ? 'Total Pieces' : 'Total de Piezas'}</p>
+                      <p style={{ margin: 0, fontSize: '1.8rem', fontWeight: '800', color: '#0ea5e9' }}>{analisisData.total_piezas}</p>
+                    </div>
+                    <div style={{ background: 'var(--bg-input)', padding: '1rem', borderRadius: '8px', textAlign: 'center', border: '1px solid var(--border-color)' }}>
+                      <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: '600', textTransform: 'uppercase' }}>{isEn ? 'Total Ironed' : 'Total Planchado'}</p>
+                      <p style={{ margin: 0, fontSize: '1.8rem', fontWeight: '800', color: '#10b981' }}>{analisisData.total_planchado}</p>
+                    </div>
+                    <div style={{ background: 'var(--bg-input)', padding: '1rem', borderRadius: '8px', textAlign: 'center', border: '1px solid var(--border-color)' }}>
+                      <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: '600', textTransform: 'uppercase' }}>{isEn ? 'Remaining' : 'Faltantes'}</p>
+                      <p style={{ margin: 0, fontSize: '1.8rem', fontWeight: '800', color: analisisData.faltantes > 0 ? '#f59e0b' : '#10b981' }}>{analisisData.faltantes}</p>
+                    </div>
+                  </div>
+                  
+                  {analisisData.historial.length > 0 ? (
+                    <div className="table-wrapper" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                      <table className="data-table">
+                        <thead style={{ position: 'sticky', top: 0, background: 'var(--bg-card)', zIndex: 1 }}>
+                          <tr>
+                            <th>{isEn ? 'Ironer' : 'Planchador'}</th>
+                            <th>{isEn ? 'Date' : 'Fecha'}</th>
+                            <th>{isEn ? 'Color' : 'Color'}</th>
+                            <th>{isEn ? 'Size' : 'Talla'}</th>
+                            <th>{isEn ? 'Pieces' : 'Piezas'}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {analisisData.historial.map((h, i) => (
+                            <tr key={i}>
+                              <td style={{ fontWeight: '600' }}>{h.planchador_nombre}</td>
+                              <td>{new Date(h.fecha_creacion).toLocaleString()}</td>
+                              <td><span style={{ background: 'var(--bg-input)', padding: '2px 6px', borderRadius: '4px', fontSize: '0.8rem', fontWeight: '600' }}>{h.color || 'N/A'}</span></td>
+                              <td><span style={{ background: 'rgba(14, 165, 233, 0.1)', color: '#0ea5e9', padding: '2px 6px', borderRadius: '4px', fontSize: '0.8rem', fontWeight: '600' }}>T{h.talla}</span></td>
+                              <td style={{ fontWeight: 'bold' }}>{h.piezas}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div style={{ textAlign: 'center', padding: '1rem', color: 'var(--text-muted)' }}>
+                      {isEn ? 'No ironing history found for this model' : 'No se encontró historial de planchado para este modelo'}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
             
             {/* Trabajos por liquidar */}
             <div className="glass-card">
