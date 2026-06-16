@@ -24,7 +24,8 @@ import {
   FileText,
   Edit3,
   MinusCircle,
-  Clock
+  Clock,
+  Search
 } from 'lucide-react';
 import { useSettings } from '../context/SettingsContext';
 import { useAuth } from '../context/AuthContext';
