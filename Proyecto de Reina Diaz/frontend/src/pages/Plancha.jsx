@@ -797,11 +797,11 @@ export default function Plancha() {
             const stockVal = matchingColorTallaKey ? (tallasObj[matchingColorTallaKey] || 0) : 0;
 
             // Verificar que tenga stock y que no esté ya asignado en este burro con esta talla y color
-            const alreadyAssigned = burro.modelos.some(
+            const alreadyAssigned = !burro.is_comodin && burro.modelos.some(
               m => m.id === model.id && m.color === color && m.talla === selectedTalla
             );
 
-            return stockVal > 0 && !alreadyAssigned;
+            return (stockVal > 0 || burro.is_comodin) && !alreadyAssigned;
           }
         );
         if (foundColorEntry) {
@@ -811,17 +811,21 @@ export default function Plancha() {
             k => normalizeTalla(k) === normTalla
           );
           stockDeEseColorYTalla = matchingColorTallaKey ? (colorTallasObj[matchingColorTallaKey] || 0) : 0;
+        } else if (burro.is_comodin) {
+          // Si es comodín y no encontró color (ej. porque todo tiene stock 0), agarrar el primer color que exista
+          selectedColor = Object.keys(model.tallas_colores_disponibles)[0] || "";
+          stockDeEseColorYTalla = 0;
         }
       }
 
-      if (stockDeEseColorYTalla <= 0) {
+      if (stockDeEseColorYTalla <= 0 && !burro.is_comodin) {
         alert(`Todas las variantes de color disponibles del modelo ${model.modelo} para la Talla ${selectedTalla} ya han sido agregadas a este burro.`);
         setDraggedItem(null);
         return;
       }
 
       // Validar si el modelo con ese mismo color y talla ya está asignado en este burro (seguridad secundaria)
-      const existing = burro.modelos.find(
+      const existing = !burro.is_comodin && burro.modelos.find(
         m => m.id === model.id && m.color === selectedColor && m.talla === selectedTalla
       );
       if (existing) {
@@ -858,7 +862,7 @@ export default function Plancha() {
     const normTalla = normalizeTalla(talla);
 
     // Verificar si el modelo con el nuevo color ya está en este burro para esta talla
-    const duplicate = burro.modelos.some(
+    const duplicate = !burro.is_comodin && burro.modelos.some(
       m => m.id === modelId && m.color === newColor && m.talla === talla
     );
     if (duplicate) {
@@ -900,7 +904,7 @@ export default function Plancha() {
     if (!model) return;
 
     // Verificar si el modelo con la nueva talla y el color actual ya está en este burro
-    const duplicate = burro.modelos.some(
+    const duplicate = !burro.is_comodin && burro.modelos.some(
       m => m.id === modelId && m.color === color && m.talla === newTalla
     );
     if (duplicate) {
