@@ -4014,6 +4014,91 @@ app.get('/api/plancha/historial', authenticateToken, async (req, res) => {
   }
 });
 
+// 12. ANALISIS DE BUSCADOR DE HISTORIAL
+app.get('/api/plancha/analisis', authenticateToken, async (req, res) => {
+  try {
+    const { modelo, color, talla } = req.query;
+    if (!modelo) {
+      return res.status(400).json({ error: "El parámetro modelo es requerido" });
+    }
+
+    // 1. Obtener los detalles del camión para este modelo
+    const [camionDetalles] = await db.query(
+      `SELECT * FROM camion_detalles WHERE modelo LIKE ? AND verificado = 1`,
+      [`%${modelo}%`]
+    );
+
+    let total_piezas = 0;
+    
+    camionDetalles.forEach(cd => {
+      if (color && talla) {
+        if (cd.tallas_colores_disponibles) {
+          const tc = typeof cd.tallas_colores_disponibles === 'string' ? JSON.parse(cd.tallas_colores_disponibles) : cd.tallas_colores_disponibles;
+          if (tc[color] && tc[color][talla]) {
+            total_piezas += parseInt(tc[color][talla]) || 0;
+          }
+        } else if (cd.color === color && cd.tallas_disponibles) {
+           const td = typeof cd.tallas_disponibles === 'string' ? JSON.parse(cd.tallas_disponibles) : cd.tallas_disponibles;
+           if (td[talla]) {
+             total_piezas += parseInt(td[talla]) || 0;
+           }
+        }
+      } else {
+        // Modelo general
+        if (cd.tallas_disponibles) {
+           const td = typeof cd.tallas_disponibles === 'string' ? JSON.parse(cd.tallas_disponibles) : cd.tallas_disponibles;
+           Object.values(td).forEach(q => total_piezas += parseInt(q) || 0);
+        }
+      }
+    });
+
+    // 2. Obtener el total planchado
+    let planchadoQuery = `
+      SELECT COALESCE(SUM(pt.piezas), 0) as total_planchado 
+      FROM plancha_trabajos pt 
+      JOIN camion_detalles cd ON pt.camion_detalles_id = cd.id 
+      WHERE cd.modelo LIKE ? 
+    `;
+    const planchadoParams = [`%${modelo}%`];
+    
+    if (color && talla) {
+      planchadoQuery += ` AND pt.color = ? AND pt.talla = ?`;
+      planchadoParams.push(color, talla);
+    }
+
+    const [planchadoResult] = await db.query(planchadoQuery, planchadoParams);
+    const total_planchado = parseInt(planchadoResult[0].total_planchado) || 0;
+
+    // 3. Obtener el historial
+    let historialQuery = `
+      SELECT p.nombre as planchador_nombre, pt.color, pt.talla, pt.piezas, pt.fecha_creacion, p.id as planchador_id
+      FROM plancha_trabajos pt
+      JOIN planchadores p ON pt.planchador_id = p.id
+      JOIN camion_detalles cd ON pt.camion_detalles_id = cd.id
+      WHERE cd.modelo LIKE ?
+    `;
+    const historialParams = [`%${modelo}%`];
+
+    if (color && talla) {
+      historialQuery += ` AND pt.color = ? AND pt.talla = ?`;
+      historialParams.push(color, talla);
+    }
+    
+    historialQuery += ` ORDER BY pt.fecha_creacion DESC`;
+    
+    const [historial] = await db.query(historialQuery, historialParams);
+
+    res.json({
+      total_piezas,
+      total_planchado,
+      faltantes: Math.max(0, total_piezas - total_planchado),
+      historial
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Debug payments removed
 
 if (require.main === module) {
