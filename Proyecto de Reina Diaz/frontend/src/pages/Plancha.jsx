@@ -1729,6 +1729,13 @@ export default function Plancha() {
                               </div>
                               
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                  {m.tallas_colores_disponibles && Object.keys(m.tallas_colores_disponibles).length > 1 && (
+                                    <select value={m.color} onChange={(e) => handleChangeModeloColor(index, m.id, m.color, e.target.value, m.talla)} style={{ fontSize: '0.75rem', padding: '2px 4px', borderRadius: '4px', border: '1px solid var(--border-color)', outline: 'none' }}>
+                                      {Object.keys(m.tallas_colores_disponibles).map(c => (
+                                        <option key={c} value={c}>{c}</option>
+                                      ))}
+                                    </select>
+                                  )}
                                   <select value={m.talla} onChange={(e) => handleChangeModeloTalla(index, m.id, m.color, m.talla, e.target.value)} style={{ fontSize: '0.75rem', padding: '2px 4px', borderRadius: '4px', border: '1px solid var(--border-color)', outline: 'none' }}>
                                     {Object.entries(m.color && m.tallas_colores_disponibles && m.tallas_colores_disponibles[m.color] ? m.tallas_colores_disponibles[m.color] : (m.tallas_disponibles || {}))
                                       .filter(([t, q]) => burro.is_comodin || q > 0 || t === m.talla)
