@@ -273,6 +273,7 @@ export default function Plancha() {
   const [ajusteRazon, setAjusteRazon] = useState('Dia adelantado');
   const [ajusteApoyoDetalle, setAjusteApoyoDetalle] = useState('Corte');
   const [ajusteMonto, setAjusteMonto] = useState('250');
+  const [ajusteFecha, setAjusteFecha] = useState(new Date().toISOString().split('T')[0]);
   const [ajusteParamDias, setAjusteParamDias] = useState('1');
   const [ajusteParamTarifa, setAjusteParamTarifa] = useState('250');
   const [ajusteParamHoras, setAjusteParamHoras] = useState('8');
@@ -1227,12 +1228,14 @@ export default function Plancha() {
       await axios.post(`${API_URL}/api/plancha/ajustes`, {
         planchador_id: ajustePlanchadorId,
         razon: razonFinal,
-        monto: finalMonto
+        monto: finalMonto,
+        fecha: ajusteFecha || undefined
       }, { headers: { Authorization: `Bearer ${token}` } });
 
       alert('Pago fijo registrado con éxito');
       setShowAjusteModal(false);
       setAjustePlanchadorId('');
+      setAjusteFecha(new Date().toISOString().split('T')[0]);
       fetchModelosDisponibles();
       if (pagoPlanchadorId === ajustePlanchadorId) {
         handleCargarPagosPlanchador(pagoPlanchadorId);
@@ -2230,8 +2233,8 @@ export default function Plancha() {
                           </p>
                           {pagoFijoItems.map(item => (
                             <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-muted, #94a3b8)', paddingLeft: '0.5rem', background: 'rgba(255,255,255,0.02)', padding: '4px 8px', borderRadius: '6px' }}>
-                              <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '180px' }} title={item.color}>
-                                - {item.color || 'Apoyo'}
+                              <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '220px' }} title={item.color}>
+                                - {item.color || 'Apoyo'} {item.fecha_creacion ? `(${formatDate(item.fecha_creacion)})` : ''}
                               </span>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                                 <span style={{ fontWeight: 600, color: '#60a5fa' }}>
@@ -3302,6 +3305,7 @@ export default function Plancha() {
                 onClick={() => {
                   setShowAjusteModal(false);
                   setAjustePlanchadorId('');
+                  setAjusteFecha(new Date().toISOString().split('T')[0]);
                 }} 
                 className="btn-icon" 
                 style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--bg-card)', border: 'none', padding: '8px', borderRadius: '50%', cursor: 'pointer' }}
@@ -3364,6 +3368,17 @@ export default function Plancha() {
               )}
  
               {/* Campos comunes para todos los tipos de ajuste */}
+              <div className="form-group">
+                <label className="form-label">{isEn ? 'Date' : 'Fecha'}</label>
+                <input 
+                  type="date" 
+                  className="form-input" 
+                  value={ajusteFecha} 
+                  onChange={e => setAjusteFecha(e.target.value)} 
+                  required
+                />
+              </div>
+
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div className="form-group">
                   <label className="form-label">
@@ -3435,6 +3450,7 @@ export default function Plancha() {
                   onClick={() => {
                     setShowAjusteModal(false);
                     setAjustePlanchadorId('');
+                    setAjusteFecha(new Date().toISOString().split('T')[0]);
                   }}
                 >
                   {isEn ? 'Cancel' : 'Cancelar'}
