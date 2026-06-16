@@ -2412,6 +2412,7 @@ export default function Plancha() {
                         }
                       }
                       
+                      const token = localStorage.getItem('token');
                       fetch(`${API_URL}/api/plancha/analisis?${searchParams}`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                       })
