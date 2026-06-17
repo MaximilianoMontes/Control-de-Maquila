@@ -20,7 +20,7 @@ export default function Historial() {
 
   const fetchHistory = async () => {
     try {
-      const res = await axios.get(`${API}/api/historial?limit=200`);
+      const res = await axios.get(`${API}/api/historial?limit=500`);
       setLogs(res.data);
     } catch (e) {
       console.error(e);
