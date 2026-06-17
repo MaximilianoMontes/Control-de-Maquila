@@ -2670,6 +2670,7 @@ export default function Plancha() {
                   <thead>
                     <tr>
                       <th>{isEn ? 'Model' : 'Modelo'}</th>
+                      <th>{isEn ? 'Color' : 'Color'}</th>
                       <th>{isEn ? 'Work Date' : 'Fecha Trabajo'}</th>
                       <th>{isEn ? 'Size' : 'Talla'}</th>
                       <th>{isEn ? 'Pcs' : 'Pzas'}</th>
@@ -2680,7 +2681,7 @@ export default function Plancha() {
                   <tbody>
                     {!planchadorPagoDetalle || planchadorPagoDetalle.trabajosPendientes.length === 0 ? (
                       <tr>
-                        <td colSpan="5" style={{ textAlign: 'center', color: 'var(--text-muted, #94a3b8)' }}>
+                        <td colSpan="7" style={{ textAlign: 'center', color: 'var(--text-muted, #94a3b8)' }}>
                           {!pagoPlanchadorId ? (isEn ? 'Select an ironer to view pending jobs.' : 'Selecciona un planchador para ver sus pendientes.') : (isEn ? 'No jobs pending payment.' : 'No hay trabajos pendientes de pago.')}
                         </td>
                       </tr>
@@ -2698,6 +2699,13 @@ export default function Plancha() {
                               ) : null}
                               <strong>{t.modelo_nombre || t.color}</strong>
                             </div>
+                          </td>
+                          <td>
+                            {t.talla !== 'AJUSTE' && t.color ? (
+                              <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                                {t.color}
+                              </span>
+                            ) : '-'}
                           </td>
                           <td>{formatDate(t.fecha_creacion)}</td>
                           <td>
