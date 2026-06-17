@@ -112,12 +112,12 @@ export default function Launcher() {
           
           {/* Action Quick Icons */}
           <button className="launcher-header-btn" title="Calendario / Citas" onClick={() => navigate('/calendario')}>
-            <Calendar size={16} />
+            <Calendar size={48} />
             {upcomingEvents > 0 && <span className="launcher-header-badge">{upcomingEvents}</span>}
           </button>
           
           <button className="launcher-header-btn" title="Notificaciones">
-            <Bell size={16} />
+            <Bell size={48} />
           </button>
         </div>
 
