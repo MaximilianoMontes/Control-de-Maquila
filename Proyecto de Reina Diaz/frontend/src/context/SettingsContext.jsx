@@ -939,7 +939,10 @@ export const SettingsProvider = ({ children }) => {
       green: { primary: '#10b981', hover: '#059669', shadow: 'rgba(16, 185, 129, 0.4)' },
       purple: { primary: '#6366f1', hover: '#4f46e5', shadow: 'rgba(99, 102, 241, 0.4)' },
       red: { primary: '#ef4444', hover: '#dc2626', shadow: 'rgba(239, 68, 68, 0.4)' },
-      orange: { primary: '#f97316', hover: '#ea580c', shadow: 'rgba(249, 115, 22, 0.4)' }
+      orange: { primary: '#f97316', hover: '#ea580c', shadow: 'rgba(249, 115, 22, 0.4)' },
+      yellow: { primary: '#eab308', hover: '#ca8a04', shadow: 'rgba(234, 179, 8, 0.4)' },
+      pink: { primary: '#ec4899', hover: '#db2777', shadow: 'rgba(236, 72, 153, 0.4)' },
+      slate: { primary: '#64748b', hover: '#475569', shadow: 'rgba(100, 116, 139, 0.4)' }
     };
 
     const chosen = accents[settings.accentColor] || accents.blue;

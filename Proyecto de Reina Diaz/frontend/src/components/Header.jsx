@@ -570,7 +570,10 @@ export default function Header() {
                     { id: 'green', color: '#10b981', label: settings.language === 'en' ? 'Emerald Green' : 'Verde Esmeralda' },
                     { id: 'purple', color: '#6366f1', label: settings.language === 'en' ? 'Indigo Purple' : 'Púrpura Índigo' },
                     { id: 'red', color: '#ef4444', label: settings.language === 'en' ? 'Ruby Red' : 'Rojo Rubí' },
-                    { id: 'orange', color: '#f97316', label: settings.language === 'en' ? 'Coral Orange' : 'Naranja Coral' }
+                    { id: 'orange', color: '#f97316', label: settings.language === 'en' ? 'Coral Orange' : 'Naranja Coral' },
+                    { id: 'yellow', color: '#eab308', label: settings.language === 'en' ? 'Sunny Yellow' : 'Amarillo Sol' },
+                    { id: 'pink', color: '#ec4899', label: settings.language === 'en' ? 'Hot Pink' : 'Rosa Fuerte' },
+                    { id: 'slate', color: '#64748b', label: settings.language === 'en' ? 'Slate Gray' : 'Gris Pizarra' }
                   ].map(item => (
                     <button
                       key={item.id}
