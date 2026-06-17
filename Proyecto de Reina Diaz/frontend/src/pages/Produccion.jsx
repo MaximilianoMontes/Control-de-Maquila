@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { 
   Plus, Search, Pencil, Trash2, CheckCircle, XCircle, 
   Archive, ArchiveRestore, Image as ImageIcon, AlertTriangle, AlertCircle, Calendar, X, Sparkles,
-  MinusCircle, MessageSquare, Scissors
+  MinusCircle, MessageSquare, Split
 } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -409,7 +409,7 @@ export default function Produccion() {
                               <button className="btn" style={{ padding: '0.4rem', background: '#8b5cf6', color: 'white' }} onClick={() => handleAddDay(o.id)} title="Agregar Prórroga (Días)"><Calendar size={16} /></button>
                               <button className="btn btn-danger" style={{ padding: '0.4rem' }} onClick={() => handleCancelar(o.id)} title="Cancelar Orden"><XCircle size={16} /></button>
                               <Link to={`/extras?newExtra=true&inventario_id=${o.inventario_id}&cantidad=${o.cantidad}&fecha_inicio=${formatDate(o.fecha_inicio)}&fecha_fin=${formatDate(o.fecha_fin)}`} className="btn" style={{ padding: '0.4rem', background: 'linear-gradient(135deg, #ec4899, #8b5cf6)', color: 'white', display: 'flex', alignItems: 'center' }} title="Crear Extra"><Sparkles size={16} /></Link>
-                              <button className="btn" style={{ padding: '0.4rem', background: '#3b82f6', color: 'white' }} onClick={() => openSplit(o)} title="Dividir / Devolución Parcial"><Scissors size={16} /></button>
+                              <button className="btn" style={{ padding: '0.4rem', background: '#3b82f6', color: 'white' }} onClick={() => openSplit(o)} title="Dividir / Devolución Parcial"><Split size={16} /></button>
                             </>
                           )}
                           {canEdit ? (
@@ -599,7 +599,7 @@ export default function Produccion() {
               <div className="modal-actions">
                 <button type="button" className="btn btn-secondary" onClick={() => setIsSplitModalOpen(false)}>Cancelar</button>
                 <button type="submit" className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Scissors size={18} /> Dividir Orden
+                  <Split size={18} /> Dividir Orden
                 </button>
               </div>
             </form>
