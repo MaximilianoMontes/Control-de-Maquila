@@ -2620,7 +2620,30 @@ app.post('/api/planchadores', authenticateToken, async (req, res) => {
   }
 });
 
-// 4. ELIMINAR PLANCHADOR
+// EDITAR PLANCHADOR
+app.put('/api/planchadores/:id', authenticateToken, async (req, res) => {
+  const { nombre, telefono } = req.body;
+  if (!nombre) return res.status(400).json({ error: 'El nombre es obligatorio' });
+
+  try {
+    const [result] = await db.query(
+      "UPDATE planchadores SET nombre = ?, telefono = ? WHERE id = ?",
+      [nombre, telefono, req.params.id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Planchador no encontrado' });
+    }
+
+    await logActividad(req.user.id, `Planchador editado: ${nombre} (${telefono || 'Sin tel'})`);
+    res.json({ message: 'Planchador actualizado con éxito' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al actualizar el planchador' });
+  }
+});
+
+// ELIMINAR PLANCHADOR
 app.delete('/api/planchadores/:id', authenticateToken, async (req, res) => {
   try {
     const [planchadores] = await db.query("SELECT nombre FROM planchadores WHERE id = ?", [req.params.id]);

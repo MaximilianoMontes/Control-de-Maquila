@@ -99,6 +99,7 @@ export default function Plancha() {
   // Estado pestaña Planchadores
   const [nuevoNombre, setNuevoNombre] = useState('');
   const [nuevoTelefono, setNuevoTelefono] = useState('');
+  const [editPlanchadorId, setEditPlanchadorId] = useState(null);
   const [planchadorDetalle, setPlanchadorDetalle] = useState(null);
   const [mostrarDetalleModal, setMostrarDetalleModal] = useState(false);
 
@@ -687,18 +688,33 @@ export default function Plancha() {
     if (!nuevoNombre.trim()) return;
     try {
       const token = localStorage.getItem('token');
-      await axios.post(`${API_URL}/api/planchadores`, {
-        nombre: nuevoNombre,
-        telefono: nuevoTelefono
-      }, { headers: { Authorization: `Bearer ${token}` } });
+      if (editPlanchadorId) {
+        await axios.put(`${API_URL}/api/planchadores/${editPlanchadorId}`, {
+          nombre: nuevoNombre,
+          telefono: nuevoTelefono
+        }, { headers: { Authorization: `Bearer ${token}` } });
+        alert('Planchador actualizado correctamente');
+      } else {
+        await axios.post(`${API_URL}/api/planchadores`, {
+          nombre: nuevoNombre,
+          telefono: nuevoTelefono
+        }, { headers: { Authorization: `Bearer ${token}` } });
+        alert('Planchador registrado correctamente');
+      }
       setNuevoNombre('');
       setNuevoTelefono('');
+      setEditPlanchadorId(null);
       fetchPlanchadores();
-      alert('Planchador registrado correctamente');
     } catch (e) {
       console.error(e);
-      alert('Error al registrar planchador');
+      alert('Error al guardar planchador');
     }
+  };
+
+  const handleEditPlanchadorClick = (p) => {
+    setEditPlanchadorId(p.id);
+    setNuevoNombre(p.nombre);
+    setNuevoTelefono(p.telefono || '');
   };
 
   const handleEliminarPlanchador = async (id) => {
@@ -1001,7 +1017,7 @@ export default function Plancha() {
     const model = newBurros[burroIndex].modelos.find(m => m.uid === uid);
     if (model) {
       const newVal = model.piezas + delta;
-      if (newVal >= 1 && (newBurros[burroIndex].is_comodin || newVal <= model.maxPiezas)) {
+      if (newVal >= 1 && newVal <= model.maxPiezas) {
         model.piezas = newVal;
         setBurrosState(newBurros);
       }
@@ -1012,7 +1028,7 @@ export default function Plancha() {
     const newBurros = [...burrosState];
     const model = newBurros[burroIndex].modelos.find(m => m.uid === uid);
     if (model) {
-      if (!newBurros[burroIndex].is_comodin && val > model.maxPiezas) val = model.maxPiezas;
+      if (val > model.maxPiezas) val = model.maxPiezas;
       if (val < 1) val = 1;
       model.piezas = val;
       setBurrosState(newBurros);
@@ -1351,7 +1367,7 @@ export default function Plancha() {
           {/* Alta de Planchador */}
           <div className="glass-card">
             <h2 style={{ fontSize: '1.4rem', margin: '0 0 1.5rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <UserPlus color="#3b82f6" /> {isEn ? 'Register Ironer' : 'Alta Planchador'}
+              <UserPlus color="#3b82f6" /> {editPlanchadorId ? (isEn ? 'Edit Ironer' : 'Editar Planchador') : (isEn ? 'Register Ironer' : 'Alta Planchador')}
             </h2>
             <form onSubmit={handleAgregarPlanchador} style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
               <div className="form-group">
@@ -1375,9 +1391,24 @@ export default function Plancha() {
                   onChange={e => setNuevoTelefono(e.target.value)} 
                 />
               </div>
-              <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>
-                <Plus size={18} style={{ marginRight: '4px' }} /> {isEn ? 'Register Ironer' : 'Registrar Planchador'}
-              </button>
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>
+                  <Plus size={18} style={{ marginRight: '4px' }} /> {editPlanchadorId ? (isEn ? 'Save Changes' : 'Guardar Cambios') : (isEn ? 'Register Ironer' : 'Registrar Planchador')}
+                </button>
+                {editPlanchadorId && (
+                  <button 
+                    type="button" 
+                    className="btn btn-secondary" 
+                    onClick={() => {
+                      setEditPlanchadorId(null);
+                      setNuevoNombre('');
+                      setNuevoTelefono('');
+                    }}
+                  >
+                    {isEn ? 'Cancel' : 'Cancelar'}
+                  </button>
+                )}
+              </div>
             </form>
           </div>
 
@@ -1424,11 +1455,25 @@ export default function Plancha() {
                       <button 
                         className="btn" 
                         style={{ 
+                          background: 'rgba(59, 130, 246, 0.1)', 
+                          color: '#3b82f6', 
+                          border: 'none',
+                          padding: '6px'
+                        }}
+                        title={isEn ? 'Edit' : 'Editar'}
+                        onClick={() => handleEditPlanchadorClick(p)}
+                      >
+                        <Edit3 size={16} />
+                      </button>
+                      <button 
+                        className="btn" 
+                        style={{ 
                           background: 'rgba(239, 68, 68, 0.1)', 
                           color: '#ef4444', 
                           border: 'none',
                           padding: '6px'
                         }}
+                        title={isEn ? 'Delete' : 'Eliminar'}
                         onClick={() => handleEliminarPlanchador(p.id)}
                       >
                         <Trash2 size={16} />
@@ -1591,7 +1636,7 @@ export default function Plancha() {
           <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr 300px', gap: '1.5rem', alignItems: 'start' }}>
             
             {/* Left Column: Pendientes */}
-            <div style={{ background: 'var(--bg-card)', borderRadius: '16px', border: '1px solid var(--border-color)', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', height: 'calc(100vh - 250px)' }}>
+            <div style={{ background: 'var(--bg-card)', borderRadius: '16px', border: '1px solid var(--border-color)', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', height: 'calc(100vh - 250px)', position: 'sticky', top: '1.5rem' }}>
               <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border-color)' }}>
                 <h3 style={{ margin: 0, fontSize: '1.2rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center' }}>
                   {isEn ? 'Pending Models' : 'Modelos pendientes'} 
