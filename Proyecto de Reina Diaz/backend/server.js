@@ -207,11 +207,11 @@ app.get('/api/historial', authenticateToken, async (req, res) => {
       JOIN users u ON h.user_id = u.id 
     `;
     
-    let whereClause = "";
+    let whereClause = " WHERE h.target NOT LIKE 'PLANCHA%'";
     const params = [];
 
     if (!isAdmin) {
-      whereClause = " WHERE h.user_id = ? ";
+      whereClause += " AND h.user_id = ? ";
       params.push(userId);
     }
     
