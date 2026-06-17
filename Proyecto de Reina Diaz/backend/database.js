@@ -1328,6 +1328,24 @@ async function initializeDatabase() {
       global.migrationError = e.message + "\n" + e.stack;
     }
 
+    try {
+      await connection.query(`
+        CREATE TABLE IF NOT EXISTS calendario_eventos (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          usuario VARCHAR(255) NOT NULL,
+          titulo VARCHAR(255) NOT NULL,
+          descripcion TEXT,
+          fecha_inicio DATETIME NOT NULL,
+          fecha_fin DATETIME NOT NULL,
+          color VARCHAR(20) DEFAULT '#3b82f6',
+          creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+      console.log('Tabla calendario_eventos lista.');
+    } catch (e) {
+      console.error('Error creating calendario_eventos:', e);
+    }
+
     connection.release();
 
     console.log('Database initialization complete.');

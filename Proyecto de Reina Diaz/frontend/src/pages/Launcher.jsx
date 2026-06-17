@@ -1,6 +1,9 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
+import API_URL from '../config';
 import { 
   Calendar, 
   Bell, 
@@ -55,6 +58,20 @@ const PlanchaIcon = () => (
 export default function Launcher() {
   const { user, logout } = useAuth();
   const { settings, updateSetting } = useSettings();
+  const navigate = useNavigate();
+  
+  const [upcomingEvents, setUpcomingEvents] = useState(0);
+
+  useEffect(() => {
+    const fetchUpcoming = async () => {
+      try {
+        const res = await axios.get(`${API_URL}/api/calendario/upcoming`);
+        setUpcomingEvents(res.data.length);
+      } catch (e) { console.error('Error fetching calendar alerts:', e); }
+    };
+    fetchUpcoming();
+  }, []);
+
   const isDark = settings.theme === 'dark';
 
   // Toggle between dark and light mode
@@ -94,9 +111,9 @@ export default function Launcher() {
           <div className="launcher-status-dot" title="Servicios del ERP Activos"></div>
           
           {/* Action Quick Icons */}
-          <button className="launcher-header-btn" title="Calendario / Citas">
+          <button className="launcher-header-btn" title="Calendario / Citas" onClick={() => navigate('/calendario')}>
             <Calendar size={16} />
-            <span className="launcher-header-badge">2</span>
+            {upcomingEvents > 0 && <span className="launcher-header-badge">{upcomingEvents}</span>}
           </button>
           
           <button className="launcher-header-btn" title="Notificaciones">
