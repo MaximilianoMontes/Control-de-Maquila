@@ -759,6 +759,7 @@ async function initializeDatabase() {
     }
     */
 
+    /*
     try {
       console.log('--- MIGRACIÓN MANUAL CORRECTIVA: Restaurar estados de pagos completados (Evitar re-ejecuciones de resets) ---');
       // 1. Restaurar orden de Juan Ortiz (ID 67, UI #11) a 'Terminado' (tiene pago completo de 13860 y está subida al camión)
@@ -798,6 +799,7 @@ async function initializeDatabase() {
     } catch (e) {
       console.error('Error en migración manual correctiva:', e);
     }
+    */
 
 
     // --- NUEVO MÓDULO: PLANCHA ---
@@ -884,6 +886,14 @@ async function initializeDatabase() {
       try {
         await connection.query("ALTER TABLE plancha_trabajos ADD COLUMN color VARCHAR(100) DEFAULT NULL");
         console.log("Migration: color column added to plancha_trabajos");
+      } catch (e) {
+        // Ignorar si ya existe
+      }
+
+      // Añadir columna activo a planchadores para soft-delete
+      try {
+        await connection.query("ALTER TABLE planchadores ADD COLUMN activo BOOLEAN DEFAULT 1");
+        console.log("Migration: activo column added to planchadores");
       } catch (e) {
         // Ignorar si ya existe
       }
