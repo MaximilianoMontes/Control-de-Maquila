@@ -2670,8 +2670,8 @@ export default function Plancha() {
                   <thead>
                     <tr>
                       <th>{isEn ? 'Model' : 'Modelo'}</th>
-                      <th>{isEn ? 'Color' : 'Color'}</th>
                       <th>{isEn ? 'Work Date' : 'Fecha Trabajo'}</th>
+                      <th>{isEn ? 'Color' : 'Color'}</th>
                       <th>{isEn ? 'Size' : 'Talla'}</th>
                       <th>{isEn ? 'Pcs' : 'Pzas'}</th>
                       <th>{isEn ? 'Net' : 'Neto'}</th>
@@ -2700,6 +2700,7 @@ export default function Plancha() {
                               <strong>{t.modelo_nombre || t.color}</strong>
                             </div>
                           </td>
+                          <td>{formatDate(t.fecha_creacion)}</td>
                           <td>
                             {t.talla !== 'AJUSTE' && t.color ? (
                               <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
@@ -2707,7 +2708,6 @@ export default function Plancha() {
                               </span>
                             ) : '-'}
                           </td>
-                          <td>{formatDate(t.fecha_creacion)}</td>
                           <td>
                             {t.talla === 'AJUSTE' ? (
                               <span className="badge badge-warning" style={{ background: 'rgba(245, 158, 11, 0.2)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.3)' }}>{isEn ? 'FIXED PAY' : 'PAGO FIJO'}</span>
