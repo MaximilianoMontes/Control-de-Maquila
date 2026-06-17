@@ -361,7 +361,8 @@ app.get('/api/inventario', async (req, res) => {
   try {
     const [items] = await db.query(`
       SELECT i.*, 
-        (SELECT COUNT(id) FROM produccion WHERE inventario_id = i.id) as producciones_count
+        (SELECT COUNT(id) FROM produccion WHERE inventario_id = i.id AND estado != 'Cancelado') as producciones_count,
+        (SELECT COALESCE(SUM(cantidad), 0) FROM produccion WHERE inventario_id = i.id AND estado != 'Cancelado') as total_asignado
       FROM inventario i
       WHERE i.en_inventario = 0 OR i.en_inventario IS NULL
       ORDER BY i.id DESC
@@ -1174,12 +1175,22 @@ app.post('/api/produccion', authenticateToken, async (req, res) => {
   const { maquilero_id, fecha_inicio, fecha_fin, estado, precio_total, inventario_id, cantidad } = req.body;
   try {
     if (inventario_id) {
-      const [existing] = await db.query(
-        "SELECT id FROM produccion WHERE inventario_id = ? AND estado != 'Cancelado'",
-        [inventario_id]
-      );
-      if (existing.length > 0) {
+      const [invs] = await db.query("SELECT piezas_en_proceso FROM inventario WHERE id = ?", [inventario_id]);
+      const piezasCut = invs[0]?.piezas_en_proceso || 0;
+      
+      const [sums] = await db.query("SELECT COALESCE(SUM(cantidad), 0) as total_asignado FROM produccion WHERE inventario_id = ? AND estado != 'Cancelado'", [inventario_id]);
+      const asignado = sums[0].total_asignado;
+      const cantidadPedida = parseInt(cantidad) || 1;
+      
+      // Allow if pieces are 0 (untracked) or if there is enough capacity
+      if (piezasCut > 0 && (asignado + cantidadPedida) > piezasCut) {
         return res.status(400).json({ error: 'errorDuplicate' });
+      } else if (piezasCut === 0) {
+        // Fallback for old untracked cuts: only allow 1 assignment
+        const [existing] = await db.query("SELECT id FROM produccion WHERE inventario_id = ? AND estado != 'Cancelado'", [inventario_id]);
+        if (existing.length > 0) {
+          return res.status(400).json({ error: 'errorDuplicate' });
+        }
       }
     }
 
@@ -1214,12 +1225,22 @@ app.put('/api/produccion/:id', authenticateToken, async (req, res) => {
     if (!old) return res.status(404).json({ error: 'Producción no encontrada' });
 
     if (inventario_id && inventario_id !== old.inventario_id) {
-      const [existing] = await db.query(
-        "SELECT id FROM produccion WHERE inventario_id = ? AND estado != 'Cancelado'",
-        [inventario_id]
-      );
-      if (existing.length > 0) {
+      const [invs] = await db.query("SELECT piezas_en_proceso FROM inventario WHERE id = ?", [inventario_id]);
+      const piezasCut = invs[0]?.piezas_en_proceso || 0;
+      
+      const [sums] = await db.query("SELECT COALESCE(SUM(cantidad), 0) as total_asignado FROM produccion WHERE inventario_id = ? AND estado != 'Cancelado' AND id != ?", [inventario_id, req.params.id]);
+      const asignado = sums[0].total_asignado;
+      
+      const cantActual = cantidad !== undefined ? cantidad : old.cantidad;
+      const cantidadPedida = parseInt(cantActual) || 1;
+      
+      if (piezasCut > 0 && (asignado + cantidadPedida) > piezasCut) {
         return res.status(400).json({ error: 'errorDuplicate' });
+      } else if (piezasCut === 0) {
+        const [existing] = await db.query("SELECT id FROM produccion WHERE inventario_id = ? AND estado != 'Cancelado' AND id != ?", [inventario_id, req.params.id]);
+        if (existing.length > 0) {
+          return res.status(400).json({ error: 'errorDuplicate' });
+        }
       }
     }
 
@@ -1422,6 +1443,70 @@ app.put('/api/produccion/:id/observaciones', authenticateToken, async (req, res)
     await db.query("UPDATE produccion SET observaciones = ? WHERE id = ?", [req.body.observaciones || null, req.params.id]);
     res.json({ success: true });
   } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/produccion/:id/dividir', authenticateToken, async (req, res) => {
+  const { cantidad_entregada, nuevo_maquilero_id } = req.body;
+  try {
+    const [olds] = await db.query(`
+      SELECT p.*, i.precio as unit_price, i.modelo as inv_m, m.nombre as maq_n
+      FROM produccion p 
+      LEFT JOIN inventario i ON p.inventario_id = i.id 
+      LEFT JOIN maquileros m ON p.maquilero_id = m.id
+      WHERE p.id = ?
+    `, [req.params.id]);
+    const old = olds[0];
+    if (!old) return res.status(404).json({ error: 'Producción no encontrada' });
+    
+    const qtyEntregada = parseInt(cantidad_entregada);
+    if (isNaN(qtyEntregada) || qtyEntregada <= 0 || qtyEntregada >= old.cantidad) {
+      return res.status(400).json({ error: 'La cantidad entregada debe ser mayor a 0 y menor a la cantidad original de la orden.' });
+    }
+
+    const remainingQty = old.cantidad - qtyEntregada;
+    const up = old.es_extra === 1
+      ? (old.precio_extra !== null ? parseFloat(old.precio_extra) : 0)
+      : (old.unit_price || (old.precio_total / old.cantidad) || 0);
+      
+    // 1. Update original order
+    const subtotalOriginal = qtyEntregada * up;
+    let finalPrecioOriginal = subtotalOriginal;
+    if (old.ajuste_tipo === 'bono') finalPrecioOriginal += subtotalOriginal * (old.ajuste_porcentaje / 100);
+    else if (old.ajuste_tipo === 'descuento') finalPrecioOriginal -= subtotalOriginal * (old.ajuste_porcentaje / 100);
+    
+    await db.query(`
+      UPDATE produccion SET 
+      cantidad = ?, 
+      cantidad_recibida = ?,
+      precio_total = ?,
+      estado = 'Terminado',
+      fecha_terminado = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `, [qtyEntregada, qtyEntregada, finalPrecioOriginal, req.params.id]);
+
+    await logActivity(req.user.id, 'EDIT', 'PRODUCCION', `Dividió orden ${old.inv_m} (${old.maq_n}): Entregó ${qtyEntregada} pzas, reasignando ${remainingQty}`);
+
+    // 2. Create new order if nuevo_maquilero_id is provided
+    if (nuevo_maquilero_id) {
+      const subtotalNuevo = remainingQty * up;
+      const [result] = await db.query(`
+        INSERT INTO produccion (maquilero_id, fecha_inicio, fecha_fin, estado, precio_total, inventario_id, cantidad) 
+        VALUES (?, CURRENT_DATE, ?, 'En proceso', ?, ?, ?)
+      `, [nuevo_maquilero_id, old.fecha_fin, subtotalNuevo, old.inventario_id, remainingQty]);
+      
+      const [maqNuevos] = await db.query("SELECT nombre FROM maquileros WHERE id = ?", [nuevo_maquilero_id]);
+      const maqNuevo = maqNuevos[0];
+      await logActivity(req.user.id, 'ALTA', 'PRODUCCION', `Nueva orden generada por división para ${maqNuevo ? maqNuevo.nombre : 'ID '+nuevo_maquilero_id} (${old.inv_m}): ${remainingQty} pzas`);
+    }
+
+    await checkAndMoveToInventory(req.params.id, req.user.id);
+    await autoArchiveOrders();
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Error en POST produccion/dividir:", error);
     res.status(500).json({ error: error.message });
   }
 });

@@ -192,7 +192,7 @@ export default function Cortes() {
   };
 
   const filteredItems = items
-    .filter(item => item.producciones_count === 0)
+    .filter(item => (item.piezas_en_proceso > 0 ? item.total_asignado < item.piezas_en_proceso : item.producciones_count === 0))
     .filter(item =>
       (item.modelo || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (item.cliente || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -266,13 +266,26 @@ export default function Cortes() {
                         )}
                       </td>
                       <td>
-                        {item.producciones_count > 0 ? (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#16a34a', fontWeight: 600, fontSize: '0.85rem' }}>
-                            <div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: '#16a34a', boxShadow: '0 0 5px rgba(22, 163, 74, 0.5)' }}></div> {t('cortes.assigned')}
+                        {item.total_asignado > 0 || item.producciones_count > 0 ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                            {item.total_asignado >= item.piezas_en_proceso && item.piezas_en_proceso > 0 ? (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#16a34a', fontWeight: 600, fontSize: '0.85rem' }}>
+                                <div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: '#16a34a', boxShadow: '0 0 5px rgba(22, 163, 74, 0.5)' }}></div> {t('cortes.assigned')}
+                              </div>
+                            ) : (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#f59e0b', fontWeight: 600, fontSize: '0.85rem' }}>
+                                <div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: '#f59e0b', boxShadow: '0 0 5px rgba(245, 158, 11, 0.5)' }}></div> Asignado Parcial
+                              </div>
+                            )}
+                            {item.piezas_en_proceso > 0 && (
+                              <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                                ({item.total_asignado} / {item.piezas_en_proceso})
+                              </span>
+                            )}
                           </div>
                         ) : (
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#ef4444', fontWeight: 600, fontSize: '0.85rem' }}>
-                            <div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: '#ef4444', boxShadow: '0 0 5px rgba(239, 68, 68, 0.5)' }}></div> {t('cortes.available')}
+                            <div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: '#ef4444', boxShadow: '0 0 5px rgba(239, 68, 68, 0.5)' }}></div> {t('cortes.unassigned')}
                           </div>
                         )}
                       </td>
@@ -305,14 +318,14 @@ export default function Cortes() {
                             <>
                                <button className="btn-icon" onClick={(e) => openEdit(item, e)} title="Editar"><Pencil size={18} /></button>
                                <button className="btn-icon" onClick={(e) => openReprogram(item, e)} title="Reprogramar" style={{ color: '#8b5cf6' }}><RefreshCw size={18} /></button>
-                               {item.producciones_count === 0 && (
+                               {(item.piezas_en_proceso > 0 ? item.total_asignado < item.piezas_en_proceso : item.producciones_count === 0) && (
                                  <button className="btn-icon" onClick={(e) => { e.stopPropagation(); navigate(`/produccion?productId=${item.id}`); }} title="Iniciar Producción" style={{ color: '#10b981' }}><PlusCircle size={18} /></button>
                                )}
                                <button className="btn-icon" onClick={(e) => handleDelete(item.id, e)} title="Eliminar" style={{ color: '#ef4444' }}><Trash2 size={18} /></button>
                             </>
                            ) : (
                              <>
-                               {item.producciones_count === 0 && (
+                               {(item.piezas_en_proceso > 0 ? item.total_asignado < item.piezas_en_proceso : item.producciones_count === 0) && (
                                  <button className="btn-icon" onClick={(e) => { e.stopPropagation(); navigate(`/produccion?productId=${item.id}`); }} title="Iniciar Producción" style={{ color: '#10b981' }}><PlusCircle size={18} /></button>
                                )}
                                <button className="btn-icon" onClick={(e) => { e.stopPropagation(); openEdit(item, e); }} title="Ver Detalles"><Search size={18} /></button>

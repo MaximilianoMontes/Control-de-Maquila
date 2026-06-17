@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { 
   Plus, Search, Pencil, Trash2, CheckCircle, XCircle, 
   Archive, ArchiveRestore, Image as ImageIcon, AlertTriangle, AlertCircle, Calendar, X, Sparkles,
-  MinusCircle, MessageSquare
+  MinusCircle, MessageSquare, Scissors
 } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -42,6 +42,9 @@ export default function Produccion() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isSplitModalOpen, setIsSplitModalOpen] = useState(false);
+  const [splitOrder, setSplitOrder] = useState(null);
+  const [splitData, setSplitData] = useState({ cantidad_entregada: '', nuevo_maquilero_id: '' });
   
   const [obsModalOpen, setObsModalOpen] = useState(false);
   const [obsText, setObsText] = useState("");
@@ -155,6 +158,26 @@ export default function Produccion() {
       }
     }
   };
+
+  const openSplit = (order) => {
+    setSplitOrder(order);
+    setSplitData({ cantidad_entregada: '', nuevo_maquilero_id: '' });
+    setIsSplitModalOpen(true);
+  };
+
+  const handleSplitSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.post(`${API}/api/produccion/${splitOrder.id}/dividir`, splitData);
+      alert('Orden dividida exitosamente.');
+      setIsSplitModalOpen(false);
+      setSplitOrder(null);
+      fetchOrders();
+    } catch (e) {
+      alert('Error al dividir orden: ' + (e.response?.data?.error || e.message));
+    }
+  };
+
 
   const handleTerminar = async (id) => {
     if (!confirm(t('prod.confirmFinish'))) return;
@@ -386,6 +409,7 @@ export default function Produccion() {
                               <button className="btn" style={{ padding: '0.4rem', background: '#8b5cf6', color: 'white' }} onClick={() => handleAddDay(o.id)} title="Agregar Prórroga (Días)"><Calendar size={16} /></button>
                               <button className="btn btn-danger" style={{ padding: '0.4rem' }} onClick={() => handleCancelar(o.id)} title="Cancelar Orden"><XCircle size={16} /></button>
                               <Link to={`/extras?newExtra=true&inventario_id=${o.inventario_id}&cantidad=${o.cantidad}&fecha_inicio=${formatDate(o.fecha_inicio)}&fecha_fin=${formatDate(o.fecha_fin)}`} className="btn" style={{ padding: '0.4rem', background: 'linear-gradient(135deg, #ec4899, #8b5cf6)', color: 'white', display: 'flex', alignItems: 'center' }} title="Crear Extra"><Sparkles size={16} /></Link>
+                              <button className="btn" style={{ padding: '0.4rem', background: '#3b82f6', color: 'white' }} onClick={() => openSplit(o)} title="Dividir / Devolución Parcial"><Scissors size={16} /></button>
                             </>
                           )}
                           {canEdit ? (
@@ -529,6 +553,56 @@ export default function Produccion() {
               <button className="btn btn-secondary" onClick={() => setObsModalOpen(false)}>Cancelar</button>
               <button className="btn btn-primary" onClick={handleSaveObs}>Guardar</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {isSplitModalOpen && splitOrder && (
+        <div className="modal-overlay" onClick={() => setIsSplitModalOpen(false)}>
+          <div className="modal-content glass-card" style={{ maxWidth: '500px' }} onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Dividir Orden / Devolución Parcial</h2>
+              <button className="btn-icon" onClick={() => setIsSplitModalOpen(false)}><X size={24} /></button>
+            </div>
+            <form onSubmit={handleSplitSubmit}>
+              <div style={{ marginBottom: '1rem', padding: '0.75rem', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', borderRadius: '8px', fontSize: '0.9rem' }}>
+                <strong>Aviso:</strong> Estás dividiendo la orden #{splitOrder.id}. Ingresa cuántas piezas <strong>SÍ entregó</strong> {splitOrder.maquilero_nombre}. El resto se reasignará automáticamente.
+              </div>
+              
+              <div className="form-group">
+                <label className="form-label">Piezas Entregadas (de {splitOrder.cantidad}) *</label>
+                <input 
+                  type="number" 
+                  required 
+                  className="form-input" 
+                  min="1"
+                  max={splitOrder.cantidad - 1}
+                  value={splitData.cantidad_entregada} 
+                  onChange={e => setSplitData({...splitData, cantidad_entregada: e.target.value})} 
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Reasignar las restantes a: (Opcional)</label>
+                <select 
+                  className="form-input" 
+                  value={splitData.nuevo_maquilero_id} 
+                  onChange={e => setSplitData({...splitData, nuevo_maquilero_id: e.target.value})}
+                >
+                  <option value="">Dejar libres en Cortes (Inventario)</option>
+                  {[...maquileros].filter(m => m.id !== splitOrder.maquilero_id).sort((a,b) => a.nombre.localeCompare(b.nombre)).map(m => (
+                    <option key={m.id} value={m.id}>{m.nombre}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="modal-actions">
+                <button type="button" className="btn btn-secondary" onClick={() => setIsSplitModalOpen(false)}>Cancelar</button>
+                <button type="submit" className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Scissors size={18} /> Dividir Orden
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
