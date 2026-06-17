@@ -1502,16 +1502,45 @@ export default function Plancha() {
             />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {modelosCamion.filter(m => m.modelo.toLowerCase().includes(searchModelosCamion.toLowerCase())).length === 0 ? (
               <p style={{ textAlign: 'center', color: 'var(--text-muted, #94a3b8)', gridColumn: '1/-1', padding: '3rem' }}>
                 {isEn ? 'No registered models from sent trucks.' : 'No hay modelos registrados de camiones enviados.'}
               </p>
             ) : (
-              modelosCamion.filter(m => m.modelo.toLowerCase().includes(searchModelosCamion.toLowerCase())).map(m => (
-                <div 
-                  key={m.id} 
-                  className="glass-card" 
+              (() => {
+                const filtered = modelosCamion
+                  .filter(m => m.modelo.toLowerCase().includes(searchModelosCamion.toLowerCase()))
+                  .sort((a, b) => a.modelo.localeCompare(b.modelo));
+                
+                const grupos = [];
+                let currentGrupo = null;
+                
+                filtered.forEach(m => {
+                  const getMarca = (mod) => mod?.charAt(0) === '5' ? 'Reina Diaz' : (mod?.charAt(0) === '7' ? 'POET' : 'Otra Marca');
+                  const getTipo = (mod) => {
+                    const s = mod?.charAt(1);
+                    return { '0':'Saco', '1':'Conjunto', '2':'Vestido', '3':'Pantalón', '4':'Falda', '5':'Blusa', '6':'Ensamble' }[s] || 'Otro';
+                  };
+                  const key = `${getMarca(m.modelo)} - ${getTipo(m.modelo)}`;
+                  
+                  if (!currentGrupo || currentGrupo.nombre !== key) {
+                    currentGrupo = { nombre: key, items: [] };
+                    grupos.push(currentGrupo);
+                  }
+                  currentGrupo.items.push(m);
+                });
+                
+                return grupos.map((grupo) => (
+                  <div key={grupo.nombre} style={{ marginBottom: '1.5rem' }}>
+                    <h3 style={{ fontSize: '1.2rem', margin: '0 0 1rem 0', paddingBottom: '0.5rem', borderBottom: '1px solid var(--border-color)', color: 'var(--text-primary)' }}>
+                      {grupo.nombre} <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginLeft: '8px', fontWeight: 'normal' }}>({grupo.items.length} {grupo.items.length === 1 ? 'modelo' : 'modelos'})</span>
+                    </h3>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
+                      {grupo.items.map(m => (
+                        <div 
+                          key={m.id} 
+                          className="glass-card" 
                   style={{ 
                     position: 'relative', 
                     padding: '1.5rem', 
@@ -1603,7 +1632,12 @@ export default function Plancha() {
                   </div>
 
                 </div>
-              ))
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ));
+              })()
             )}
           </div>
         </div>
