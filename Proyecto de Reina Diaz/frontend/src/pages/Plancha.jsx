@@ -1632,7 +1632,6 @@ export default function Plancha() {
                   </div>
 
                 </div>
-                        </div>
                       ))}
                     </div>
                   </div>
