@@ -23,10 +23,10 @@ export default function Sidebar() {
   
   // Todos los items del sidebar - cualquier usuario autenticado los ve
   // excepto Pagos que solo es para admin y produccion
-  const userRole = (user?.role || user?.rol || '').trim();
+  const userRole = (user?.role || user?.rol || '').toString().toLowerCase().trim();
   // Solo admin y produccion pueden ver Pagos
-  const puedeVerPagos = ['admin', 'produccion1', 'produccion2'].includes(userRole);
-  const puedeVerCamion = ['admin', 'produccion1', 'produccion2'].includes(userRole);
+  const puedeVerPagos = ['admin', 'produccion1', 'produccion2', 'produccion'].includes(userRole);
+  const puedeVerCamion = ['admin', 'produccion1', 'produccion2', 'produccion'].includes(userRole);
 
   const navItems = [
     { path: '/dashboard',  name: t('nav.dashboard'),   icon: <LayoutDashboard size={20} /> },
