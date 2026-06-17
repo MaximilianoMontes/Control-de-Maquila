@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { 
   Plus, Search, Pencil, Trash2, CheckCircle, XCircle, 
   Archive, ArchiveRestore, Image as ImageIcon, AlertTriangle, AlertCircle, Calendar, X, Sparkles,
-  MinusCircle
+  MinusCircle, MessageSquare
 } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -42,6 +42,31 @@ export default function Produccion() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  
+  const [obsModalOpen, setObsModalOpen] = useState(false);
+  const [obsText, setObsText] = useState("");
+  const [obsOrderId, setObsOrderId] = useState(null);
+
+  const handleOpenObs = (o) => {
+    setObsOrderId(o.id);
+    setObsText(o.observaciones || "");
+    setObsModalOpen(true);
+  };
+
+  const handleSaveObs = async () => {
+    try {
+      const res = await axios.put(`${API}/api/produccion/${obsOrderId}/observaciones`, {
+        observaciones: obsText
+      }, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+      if (res.data.success) {
+        setObsModalOpen(false);
+        fetchOrders();
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Error al guardar observaciones");
+    }
+  };
   const [verArchivados, setVerArchivados] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   
@@ -365,6 +390,10 @@ export default function Produccion() {
                           )}
                           {canEdit ? (
                             <>
+                              <button className="btn btn-secondary" style={{ padding: '0.4rem', position: 'relative' }} onClick={() => handleOpenObs(o)} title="Notas / Observaciones">
+                                <MessageSquare size={16} />
+                                {o.observaciones && <span style={{ position: 'absolute', top: -2, right: -2, width: 8, height: 8, background: '#ef4444', borderRadius: '50%' }}></span>}
+                              </button>
                               <button className="btn btn-secondary" style={{ padding: '0.4rem' }} onClick={() => { 
                                 setEditingOrder(o); 
                                 setFormData({ 
@@ -480,6 +509,30 @@ export default function Produccion() {
       )}
 
       {/* Modal Zoom de Imagen */}
+      {obsModalOpen && (
+        <div className="modal-overlay" onClick={() => setObsModalOpen(false)}>
+          <div className="modal-content glass-card" style={{ maxWidth: '500px' }} onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Observaciones / Notas</h2>
+              <button className="btn-icon" onClick={() => setObsModalOpen(false)}><X size={24} /></button>
+            </div>
+            <div className="form-group">
+              <textarea 
+                className="form-input" 
+                rows="4" 
+                value={obsText} 
+                onChange={e => setObsText(e.target.value)} 
+                placeholder="Escribe aquí tus notas o detalles importantes..."
+              ></textarea>
+            </div>
+            <div className="modal-actions">
+              <button className="btn btn-secondary" onClick={() => setObsModalOpen(false)}>Cancelar</button>
+              <button className="btn btn-primary" onClick={handleSaveObs}>Guardar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {selectedImage && (
         <div className="modal-overlay" style={{ zIndex: 2000 }} onClick={() => setSelectedImage(null)}>
           <div style={{ position: 'relative', maxWidth: '90vw', maxHeight: '90vh' }} onClick={e => e.stopPropagation()}>

@@ -275,9 +275,15 @@ async function initializeDatabase() {
 
     try {
       await connection.query("ALTER TABLE produccion ADD COLUMN precio_extra DECIMAL(10, 2) DEFAULT NULL");
-      console.log("Migration: precio_extra column added to produccion");
     } catch (e) {
-      // Si ya existe, ignoramos el error
+      if (e.code !== 'ER_DUP_FIELDNAME') console.error("Migration error (precio_extra):", e.message);
+    }
+
+    try {
+      await connection.query("ALTER TABLE produccion ADD COLUMN observaciones TEXT DEFAULT NULL");
+      console.log("Migration: observaciones column added to produccion");
+    } catch (e) {
+      if (e.code !== 'ER_DUP_FIELDNAME') console.error("Migration error (observaciones):", e.message);
     }
 
     // Migration: Backfill fecha_creacion for existing cuts using historial records

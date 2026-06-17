@@ -1201,7 +1201,7 @@ app.post('/api/produccion', authenticateToken, async (req, res) => {
 });
 
 app.put('/api/produccion/:id', authenticateToken, async (req, res) => {
-  const { maquilero_id, inventario_id, fecha_inicio, fecha_fin, estado, precio_total, cantidad, cantidad_recibida, retrasos, ajuste_tipo, ajuste_porcentaje, precio_extra } = req.body;
+  const { maquilero_id, inventario_id, fecha_inicio, fecha_fin, estado, precio_total, cantidad, cantidad_recibida, retrasos, ajuste_tipo, ajuste_porcentaje, precio_extra, observaciones } = req.body;
   try {
     const [olds] = await db.query(`
       SELECT p.*, i.precio as unit_price, i.modelo as inv_m, m.nombre as maq_n
@@ -1281,7 +1281,8 @@ app.put('/api/produccion/:id', authenticateToken, async (req, res) => {
       ajuste_porcentaje = ?,
       ajuste_monto = ?,
       fecha_terminado = ?,
-      precio_extra = COALESCE(?, precio_extra)
+      precio_extra = COALESCE(?, precio_extra),
+      observaciones = ?
       WHERE id = ?
     `, [
       maquilero_id || null, 
@@ -1298,6 +1299,7 @@ app.put('/api/produccion/:id', authenticateToken, async (req, res) => {
       adjustmentAmount,
       finalFechaTerminado,
       precio_extra !== undefined ? precio_extra : null,
+      observaciones !== undefined ? observaciones : old.observaciones,
       req.params.id
     ]);
 
@@ -1409,6 +1411,15 @@ app.put('/api/produccion/:id/archivo', authenticateToken, async (req, res) => {
     
     await checkAndMoveToInventory(req.params.id, req.user.id);
     
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.put('/api/produccion/:id/observaciones', authenticateToken, async (req, res) => {
+  try {
+    await db.query("UPDATE produccion SET observaciones = ? WHERE id = ?", [req.body.observaciones || null, req.params.id]);
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
