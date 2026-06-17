@@ -942,7 +942,13 @@ export const SettingsProvider = ({ children }) => {
       orange: { primary: '#f97316', hover: '#ea580c', shadow: 'rgba(249, 115, 22, 0.4)' },
       yellow: { primary: '#eab308', hover: '#ca8a04', shadow: 'rgba(234, 179, 8, 0.4)' },
       pink: { primary: '#ec4899', hover: '#db2777', shadow: 'rgba(236, 72, 153, 0.4)' },
-      slate: { primary: '#64748b', hover: '#475569', shadow: 'rgba(100, 116, 139, 0.4)' }
+      slate: { primary: '#64748b', hover: '#475569', shadow: 'rgba(100, 116, 139, 0.4)' },
+      black: { primary: '#171717', hover: '#0a0a0a', shadow: 'rgba(23, 23, 23, 0.4)' },
+      white: { primary: '#f8fafc', hover: '#e2e8f0', shadow: 'rgba(248, 250, 252, 0.4)' },
+      brown: { primary: '#78350f', hover: '#451a03', shadow: 'rgba(120, 53, 15, 0.4)' },
+      teal: { primary: '#14b8a6', hover: '#0d9488', shadow: 'rgba(20, 184, 166, 0.4)' },
+      cyan: { primary: '#06b6d4', hover: '#0891b2', shadow: 'rgba(6, 182, 212, 0.4)' },
+      rose: { primary: '#f43f5e', hover: '#e11d48', shadow: 'rgba(244, 63, 94, 0.4)' }
     };
 
     const chosen = accents[settings.accentColor] || accents.blue;
