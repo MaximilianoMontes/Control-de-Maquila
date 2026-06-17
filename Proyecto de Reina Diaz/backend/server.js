@@ -2572,7 +2572,7 @@ app.get('/api/admin/reset-order-fermin', async (req, res) => {
 // 1. OBTENER LISTA DE PLANCHADORES
 app.get('/api/planchadores', authenticateToken, async (req, res) => {
   try {
-    const [rows] = await db.query("SELECT * FROM planchadores ORDER BY nombre ASC");
+    const [rows] = await db.query("SELECT * FROM planchadores WHERE activo = 1 ORDER BY nombre ASC");
     res.json(rows);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -2643,15 +2643,15 @@ app.put('/api/planchadores/:id', authenticateToken, async (req, res) => {
   }
 });
 
-// ELIMINAR PLANCHADOR
+// ELIMINAR PLANCHADOR (Soft Delete)
 app.delete('/api/planchadores/:id', authenticateToken, async (req, res) => {
   try {
     const [planchadores] = await db.query("SELECT nombre FROM planchadores WHERE id = ?", [req.params.id]);
     const planchador = planchadores[0];
     if (!planchador) return res.status(404).json({ error: 'Planchador no encontrado' });
     
-    await db.query("DELETE FROM planchadores WHERE id = ?", [req.params.id]);
-    await logActivity(req.user.id, 'DELETE', 'PLANCHADORES', `Eliminó al planchador ${planchador.nombre}`);
+    await db.query("UPDATE planchadores SET activo = 0 WHERE id = ?", [req.params.id]);
+    await logActivity(req.user.id, 'DELETE', 'PLANCHADORES', `Eliminó al planchador ${planchador.nombre} (Soft Delete)`);
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -3843,7 +3843,8 @@ app.get('/api/reportes/plancha/resumen', async (req, res) => {
   const lang = req.query.lang || 'es';
   const tLabel = (esText, enText) => lang === 'en' ? enText : esText;
   try {
-    const [allPlanchadores] = await db.query("SELECT id, nombre FROM planchadores ORDER BY nombre ASC");
+    // Obtener planchadores activos
+    const [allPlanchadores] = await db.query("SELECT id, nombre FROM planchadores WHERE activo = 1 ORDER BY nombre ASC");
     const planchadores = allPlanchadores.filter(p => 
       !p.nombre.toLowerCase().includes('olga') && 
       !p.nombre.toLowerCase().includes('luis')
