@@ -20,7 +20,8 @@ import { useSettings } from '../context/SettingsContext';
 export default function Sidebar() {
   const location = useLocation();
   const { user, logout } = useAuth();
-  const { t } = useSettings();
+  const { t, settings } = useSettings();
+  const isEn = settings?.language === 'en';
   
   // Todos los items del sidebar - cualquier usuario autenticado los ve
   // excepto Pagos que solo es para admin y produccion
