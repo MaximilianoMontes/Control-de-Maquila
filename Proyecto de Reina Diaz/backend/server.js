@@ -1956,7 +1956,7 @@ app.get('/api/reportes/recoleccion', async (req, res) => {
       FROM produccion p 
       JOIN maquileros m ON p.maquilero_id = m.id 
       LEFT JOIN inventario i ON p.inventario_id = i.id
-      WHERE p.archivado = 0 AND p.estado = 'En proceso'
+      WHERE 1=1
     `;
     const params = [];
     let subtitleDateText = "";
@@ -1977,6 +1977,7 @@ app.get('/api/reportes/recoleccion', async (req, res) => {
       params.push(d);
       subtitleDateText = tLabel(`del día ${formatDateToDMY(d)}`, `for ${formatDateToDMY(d)}`);
     } else {
+      query += ` AND p.archivado = 0 AND p.estado IN ('En proceso', 'Terminado Parcial')`;
       subtitleDateText = tLabel("estimada", "estimated");
     }
     query += ` ORDER BY p.fecha_fin ASC`;
