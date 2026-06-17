@@ -573,7 +573,13 @@ export default function Header() {
                     { id: 'orange', color: '#f97316', label: settings.language === 'en' ? 'Coral Orange' : 'Naranja Coral' },
                     { id: 'yellow', color: '#eab308', label: settings.language === 'en' ? 'Sunny Yellow' : 'Amarillo Sol' },
                     { id: 'pink', color: '#ec4899', label: settings.language === 'en' ? 'Hot Pink' : 'Rosa Fuerte' },
-                    { id: 'slate', color: '#64748b', label: settings.language === 'en' ? 'Slate Gray' : 'Gris Pizarra' }
+                    { id: 'slate', color: '#64748b', label: settings.language === 'en' ? 'Slate Gray' : 'Gris Pizarra' },
+                    { id: 'black', color: '#171717', label: settings.language === 'en' ? 'Carbon Black' : 'Negro Carbón' },
+                    { id: 'white', color: '#f8fafc', label: settings.language === 'en' ? 'Snow White' : 'Blanco Nieve' },
+                    { id: 'brown', color: '#78350f', label: settings.language === 'en' ? 'Coffee Brown' : 'Café Tostado' },
+                    { id: 'teal', color: '#14b8a6', label: settings.language === 'en' ? 'Ocean Teal' : 'Cian Océano' },
+                    { id: 'cyan', color: '#06b6d4', label: settings.language === 'en' ? 'Sky Cyan' : 'Celeste Cielo' },
+                    { id: 'rose', color: '#f43f5e', label: settings.language === 'en' ? 'Soft Rose' : 'Rosa Suave' }
                   ].map(item => (
                     <button
                       key={item.id}
