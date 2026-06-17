@@ -1552,6 +1552,9 @@ export default function Plancha() {
                     )}
                     <div>
                       <h3 style={{ margin: 0, fontSize: '1.3rem' }}>{isEn ? 'Model' : 'Modelo'} {m.modelo}</h3>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                        Camión del: {formatDate(m.fecha_envio)}
+                      </div>
                     </div>
                   </div>
 
