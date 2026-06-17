@@ -4190,7 +4190,109 @@ app.get('/api/plancha/analisis', authenticateToken, async (req, res) => {
   }
 });
 
-// Debug payments removed
+// ==========================================
+// Módulo Calendario y Alertas
+// ==========================================
+
+app.get('/api/calendario/upcoming', authenticateToken, async (req, res) => {
+  const username = req.user?.username || '';
+  const userRole = (req.user?.role || req.user?.rol || '').toLowerCase().trim();
+  
+  try {
+    const isAdmin = userRole === 'admin';
+    let query = "SELECT * FROM calendario_eventos WHERE fecha_inicio >= NOW() AND fecha_inicio <= DATE_ADD(NOW(), INTERVAL 24 HOUR) ";
+    let params = [];
+    
+    if (!isAdmin) {
+      query += "AND usuario = ? ";
+      params.push(username);
+    }
+    query += "ORDER BY fecha_inicio ASC";
+    
+    const [events] = await db.query(query, params);
+    res.json(events);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/calendario', authenticateToken, async (req, res) => {
+  const username = req.user?.username || '';
+  const userRole = (req.user?.role || req.user?.rol || '').toLowerCase().trim();
+  
+  try {
+    const isAdmin = userRole === 'admin';
+    let query = "SELECT * FROM calendario_eventos ";
+    let params = [];
+    
+    if (!isAdmin) {
+      query += "WHERE usuario = ? ";
+      params.push(username);
+    }
+    
+    const [events] = await db.query(query, params);
+    res.json(events);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/calendario', authenticateToken, async (req, res) => {
+  const username = req.user?.username || '';
+  const { titulo, descripcion, fecha_inicio, fecha_fin, color } = req.body;
+  try {
+    const [result] = await db.query(
+      "INSERT INTO calendario_eventos (usuario, titulo, descripcion, fecha_inicio, fecha_fin, color) VALUES (?, ?, ?, ?, ?, ?)",
+      [username, titulo, descripcion || '', fecha_inicio, fecha_fin, color || '#3b82f6']
+    );
+    res.status(201).json({ id: result.insertId, message: 'Evento creado exitosamente' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.put('/api/calendario/:id', authenticateToken, async (req, res) => {
+  const id = req.params.id;
+  const username = req.user?.username || '';
+  const userRole = (req.user?.role || req.user?.rol || '').toLowerCase().trim();
+  const { titulo, descripcion, fecha_inicio, fecha_fin, color } = req.body;
+  
+  try {
+    const isAdmin = userRole === 'admin';
+    
+    // Check ownership
+    const [existing] = await db.query("SELECT * FROM calendario_eventos WHERE id = ?", [id]);
+    if (existing.length === 0) return res.status(404).json({ error: 'Evento no encontrado' });
+    if (!isAdmin && existing[0].usuario !== username) return res.status(403).json({ error: 'No tienes permiso para editar este evento' });
+    
+    await db.query(
+      "UPDATE calendario_eventos SET titulo = ?, descripcion = ?, fecha_inicio = ?, fecha_fin = ?, color = ? WHERE id = ?",
+      [titulo, descripcion || '', fecha_inicio, fecha_fin, color || '#3b82f6', id]
+    );
+    res.json({ message: 'Evento actualizado' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/api/calendario/:id', authenticateToken, async (req, res) => {
+  const id = req.params.id;
+  const username = req.user?.username || '';
+  const userRole = (req.user?.role || req.user?.rol || '').toLowerCase().trim();
+  
+  try {
+    const isAdmin = userRole === 'admin';
+    
+    const [existing] = await db.query("SELECT * FROM calendario_eventos WHERE id = ?", [id]);
+    if (existing.length === 0) return res.status(404).json({ error: 'Evento no encontrado' });
+    if (!isAdmin && existing[0].usuario !== username) return res.status(403).json({ error: 'No tienes permiso para eliminar este evento' });
+    
+    await db.query("DELETE FROM calendario_eventos WHERE id = ?", [id]);
+    res.json({ message: 'Evento eliminado' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 if (require.main === module) {
   app.listen(PORT, '0.0.0.0', async () => {

@@ -32,7 +32,8 @@ import {
   AlertTriangle,
   LayoutGrid,
   Flame,
-  Layers
+  Layers,
+  Calendar
 } from 'lucide-react';
 
 export default function Header() {
@@ -81,10 +82,30 @@ export default function Header() {
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
-        const res = await axios.get(`${API_URL}/api/historial?limit=15`);
-        if (res.data && Array.isArray(res.data)) {
-          setLogs(res.data);
+        const [histRes, calRes] = await Promise.all([
+          axios.get(`${API_URL}/api/historial?limit=15`),
+          axios.get(`${API_URL}/api/calendario/upcoming`).catch(() => ({ data: [] }))
+        ]);
+        
+        let mergedLogs = [];
+        if (histRes.data && Array.isArray(histRes.data)) {
+          mergedLogs = [...histRes.data];
         }
+        
+        if (calRes.data && Array.isArray(calRes.data)) {
+          const calEvents = calRes.data.map(ev => ({
+            id: `cal-${ev.id}`,
+            action: 'CALENDAR_ALERT',
+            target: 'CALENDARIO',
+            timestamp: ev.fecha_inicio,
+            user_name: ev.usuario,
+            description: `${ev.titulo}: ${ev.descripcion || ''}`
+          }));
+          mergedLogs = [...calEvents, ...mergedLogs];
+        }
+        
+        mergedLogs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        setLogs(mergedLogs);
       } catch (e) {
         console.error('Error fetching notifications for header:', e);
       }
@@ -96,7 +117,7 @@ export default function Header() {
   }, []);
 
   // Filter active notifications
-  const activeNotifications = logs.filter(log => log.id > clearedUntil);
+  const activeNotifications = logs.filter(log => typeof log.id === 'string' || log.id > clearedUntil);
   const unreadCount = activeNotifications.filter(log => !readIds.includes(log.id)).length;
 
   const getRelativeTime = (timestamp, lang) => {
@@ -222,7 +243,8 @@ export default function Header() {
   };
 
   const handleClearNotifications = () => {
-    const maxId = activeNotifications.length > 0 ? Math.max(...activeNotifications.map(n => n.id)) : clearedUntil;
+    const numericLogs = activeNotifications.filter(n => typeof n.id === 'number');
+    const maxId = numericLogs.length > 0 ? Math.max(...numericLogs.map(n => n.id)) : clearedUntil;
     setClearedUntil(maxId);
     localStorage.setItem('notifications_cleared_until', maxId.toString());
   };
@@ -308,6 +330,10 @@ export default function Header() {
                       IconComponent = Trash2;
                       iconColor = 'var(--danger-color)';
                       bgColor = 'rgba(239, 68, 68, 0.1)';
+                    } else if (actionLower === 'calendar_alert') {
+                      IconComponent = Calendar;
+                      iconColor = '#c084fc'; // a nice purple
+                      bgColor = 'rgba(192, 132, 252, 0.1)';
                     }
 
                     return (
