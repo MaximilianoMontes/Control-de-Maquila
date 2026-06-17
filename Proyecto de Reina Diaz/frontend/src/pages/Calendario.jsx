@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
-import { ChevronLeft, ChevronRight, Plus, Trash2, X, Calendar as CalendarIcon, Clock, AlignLeft } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Trash2, X, Calendar as CalendarIcon, Clock, AlignLeft, Home } from 'lucide-react';
 import API_URL from '../config';
 
 export default function Calendario() {
   const { user } = useAuth();
   const { t, settings } = useSettings();
+  const navigate = useNavigate();
   const isEn = settings.language === 'en';
 
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -174,7 +176,7 @@ export default function Calendario() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', height: '100%', fontFamily: 'Inter, sans-serif' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', height: '100vh', padding: '2rem', boxSizing: 'border-box', fontFamily: 'Inter, sans-serif', backgroundColor: 'var(--bg-body)' }}>
       <style>{`
         .calendar-container {
           background: var(--bg-card);
@@ -349,7 +351,13 @@ export default function Calendario() {
       `}</style>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1 className="gradient-text" style={{ fontSize: '2rem', margin: 0 }}>{isEn ? 'Calendar & Alerts' : 'Calendario y Alertas'}</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <button className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '6px' }} onClick={() => navigate('/')}>
+            <Home size={18} />
+            {isEn ? 'Home' : 'Volver al Inicio'}
+          </button>
+          <h1 className="gradient-text" style={{ fontSize: '2rem', margin: 0 }}>{isEn ? 'Calendar & Alerts' : 'Calendario y Alertas'}</h1>
+        </div>
         <button className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px' }} onClick={() => openModal()}>
           <Plus size={18} />
           {isEn ? 'New Event' : 'Nuevo Evento'}

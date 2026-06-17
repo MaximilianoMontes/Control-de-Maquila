@@ -75,7 +75,7 @@ function App() {
       <Route path="/pagos" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2', 'produccion']}><MainLayout><Pagos /></MainLayout></ProtectedRoute>} />
       <Route path="/plancha" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2', 'produccion', 'plancha', 'inventario1']}><Plancha /></ProtectedRoute>} />
       <Route path="/reportes" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2', 'produccion', 'inventario1']}><MainLayout><Reportes /></MainLayout></ProtectedRoute>} />
-      <Route path="/calendario" element={<ProtectedRoute><MainLayout><Calendario /></MainLayout></ProtectedRoute>} />
+      <Route path="/calendario" element={<ProtectedRoute><Calendario /></ProtectedRoute>} />
       <Route path="/historial" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2', 'produccion', 'inventario1']}><MainLayout><Historial /></MainLayout></ProtectedRoute>} />
       <Route path="/ayuda" element={<ProtectedRoute><MainLayout><Ayuda /></MainLayout></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />

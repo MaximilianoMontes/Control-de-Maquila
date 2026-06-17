@@ -40,7 +40,6 @@ export default function Sidebar() {
     ...(puedeVerCamion ? [{ path: '/camion', name: t('nav.camion'), icon: <Truck size={20} /> }] : []),
     { path: '/reportes',   name: t('nav.reportes'),    icon: <FileText size={20} /> },
     ...(puedeVerPagos ? [{ path: '/pagos', name: t('nav.pagos'), icon: <Wallet size={20} /> }] : []),
-    { path: '/calendario', name: isEn ? 'Calendar' : 'Calendario', icon: <Calendar size={20} /> },
     { path: '/historial',  name: t('nav.historial'),   icon: <History size={20} /> },
   ];
 
