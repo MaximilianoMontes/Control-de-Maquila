@@ -667,6 +667,7 @@ export default function Plancha() {
       playBeep('success');
     } else {
       newBurros[burroIdx].modelos.push({
+        uid: Date.now() + Math.random().toString().slice(2, 6),
         id: modeloMatch.id,
         modelo: modeloMatch.modelo,
         imagen: modeloMatch.imagen,
