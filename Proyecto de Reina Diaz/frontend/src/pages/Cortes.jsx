@@ -22,12 +22,10 @@ export default function Cortes() {
   const [items, setItems] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [editImageItem, setEditImageItem] = useState(null);
   const [editMode, setEditMode] = useState(false);
   const [isReprogram, setIsReprogram] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  const fileInputRef = useRef(null);
   const [formData, setFormData] = useState(getEmptyForm());
   const [imagenFile, setImagenFile] = useState(null);
   const [editImageFile, setEditImageFile] = useState(null);
@@ -163,20 +161,6 @@ export default function Cortes() {
     }
   };
 
-  const handleFileUpload = async (e) => {
-    e.preventDefault();
-    const file = fileInputRef.current?.files[0];
-    if (!file) return;
-    const data = new FormData();
-    data.append('file', file);
-    try {
-      await axios.post(`${API}/api/inventario/import`, data, { headers: { 'Content-Type': 'multipart/form-data' } });
-      setIsUploadModalOpen(false);
-      fetchItems();
-      alert('Inventario importado con éxito');
-    } catch (e) { alert('Error en importación'); }
-  };
-
   const handleEditImageSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -206,14 +190,9 @@ export default function Cortes() {
         <h1 className="gradient-text" style={{ fontSize: '2.5rem', margin: 0 }}>{t('cortes.title')}</h1>
         <div style={{ display: 'flex', gap: '1rem' }}>
           {canEdit && (
-            <>
-              <button className="btn btn-secondary" onClick={() => setIsUploadModalOpen(true)}>
-                <UploadCloud size={20} /> {t('cortes.import')}
-              </button>
-              <button className="btn btn-primary" onClick={openNew}>
-                <Plus size={20} /> {t('cortes.new')}
-              </button>
-            </>
+            <button className="btn btn-primary" onClick={openNew}>
+              <Plus size={20} /> {t('cortes.new')}
+            </button>
           )}
         </div>
       </div>
@@ -468,25 +447,6 @@ export default function Cortes() {
                 <button type="button" className="btn btn-secondary" onClick={() => setEditImageItem(null)}>{t('cortes.cancel')}</button>
                 <button type="submit" className="btn btn-primary">{t('cortes.savePhoto')}</button>
               </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Modal Importar Excel */}
-      {isUploadModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-content glass-card" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>{t('cortes.importTitle')}</h2>
-              <button className="btn-icon" onClick={() => setIsUploadModalOpen(false)}><X size={24} /></button>
-            </div>
-            <p style={{ marginBottom: '1rem', color: '#64748b' }}>{t('dash.status') === 'Status' ? 'Expected columns: MODELO, PRECIO, COLOR, CLIENTE, NO. ORDEN, PIEZAS EN PROCESO.' : 'Columnas esperadas: MODELO, PRECIO, COLOR, CLIENTE, NO. ORDEN, PIEZAS EN PROCESO.'}</p>
-            <form onSubmit={handleFileUpload}>
-              <div className="form-group">
-                <input type="file" ref={fileInputRef} accept=".xlsx, .xls" required className="form-input" style={{ paddingTop: '0.5rem' }} />
-              </div>
-              <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '1rem' }}>{t('cortes.importBtn')}</button>
             </form>
           </div>
         </div>
