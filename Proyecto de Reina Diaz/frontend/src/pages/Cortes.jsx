@@ -30,6 +30,7 @@ export default function Cortes() {
   const [imagenFile, setImagenFile] = useState(null);
   const [editImageFile, setEditImageFile] = useState(null);
   const [editImageUrl, setEditImageUrl] = useState('');
+  const [selectedImage, setSelectedImage] = useState(null);
 
   useEffect(() => {
     fetchItems();
@@ -231,8 +232,8 @@ export default function Cortes() {
                   return (
                     <tr key={item.id}>
                       <td>
-                        {imgSrc
-                          ? <img src={imgSrc} alt={item.modelo} className="img-zoom" style={{ width: 48, height: 48, objectFit: 'contain', backgroundColor: '#ffffff', borderRadius: 8, border: '1px solid #e2e8f0' }} />
+                        {imgSrc 
+                          ? <img src={imgSrc} alt={item.modelo} className="img-zoom" style={{ width: 48, height: 48, objectFit: 'contain', backgroundColor: '#ffffff', borderRadius: 8, border: '1px solid #e2e8f0', cursor: 'pointer' }} onClick={(e) => { e.stopPropagation(); setSelectedImage(imgSrc); }} />
                           : canEdit
                             ? <button className="btn btn-secondary" style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem' }} onClick={() => setEditImageItem(item)}>+ Foto</button>
                             : <div style={{ width: 48, height: 48, background: '#f1f5f9', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><ImageIcon size={20} color="#cbd5e1" /></div>
@@ -448,6 +449,25 @@ export default function Cortes() {
                 <button type="submit" className="btn btn-primary">{t('cortes.savePhoto')}</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Zoom de Imagen */}
+      {selectedImage && (
+        <div className="modal-overlay" style={{ zIndex: 3000 }} onClick={() => setSelectedImage(null)}>
+          <div style={{ position: 'relative', maxWidth: '90vw', maxHeight: '90vh' }} onClick={e => e.stopPropagation()}>
+            <button 
+              onClick={() => setSelectedImage(null)}
+              style={{ position: 'absolute', top: '-40px', right: '-40px', background: 'white', border: 'none', borderRadius: '50%', padding: '8px', cursor: 'pointer', display: 'flex' }}
+            >
+              <X size={24} />
+            </button>
+            <img 
+              src={selectedImage} 
+              alt="Zoom" 
+              style={{ width: '100%', height: '100%', borderRadius: '12px', objectFit: 'contain', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' }} 
+            />
           </div>
         </div>
       )}
