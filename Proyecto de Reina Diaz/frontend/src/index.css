@@ -393,7 +393,7 @@ p { color: var(--text-secondary); line-height: 1.6; }
 
 /* Efecto de Zoom para Imágenes */
 .img-zoom {
-  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s ease;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s ease, border-radius 0.25s ease;
   cursor: zoom-in;
   z-index: 1;
   position: relative;
@@ -401,11 +401,11 @@ p { color: var(--text-secondary); line-height: 1.6; }
 }
 
 .img-zoom:hover {
-  transform: scale(5) translateX(0);
+  transform: scale(2.8) translateX(0);
   box-shadow: 0 12px 30px rgba(0,0,0,0.4);
   z-index: 9999;
   border: 2px solid white;
-  border-radius: 8px;
+  border-radius: 8px !important; /* Remove circle mask on hover to show full face */
 }
 
 /* Kill Feed (Video Game Style) */
