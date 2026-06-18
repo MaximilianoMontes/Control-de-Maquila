@@ -1851,7 +1851,7 @@ app.get('/api/reportes/produccion', async (req, res) => {
 
     const [orders] = await db.query(query, params);
 
-    const doc = new PDFDocument({ margin: 20, size: 'A4', layout: 'landscape' });
+    const doc = new PDFDocument({ margins: { top: 30, bottom: 50, left: 30, right: 30 }, size: 'A4', layout: 'landscape' });
     res.setHeader('Content-disposition', 'attachment; filename="Reporte_Produccion.pdf"');
     res.setHeader('Content-type', 'application/pdf');
 
@@ -1901,7 +1901,7 @@ app.get('/api/reportes/produccion', async (req, res) => {
           piezas: String(o.cantidad || 0),
           entrega: formatDateToDMY(o.fecha_fin)
         })),
-        options: { padding: 5 }
+        options: { padding: 2 }
       };
 
       await doc.table(tableConfig, {
@@ -1953,7 +1953,7 @@ app.get('/api/reportes/inventario', async (req, res) => {
     
     const [items] = await db.query(query);
 
-    const doc = new PDFDocument({ margin: 20, size: 'A4', layout: 'landscape' });
+    const doc = new PDFDocument({ margins: { top: 30, bottom: 50, left: 30, right: 30 }, size: 'A4', layout: 'landscape' });
     res.setHeader('Content-disposition', 'attachment; filename="Reporte_Inventario.pdf"');
     res.setHeader('Content-type', 'application/pdf');
 
@@ -2006,7 +2006,7 @@ app.get('/api/reportes/inventario', async (req, res) => {
           precio: '$' + (i.precio || 0),
           piezas: String(i.piezas_en_proceso || 0)
         })),
-        options: { padding: 5 }
+        options: { padding: 2 }
       };
 
       await doc.table(tableConfig, {
@@ -2079,7 +2079,7 @@ app.get('/api/reportes/recoleccion', async (req, res) => {
     query += ` ORDER BY p.fecha_fin ASC`;
     const [orders] = await db.query(query, params);
 
-    const doc = new PDFDocument({ margin: 20, size: 'A4', layout: 'landscape' });
+    const doc = new PDFDocument({ margins: { top: 30, bottom: 50, left: 30, right: 30 }, size: 'A4', layout: 'landscape' });
     res.setHeader('Content-disposition', 'attachment; filename="Reporte_Recoleccion.pdf"');
     res.setHeader('Content-type', 'application/pdf');
 
@@ -2127,7 +2127,7 @@ app.get('/api/reportes/recoleccion', async (req, res) => {
           piezas: String(o.cantidad || 0),
           entrega: formatDateToDMY(o.fecha_fin)
         })),
-        options: { padding: 5 }
+        options: { padding: 2 }
       };
 
       await doc.table(tableConfig, {
@@ -2197,7 +2197,7 @@ app.get('/api/reportes/pagos', async (req, res) => {
     query += ` ORDER BY pg.fecha ASC, pg.id ASC`;
     const [rows] = await db.query(query, params);
 
-    const doc = new PDFDocument({ margin: 20, size: 'A4', layout: 'portrait' });
+    const doc = new PDFDocument({ margins: { top: 30, bottom: 50, left: 30, right: 30 }, size: 'A4', layout: 'portrait' });
     res.setHeader('Content-disposition', 'attachment; filename="Reporte_Pagos.pdf"');
     res.setHeader('Content-type', 'application/pdf');
 
@@ -2234,7 +2234,7 @@ app.get('/api/reportes/pagos', async (req, res) => {
           tipo: (r.tipo_pago === 'completo' ? tLabel('LIQUIDACIÓN', 'SETTLEMENT') : (r.tipo_pago === 'abono' ? tLabel('ABONO', 'DEPOSIT') : (r.tipo_pago || 'ABONO'))).toUpperCase(),
           monto: '$' + Number(r.monto).toFixed(2)
         })),
-        options: { padding: 5 }
+        options: { padding: 2 }
       };
 
       await doc.table(tableConfig, {
