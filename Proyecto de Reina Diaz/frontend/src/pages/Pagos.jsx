@@ -39,7 +39,7 @@ export default function Pagos() {
       fetchOrders();
       fetchMaquileros();
       fetchInventario();
-    }, 15000); // Auto-refresca cada 15 segundos en segundo plano
+    }, 2000); // Auto-refresca cada 2 segundos en segundo plano
 
     return () => clearInterval(interval);
   }, []);
@@ -73,7 +73,7 @@ export default function Pagos() {
       };
       
       loadSelectedData();
-      interval = setInterval(loadSelectedData, 15000); // Auto-refresca pagos y descuentos cada 15 segundos
+      interval = setInterval(loadSelectedData, 2000); // Auto-refresca pagos y descuentos cada 2 segundos
     } else {
       setPagos([]);
       setPendingDiscount(0);

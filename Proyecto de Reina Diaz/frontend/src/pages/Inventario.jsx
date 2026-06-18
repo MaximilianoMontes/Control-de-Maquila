@@ -30,7 +30,7 @@ export default function Inventario() {
 
   useEffect(() => {
     fetchItems();
-    const interval = setInterval(fetchItems, 15000); // Auto-refresca cada 15 segundos en segundo plano
+    const interval = setInterval(fetchItems, 2000); // Auto-refresca cada 2 segundos en segundo plano
     return () => clearInterval(interval);
   }, []);
 
