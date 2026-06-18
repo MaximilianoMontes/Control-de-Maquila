@@ -64,8 +64,8 @@ export default function Calendario() {
   const dayNames = isEn ? dayNamesEn : dayNamesEs;
 
   const handleDayClick = (day) => {
-    const d = new Date(year, month, day);
-    const dateStr = d.toISOString().split('T')[0];
+    const pad = n => n < 10 ? '0'+n : n;
+    const dateStr = `${year}-${pad(month + 1)}-${pad(day)}`;
     openModal(null, dateStr);
   };
 
@@ -80,20 +80,23 @@ export default function Calendario() {
       setTitulo(event.titulo);
       setDescripcion(event.descripcion || '');
       
-      const start = new Date(event.fecha_inicio);
-      setFechaInicio(start.toISOString().split('T')[0]);
-      setHoraInicio(start.toTimeString().slice(0, 5));
+      const startParts = event.fecha_inicio.replace('T', ' ').split(' ');
+      setFechaInicio(startParts[0]);
+      setHoraInicio(startParts[1] ? startParts[1].substring(0, 5) : '09:00');
       
-      const end = new Date(event.fecha_fin);
-      setFechaFin(end.toISOString().split('T')[0]);
-      setHoraFin(end.toTimeString().slice(0, 5));
+      const endParts = event.fecha_fin.replace('T', ' ').split(' ');
+      setFechaFin(endParts[0]);
+      setHoraFin(endParts[1] ? endParts[1].substring(0, 5) : '10:00');
       
       setColor(event.color || '#8b5cf6');
     } else {
       setEditingEvent(null);
       setTitulo('');
       setDescripcion('');
-      const dateToUse = defaultDate || new Date().toISOString().split('T')[0];
+      const now = new Date();
+      const pad = n => n < 10 ? '0'+n : n;
+      const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+      const dateToUse = defaultDate || todayStr;
       setFechaInicio(dateToUse);
       setHoraInicio('09:00');
       setFechaFin(dateToUse);
@@ -145,31 +148,34 @@ export default function Calendario() {
     days.push(<div key={`empty-${i}`} className="calendar-day empty"></div>);
   }
   for (let d = 1; d <= daysInMonth; d++) {
-    const currentDayDate = new Date(year, month, d);
-    const dateStr = currentDayDate.toISOString().split('T')[0];
+    const pad = n => n < 10 ? '0'+n : n;
+    const dateStr = `${year}-${pad(month + 1)}-${pad(d)}`;
     
     const dayEvents = events.filter(ev => {
-      const start = new Date(ev.fecha_inicio).toISOString().split('T')[0];
-      const end = new Date(ev.fecha_fin).toISOString().split('T')[0];
+      const start = ev.fecha_inicio.replace('T', ' ').split(' ')[0];
+      const end = ev.fecha_fin.replace('T', ' ').split(' ')[0];
       return dateStr >= start && dateStr <= end;
     });
 
-    const isToday = currentDayDate.toDateString() === new Date().toDateString();
+    const isToday = new Date(year, month, d).toDateString() === new Date().toDateString();
 
     days.push(
       <div key={`day-${d}`} className={`calendar-day ${isToday ? 'today' : ''}`} onClick={() => handleDayClick(d)}>
         <div className="day-number">{d}</div>
         <div className="day-events">
-          {dayEvents.map(ev => (
-            <div 
-              key={ev.id} 
-              className="calendar-event" 
-              style={{ backgroundColor: ev.color || '#3b82f6' }}
-              onClick={(e) => handleEventClick(e, ev)}
-            >
-              {new Date(ev.fecha_inicio).toTimeString().slice(0, 5)} {ev.titulo}
-            </div>
-          ))}
+          {dayEvents.map(ev => {
+            const timeStr = ev.fecha_inicio.replace('T', ' ').split(' ')[1];
+            return (
+              <div 
+                key={ev.id} 
+                className="calendar-event" 
+                style={{ backgroundColor: ev.color || '#3b82f6' }}
+                onClick={(e) => handleEventClick(e, ev)}
+              >
+                {timeStr ? timeStr.substring(0, 5) : '00:00'} {ev.titulo}
+              </div>
+            );
+          })}
         </div>
       </div>
     );
