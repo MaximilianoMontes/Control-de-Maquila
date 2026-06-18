@@ -1910,9 +1910,9 @@ body.dark-mode .launcher-company-name {
 }
 
 .launcher-app-icon {
-  width: 92px;
-  height: 92px;
-  border-radius: 22px;
+  width: 130px;
+  height: 130px;
+  border-radius: 32px;
   background: #ffffff;
   display: flex;
   align-items: center;
@@ -1940,8 +1940,8 @@ body.dark-mode .launcher-app-item:hover .launcher-app-icon {
 }
 
 .launcher-app-name {
-  margin-top: 12px;
-  font-size: 0.85rem;
+  margin-top: 14px;
+  font-size: 1.05rem;
   font-weight: 500;
   color: #374151;
   transition: all 0.2s ease;

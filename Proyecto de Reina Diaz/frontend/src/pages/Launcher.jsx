@@ -16,7 +16,7 @@ import {
 
 // Custom high-aesthetic SVGs for app icons (Odoo claymorphism-flat style)
 const MaquilaIcon = () => (
-  <svg width="56" height="56" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <svg width="86" height="86" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
     <defs>
       <linearGradient id="gradMaquila" x1="0%" y1="0%" x2="100%" y2="100%">
         <stop offset="0%" stopColor="#7c3aed" />
@@ -35,7 +35,7 @@ const MaquilaIcon = () => (
 );
 
 const PlanchaIcon = () => (
-  <svg width="56" height="56" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <svg width="86" height="86" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
     <defs>
       <linearGradient id="gradPlancha" x1="0%" y1="0%" x2="100%" y2="100%">
         <stop offset="0%" stopColor="#0ea5e9" />
@@ -61,6 +61,8 @@ export default function Launcher() {
   const navigate = useNavigate();
   
   const [upcomingEvents, setUpcomingEvents] = useState(0);
+  const [appsOrder, setAppsOrder] = useState(['maquila', 'plancha']);
+  const [draggedApp, setDraggedApp] = useState(null);
 
   useEffect(() => {
     const fetchUpcoming = async () => {
@@ -70,7 +72,47 @@ export default function Launcher() {
       } catch (e) { console.error('Error fetching calendar alerts:', e); }
     };
     fetchUpcoming();
+
+    const saved = localStorage.getItem('launcher_apps_order');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setAppsOrder(parsed);
+        }
+      } catch(e) {}
+    }
   }, []);
+
+  const handleDragStart = (e, id) => {
+    setDraggedApp(id);
+    e.dataTransfer.effectAllowed = 'move';
+    setTimeout(() => {
+      e.target.style.opacity = '0.5';
+    }, 0);
+  };
+
+  const handleDragEnd = (e) => {
+    e.target.style.opacity = '1';
+    setDraggedApp(null);
+  };
+
+  const handleDragOver = (e, id) => {
+    e.preventDefault();
+    if (!draggedApp || draggedApp === id) return;
+    
+    const newOrder = [...appsOrder];
+    const draggedIdx = newOrder.indexOf(draggedApp);
+    const targetIdx = newOrder.indexOf(id);
+    
+    if (draggedIdx === -1 || targetIdx === -1) return;
+
+    newOrder.splice(draggedIdx, 1);
+    newOrder.splice(targetIdx, 0, draggedApp);
+    
+    setAppsOrder(newOrder);
+    localStorage.setItem('launcher_apps_order', JSON.stringify(newOrder));
+  };
 
   const isDark = settings.theme === 'dark';
 
@@ -101,6 +143,15 @@ export default function Launcher() {
     logout: "Cerrar Sesión",
     theme: "Cambiar Tema"
   };
+
+  const availableApps = {
+    maquila: { id: 'maquila', name: text.maquila, to: '/dashboard', Icon: MaquilaIcon, visible: userRole !== 'plancha' },
+    plancha: { id: 'plancha', name: text.plancha, to: '/plancha', Icon: PlanchaIcon, visible: true }
+  };
+
+  const renderedApps = appsOrder
+    .map(id => availableApps[id])
+    .filter(app => app && app.visible);
 
   return (
     <div className="launcher-container">
@@ -149,23 +200,26 @@ export default function Launcher() {
       {/* Main Apps Selection Grid */}
       <main className="launcher-grid-wrapper">
         <div className="launcher-grid">
-          {/* App 1: Maquila (Active ERP Dashboard) */}
-          {userRole !== 'plancha' && (
-            <Link to="/dashboard" className="launcher-app-item">
-              <div className="launcher-app-icon">
-                <MaquilaIcon />
+          {renderedApps.map(app => {
+            const Icon = app.Icon;
+            return (
+              <div 
+                key={app.id}
+                draggable
+                onDragStart={(e) => handleDragStart(e, app.id)}
+                onDragEnd={handleDragEnd}
+                onDragOver={(e) => handleDragOver(e, app.id)}
+                className="launcher-app-item"
+                style={{ cursor: draggedApp ? 'grabbing' : 'grab' }}
+                onClick={() => navigate(app.to)}
+              >
+                <div className="launcher-app-icon">
+                  <Icon />
+                </div>
+                <span className="launcher-app-name">{app.name}</span>
               </div>
-              <span className="launcher-app-name">{text.maquila}</span>
-            </Link>
-          )}
-
-          {/* App 2: Plancha (Active) */}
-          <Link to="/plancha" className="launcher-app-item">
-            <div className="launcher-app-icon">
-              <PlanchaIcon />
-            </div>
-            <span className="launcher-app-name">{text.plancha}</span>
-          </Link>
+            );
+          })}
         </div>
       </main>
     </div>
