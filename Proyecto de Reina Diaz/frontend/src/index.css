@@ -391,7 +391,7 @@ p { color: var(--text-secondary); line-height: 1.6; }
   margin-bottom: 1.5rem;
 }
 
-/* Efecto de Zoom para ImÃ¡genes */
+/* Efecto de Zoom para ImÃƒÂ¡genes */
 .img-zoom {
   transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s ease, border-radius 0.25s ease;
   cursor: zoom-in;
@@ -2073,7 +2073,7 @@ body.dark-mode .header-launcher-btn {
   }
 }
 
-/* Tema Océano (Azul Profundo) */
+/* Tema Oceano (Azul Profundo)
 body.theme-ocean {
   --bg-dark: #041427;
   --bg-card: #0a2540;
@@ -2123,7 +2123,7 @@ body.theme-nature {
   --badge-desc-text: #f87171;
 }
 
-/* Tema Atardecer (Cálido/Café Oscuro) */
+/* Tema Atardecer (Calido/Cafe Oscuro) */
 body.theme-sunset {
   --bg-dark: #1e100f;
   --bg-card: #3a1c18;
