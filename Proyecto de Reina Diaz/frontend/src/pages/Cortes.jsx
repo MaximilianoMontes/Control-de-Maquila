@@ -33,7 +33,7 @@ export default function Cortes() {
 
   useEffect(() => {
     fetchItems();
-    const interval = setInterval(fetchItems, 15000); // Auto-refresca cada 15 segundos en segundo plano
+    const interval = setInterval(fetchItems, 5000); // Auto-refresca cada 15 segundos en segundo plano
     return () => clearInterval(interval);
   }, []);
 
@@ -86,7 +86,7 @@ export default function Cortes() {
 
   useEffect(() => {
     if (location.state?.reprogramItem) {
-      openReprogram(location.state.reprogramItem, { stopPropagation: () => {} });
+      openReprogram(location.state.reprogramItem, { stopPropagation: () => { } });
       window.history.replaceState({}, document.title);
     }
   }, [location.state]);
@@ -97,7 +97,7 @@ export default function Cortes() {
       const prs = JSON.parse(item.color);
       if (Array.isArray(prs) && prs.length > 0) parsedVariantes = prs;
       else if (item.color) parsedVariantes = [{ color: item.color, cantidad: item.piezas_en_proceso }];
-    } catch(err) {
+    } catch (err) {
       if (item.color) parsedVariantes = [{ color: item.color, cantidad: item.piezas_en_proceso }];
     }
 
@@ -121,8 +121,8 @@ export default function Cortes() {
     try {
       await axios.delete(`${API}/api/inventario/${id}`);
       fetchItems();
-    } catch (e) { 
-      alert(e.response?.data?.error || 'Error al eliminar'); 
+    } catch (e) {
+      alert(e.response?.data?.error || 'Error al eliminar');
     }
   };
 
@@ -272,8 +272,8 @@ export default function Cortes() {
                         {(() => {
                           try {
                             const parsed = JSON.parse(item.color);
-                            return Array.isArray(parsed) 
-                              ? parsed.map(v => v.color).filter(Boolean).join(', ') 
+                            return Array.isArray(parsed)
+                              ? parsed.map(v => v.color).filter(Boolean).join(', ')
                               : (item.color || '-');
                           } catch (e) {
                             return item.color || '-';
@@ -288,28 +288,28 @@ export default function Cortes() {
                       <td>
                         <div style={{ display: 'flex', gap: '0.5rem' }}>
                           {item.observaciones && (
-                              <div className="tooltip-container" style={{ marginRight: '0.2rem' }}>
-                                <MessageSquare size={18} color="#64748b" />
-                                <div className="tooltip-box">{item.observaciones}</div>
-                              </div>
+                            <div className="tooltip-container" style={{ marginRight: '0.2rem' }}>
+                              <MessageSquare size={18} color="#64748b" />
+                              <div className="tooltip-box">{item.observaciones}</div>
+                            </div>
                           )}
                           {canEdit ? (
                             <>
-                               <button className="btn-icon" onClick={(e) => openEdit(item, e)} title="Editar"><Pencil size={18} /></button>
-                               <button className="btn-icon" onClick={(e) => openReprogram(item, e)} title="Reprogramar" style={{ color: '#8b5cf6' }}><RefreshCw size={18} /></button>
-                               {(item.piezas_en_proceso > 0 ? item.total_asignado < item.piezas_en_proceso : item.producciones_count === 0) && (
-                                 <button className="btn-icon" onClick={(e) => { e.stopPropagation(); navigate(`/produccion?productId=${item.id}`); }} title="Iniciar Producción" style={{ color: '#10b981' }}><PlusCircle size={18} /></button>
-                               )}
-                               <button className="btn-icon" onClick={(e) => handleDelete(item.id, e)} title="Eliminar" style={{ color: '#ef4444' }}><Trash2 size={18} /></button>
+                              <button className="btn-icon" onClick={(e) => openEdit(item, e)} title="Editar"><Pencil size={18} /></button>
+                              <button className="btn-icon" onClick={(e) => openReprogram(item, e)} title="Reprogramar" style={{ color: '#8b5cf6' }}><RefreshCw size={18} /></button>
+                              {(item.piezas_en_proceso > 0 ? item.total_asignado < item.piezas_en_proceso : item.producciones_count === 0) && (
+                                <button className="btn-icon" onClick={(e) => { e.stopPropagation(); navigate(`/produccion?productId=${item.id}`); }} title="Iniciar Producción" style={{ color: '#10b981' }}><PlusCircle size={18} /></button>
+                              )}
+                              <button className="btn-icon" onClick={(e) => handleDelete(item.id, e)} title="Eliminar" style={{ color: '#ef4444' }}><Trash2 size={18} /></button>
                             </>
-                           ) : (
-                             <>
-                               {(item.piezas_en_proceso > 0 ? item.total_asignado < item.piezas_en_proceso : item.producciones_count === 0) && (
-                                 <button className="btn-icon" onClick={(e) => { e.stopPropagation(); navigate(`/produccion?productId=${item.id}`); }} title="Iniciar Producción" style={{ color: '#10b981' }}><PlusCircle size={18} /></button>
-                               )}
-                               <button className="btn-icon" onClick={(e) => { e.stopPropagation(); openEdit(item, e); }} title="Ver Detalles"><Search size={18} /></button>
-                             </>
-                           )}
+                          ) : (
+                            <>
+                              {(item.piezas_en_proceso > 0 ? item.total_asignado < item.piezas_en_proceso : item.producciones_count === 0) && (
+                                <button className="btn-icon" onClick={(e) => { e.stopPropagation(); navigate(`/produccion?productId=${item.id}`); }} title="Iniciar Producción" style={{ color: '#10b981' }}><PlusCircle size={18} /></button>
+                              )}
+                              <button className="btn-icon" onClick={(e) => { e.stopPropagation(); openEdit(item, e); }} title="Ver Detalles"><Search size={18} /></button>
+                            </>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -334,13 +334,13 @@ export default function Cortes() {
             <form onSubmit={handleManualSubmit}>
               <div className="form-group">
                 <label className="form-label">{t('cortes.code')} *</label>
-                <input 
-                  type="text" 
-                  required 
-                  className="form-input" 
+                <input
+                  type="text"
+                  required
+                  className="form-input"
                   disabled={isReprogram}
-                  value={formData.modelo} 
-                  onChange={e => setFormData({...formData, modelo: e.target.value, numero: e.target.value})} 
+                  value={formData.modelo}
+                  onChange={e => setFormData({ ...formData, modelo: e.target.value, numero: e.target.value })}
                 />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.5rem', marginBottom: '1rem', border: '1px solid #e2e8f0', padding: '1rem', borderRadius: 8 }}>
@@ -350,46 +350,46 @@ export default function Cortes() {
                     <input type="text" placeholder={t('cortes.color')} className="form-input" value={v.color} onChange={e => {
                       const newVar = [...formData.variantes];
                       newVar[i].color = e.target.value;
-                      setFormData({...formData, variantes: newVar});
+                      setFormData({ ...formData, variantes: newVar });
                     }} />
                     <input type="number" placeholder={t('cortes.qty')} className="form-input" value={v.cantidad} onChange={e => {
                       const newVar = [...formData.variantes];
                       newVar[i].cantidad = e.target.value;
-                      setFormData({...formData, variantes: newVar});
+                      setFormData({ ...formData, variantes: newVar });
                     }} />
                     {formData.variantes.length > 1 && (
                       <button type="button" className="btn-icon" onClick={() => {
                         const newVar = formData.variantes.filter((_, idx) => idx !== i);
-                        setFormData({...formData, variantes: newVar});
+                        setFormData({ ...formData, variantes: newVar });
                       }}><Trash2 size={20} color="#ef4444" /></button>
                     )}
                   </div>
                 ))}
-                <button type="button" className="btn btn-secondary" style={{ width: 'fit-content', marginTop: '0.5rem' }} onClick={() => setFormData({...formData, variantes: [...formData.variantes, {color: '', cantidad: ''}] })}>{t('cortes.addColor')}</button>
+                <button type="button" className="btn btn-secondary" style={{ width: 'fit-content', marginTop: '0.5rem' }} onClick={() => setFormData({ ...formData, variantes: [...formData.variantes, { color: '', cantidad: '' }] })}>{t('cortes.addColor')}</button>
               </div>
 
               <div className="form-group">
                 <label className="form-label">{t('cortes.client')}</label>
-                <input type="text" className="form-input" value={formData.cliente} onChange={e => setFormData({...formData, cliente: e.target.value})} />
+                <input type="text" className="form-input" value={formData.cliente} onChange={e => setFormData({ ...formData, cliente: e.target.value })} />
               </div>
-              
+
               <div className="form-group">
                 <label className="form-label">{t('cortes.orderNo')}</label>
-                <input type="text" className="form-input" value={formData.no_orden} onChange={e => setFormData({...formData, no_orden: e.target.value})} />
+                <input type="text" className="form-input" value={formData.no_orden} onChange={e => setFormData({ ...formData, no_orden: e.target.value })} />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div className="form-group">
                   <label className="form-label">{t('cortes.priceMaquila')}</label>
                   <div style={{ position: 'relative' }}>
                     <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#64748b', fontWeight: 500 }}>$</span>
-                    <input type="number" step="0.01" className="form-input" style={{ paddingLeft: '2rem' }} value={formData.precio} onChange={e => setFormData({...formData, precio: e.target.value})} />
+                    <input type="number" step="0.01" className="form-input" style={{ paddingLeft: '2rem' }} value={formData.precio} onChange={e => setFormData({ ...formData, precio: e.target.value })} />
                   </div>
                 </div>
                 <div className="form-group">
                   <label className="form-label">{t('cortes.pricePlancha')}</label>
                   <div style={{ position: 'relative' }}>
                     <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#64748b', fontWeight: 500 }}>$</span>
-                    <input type="number" step="0.01" className="form-input" style={{ paddingLeft: '2rem' }} value={formData.precio_plancha} onChange={e => setFormData({...formData, precio_plancha: e.target.value})} />
+                    <input type="number" step="0.01" className="form-input" style={{ paddingLeft: '2rem' }} value={formData.precio_plancha} onChange={e => setFormData({ ...formData, precio_plancha: e.target.value })} />
                   </div>
                 </div>
               </div>
@@ -402,17 +402,17 @@ export default function Cortes() {
                   </div>
                   <div>
                     <label style={{ fontSize: '0.8rem', color: '#64748b' }}>{t('cortes.internetUrl')}</label>
-                    <input type="url" placeholder="https://..." className="form-input" style={{ marginTop: '0.25rem' }} value={formData.imagenUrl} onChange={e => setFormData({...formData, imagenUrl: e.target.value})} />
+                    <input type="url" placeholder="https://..." className="form-input" style={{ marginTop: '0.25rem' }} value={formData.imagenUrl} onChange={e => setFormData({ ...formData, imagenUrl: e.target.value })} />
                   </div>
                 </div>
               </div>
               <div className="form-group" style={{ marginTop: '1rem' }}>
                 <label className="form-label">{t('cortes.notes')}</label>
-                <textarea 
-                  className="form-input" 
-                  style={{ minHeight: '80px', resize: 'vertical' }} 
-                  value={formData.observaciones} 
-                  onChange={e => setFormData({...formData, observaciones: e.target.value})}
+                <textarea
+                  className="form-input"
+                  style={{ minHeight: '80px', resize: 'vertical' }}
+                  value={formData.observaciones}
+                  onChange={e => setFormData({ ...formData, observaciones: e.target.value })}
                   placeholder={t('cortes.notesPlaceholder')}
                 />
               </div>
