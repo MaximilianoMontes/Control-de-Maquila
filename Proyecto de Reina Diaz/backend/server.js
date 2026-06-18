@@ -495,11 +495,22 @@ app.put('/api/inventario/:id', authenticateToken, upload.single('imagenBtn'), as
 
     let changes = [];
     if (old.modelo !== modelo) changes.push(`Modelo: ${old.modelo} -> ${modelo}`);
+    
     const numPrecio = parseFloat(String(precio).replace(/[^0-9.-]+/g,"")) || 0;
-    if (old.precio !== numPrecio) changes.push(`Precio: ${old.precio} -> ${numPrecio}`);
+    const oldPrecio = parseFloat(old.precio) || 0;
+    if (oldPrecio !== numPrecio) changes.push(`Precio: ${oldPrecio} -> ${numPrecio}`);
+    
     if (old.piezas_en_proceso !== piezas_en_proceso) changes.push(`Piezas: ${old.piezas_en_proceso} -> ${piezas_en_proceso}`);
+    
     const numPrecioPlancha = parseFloat(String(precio_plancha).replace(/[^0-9.-]+/g,"")) || 0;
-    if (old.precio_plancha !== numPrecioPlancha) changes.push(`Precio Plancha: ${old.precio_plancha} -> ${numPrecioPlancha}`);
+    const oldPrecioPlancha = parseFloat(old.precio_plancha) || 0;
+    if (oldPrecioPlancha !== numPrecioPlancha) changes.push(`Precio Plancha: ${oldPrecioPlancha} -> ${numPrecioPlancha}`);
+
+    const oldObs = old.observaciones || '';
+    const newObs = observaciones || '';
+    if (oldObs !== newObs) {
+      changes.push(`Comentario: "${newObs}"`);
+    }
     
     const desc = changes.length > 0 ? `Editó ${modelo}: ${changes.join(', ')}` : `Actualizó datos de ${modelo}`;
     await logActivity(req.user.id, 'EDIT', 'INVENTARIO', desc);
