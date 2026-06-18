@@ -33,7 +33,7 @@ export default function Cortes() {
 
   useEffect(() => {
     fetchItems();
-    const interval = setInterval(fetchItems, 5000); // Auto-refresca cada 15 segundos en segundo plano
+    const interval = setInterval(fetchItems, 2000); // Auto-refresca cada 2 segundos en segundo plano
     return () => clearInterval(interval);
   }, []);
 

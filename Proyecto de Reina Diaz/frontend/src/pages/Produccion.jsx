@@ -95,7 +95,7 @@ export default function Produccion() {
       fetchOrders();
       fetchMaquileros();
       fetchInventario();
-    }, 15000); // Auto-refresca cada 15 segundos en segundo plano
+    }, 2000); // Auto-refresca cada 2 segundos en segundo plano
 
     return () => clearInterval(interval);
   }, [verArchivados, location]);

@@ -28,7 +28,7 @@ export default function Maquileros() {
 
   useEffect(() => {
     fetchMaquileros();
-    const interval = setInterval(fetchMaquileros, 15000); // Auto-refresca cada 15 segundos en segundo plano
+    const interval = setInterval(fetchMaquileros, 2000); // Auto-refresca cada 2 segundos en segundo plano
     return () => clearInterval(interval);
   }, []);
 

@@ -95,7 +95,7 @@ export default function Extras() {
       fetchOrders();
       fetchMaquileros();
       fetchInventario();
-    }, 15000); // Auto-refresca cada 15 segundos
+    }, 2000); // Auto-refresca cada 2 segundos
 
     return () => clearInterval(interval);
   }, [verArchivados, location, canEdit]);
