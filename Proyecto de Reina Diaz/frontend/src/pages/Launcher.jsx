@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
@@ -63,6 +63,7 @@ export default function Launcher() {
   const [upcomingEvents, setUpcomingEvents] = useState(0);
   const [appsOrder, setAppsOrder] = useState(['maquila', 'plancha']);
   const [draggedApp, setDraggedApp] = useState(null);
+  const isDraggingRef = useRef(false);
 
   useEffect(() => {
     const fetchUpcoming = async () => {
@@ -85,6 +86,7 @@ export default function Launcher() {
   }, []);
 
   const handleDragStart = (e, id) => {
+    isDraggingRef.current = true;
     setDraggedApp(id);
     e.dataTransfer.effectAllowed = 'move';
     setTimeout(() => {
@@ -95,6 +97,9 @@ export default function Launcher() {
   const handleDragEnd = (e) => {
     e.target.style.opacity = '1';
     setDraggedApp(null);
+    setTimeout(() => {
+      isDraggingRef.current = false;
+    }, 150);
   };
 
   const handleDragOver = (e, id) => {
@@ -211,7 +216,13 @@ export default function Launcher() {
                 onDragOver={(e) => handleDragOver(e, app.id)}
                 className="launcher-app-item"
                 style={{ cursor: draggedApp ? 'grabbing' : 'grab' }}
-                onClick={() => navigate(app.to)}
+                onClick={(e) => {
+                  if (isDraggingRef.current) {
+                    e.preventDefault();
+                    return;
+                  }
+                  navigate(app.to);
+                }}
               >
                 <div className="launcher-app-icon">
                   <Icon />
