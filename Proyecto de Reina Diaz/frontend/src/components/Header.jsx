@@ -538,7 +538,7 @@ export default function Header() {
               <div className="settings-item">
                 <span className="settings-item-label">{t('settings.themeLabel')}</span>
                 <span className="settings-item-desc">{t('settings.themeDesc')}</span>
-                <div className="settings-options-row">
+                <div className="settings-options-row" style={{ flexWrap: 'wrap' }}>
                   <button 
                     className={`settings-option-btn ${settings.theme === 'light' ? 'active' : ''}`}
                     onClick={() => toggleSetting('theme', 'light')}
@@ -552,8 +552,27 @@ export default function Header() {
                     {settings.theme === 'dark' && <Check size={14} />} {t('settings.themeDark')}
                   </button>
                   <button 
+                    className={`settings-option-btn ${settings.theme === 'ocean' ? 'active' : ''}`}
+                    onClick={() => toggleSetting('theme', 'ocean')}
+                  >
+                    {settings.theme === 'ocean' && <Check size={14} />} {t('settings.themeOcean')}
+                  </button>
+                  <button 
+                    className={`settings-option-btn ${settings.theme === 'nature' ? 'active' : ''}`}
+                    onClick={() => toggleSetting('theme', 'nature')}
+                  >
+                    {settings.theme === 'nature' && <Check size={14} />} {t('settings.themeNature')}
+                  </button>
+                  <button 
+                    className={`settings-option-btn ${settings.theme === 'sunset' ? 'active' : ''}`}
+                    onClick={() => toggleSetting('theme', 'sunset')}
+                  >
+                    {settings.theme === 'sunset' && <Check size={14} />} {t('settings.themeSunset')}
+                  </button>
+                  <button 
                     className={`settings-option-btn ${settings.theme === 'system' ? 'active' : ''}`}
                     onClick={() => toggleSetting('theme', 'system')}
+                    style={{ flexBasis: '100%' }}
                   >
                     {settings.theme === 'system' && <Check size={14} />} {t('settings.themeSystem')}
                   </button>
