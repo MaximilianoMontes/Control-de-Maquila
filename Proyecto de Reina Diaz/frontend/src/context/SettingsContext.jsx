@@ -116,8 +116,11 @@ const translations = {
     'settings.themeLabel': 'Tema del Sistema',
     'settings.themeDesc': 'Elige el aspecto visual de la aplicación.',
     'settings.themeLight': 'Claro',
-    'settings.themeDark': 'Oscuro',
+    'settings.themeDark': 'Oscuro (Original)',
     'settings.themeSystem': 'Sistema',
+    'settings.themeOcean': 'Océano',
+    'settings.themeNature': 'Bosque',
+    'settings.themeSunset': 'Atardecer',
     'settings.accentLabel': 'Color de Acento',
     'settings.accentDesc': 'Elige un color personalizado para destacar elementos de la interfaz.',
     'settings.currencyLabel': 'Formato de Moneda',
@@ -551,8 +554,11 @@ const translations = {
     'settings.themeLabel': 'System Theme',
     'settings.themeDesc': 'Choose the visual appearance of the application.',
     'settings.themeLight': 'Light',
-    'settings.themeDark': 'Dark',
+    'settings.themeDark': 'Dark (Original)',
     'settings.themeSystem': 'System',
+    'settings.themeOcean': 'Ocean',
+    'settings.themeNature': 'Nature',
+    'settings.themeSunset': 'Sunset',
     'settings.accentLabel': 'Accent Color',
     'settings.accentDesc': 'Choose a custom color to highlight interface elements.',
     'settings.currencyLabel': 'Currency Format',
@@ -914,13 +920,17 @@ export const SettingsProvider = ({ children }) => {
   // Apply visual theme (Light / Dark / System)
   useEffect(() => {
     const applyTheme = () => {
-      const isDark = settings.theme === 'dark' || 
-        (settings.theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-      
-      if (isDark) {
+      document.body.classList.remove('dark-mode', 'theme-ocean', 'theme-nature', 'theme-sunset');
+
+      const isSystemDark = settings.theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const isAnyDark = ['dark', 'ocean', 'nature', 'sunset'].includes(settings.theme) || isSystemDark;
+
+      if (isAnyDark) {
         document.body.classList.add('dark-mode');
-      } else {
-        document.body.classList.remove('dark-mode');
+      }
+      
+      if (['ocean', 'nature', 'sunset'].includes(settings.theme)) {
+        document.body.classList.add(`theme-${settings.theme}`);
       }
     };
 
