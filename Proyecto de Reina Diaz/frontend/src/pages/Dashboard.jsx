@@ -38,10 +38,12 @@ export default function Dashboard() {
 
         // Piezas en Producción (piezas en talleres de maquila no enviadas aún en camión)
         const piezas_produccion = prodRes.data.reduce((sum, p) => {
-          if (p.estado === 'En proceso') {
-            return sum + (parseInt(p.cantidad) || 0);
-          } else if (p.estado === 'Terminado' || p.estado === 'Pago Parcial') {
-            const total = parseInt(p.cantidad_recibida) || parseInt(p.cantidad) || 0;
+          if (p.estado === 'En proceso' || p.estado === 'Terminado Parcial') {
+            const total = parseInt(p.cantidad) || 0;
+            const sent = parseInt(p.piezas_enviadas) || 0;
+            return sum + Math.max(0, total - sent);
+          } else if (p.estado === 'Terminado') {
+            const total = p.cantidad_recibida !== null ? (parseInt(p.cantidad_recibida) || 0) : (parseInt(p.cantidad) || 0);
             const sent = parseInt(p.piezas_enviadas) || 0;
             return sum + Math.max(0, total - sent);
           }
