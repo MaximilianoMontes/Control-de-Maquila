@@ -804,6 +804,7 @@ export default function Camion() {
                                   </div>
                                 </td>
                               </tr>
+                            );
                             })}
                           </tbody>
                         </table>
