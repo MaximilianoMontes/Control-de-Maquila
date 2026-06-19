@@ -21,6 +21,9 @@ import Ayuda from './pages/Ayuda';
 import Calendario from './pages/Calendario';
 import Camion from './pages/Camion';
 import KillFeed from './components/KillFeed';
+import UxDemo from './pages/UxDemo';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function MainLayout({ children }) {
   const [searchParams] = useSearchParams();
@@ -62,24 +65,28 @@ function App() {
   if (loading) return <div>Cargando...</div>;
 
   return (
-    <Routes>
-      <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
-      <Route path="/" element={<ProtectedRoute><Launcher /></ProtectedRoute>} />
-      <Route path="/dashboard" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2', 'produccion', 'inventario1']}><MainLayout><Dashboard /></MainLayout></ProtectedRoute>} />
-      <Route path="/maquileros" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2', 'produccion', 'inventario1']}><MainLayout><Maquileros /></MainLayout></ProtectedRoute>} />
-      <Route path="/inventario" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2', 'produccion', 'inventario1']}><MainLayout><Inventario /></MainLayout></ProtectedRoute>} />
-      <Route path="/cortes" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2', 'produccion', 'inventario1']}><MainLayout><Cortes /></MainLayout></ProtectedRoute>} />
-      <Route path="/produccion" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2', 'produccion', 'inventario1']}><MainLayout><Produccion /></MainLayout></ProtectedRoute>} />
-      <Route path="/extras" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2', 'produccion', 'inventario1']}><MainLayout><Extras /></MainLayout></ProtectedRoute>} />
-      <Route path="/camion" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2', 'produccion']}><MainLayout><Camion /></MainLayout></ProtectedRoute>} />
-      <Route path="/pagos" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2', 'produccion']}><MainLayout><Pagos /></MainLayout></ProtectedRoute>} />
-      <Route path="/plancha" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2', 'produccion', 'plancha', 'inventario1']}><Plancha /></ProtectedRoute>} />
-      <Route path="/reportes" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2', 'produccion', 'inventario1']}><MainLayout><Reportes /></MainLayout></ProtectedRoute>} />
-      <Route path="/calendario" element={<ProtectedRoute><Calendario /></ProtectedRoute>} />
-      <Route path="/historial" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2', 'produccion', 'inventario1']}><MainLayout><Historial /></MainLayout></ProtectedRoute>} />
-      <Route path="/ayuda" element={<ProtectedRoute><MainLayout><Ayuda /></MainLayout></ProtectedRoute>} />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    <>
+      <Routes>
+        <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
+        <Route path="/" element={<ProtectedRoute><Launcher /></ProtectedRoute>} />
+        <Route path="/dashboard" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2', 'produccion', 'inventario1']}><MainLayout><Dashboard /></MainLayout></ProtectedRoute>} />
+        <Route path="/maquileros" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2', 'produccion', 'inventario1']}><MainLayout><Maquileros /></MainLayout></ProtectedRoute>} />
+        <Route path="/inventario" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2', 'produccion', 'inventario1']}><MainLayout><Inventario /></MainLayout></ProtectedRoute>} />
+        <Route path="/cortes" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2', 'produccion', 'inventario1']}><MainLayout><Cortes /></MainLayout></ProtectedRoute>} />
+        <Route path="/produccion" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2', 'produccion', 'inventario1']}><MainLayout><Produccion /></MainLayout></ProtectedRoute>} />
+        <Route path="/extras" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2', 'produccion', 'inventario1']}><MainLayout><Extras /></MainLayout></ProtectedRoute>} />
+        <Route path="/camion" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2', 'produccion']}><MainLayout><Camion /></MainLayout></ProtectedRoute>} />
+        <Route path="/pagos" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2', 'produccion']}><MainLayout><Pagos /></MainLayout></ProtectedRoute>} />
+        <Route path="/plancha" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2', 'produccion', 'plancha', 'inventario1']}><Plancha /></ProtectedRoute>} />
+        <Route path="/reportes" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2', 'produccion', 'inventario1']}><MainLayout><Reportes /></MainLayout></ProtectedRoute>} />
+        <Route path="/calendario" element={<ProtectedRoute><Calendario /></ProtectedRoute>} />
+        <Route path="/historial" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2', 'produccion', 'inventario1']}><MainLayout><Historial /></MainLayout></ProtectedRoute>} />
+        <Route path="/ayuda" element={<ProtectedRoute><MainLayout><Ayuda /></MainLayout></ProtectedRoute>} />
+        <Route path="/ux-demo" element={<ProtectedRoute><MainLayout><UxDemo /></MainLayout></ProtectedRoute>} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
+    </>
   );
 }
 
