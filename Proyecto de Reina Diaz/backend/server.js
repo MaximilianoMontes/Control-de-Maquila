@@ -3558,7 +3558,7 @@ app.get('/api/reportes/plancha/pagos', async (req, res) => {
       doc.y = 100;
 
       let worksQuery = `
-        SELECT pt.fecha_terminado, pt.talla, pt.piezas, pt.total, pt.color,
+        SELECT pt.fecha_terminado, pt.talla, pt.piezas, pt.precio_unitario, pt.total, pt.color,
                COALESCE(cd.modelo, CONCAT('Ajuste: ', pt.color)) as modelo_nombre,
                COALESCE(pt.color, cd.color, 'Único') as color_nombre
         FROM plancha_trabajos pt
@@ -3589,6 +3589,7 @@ app.get('/api/reportes/plancha/pagos', async (req, res) => {
           color: w.color_nombre,
           talla: w.talla,
           piezas: w.piezas || 0,
+          precio_unitario: Number(w.precio_unitario) || 0,
           total: Number(w.total) || 0
         });
       }
@@ -3614,11 +3615,12 @@ app.get('/api/reportes/plancha/pagos', async (req, res) => {
           subtitle: tLabel(`Detalle de trabajos y asistencias `, `Detail of jobs and assistance `) + subtitleDate + tLabel(" - Generado el ", " - Generated on ") + formatDateUTC(localNow),
           headers: [
             { label: tLabel("FECHA", "DATE"), property: "fecha", width: 70 },
-            { label: tLabel("MODELO", "MODEL"), property: "modelo", width: 140 },
-            { label: tLabel("COLOR", "COLOR"), property: "color", width: 100 },
-            { label: tLabel("TALLA", "SIZE"), property: "talla", width: 60 },
-            { label: tLabel("PIEZAS", "PIECES"), property: "piezas", width: 70 },
-            { label: tLabel("TOTAL", "TOTAL"), property: "total", width: 80 }
+            { label: tLabel("MODELO", "MODEL"), property: "modelo", width: 120 },
+            { label: tLabel("COLOR", "COLOR"), property: "color", width: 80 },
+            { label: tLabel("TALLA", "SIZE"), property: "talla", width: 50 },
+            { label: tLabel("PIEZAS", "PIECES"), property: "piezas", width: 60 },
+            { label: tLabel("PRECIO U.", "UNIT PRICE"), property: "precio", width: 70 },
+            { label: tLabel("TOTAL", "TOTAL"), property: "total", width: 70 }
           ],
           datas: [
             ...items.map(i => ({
@@ -3627,6 +3629,7 @@ app.get('/api/reportes/plancha/pagos', async (req, res) => {
               color: i.color,
               talla: i.talla,
               piezas: String(i.piezas),
+              precio: '$' + i.precio_unitario.toFixed(2),
               total: '$' + i.total.toFixed(2)
             })),
             {
@@ -3635,6 +3638,7 @@ app.get('/api/reportes/plancha/pagos', async (req, res) => {
               color: '',
               talla: '',
               piezas: String(sumPiezas),
+              precio: '',
               total: '$' + sumTotal.toFixed(2)
             }
           ],
