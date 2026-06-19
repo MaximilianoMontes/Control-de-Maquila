@@ -2075,9 +2075,9 @@ body.dark-mode .header-launcher-btn {
 
 /* Tema Oceano (Azul Profundo)
 body.theme-ocean {
-  --bg-dark: #041427;
-  --bg-card: #0a2540;
-  --bg-input: #123761;
+  --bg-dark: #082f49;
+  --bg-card: #0c4a6e;
+  --bg-input: #075985;
   --text-primary: #f0f9ff;
   --text-secondary: #7dd3fc;
   --border-color: rgba(125, 211, 252, 0.15);
@@ -2085,7 +2085,7 @@ body.theme-ocean {
   --glass-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.3);
   --bg-hover: rgba(255, 255, 255, 0.03);
   --bg-th: rgba(255, 255, 255, 0.04);
-  --header-bg: rgba(10, 37, 64, 0.85);
+  --header-bg: rgba(12, 74, 110, 0.85);
   --row-normal-bg: rgba(16, 185, 129, 0.08);
   --row-normal-hover: rgba(16, 185, 129, 0.15);
   --row-warning-bg: rgba(245, 158, 11, 0.08);
@@ -2100,17 +2100,17 @@ body.theme-ocean {
 
 /* Tema Bosque (Verde Oscuro) */
 body.theme-nature {
-  --bg-dark: #051f14;
-  --bg-card: #064e3b;
-  --bg-input: #065f46;
+  --bg-dark: #064e3b;
+  --bg-card: #047857;
+  --bg-input: #059669;
   --text-primary: #ecfdf5;
-  --text-secondary: #6ee7b7;
-  --border-color: rgba(110, 231, 183, 0.15);
+  --text-secondary: #a7f3d0;
+  --border-color: rgba(167, 243, 208, 0.15);
   --glass-border: 1px solid rgba(255, 255, 255, 0.05);
   --glass-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.3);
   --bg-hover: rgba(255, 255, 255, 0.03);
   --bg-th: rgba(255, 255, 255, 0.04);
-  --header-bg: rgba(6, 78, 59, 0.85);
+  --header-bg: rgba(4, 120, 87, 0.85);
   --row-normal-bg: rgba(16, 185, 129, 0.15);
   --row-normal-hover: rgba(16, 185, 129, 0.25);
   --row-warning-bg: rgba(245, 158, 11, 0.08);
@@ -2125,17 +2125,17 @@ body.theme-nature {
 
 /* Tema Atardecer (Calido/Cafe Oscuro) */
 body.theme-sunset {
-  --bg-dark: #1e100f;
-  --bg-card: #3a1c18;
-  --bg-input: #4f2722;
-  --text-primary: #fff1f2;
-  --text-secondary: #fda4af;
-  --border-color: rgba(253, 164, 175, 0.15);
+  --bg-dark: #451a03;
+  --bg-card: #78350f;
+  --bg-input: #92400e;
+  --text-primary: #fffbeb;
+  --text-secondary: #fcd34d;
+  --border-color: rgba(252, 211, 77, 0.15);
   --glass-border: 1px solid rgba(255, 255, 255, 0.05);
   --glass-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.3);
   --bg-hover: rgba(255, 255, 255, 0.03);
   --bg-th: rgba(255, 255, 255, 0.04);
-  --header-bg: rgba(58, 28, 24, 0.85);
+  --header-bg: rgba(120, 53, 15, 0.85);
   --row-normal-bg: rgba(16, 185, 129, 0.08);
   --row-normal-hover: rgba(16, 185, 129, 0.15);
   --row-warning-bg: rgba(245, 158, 11, 0.08);
