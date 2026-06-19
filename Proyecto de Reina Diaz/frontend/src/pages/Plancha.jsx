@@ -551,7 +551,10 @@ export default function Plancha() {
 
     // Seleccionar el mejor modelo de exactMatches basado en el color y la talla decodificados del código
     let modeloMatch = exactMatches[0];
-    if (exactMatches.length > 1) {
+    let finalDecodedColor = null;
+    let finalDecodedTalla = null;
+
+    if (exactMatches.length > 0) {
       let bestScore = -1;
       for (const m of exactMatches) {
         const modelUpper = m.modelo.toUpperCase();
@@ -646,9 +649,12 @@ export default function Plancha() {
           score += 1;
         }
 
-        if (score > bestScore) {
+        // Always set the first one as default, then override if better score
+        if (score > bestScore || bestScore === -1) {
           bestScore = score;
           modeloMatch = m;
+          finalDecodedColor = decodedColor;
+          finalDecodedTalla = decodedTalla;
         }
       }
     }
@@ -663,52 +669,41 @@ export default function Plancha() {
     const burroIdx = activeBurroScannerRef.current - 1;
     const currentBurro = burrosStateRef.current[burroIdx];
 
-    let selectedTalla = null;
-    let selectedColor = "";
+    let selectedTalla = finalDecodedTalla;
+    let selectedColor = finalDecodedColor || "";
     let stockDeEseColorYTalla = 0;
     const newBurros = [...burrosStateRef.current];
 
-    // --- Lógica para decodificar color y talla del código de barras ---
-    const modelUpper = modeloMatch.modelo.toUpperCase();
-    const suffixIndex = codeUpper.indexOf(modelUpper);
-    const suffix = suffixIndex !== -1 ? codeUpper.substring(suffixIndex + modelUpper.length) : "";
-
-    let decodedColor = null;
-    let decodedTalla = null;
-
-    if (modeloMatch.tallas_colores_disponibles && suffix) {
-      const availableColors = Object.keys(modeloMatch.tallas_colores_disponibles);
-      for (const c of availableColors) {
-        const cPrefix3 = c.toUpperCase().substring(0, 3);
-        const cPrefix4 = c.toUpperCase().substring(0, 4);
-        if (suffix.includes(cPrefix4) || suffix.includes(cPrefix3)) {
-          decodedColor = c;
-          break;
-        }
-      }
-
-      if (decodedColor) {
-        const colorTallasObj = modeloMatch.tallas_colores_disponibles[decodedColor] || {};
-        const availableTallasForColor = Object.keys(colorTallasObj);
-        const sortedTallas = [...availableTallasForColor].sort((a,b) => b.length - a.length);
-        for (const t of sortedTallas) {
-          const tNorm = normalizeTalla(t);
-          if (suffix.includes(t.toUpperCase()) || suffix.includes(tNorm) || suffix.includes("0" + tNorm)) {
-            decodedTalla = t;
-            break;
+    if (selectedTalla) {
+      // Si logramos decodificar al menos la talla, buscamos un color válido para esa talla si no se decodificó color
+      const normTalla = normalizeTalla(selectedTalla);
+      
+      if (!selectedColor && modeloMatch.tallas_colores_disponibles) {
+        // Buscar el primer color que tenga stock para esta talla
+        const foundColorEntry = Object.entries(modeloMatch.tallas_colores_disponibles).find(
+          ([color, tallasObj]) => {
+            const matchingColorTallaKey = Object.keys(tallasObj || {}).find(k => normalizeTalla(k) === normTalla);
+            const stockVal = matchingColorTallaKey ? (tallasObj[matchingColorTallaKey] || 0) : 0;
+            return stockVal > 0;
           }
+        );
+        if (foundColorEntry) {
+          selectedColor = foundColorEntry[0];
         }
       }
-    }
 
-    if (decodedColor && decodedTalla) {
-      selectedColor = decodedColor;
-      selectedTalla = decodedTalla;
-      const colorTallasObj = modeloMatch.tallas_colores_disponibles[selectedColor] || {};
-      const matchingKey = Object.keys(colorTallasObj).find(k => normalizeTalla(k) === normalizeTalla(selectedTalla));
-      stockDeEseColorYTalla = matchingKey ? colorTallasObj[matchingKey] : 0;
+      if (selectedColor && modeloMatch.tallas_colores_disponibles) {
+        const colorTallasObj = modeloMatch.tallas_colores_disponibles[selectedColor] || {};
+        const matchingKey = Object.keys(colorTallasObj).find(k => normalizeTalla(k) === normTalla);
+        stockDeEseColorYTalla = matchingKey ? colorTallasObj[matchingKey] : 0;
+      } else {
+        // Si no hay colores disponibles definidos, tomar del flat
+        const availableTallas = modeloMatch.tallas_disponibles || {};
+        const matchingKey = Object.keys(availableTallas).find(k => normalizeTalla(k) === normTalla);
+        stockDeEseColorYTalla = matchingKey ? availableTallas[matchingKey] : 0;
+      }
     } else {
-      // Fallback si no viene color y talla en el código
+      // Fallback si no viene talla en el código
       const availableTallas = Object.entries(modeloMatch.tallas_disponibles || {}).filter(([t, q]) => q > 0);
       
       if (availableTallas.length === 1) {
