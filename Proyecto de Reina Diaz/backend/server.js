@@ -681,7 +681,11 @@ app.get('/api/camiones', authenticateToken, async (req, res) => {
 
   try {
     const [camiones] = await db.query("SELECT * FROM camiones ORDER BY id DESC");
-    const [detalles] = await db.query("SELECT * FROM camion_detalles");
+    const [detalles] = await db.query(`
+      SELECT cd.*, 
+             (SELECT imagen FROM inventario WHERE modelo = cd.modelo LIMIT 1) as imagen
+      FROM camion_detalles cd
+    `);
     
     // Group details by camion_id
     const detallesMap = {};

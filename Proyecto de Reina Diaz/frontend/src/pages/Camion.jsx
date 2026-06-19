@@ -748,6 +748,7 @@ export default function Camion() {
                         <table className="data-table" style={{ width: '100%', fontSize: '0.85rem' }}>
                           <thead>
                             <tr>
+                              <th>{t('maquileros.image') || 'Imagen'}</th>
                               <th>{t('prod.model') || 'Modelo'}</th>
                               <th>{t('inv.orderNo') || 'No. Orden'}</th>
                               <th>{t('cortes.color') || 'Color'}</th>
@@ -757,13 +758,24 @@ export default function Camion() {
                             </tr>
                           </thead>
                           <tbody>
-                            {truck.items.map((item, idx) => (
-                              <tr key={`truck-det-${truck.id}-${idx}`}>
-                                <td style={{ fontWeight: 700, color: '#c084fc' }}>{item.modelo}</td>
-                                <td>{item.no_orden || 'N/A'}</td>
-                                <td>{formatColorsDisplay(item.color)}</td>
-                                <td>{item.cliente || 'N/A'}</td>
-                                <td style={{ textAlign: 'center', fontWeight: 700 }}>{item.piezas}</td>
+                            {truck.items.map((item, idx) => {
+                              const img = getImgSrc(item.imagen);
+                              return (
+                                <tr key={`truck-det-${truck.id}-${idx}`}>
+                                  <td>
+                                    {img ? (
+                                      <img src={img} alt="" style={{ width: 40, height: 40, borderRadius: 6, objectFit: 'contain', backgroundColor: '#ffffff' }} />
+                                    ) : (
+                                      <div style={{ width: 40, height: 40, background: 'rgba(255,255,255,0.05)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <Truck size={18} color="var(--text-secondary)" />
+                                      </div>
+                                    )}
+                                  </td>
+                                  <td style={{ fontWeight: 700, color: '#c084fc' }}>{item.modelo}</td>
+                                  <td>{item.no_orden || 'N/A'}</td>
+                                  <td>{formatColorsDisplay(item.color)}</td>
+                                  <td>{item.cliente || 'N/A'}</td>
+                                  <td style={{ textAlign: 'center', fontWeight: 700 }}>{item.piezas}</td>
                                 <td>
                                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                                     {Object.entries(item.tallas_cantidades).map(([key, val]) => {
@@ -792,7 +804,7 @@ export default function Camion() {
                                   </div>
                                 </td>
                               </tr>
-                            ))}
+                            })}
                           </tbody>
                         </table>
                       </div>
