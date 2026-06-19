@@ -1120,7 +1120,8 @@ app.get('/api/produccion', async (req, res) => {
       (SELECT COALESCE(SUM(monto), 0) FROM pagos WHERE produccion_id = p.id) + 
       (SELECT COALESCE(SUM(dp.monto_total), 0) FROM descuentos_personales dp 
        JOIN pagos pg ON dp.pago_id = pg.id 
-       WHERE pg.produccion_id = p.id) as pagado
+       WHERE pg.produccion_id = p.id) as pagado,
+      (SELECT COALESCE(SUM(cd.piezas), 0) FROM camion_detalles cd WHERE cd.produccion_id = p.id) as piezas_enviadas
       FROM produccion p 
       JOIN maquileros m ON p.maquilero_id = m.id
       LEFT JOIN inventario i ON p.inventario_id = i.id
