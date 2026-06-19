@@ -25,12 +25,30 @@ export default function Dashboard() {
       try {
         const [maqRes, invRes, prodRes] = await Promise.all([
           axios.get(`${API}/api/maquileros`),
-          axios.get(`${API}/api/inventario_real`),
+          axios.get(`${API}/api/inventario`),
           axios.get(`${API}/api/produccion`),
         ]);
 
         const maquileros = maqRes.data.length;
-        const inventario = invRes.data.reduce((sum, item) => sum + (parseInt(item.piezas) || 0), 0);
+
+        // Piezas en Corte (piezas de cortes activos no asignadas a maquila)
+        const piezas_corte = invRes.data.reduce((sum, cut) => {
+          return sum + Math.max(0, (parseInt(cut.piezas_en_proceso) || 0) - (parseInt(cut.total_asignado) || 0));
+        }, 0);
+
+        // Piezas en Producción (piezas en talleres de maquila no enviadas aún en camión)
+        const piezas_produccion = prodRes.data.reduce((sum, p) => {
+          if (p.estado === 'En proceso') {
+            return sum + (parseInt(p.cantidad) || 0);
+          } else if (p.estado === 'Terminado' || p.estado === 'Pago Parcial') {
+            const total = parseInt(p.cantidad_recibida) || parseInt(p.cantidad) || 0;
+            const sent = parseInt(p.piezas_enviadas) || 0;
+            return sum + Math.max(0, total - sent);
+          }
+          return sum;
+        }, 0);
+
+        const inventario = piezas_corte + piezas_produccion;
         const ordenes_proceso = prodRes.data.filter(o => o.estado === 'En proceso').length;
 
         // Pagos totales (solo efectivo real en dashboard)
