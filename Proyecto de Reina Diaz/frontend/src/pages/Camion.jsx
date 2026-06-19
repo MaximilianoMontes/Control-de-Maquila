@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { 
   Truck, ArrowRight, Trash2, Calendar, Edit3, Plus, 
-  ChevronDown, ChevronUp, AlertCircle, CheckCircle, Info, Search, XCircle
+  ChevronDown, ChevronUp, AlertCircle, CheckCircle, Info, Search, XCircle, X
 } from 'lucide-react';
 import { useSettings } from '../context/SettingsContext';
 import { useAuth } from '../context/AuthContext';
@@ -86,6 +86,7 @@ export default function Camion() {
   // Accordion History State
   const [expandedTruckId, setExpandedTruckId] = useState(null);
   const [dragOver, setDragOver] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
 
   // Fetch Data
   const fetchData = async () => {
@@ -486,7 +487,7 @@ export default function Camion() {
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                       {img ? (
-                        <img src={img} alt="" style={{ width: 44, height: 44, borderRadius: 6, objectFit: 'contain', backgroundColor: '#ffffff' }} />
+                        <img src={img} alt="" className="img-zoom" style={{ width: 44, height: 44, borderRadius: 6, objectFit: 'contain', backgroundColor: '#ffffff', cursor: 'zoom-in' }} onClick={(e) => { e.stopPropagation(); setSelectedImage(img); }} />
                       ) : (
                         <div style={{ width: 44, height: 44, background: 'rgba(255,255,255,0.05)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                           <Truck size={20} color="var(--text-secondary)" />
@@ -764,7 +765,7 @@ export default function Camion() {
                                 <tr key={`truck-det-${truck.id}-${idx}`}>
                                   <td>
                                     {img ? (
-                                      <img src={img} alt="" style={{ width: 40, height: 40, borderRadius: 6, objectFit: 'contain', backgroundColor: '#ffffff' }} />
+                                      <img src={img} alt="" className="img-zoom" style={{ width: 40, height: 40, borderRadius: 6, objectFit: 'contain', backgroundColor: '#ffffff', cursor: 'zoom-in' }} onClick={(e) => { e.stopPropagation(); setSelectedImage(img); }} />
                                     ) : (
                                       <div style={{ width: 40, height: 40, background: 'rgba(255,255,255,0.05)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                         <Truck size={18} color="var(--text-secondary)" />
@@ -860,7 +861,7 @@ export default function Camion() {
                       <tr key={d.id}>
                         <td>
                           {img ? (
-                            <img src={img} alt="" style={{ width: 40, height: 40, borderRadius: 6, objectFit: 'contain', backgroundColor: '#ffffff' }} />
+                            <img src={img} alt="" className="img-zoom" style={{ width: 40, height: 40, borderRadius: 6, objectFit: 'contain', backgroundColor: '#ffffff', cursor: 'zoom-in' }} onClick={(e) => { e.stopPropagation(); setSelectedImage(img); }} />
                           ) : (
                             <div style={{ width: 40, height: 40, background: 'rgba(255,255,255,0.05)', borderRadius: 6 }} />
                           )}
@@ -1056,6 +1057,25 @@ export default function Camion() {
               </button>
             </div>
 
+          </div>
+        </div>
+      )}
+
+      {/* Modal Zoom de Imagen */}
+      {selectedImage && (
+        <div className="modal-overlay" style={{ zIndex: 3000 }} onClick={() => setSelectedImage(null)}>
+          <div style={{ position: 'relative', maxWidth: '90vw', maxHeight: '90vh' }} onClick={e => e.stopPropagation()}>
+            <button 
+              onClick={() => setSelectedImage(null)}
+              style={{ position: 'absolute', top: '-40px', right: '-40px', background: 'white', border: 'none', borderRadius: '50%', padding: '8px', cursor: 'pointer', display: 'flex' }}
+            >
+              <X size={24} />
+            </button>
+            <img 
+              src={selectedImage} 
+              alt="Zoom" 
+              style={{ width: '100%', height: '100%', borderRadius: '12px', objectFit: 'contain', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' }} 
+            />
           </div>
         </div>
       )}
