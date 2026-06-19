@@ -2273,7 +2273,7 @@ export default function Plancha() {
 
                       {regularWork > 0 && (
                         <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted, #94a3b8)', paddingLeft: '1rem' }}>
-                          • {isEn ? 'Regular Ironing' : 'Plancha Regular'}: <span style={{ color: 'var(--bg-input)' }}>+{formatCurrency(regularWork)}</span>
+                          • {isEn ? 'Regular Ironing' : 'Plancha Regular'}: <span style={{ color: '#34d399', fontWeight: 'bold' }}>+{formatCurrency(regularWork)}</span>
                         </p>
                       )}
                       
