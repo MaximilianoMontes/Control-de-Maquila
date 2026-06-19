@@ -2147,3 +2147,103 @@ body.theme-sunset {
   --badge-desc-bg: rgba(239, 68, 68, 0.25);
   --badge-desc-text: #f87171;
 }
+
+/* Tema Lavanda (Purpura Oscuro) */
+body.theme-lavender {
+  --bg-dark: #2e1065;
+  --bg-card: #4c1d95;
+  --bg-input: #5b21b6;
+  --text-primary: #f5f3ff;
+  --text-secondary: #c4b5fd;
+  --border-color: rgba(196, 181, 253, 0.15);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.05);
+  --glass-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.3);
+  --bg-hover: rgba(255, 255, 255, 0.03);
+  --bg-th: rgba(255, 255, 255, 0.04);
+  --header-bg: rgba(76, 29, 149, 0.85);
+  --row-normal-bg: rgba(16, 185, 129, 0.08);
+  --row-normal-hover: rgba(16, 185, 129, 0.15);
+  --row-warning-bg: rgba(245, 158, 11, 0.08);
+  --row-warning-hover: rgba(245, 158, 11, 0.15);
+  --row-danger-bg: rgba(239, 68, 68, 0.1);
+  --row-danger-hover: rgba(239, 68, 68, 0.18);
+  --badge-bono-bg: rgba(16, 185, 129, 0.2);
+  --badge-bono-text: #34d399;
+  --badge-desc-bg: rgba(239, 68, 68, 0.25);
+  --badge-desc-text: #f87171;
+}
+
+/* Tema Cereza (Rojo Oscuro) */
+body.theme-cherry {
+  --bg-dark: #450a0a;
+  --bg-card: #7f1d1d;
+  --bg-input: #991b1b;
+  --text-primary: #fef2f2;
+  --text-secondary: #fca5a5;
+  --border-color: rgba(254, 226, 226, 0.15);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.05);
+  --glass-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.3);
+  --bg-hover: rgba(255, 255, 255, 0.03);
+  --bg-th: rgba(255, 255, 255, 0.04);
+  --header-bg: rgba(127, 29, 29, 0.85);
+  --row-normal-bg: rgba(16, 185, 129, 0.08);
+  --row-normal-hover: rgba(16, 185, 129, 0.15);
+  --row-warning-bg: rgba(245, 158, 11, 0.08);
+  --row-warning-hover: rgba(245, 158, 11, 0.15);
+  --row-danger-bg: rgba(239, 68, 68, 0.1);
+  --row-danger-hover: rgba(239, 68, 68, 0.18);
+  --badge-bono-bg: rgba(16, 185, 129, 0.2);
+  --badge-bono-text: #34d399;
+  --badge-desc-bg: rgba(239, 68, 68, 0.25);
+  --badge-desc-text: #f87171;
+}
+
+/* Tema Medianoche (Negro OLED) */
+body.theme-midnight {
+  --bg-dark: #000000;
+  --bg-card: #111111;
+  --bg-input: #222222;
+  --text-primary: #ffffff;
+  --text-secondary: #a3a3a3;
+  --border-color: rgba(255, 255, 255, 0.1);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.05);
+  --glass-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.4);
+  --bg-hover: rgba(255, 255, 255, 0.05);
+  --bg-th: rgba(255, 255, 255, 0.08);
+  --header-bg: rgba(17, 17, 17, 0.85);
+  --row-normal-bg: rgba(16, 185, 129, 0.08);
+  --row-normal-hover: rgba(16, 185, 129, 0.15);
+  --row-warning-bg: rgba(245, 158, 11, 0.08);
+  --row-warning-hover: rgba(245, 158, 11, 0.15);
+  --row-danger-bg: rgba(239, 68, 68, 0.1);
+  --row-danger-hover: rgba(239, 68, 68, 0.18);
+  --badge-bono-bg: rgba(16, 185, 129, 0.2);
+  --badge-bono-text: #34d399;
+  --badge-desc-bg: rgba(239, 68, 68, 0.25);
+  --badge-desc-text: #f87171;
+}
+
+/* Tema Gris (Gris Suave) */
+body.theme-dim {
+  --bg-dark: #1f2937;
+  --bg-card: #374151;
+  --bg-input: #4b5563;
+  --text-primary: #f9fafb;
+  --text-secondary: #9ca3af;
+  --border-color: rgba(255, 255, 255, 0.1);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.05);
+  --glass-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.3);
+  --bg-hover: rgba(255, 255, 255, 0.03);
+  --bg-th: rgba(255, 255, 255, 0.04);
+  --header-bg: rgba(55, 65, 81, 0.85);
+  --row-normal-bg: rgba(16, 185, 129, 0.08);
+  --row-normal-hover: rgba(16, 185, 129, 0.15);
+  --row-warning-bg: rgba(245, 158, 11, 0.08);
+  --row-warning-hover: rgba(245, 158, 11, 0.15);
+  --row-danger-bg: rgba(239, 68, 68, 0.1);
+  --row-danger-hover: rgba(239, 68, 68, 0.18);
+  --badge-bono-bg: rgba(16, 185, 129, 0.2);
+  --badge-bono-text: #34d399;
+  --badge-desc-bg: rgba(239, 68, 68, 0.25);
+  --badge-desc-text: #f87171;
+}

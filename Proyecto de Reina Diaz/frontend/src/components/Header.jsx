@@ -570,6 +570,30 @@ export default function Header() {
                     {settings.theme === 'sunset' && <Check size={14} />} {t('settings.themeSunset')}
                   </button>
                   <button 
+                    className={`settings-option-btn ${settings.theme === 'lavender' ? 'active' : ''}`}
+                    onClick={() => toggleSetting('theme', 'lavender')}
+                  >
+                    {settings.theme === 'lavender' && <Check size={14} />} {t('settings.themeLavender')}
+                  </button>
+                  <button 
+                    className={`settings-option-btn ${settings.theme === 'cherry' ? 'active' : ''}`}
+                    onClick={() => toggleSetting('theme', 'cherry')}
+                  >
+                    {settings.theme === 'cherry' && <Check size={14} />} {t('settings.themeCherry')}
+                  </button>
+                  <button 
+                    className={`settings-option-btn ${settings.theme === 'midnight' ? 'active' : ''}`}
+                    onClick={() => toggleSetting('theme', 'midnight')}
+                  >
+                    {settings.theme === 'midnight' && <Check size={14} />} {t('settings.themeMidnight')}
+                  </button>
+                  <button 
+                    className={`settings-option-btn ${settings.theme === 'dim' ? 'active' : ''}`}
+                    onClick={() => toggleSetting('theme', 'dim')}
+                  >
+                    {settings.theme === 'dim' && <Check size={14} />} {t('settings.themeDim')}
+                  </button>
+                  <button 
                     className={`settings-option-btn ${settings.theme === 'system' ? 'active' : ''}`}
                     onClick={() => toggleSetting('theme', 'system')}
                     style={{ flexBasis: '100%' }}
