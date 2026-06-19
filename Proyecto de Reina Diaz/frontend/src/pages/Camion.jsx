@@ -749,7 +749,7 @@ export default function Camion() {
                         <table className="data-table" style={{ width: '100%', fontSize: '0.85rem' }}>
                           <thead>
                             <tr>
-                              <th>{t('maquileros.image') || 'Imagen'}</th>
+                              <th>{t('inv.image') || 'Imagen'}</th>
                               <th>{t('prod.model') || 'Modelo'}</th>
                               <th>{t('inv.orderNo') || 'No. Orden'}</th>
                               <th>{t('cortes.color') || 'Color'}</th>
