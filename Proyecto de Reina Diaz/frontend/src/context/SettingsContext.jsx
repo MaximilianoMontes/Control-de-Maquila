@@ -121,6 +121,10 @@ const translations = {
     'settings.themeOcean': 'Océano',
     'settings.themeNature': 'Bosque',
     'settings.themeSunset': 'Atardecer',
+    'settings.themeLavender': 'Lavanda',
+    'settings.themeCherry': 'Cereza',
+    'settings.themeMidnight': 'Medianoche',
+    'settings.themeDim': 'Gris Suave',
     'settings.accentLabel': 'Color de Acento',
     'settings.accentDesc': 'Elige un color personalizado para destacar elementos de la interfaz.',
     'settings.currencyLabel': 'Formato de Moneda',
@@ -559,6 +563,10 @@ const translations = {
     'settings.themeOcean': 'Ocean',
     'settings.themeNature': 'Nature',
     'settings.themeSunset': 'Sunset',
+    'settings.themeLavender': 'Lavender',
+    'settings.themeCherry': 'Cherry',
+    'settings.themeMidnight': 'Midnight',
+    'settings.themeDim': 'Dim',
     'settings.accentLabel': 'Accent Color',
     'settings.accentDesc': 'Choose a custom color to highlight interface elements.',
     'settings.currencyLabel': 'Currency Format',
@@ -920,16 +928,16 @@ export const SettingsProvider = ({ children }) => {
   // Apply visual theme (Light / Dark / System)
   useEffect(() => {
     const applyTheme = () => {
-      document.body.classList.remove('dark-mode', 'theme-ocean', 'theme-nature', 'theme-sunset');
+      document.body.classList.remove('dark-mode', 'theme-ocean', 'theme-nature', 'theme-sunset', 'theme-lavender', 'theme-cherry', 'theme-midnight', 'theme-dim');
 
       const isSystemDark = settings.theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches;
-      const isAnyDark = ['dark', 'ocean', 'nature', 'sunset'].includes(settings.theme) || isSystemDark;
+      const isAnyDark = ['dark', 'ocean', 'nature', 'sunset', 'lavender', 'cherry', 'midnight', 'dim'].includes(settings.theme) || isSystemDark;
 
       if (isAnyDark) {
         document.body.classList.add('dark-mode');
       }
       
-      if (['ocean', 'nature', 'sunset'].includes(settings.theme)) {
+      if (['ocean', 'nature', 'sunset', 'lavender', 'cherry', 'midnight', 'dim'].includes(settings.theme)) {
         document.body.classList.add(`theme-${settings.theme}`);
       }
     };
