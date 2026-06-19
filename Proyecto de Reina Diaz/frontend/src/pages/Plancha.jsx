@@ -549,11 +549,113 @@ export default function Plancha() {
       return;
     }
 
-    const modeloMatch = exactMatches[0];
+    // Seleccionar el mejor modelo de exactMatches basado en el color y la talla decodificados del código
+    let modeloMatch = exactMatches[0];
+    if (exactMatches.length > 1) {
+      let bestScore = -1;
+      for (const m of exactMatches) {
+        const modelUpper = m.modelo.toUpperCase();
+        const suffixIndex = codeUpper.indexOf(modelUpper);
+        const suffix = suffixIndex !== -1 ? codeUpper.substring(suffixIndex + modelUpper.length) : "";
+
+        let decodedColor = null;
+        let decodedTalla = null;
+
+        let tallasColoresObj = m.tallas_colores_disponibles;
+        if (!tallasColoresObj) {
+          const originalTallas = m.tallas_cantidades || {};
+          const firstVal = Object.values(originalTallas)[0];
+          const isNested = (typeof firstVal === 'object' && firstVal !== null);
+          if (isNested) {
+            tallasColoresObj = originalTallas;
+          } else {
+            tallasColoresObj = { "": originalTallas };
+          }
+        }
+
+        if (tallasColoresObj && suffix) {
+          const availableColors = Object.keys(tallasColoresObj);
+          for (const c of availableColors) {
+            const cPrefix3 = c.toUpperCase().substring(0, 3);
+            const cPrefix4 = c.toUpperCase().substring(0, 4);
+            if (suffix.includes(cPrefix4) || suffix.includes(cPrefix3)) {
+              decodedColor = c;
+              break;
+            }
+          }
+
+          if (decodedColor) {
+            const colorTallasObj = tallasColoresObj[decodedColor] || {};
+            const availableTallasForColor = Object.keys(colorTallasObj);
+            const sortedTallas = [...availableTallasForColor].sort((a,b) => b.length - a.length);
+            for (const t of sortedTallas) {
+              const tNorm = normalizeTalla(t);
+              if (suffix.includes(t.toUpperCase()) || suffix.includes(tNorm) || suffix.includes("0" + tNorm)) {
+                decodedTalla = t;
+                break;
+              }
+            }
+          }
+        }
+
+        let score = 0;
+        let stock = 0;
+
+        if (decodedColor) {
+          score += 10;
+          if (decodedTalla) {
+            score += 5;
+            const colorTallasObj = tallasColoresObj[decodedColor] || {};
+            const matchingKey = Object.keys(colorTallasObj).find(k => normalizeTalla(k) === normalizeTalla(decodedTalla));
+            stock = matchingKey ? colorTallasObj[matchingKey] : 0;
+          } else {
+            const colorTallasObj = tallasColoresObj[decodedColor] || {};
+            stock = Object.values(colorTallasObj).reduce((sum, q) => sum + (parseInt(q) || 0), 0);
+          }
+        } else {
+          let flatTallas = m.tallas_disponibles;
+          if (!flatTallas) {
+            flatTallas = {};
+            Object.values(tallasColoresObj || {}).forEach(tallasObj => {
+              Object.entries(tallasObj || {}).forEach(([t, q]) => {
+                flatTallas[t] = (flatTallas[t] || 0) + (parseInt(q) || 0);
+              });
+            });
+          }
+          if (flatTallas && suffix) {
+            const availableTallas = Object.keys(flatTallas);
+            const sortedTallas = [...availableTallas].sort((a,b) => b.length - a.length);
+            for (const t of sortedTallas) {
+              const tNorm = normalizeTalla(t);
+              if (suffix.includes(t.toUpperCase()) || suffix.includes(tNorm) || suffix.includes("0" + tNorm)) {
+                decodedTalla = t;
+                break;
+              }
+            }
+          }
+          if (decodedTalla) {
+            score += 2;
+            const matchingKey = Object.keys(flatTallas || {}).find(k => normalizeTalla(k) === normalizeTalla(decodedTalla));
+            stock = matchingKey ? flatTallas[matchingKey] : 0;
+          } else {
+            stock = m.piezas_disponibles_total || m.piezas || 0;
+          }
+        }
+
+        if (stock > 0) {
+          score += 1;
+        }
+
+        if (score > bestScore) {
+          bestScore = score;
+          modeloMatch = m;
+        }
+      }
+    }
 
     if (!activeBurroScannerRef.current) {
       playBeep('error');
-      setSearchTerm(modeloMatch.modelo);
+      setSearchQuery(modeloMatch.modelo);
       alert(`Modelo ${modeloMatch.modelo} detectado. Escanea primero un Burro para asignarlo, o selecciónalo de la lista para asignarlo manualmente.`);
       return;
     }
