@@ -589,7 +589,8 @@ export default function Plancha() {
 
           if (decodedColor) {
             const colorTallasObj = tallasColoresObj[decodedColor] || {};
-            const availableTallasForColor = Object.keys(colorTallasObj);
+            const standardSizes = ['3', '5', '7', '9', '11', '13', '15', '17', '38', 'S', 'M', 'L', 'XL', 'UNI', '03', '05', '07', '09', 'T03', 'T05', 'T07', 'T09', 'T11', 'T13', 'T15', 'T17'];
+            const availableTallasForColor = Array.from(new Set([...Object.keys(colorTallasObj), ...standardSizes]));
             const sortedTallas = [...availableTallasForColor].sort((a,b) => b.length - a.length);
             for (const t of sortedTallas) {
               const tNorm = normalizeTalla(t);
@@ -626,7 +627,8 @@ export default function Plancha() {
             });
           }
           if (flatTallas && suffix) {
-            const availableTallas = Object.keys(flatTallas);
+            const standardSizes = ['3', '5', '7', '9', '11', '13', '15', '17', '38', 'S', 'M', 'L', 'XL', 'UNI', '03', '05', '07', '09', 'T03', 'T05', 'T07', 'T09', 'T11', 'T13', 'T15', 'T17'];
+            const availableTallas = Array.from(new Set([...Object.keys(flatTallas), ...standardSizes]));
             const sortedTallas = [...availableTallas].sort((a,b) => b.length - a.length);
             for (const t of sortedTallas) {
               const tNorm = normalizeTalla(t);
