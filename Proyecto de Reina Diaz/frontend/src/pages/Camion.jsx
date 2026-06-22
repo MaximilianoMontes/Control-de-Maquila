@@ -7,6 +7,8 @@ import { useSettings } from '../context/SettingsContext';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import API_URL from '../config';
+import Swal from 'sweetalert2';
+import { toast } from 'react-toastify';
 
 const API = API_URL;
 
@@ -119,24 +121,38 @@ export default function Camion() {
       setDraftLoaded(true);
     } catch (e) {
       console.error(e);
-      alert(t('prod.alertGenericError') || 'Error al obtener datos');
+      toast.error(t('prod.alertGenericError') || 'Error al obtener datos', { theme: 'dark' });
     } finally {
       setLoading(false);
     }
   };
 
   const handleArreglarDevolucion = async (id) => {
-    if (!confirm('¿Seguro que deseas marcar esta devolución como terminada/arreglada?')) return;
-    try {
-      const token = localStorage.getItem('token');
-      const headers = { Authorization: `Bearer ${token}` };
-      await axios.put(`${API}/api/maquila/devoluciones/${id}/arreglar`, {}, { headers });
-      alert('Devolución marcada como arreglada. Ahora está disponible en la lista para cargarse al camión.');
-      fetchData();
-    } catch (e) {
-      console.error(e);
-      alert('Error al actualizar devolución.');
-    }
+    Swal.fire({
+      title: '¿Marcar devolución como arreglada?',
+      text: 'Ahora estará disponible en la lista para cargarse al camión.',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#10b981',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: 'Sí, marcar como arreglada',
+      cancelButtonText: 'Cancelar',
+      background: '#1e293b',
+      color: '#f8fafc'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const token = localStorage.getItem('token');
+          const headers = { Authorization: `Bearer ${token}` };
+          await axios.put(`${API}/api/maquila/devoluciones/${id}/arreglar`, {}, { headers });
+          toast.success('Devolución marcada como arreglada.', { theme: 'dark' });
+          fetchData();
+        } catch (e) {
+          console.error(e);
+          toast.error('Error al actualizar devolución.', { theme: 'dark' });
+        }
+      }
+    });
   };
 
   useEffect(() => {
@@ -304,55 +320,67 @@ export default function Camion() {
   // Ship Truck Action
   const handleShipTruck = async () => {
     if (cargo.length === 0) {
-      alert(t('camion.emptyCargo') || 'Carga vacía');
+      toast.error(t('camion.emptyCargo') || 'Carga vacía', { theme: 'dark' });
       return;
     }
 
-    if (!confirm(t('prod.confirmFinish') || '¿Seguro que deseas enviar el camión?')) return;
+    Swal.fire({
+      title: t('prod.confirmFinish') || '¿Seguro que deseas enviar el camión?',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#3b82f6',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: 'Sí, enviar camión',
+      cancelButtonText: 'Cancelar',
+      background: '#1e293b',
+      color: '#f8fafc'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const token = localStorage.getItem('token');
+          const headers = { Authorization: `Bearer ${token}` };
+          
+          const payload = {
+            fecha_envio: fechaEnvio,
+            observaciones,
+            items: cargo.map(c => ({
+              id: c.id,
+              produccion_id: c.produccion_id || c.id,
+              numero: c.numero,
+              temporada: c.temporada,
+              modelo: c.modelo,
+              precio: c.precio,
+              color: c.color,
+              cliente: c.cliente,
+              no_orden: c.no_orden,
+              piezas: c.piezas,
+              tallas_cantidades: c.tallas_cantidades,
+              is_devolucion: c.is_devolucion || false,
+              devolucion_id: c.devolucion_id || null
+            }))
+          };
 
-    try {
-      const token = localStorage.getItem('token');
-      const headers = { Authorization: `Bearer ${token}` };
-      
-      const payload = {
-        fecha_envio: fechaEnvio,
-        observaciones,
-        items: cargo.map(c => ({
-          id: c.id,
-          produccion_id: c.produccion_id || c.id,
-          numero: c.numero,
-          temporada: c.temporada,
-          modelo: c.modelo,
-          precio: c.precio,
-          color: c.color,
-          cliente: c.cliente,
-          no_orden: c.no_orden,
-          piezas: c.piezas,
-          tallas_cantidades: c.tallas_cantidades,
-          is_devolucion: c.is_devolucion || false,
-          devolucion_id: c.devolucion_id || null
-        }))
-      };
+          await axios.post(`${API}/api/camiones`, payload, { headers });
+          
+          toast.success(t('camion.shipSuccess') || '¡Camión enviado con éxito!', { theme: 'dark' });
+          
+          // Prevent auto-save from writing an empty draft back
+          setDraftLoaded(false);
 
-      await axios.post(`${API}/api/camiones`, payload, { headers });
-      
-      alert(t('camion.shipSuccess') || '¡Camión enviado con éxito!');
-      
-      // Prevent auto-save from writing an empty draft back
-      setDraftLoaded(false);
-
-      // Reset active truck
-      setCargo([]);
-      setObservaciones('');
-      setFechaEnvio(new Date().toISOString().split('T')[0]);
-      setSavingStatus('');
-      
-      // Refresh
-      fetchData();
-    } catch (e) {
-      console.error(e);
-      alert(e.response?.data?.error || t('prod.alertGenericError') || 'Error al enviar el camión');
-    }
+          // Reset active truck
+          setCargo([]);
+          setObservaciones('');
+          setFechaEnvio(new Date().toISOString().split('T')[0]);
+          setSavingStatus('');
+          
+          // Refresh
+          fetchData();
+        } catch (e) {
+          console.error(e);
+          toast.error(e.response?.data?.error || t('prod.alertGenericError') || 'Error al enviar el camión', { theme: 'dark' });
+        }
+      }
+    });
   };
 
   const toggleAccordion = (id) => {

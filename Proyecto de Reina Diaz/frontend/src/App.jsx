@@ -24,6 +24,7 @@ import KillFeed from './components/KillFeed';
 import UxDemo from './pages/UxDemo';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { motion } from 'framer-motion';
 
 function MainLayout({ children }) {
   const [searchParams] = useSearchParams();
@@ -40,7 +41,14 @@ function MainLayout({ children }) {
       <div className="main-container">
         <Header />
         <main className="main-content">
-          {children}
+          <motion.div
+            key={window.location.pathname}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25, ease: 'easeOut' }}
+          >
+            {children}
+          </motion.div>
         </main>
       </div>
     </div>
