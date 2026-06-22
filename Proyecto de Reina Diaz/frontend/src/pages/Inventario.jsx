@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Search, Image as ImageIcon, Trash2, Calendar, ClipboardList, RefreshCw, ChevronDown } from 'lucide-react';
+import { Search, Image as ImageIcon, Trash2, Calendar, ClipboardList, RefreshCw, ChevronDown, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
@@ -152,7 +152,7 @@ export default function Inventario() {
       </div>
 
       {/* Search Input */}
-      <div className="glass-card" style={{ padding: '1rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+      <div className="glass-card interactive-search-card" style={{ padding: '0.75rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
         <Search size={20} color="#94a3b8" />
         <input 
           type="text" 
@@ -161,6 +161,16 @@ export default function Inventario() {
           value={searchTerm} 
           onChange={(e) => setSearchTerm(e.target.value)} 
         />
+        {searchTerm && (
+          <button 
+            type="button" 
+            className="search-clear-btn" 
+            onClick={() => setSearchTerm('')}
+            title={isEn ? 'Clear search' : 'Limpiar búsqueda'}
+          >
+            <X size={16} />
+          </button>
+        )}
       </div>
 
       {/* Table view */}

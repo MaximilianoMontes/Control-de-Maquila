@@ -11,6 +11,7 @@ import axios from 'axios';
 import API_URL from '../config';
 import Swal from 'sweetalert2';
 import { toast } from 'react-toastify';
+import SearchableSelect from '../components/SearchableSelect';
 
 const API = API_URL;
 
@@ -374,9 +375,26 @@ export default function Produccion() {
         </div>
       </div>
 
-      <div className="glass-card" style={{ padding: '1rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+      <div className="glass-card interactive-search-card" style={{ padding: '0.75rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
         <Search size={20} color="#94a3b8" />
-        <input type="text" className="form-input" style={{ border: 'none', background: 'transparent', padding: '0.5rem' }} placeholder={t('prod.search')} value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+        <input 
+          type="text" 
+          className="form-input" 
+          style={{ border: 'none', background: 'transparent', padding: '0.25rem 0.5rem', outline: 'none' }} 
+          placeholder={t('prod.search')} 
+          value={searchTerm} 
+          onChange={e => setSearchTerm(e.target.value)} 
+        />
+        {searchTerm && (
+          <button 
+            type="button" 
+            className="search-clear-btn" 
+            onClick={() => setSearchTerm('')}
+            title={isEn ? 'Clear search' : 'Limpiar búsqueda'}
+          >
+            <X size={16} />
+          </button>
+        )}
       </div>
 
       <div className="glass-card">
@@ -605,30 +623,21 @@ export default function Produccion() {
             <form onSubmit={isEditModalOpen ? handleEditSubmit : handleSubmit}>
               <div className="form-group">
                 <label className="form-label">{t('prod.selectMaquilero')}</label>
-                <select 
-                  required 
-                  className="form-input" 
-                  value={formData.maquilero_id} 
-                  onChange={e => setFormData({...formData, maquilero_id: e.target.value})}
+                <SearchableSelect
+                  options={[...maquileros].sort((a,b) => a.nombre.localeCompare(b.nombre))}
+                  value={formData.maquilero_id}
+                  onChange={id => setFormData({...formData, maquilero_id: id})}
+                  placeholder={t('prod.selectDefault')}
+                  labelKey="nombre"
+                  valueKey="id"
                   disabled={!canEdit && isEditModalOpen}
-                >
-                  <option value="">{t('prod.selectDefault')}</option>
-                  {[...maquileros].sort((a,b) => a.nombre.localeCompare(b.nombre)).map(m => (
-                    <option key={m.id} value={m.id}>{m.nombre}</option>
-                  ))}
-                </select>
+                  required
+                />
               </div>
               <div className="form-group">
                 <label className="form-label">{t('prod.selectProduct')}</label>
-                <select 
-                  required 
-                  className="form-input" 
-                  value={formData.inventario_id} 
-                  onChange={e => setFormData({...formData, inventario_id: e.target.value})}
-                  disabled={!canEdit && isEditModalOpen}
-                >
-                  <option value="">{t('prod.selectDefault')}</option>
-                  {[...inventario]
+                <SearchableSelect
+                  options={[...inventario]
                     .filter(i => {
                       if (isModalOpen) {
                         return i.producciones_count === 0;
@@ -639,35 +648,48 @@ export default function Produccion() {
                       return true;
                     })
                     .sort((a,b) => (a.modelo || '').localeCompare(b.modelo || '', undefined, {numeric: true}))
-                    .map(i => (
-                      <option key={i.id} value={i.id}>
-                        {i.modelo} - {i.numero} {i.es_reprogramacion === 1 ? t('prod.reprogrammedLabel') : ''}
-                      </option>
-                    ))}
-                </select>
+                    .map(i => ({
+                      id: i.id,
+                      modeloDisplay: `${i.modelo} - ${i.numero} ${i.es_reprogramacion === 1 ? t('prod.reprogrammedLabel') : ''}`
+                    }))
+                  }
+                  value={formData.inventario_id}
+                  onChange={id => setFormData({...formData, inventario_id: id})}
+                  placeholder={t('prod.selectDefault')}
+                  labelKey="modeloDisplay"
+                  valueKey="id"
+                  disabled={!canEdit && isEditModalOpen}
+                  required
+                />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div className="form-group">
                   <label className="form-label">{t('prod.startDateLabel')}</label>
-                  <input 
-                    type="date" 
-                    required 
-                    className="form-input" 
-                    value={formData.fecha_inicio} 
-                    onChange={e => setFormData({...formData, fecha_inicio: e.target.value})}
-                    disabled={!canEdit && isEditModalOpen}
-                  />
+                  <div className="input-group-with-prefix">
+                    <span className="input-prefix-icon"><Calendar size={18} /></span>
+                    <input 
+                      type="date" 
+                      required 
+                      className="form-input" 
+                      value={formData.fecha_inicio} 
+                      onChange={e => setFormData({...formData, fecha_inicio: e.target.value})}
+                      disabled={!canEdit && isEditModalOpen}
+                    />
+                  </div>
                 </div>
                 <div className="form-group">
                   <label className="form-label">{t('prod.endDateLabel')}</label>
-                  <input 
-                    type="date" 
-                    required 
-                    className="form-input" 
-                    value={formData.fecha_fin} 
-                    onChange={e => setFormData({...formData, fecha_fin: e.target.value})}
-                    disabled={!canEdit && isEditModalOpen}
-                  />
+                  <div className="input-group-with-prefix">
+                    <span className="input-prefix-icon"><Calendar size={18} /></span>
+                    <input 
+                      type="date" 
+                      required 
+                      className="form-input" 
+                      value={formData.fecha_fin} 
+                      onChange={e => setFormData({...formData, fecha_fin: e.target.value})}
+                      disabled={!canEdit && isEditModalOpen}
+                    />
+                  </div>
                 </div>
               </div>
 

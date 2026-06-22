@@ -247,11 +247,25 @@ export default function Cortes() {
         </div>
       </div>
 
-      <div className="glass-card" style={{ marginBottom: '2rem', padding: '1rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+      <div className="glass-card interactive-search-card" style={{ marginBottom: '2rem', padding: '0.75rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
         <Search size={20} color="#94a3b8" />
-        <input type="text" placeholder={t('cortes.search')}
+        <input 
+          type="text" 
+          placeholder={t('cortes.search')}
           style={{ width: '100%', background: 'transparent', border: 'none', color: 'var(--text-primary)', outline: 'none' }}
-          value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+          value={searchTerm} 
+          onChange={(e) => setSearchTerm(e.target.value)} 
+        />
+        {searchTerm && (
+          <button 
+            type="button" 
+            className="search-clear-btn" 
+            onClick={() => setSearchTerm('')}
+            title={isEn ? 'Clear search' : 'Limpiar búsqueda'}
+          >
+            <X size={16} />
+          </button>
+        )}
       </div>
 
       <div className="glass-card">
@@ -468,16 +482,16 @@ export default function Cortes() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div className="form-group">
                   <label className="form-label">{t('cortes.priceMaquila')}</label>
-                  <div style={{ position: 'relative' }}>
-                    <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#64748b', fontWeight: 500 }}>$</span>
-                    <input type="number" step="0.01" className="form-input" style={{ paddingLeft: '2rem' }} value={formData.precio} onChange={e => setFormData({ ...formData, precio: e.target.value })} />
+                  <div className="input-group-with-prefix">
+                    <span className="input-prefix-icon">$</span>
+                    <input type="number" step="0.01" className="form-input" value={formData.precio} onChange={e => setFormData({ ...formData, precio: e.target.value })} />
                   </div>
                 </div>
                 <div className="form-group">
                   <label className="form-label">{t('cortes.pricePlancha')}</label>
-                  <div style={{ position: 'relative' }}>
-                    <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#64748b', fontWeight: 500 }}>$</span>
-                    <input type="number" step="0.01" className="form-input" style={{ paddingLeft: '2rem' }} value={formData.precio_plancha} onChange={e => setFormData({ ...formData, precio_plancha: e.target.value })} />
+                  <div className="input-group-with-prefix">
+                    <span className="input-prefix-icon">$</span>
+                    <input type="number" step="0.01" className="form-input" value={formData.precio_plancha} onChange={e => setFormData({ ...formData, precio_plancha: e.target.value })} />
                   </div>
                 </div>
               </div>
