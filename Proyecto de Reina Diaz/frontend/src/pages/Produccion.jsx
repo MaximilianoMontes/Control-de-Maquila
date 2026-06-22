@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { 
   Plus, Search, Pencil, Trash2, CheckCircle, XCircle, 
   Archive, ArchiveRestore, Image as ImageIcon, AlertTriangle, AlertCircle, Calendar, X, Sparkles,
-  MinusCircle, MessageSquare, Split
+  MinusCircle, MessageSquare, Split, ChevronDown
 } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -40,6 +40,7 @@ export default function Produccion() {
   const userRole = (user?.role || user?.rol || '').toString().toLowerCase().trim();
   const canEdit = userRole === 'admin' || userRole === 'produccion1' || userRole === 'produccion2';
   const [orders, setOrders] = useState([]);
+  const [activeDropdownId, setActiveDropdownId] = useState(null);
   const [maquileros, setMaquileros] = useState([]);
   const [inventario, setInventario] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -103,6 +104,25 @@ export default function Produccion() {
 
     return () => clearInterval(interval);
   }, [verArchivados, location]);
+
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (!e.target.closest('.actions-dropdown-container')) {
+        setActiveDropdownId(null);
+      }
+    };
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') {
+        setActiveDropdownId(null);
+      }
+    };
+    document.addEventListener('click', handleOutsideClick);
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('click', handleOutsideClick);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, []);
 
   const fetchOrders = async () => {
     try {
@@ -497,34 +517,69 @@ export default function Produccion() {
                       </td>
                       <td>
                         <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'center' }}>
-                          {canEdit && (o.estado === 'En proceso' || o.estado === 'Terminado Parcial') && (
-                            <>
-                              <button className="btn btn-success" style={{ padding: '0.4rem' }} onClick={() => handleTerminar(o.id)} title="Terminar Orden"><CheckCircle size={16} /></button>
-                              <button className="btn" style={{ padding: '0.4rem', background: '#eab308', color: 'white' }} onClick={() => handleTerminarParcial(o.id)} title={t('prod.tooltipPartial')}><MinusCircle size={16} /></button>
-                              <button className="btn" style={{ padding: '0.4rem', background: '#8b5cf6', color: 'white' }} onClick={() => handleAddDay(o.id)} title="Agregar Prórroga (Días)"><Calendar size={16} /></button>
-                              <button className="btn btn-danger" style={{ padding: '0.4rem' }} onClick={() => handleCancelar(o.id)} title="Cancelar Orden"><XCircle size={16} /></button>
-                              <Link to={`/extras?newExtra=true&inventario_id=${o.inventario_id}&cantidad=${o.cantidad}&fecha_inicio=${formatDate(o.fecha_inicio)}&fecha_fin=${formatDate(o.fecha_fin)}`} className="btn" style={{ padding: '0.4rem', background: 'linear-gradient(135deg, #ec4899, #8b5cf6)', color: 'white', display: 'flex', alignItems: 'center' }} title="Crear Extra"><Sparkles size={16} /></Link>
-                              <button className="btn" style={{ padding: '0.4rem', background: '#3b82f6', color: 'white' }} onClick={() => openSplit(o)} title="Dividir / Devolución Parcial"><Split size={16} /></button>
-                            </>
-                          )}
                           {canEdit ? (
-                            <>
-                              <button className="btn btn-secondary" style={{ padding: '0.4rem', position: 'relative' }} onClick={() => handleOpenObs(o)} title="Notas / Observaciones">
-                                <MessageSquare size={16} />
-                                {o.observaciones && <span style={{ position: 'absolute', top: -2, right: -2, width: 8, height: 8, background: '#ef4444', borderRadius: '50%' }}></span>}
+                            <div className="actions-dropdown-container">
+                              <button 
+                                className="actions-dropdown-btn" 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setActiveDropdownId(activeDropdownId === o.id ? null : o.id);
+                                }}
+                              >
+                                {isEn ? 'Actions' : 'Acciones'} <ChevronDown size={14} />
                               </button>
-                              <button className="btn btn-secondary" style={{ padding: '0.4rem' }} onClick={() => { 
-                                setEditingOrder(o); 
-                                setFormData({ 
-                                  maquilero_id: o.maquilero_id, 
-                                  inventario_id: o.inventario_id, 
-                                  fecha_inicio: formatDate(o.fecha_inicio), 
-                                  fecha_fin: formatDate(o.fecha_fin) 
-                                }); 
-                                setIsEditModalOpen(true); 
-                              }} title="Editar"><Pencil size={16} /></button>
-                              <button className="btn btn-danger" style={{ padding: '0.4rem' }} onClick={() => handleDelete(o.id)} title="Eliminar"><Trash2 size={16} /></button>
-                            </>
+                              
+                              {activeDropdownId === o.id && (
+                                <div className={`actions-dropdown-menu ${index >= filteredOrders.length - 3 && filteredOrders.length > 3 ? 'open-upward' : ''}`}>
+                                  {/* Acciones principales en proceso */}
+                                  {(o.estado === 'En proceso' || o.estado === 'Terminado Parcial') && (
+                                    <>
+                                      <button className="actions-dropdown-item success" onClick={() => { setActiveDropdownId(null); handleTerminar(o.id); }}>
+                                        <CheckCircle size={16} /> {isEn ? 'Finish Order' : 'Terminar Orden'}
+                                      </button>
+                                      <button className="actions-dropdown-item warning" onClick={() => { setActiveDropdownId(null); handleTerminarParcial(o.id); }}>
+                                        <MinusCircle size={16} /> {t('prod.tooltipPartial') || (isEn ? 'Partial Pay' : 'Pago Parcial')}
+                                      </button>
+                                      <button className="actions-dropdown-item purple" onClick={() => { setActiveDropdownId(null); handleAddDay(o.id); }}>
+                                        <Calendar size={16} /> {isEn ? 'Add Extension' : 'Agregar Prórroga'}
+                                      </button>
+                                      <button className="actions-dropdown-item danger" onClick={() => { setActiveDropdownId(null); handleCancelar(o.id); }}>
+                                        <XCircle size={16} /> {isEn ? 'Cancel Order' : 'Cancelar Orden'}
+                                      </button>
+                                      <Link to={`/extras?newExtra=true&inventario_id=${o.inventario_id}&cantidad=${o.cantidad}&fecha_inicio=${formatDate(o.fecha_inicio)}&fecha_fin=${formatDate(o.fecha_fin)}`} className="actions-dropdown-item pink" onClick={() => setActiveDropdownId(null)}>
+                                        <Sparkles size={16} /> {isEn ? 'Create Extra' : 'Crear Extra'}
+                                      </Link>
+                                      <button className="actions-dropdown-item blue" onClick={() => { setActiveDropdownId(null); openSplit(o); }}>
+                                        <Split size={16} /> {isEn ? 'Split Order' : 'Dividir / Devolución'}
+                                      </button>
+                                      <div style={{ height: '1px', background: 'var(--border-color)', margin: '4px 0' }}></div>
+                                    </>
+                                  )}
+                                  
+                                  {/* Acciones generales siempre disponibles para editores */}
+                                  <button className="actions-dropdown-item" style={{ position: 'relative' }} onClick={() => { setActiveDropdownId(null); handleOpenObs(o); }}>
+                                    <MessageSquare size={16} /> {isEn ? 'Notes / Obs.' : 'Notas / Observaciones'}
+                                    {o.observaciones && <span style={{ position: 'absolute', top: 12, right: 12, width: 8, height: 8, background: '#ef4444', borderRadius: '50%' }}></span>}
+                                  </button>
+                                  <button className="actions-dropdown-item" onClick={() => { 
+                                    setActiveDropdownId(null);
+                                    setEditingOrder(o); 
+                                    setFormData({ 
+                                      maquilero_id: o.maquilero_id, 
+                                      inventario_id: o.inventario_id, 
+                                      fecha_inicio: formatDate(o.fecha_inicio), 
+                                      fecha_fin: formatDate(o.fecha_fin) 
+                                    }); 
+                                    setIsEditModalOpen(true); 
+                                  }}>
+                                    <Pencil size={16} /> {isEn ? 'Edit' : 'Editar'}
+                                  </button>
+                                  <button className="actions-dropdown-item danger" onClick={() => { setActiveDropdownId(null); handleDelete(o.id); }}>
+                                    <Trash2 size={16} /> {isEn ? 'Delete' : 'Eliminar'}
+                                  </button>
+                                </div>
+                              )}
+                            </div>
                           ) : (
                             <button className="btn btn-secondary" style={{ padding: '0.4rem' }} onClick={() => { setEditingOrder(o); setIsEditModalOpen(true); }} title="Ver Detalle"><Search size={16} /></button>
                           )}
