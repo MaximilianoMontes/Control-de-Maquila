@@ -364,8 +364,28 @@ export default function PlanchaBurros({
           if (match) selectedTalla = match[0];
         }
         if (!selectedTalla) {
-          selectedTalla = prompt(`El modelo ${modeloMatch.modelo} tiene varias tallas. Ingresa la talla a asignar:`);
-          if (!selectedTalla) {
+          const result = await Swal.fire({
+            title: isEn ? 'Select Size' : 'Seleccionar Talla',
+            text: isEn 
+              ? `The model ${modeloMatch.modelo} has multiple sizes. Enter the size to assign:` 
+              : `El modelo ${modeloMatch.modelo} tiene varias tallas. Ingresa la talla a asignar:`,
+            input: 'text',
+            showCancelButton: true,
+            confirmButtonText: isEn ? 'Assign' : 'Asignar',
+            cancelButtonText: isEn ? 'Cancel' : 'Cancelar',
+            confirmButtonColor: '#3b82f6',
+            cancelButtonColor: '#64748b',
+            background: '#1e293b',
+            color: '#f8fafc',
+            inputValidator: (value) => {
+              if (!value || !value.trim()) {
+                return isEn ? 'You must enter a size!' : '¡Debes ingresar una talla!';
+              }
+            }
+          });
+          if (result.isConfirmed) {
+            selectedTalla = result.value.trim();
+          } else {
             playBeep('error');
             return;
           }

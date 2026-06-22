@@ -6,6 +6,9 @@ import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import API_URL from '../config';
 
+import Swal from 'sweetalert2';
+import { toast } from 'react-toastify';
+
 const API = API_URL;
 
 const getImgSrc = (img) => img ? (img.startsWith('http') ? img : `${API}${img}`) : null;
@@ -19,7 +22,8 @@ const displayDate = (date) => {
 
 export default function Inventario() {
   const { user } = useAuth();
-  const { t, formatCurrency } = useSettings();
+  const { t, formatCurrency, settings } = useSettings();
+  const isEn = settings?.language === 'en';
   const userRole = (user?.role || user?.rol || '').toString().toLowerCase().trim();
   const canEdit = userRole === 'admin' || userRole === 'inventario1';
   
@@ -44,16 +48,33 @@ export default function Inventario() {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('¿Eliminar este producto del inventario general?')) return;
-    try {
-      const token = localStorage.getItem('token');
-      await axios.delete(`${API}/api/inventario_real/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      fetchItems();
-    } catch (e) {
-      alert('Error al eliminar: ' + (e.response?.data?.error || e.message));
-    }
+    Swal.fire({
+      title: isEn ? 'Delete product?' : '¿Eliminar producto?',
+      text: isEn 
+        ? 'Are you sure you want to delete this product from the general inventory?' 
+        : '¿Estás seguro de eliminar este producto del inventario general?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: isEn ? 'Yes, delete' : 'Sí, eliminar',
+      cancelButtonText: isEn ? 'Cancel' : 'Cancelar',
+      background: '#1e293b',
+      color: '#f8fafc'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const token = localStorage.getItem('token');
+          await axios.delete(`${API}/api/inventario_real/${id}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          fetchItems();
+          toast.success(isEn ? 'Product deleted successfully' : 'Producto eliminado correctamente', { theme: 'dark' });
+        } catch (e) {
+          toast.error((isEn ? 'Error deleting: ' : 'Error al eliminar: ') + (e.response?.data?.error || e.message), { theme: 'dark' });
+        }
+      }
+    });
   };
 
   const filteredItems = items.filter(item =>
