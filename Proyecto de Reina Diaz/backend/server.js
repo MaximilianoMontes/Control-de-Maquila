@@ -3088,12 +3088,16 @@ app.get('/api/plancha/disponibles', authenticateToken, async (req, res) => {
 
 const normalizeTalla = (t) => {
   if (!t) return "";
-  const cleaned = t.toString().replace(/^[a-zA-Z]+/g, '').trim();
-  if (/^\d$/.test(cleaned)) {
-    return "0" + cleaned;
+  let str = t.toString().trim().toUpperCase();
+  // Strip ALL leading T characters (handles TT07, T07, 07, 7, etc.)
+  str = str.replace(/^T+/i, '');
+  if (/^\d+$/.test(str)) {
+    return str.padStart(2, '0');
   }
-  return cleaned.toUpperCase();
+  return str;
 };
+
+
 
 // 8. ASIGNAR Y FINALIZAR TRABAJOS DE PLANCHA
 app.post('/api/plancha/asignar', authenticateToken, async (req, res) => {

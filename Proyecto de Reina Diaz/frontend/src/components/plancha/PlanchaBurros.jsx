@@ -47,33 +47,25 @@ export default function PlanchaBurros({
 
   const normalizeTalla = (t) => {
     if (!t) return "";
-    const cleaned = t.toString().replace(/^[a-zA-Z]+/g, '').trim();
-    if (/^\d$/.test(cleaned)) {
-      return "0" + cleaned;
+    let str = t.toString().trim().toUpperCase();
+    // Strip ALL leading T characters (handles TT07, T07, 07, 7, etc.)
+    str = str.replace(/^T+/i, '');
+    if (/^\d+$/.test(str)) {
+      return str.padStart(2, '0');
     }
-    return cleaned.toUpperCase();
+    return str;
   };
 
   const displayTalla = (talla) => {
     if (!talla) return "";
-    const tStr = talla.toString().trim();
-    if (/^[tT]/i.test(tStr)) {
-      const clean = tStr.substring(1).trim();
-      const num = parseInt(clean, 10);
-      if (!isNaN(num) && num < 10 && !clean.startsWith("0")) {
-        return 'T0' + num;
-      }
-      return tStr.toUpperCase();
+    // Always normalize first to get a clean numeric or letter string
+    const norm = normalizeTalla(talla); // e.g. "T07" -> "07", "07" -> "07", "7" -> "07"
+    if (/^\d+$/.test(norm)) {
+      return 'T' + norm; // Exactly one T prefix
     }
-    const num = parseInt(tStr, 10);
-    if (!isNaN(num)) {
-      if (num < 10 && !tStr.startsWith("0")) {
-        return 'T0' + num;
-      }
-      return 'T' + tStr;
-    }
-    return tStr;
+    return norm;
   };
+
 
   const sortTallasFunc = (a, b) => {
     const numA = parseInt(a, 10);
@@ -250,11 +242,21 @@ export default function PlanchaBurros({
         }
 
         if (tallasColoresObj && suffix) {
-          const availableColors = Object.keys(tallasColoresObj);
+          const availableColors = Object.keys(tallasColoresObj).filter(c => c); // skip empty-string color
+          // Sort colors longest first so more specific colors match before shorter ones
+          availableColors.sort((a, b) => b.length - a.length);
           for (const c of availableColors) {
-            const cPrefix3 = c.toUpperCase().substring(0, 3);
-            const cPrefix4 = c.toUpperCase().substring(0, 4);
-            if (suffix.includes(cPrefix4) || suffix.includes(cPrefix3)) {
+            const cUp = c.toUpperCase();
+            const cPrefix4 = cUp.substring(0, 4);
+            const cPrefix3 = cUp.substring(0, 3);
+            // Find where the color prefix appears in the suffix
+            let colorMatchEnd = -1;
+            if (cPrefix4.length >= 4 && suffix.includes(cPrefix4)) {
+              colorMatchEnd = suffix.indexOf(cPrefix4) + cPrefix4.length;
+            } else if (cPrefix3.length >= 3 && suffix.includes(cPrefix3)) {
+              colorMatchEnd = suffix.indexOf(cPrefix3) + cPrefix3.length;
+            }
+            if (colorMatchEnd !== -1) {
               decodedColor = c;
               break;
             }
@@ -266,9 +268,28 @@ export default function PlanchaBurros({
           const standardSizes = ['3', '5', '7', '9', '11', '13', '15', '17', '38', 'S', 'M', 'L', 'XL', 'UNI', '03', '05', '07', '09', 'T03', 'T05', 'T07', 'T09', 'T11', 'T13', 'T15', 'T17'];
           const availableTallasForColor = Array.from(new Set([...Object.keys(colorTallasObj), ...standardSizes]));
           const sortedTallas = [...availableTallasForColor].sort((a,b) => b.length - a.length);
+
+          // Build the portion of the suffix AFTER the matched color to avoid
+          // the color letters (e.g. the 'T' in 'EST') being confused with a talla prefix.
+          const cUp = decodedColor.toUpperCase();
+          const cPrefix4 = cUp.substring(0, 4);
+          const cPrefix3 = cUp.substring(0, 3);
+          let colorMatchEnd = 0;
+          if (cPrefix4.length >= 4 && suffix.includes(cPrefix4)) {
+            colorMatchEnd = suffix.indexOf(cPrefix4) + cPrefix4.length;
+          } else if (cPrefix3.length >= 3 && suffix.includes(cPrefix3)) {
+            colorMatchEnd = suffix.indexOf(cPrefix3) + cPrefix3.length;
+          }
+          // tallaSearchSuffix: prefer the part after the color; fallback to full suffix
+          const tallaSearchSuffix = colorMatchEnd > 0 ? suffix.substring(colorMatchEnd) : suffix;
+
           for (const t of sortedTallas) {
+            const tUp = t.toUpperCase();
             const tNorm = normalizeTalla(t);
-            if (suffix.includes(t.toUpperCase()) || suffix.includes(tNorm) || suffix.includes("0" + tNorm)) {
+            // Search in the suffix AFTER the color match first, then in full suffix as fallback
+            const inPost = tallaSearchSuffix.includes(tUp) || tallaSearchSuffix.includes(tNorm) || tallaSearchSuffix.includes('0' + tNorm);
+            const inFull = suffix.includes(tUp) || suffix.includes(tNorm) || suffix.includes('0' + tNorm);
+            if (inPost || inFull) {
               decodedTalla = t;
               break;
             }
