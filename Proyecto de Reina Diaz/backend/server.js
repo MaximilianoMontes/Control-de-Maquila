@@ -3026,8 +3026,8 @@ app.get('/api/plancha/disponibles', authenticateToken, async (req, res) => {
     const assignedLookup = {};
     assigned.forEach(a => {
       const colorKey = a.color || "";
-      const key = `${a.camion_detalles_id}_${a.talla}_${colorKey}`;
-      assignedLookup[key] = parseInt(a.total_piezas) || 0;
+      const key = `${a.camion_detalles_id}_${normalizeTalla(a.talla)}_${colorKey}`;
+      assignedLookup[key] = (assignedLookup[key] || 0) + (parseInt(a.total_piezas) || 0);
     });
 
     const result = models.map(m => {
@@ -3049,7 +3049,7 @@ app.get('/api/plancha/disponibles', authenticateToken, async (req, res) => {
         Object.entries(originalTallas).forEach(([color, tallasObj]) => {
           tallasColoresDisponibles[color] = {};
           Object.entries(tallasObj).forEach(([talla, cantidad]) => {
-            const key = `${m.id}_${talla}_${color}`;
+            const key = `${m.id}_${normalizeTalla(talla)}_${color}`;
             const gastado = assignedLookup[key] || 0;
             const disp = Math.max(0, parseInt(cantidad) - gastado);
             
@@ -3061,7 +3061,7 @@ app.get('/api/plancha/disponibles', authenticateToken, async (req, res) => {
       } else {
         tallasColoresDisponibles[""] = {};
         Object.entries(originalTallas).forEach(([talla, cantidad]) => {
-          const key = `${m.id}_${talla}_`;
+          const key = `${m.id}_${normalizeTalla(talla)}_`;
           const gastado = assignedLookup[key] || 0;
           const disp = Math.max(0, parseInt(cantidad) - gastado);
           
@@ -3089,8 +3089,10 @@ app.get('/api/plancha/disponibles', authenticateToken, async (req, res) => {
 const normalizeTalla = (t) => {
   if (!t) return "";
   const cleaned = t.toString().replace(/^[a-zA-Z]+/g, '').trim();
-  const num = parseInt(cleaned, 10);
-  return isNaN(num) ? t.toString().toUpperCase().trim() : num.toString();
+  if (/^\d$/.test(cleaned)) {
+    return "0" + cleaned;
+  }
+  return cleaned.toUpperCase();
 };
 
 // 8. ASIGNAR Y FINALIZAR TRABAJOS DE PLANCHA
