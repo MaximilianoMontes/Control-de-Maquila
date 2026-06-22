@@ -1,10 +1,24 @@
-import { History, Layers } from 'lucide-react';
+import { useState } from 'react';
+import { History, Layers, Search } from 'lucide-react';
 import { useSettings } from '../../context/SettingsContext';
 import API_URL from '../../config';
 
 export default function PlanchaHistorial({ historialGeneral, fetchHistorialGeneral }) {
   const { settings, formatCurrency } = useSettings();
   const isEn = settings.language === 'en';
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filteredHistorial = historialGeneral.filter(h => {
+    const term = searchTerm.toLowerCase();
+    return (
+      (h.modelo_nombre || '').toLowerCase().includes(term) ||
+      (h.no_orden || '').toLowerCase().includes(term) ||
+      (h.planchador_nombre || '').toLowerCase().includes(term) ||
+      (h.color || '').toLowerCase().includes(term) ||
+      (h.talla || '').toLowerCase().includes(term) ||
+      (h.burro_numero || '').toString().includes(term)
+    );
+  });
 
   return (
     <div className="glass-card">
@@ -14,6 +28,19 @@ export default function PlanchaHistorial({ historialGeneral, fetchHistorialGener
         </h2>
         <button className="btn btn-secondary" onClick={fetchHistorialGeneral}>{isEn ? 'Refresh History' : 'Refrescar Historial'}</button>
       </div>
+
+      <div className="glass-card" style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem', background: 'rgba(255, 255, 255, 0.02)' }}>
+        <Search size={20} color="#64748b" />
+        <input 
+          type="text" 
+          className="form-input" 
+          style={{ border: 'none', background: 'transparent', padding: '0.5rem', width: '100%', outline: 'none', fontSize: '0.95rem' }} 
+          placeholder={isEn ? 'Search by model, order, color, size, or ironer...' : 'Buscar por modelo, orden, color, talla o planchador...'} 
+          value={searchTerm} 
+          onChange={e => setSearchTerm(e.target.value)} 
+        />
+      </div>
+
       <div className="table-wrapper">
         <table className="data-table">
           <thead>
@@ -32,14 +59,14 @@ export default function PlanchaHistorial({ historialGeneral, fetchHistorialGener
             </tr>
           </thead>
           <tbody>
-            {historialGeneral.length === 0 ? (
+            {filteredHistorial.length === 0 ? (
               <tr>
                 <td colSpan="11" style={{ textAlign: 'center', color: 'var(--text-muted, #94a3b8)', padding: '3rem' }}>
-                  {isEn ? 'No ironing records in general history.' : 'No hay registros de planchado en el historial general.'}
+                  {isEn ? 'No matching ironing records found.' : 'No se encontraron registros de planchado coincidentes.'}
                 </td>
               </tr>
             ) : (
-              historialGeneral.map(h => (
+              filteredHistorial.map(h => (
                 <tr key={h.id}>
                   <td>{new Date(h.fecha_terminado || h.fecha_creacion).toLocaleString(isEn ? 'en-US' : 'es-MX')}</td>
                   <td>
