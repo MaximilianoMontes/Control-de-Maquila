@@ -3088,8 +3088,9 @@ app.get('/api/plancha/disponibles', authenticateToken, async (req, res) => {
 
 const normalizeTalla = (t) => {
   if (!t) return "";
-  const num = parseInt(t, 10);
-  return isNaN(num) ? t.trim() : num.toString();
+  const cleaned = t.toString().replace(/^[a-zA-Z]+/g, '').trim();
+  const num = parseInt(cleaned, 10);
+  return isNaN(num) ? t.toString().toUpperCase().trim() : num.toString();
 };
 
 // 8. ASIGNAR Y FINALIZAR TRABAJOS DE PLANCHA
