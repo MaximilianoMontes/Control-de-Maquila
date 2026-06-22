@@ -1412,6 +1412,87 @@ async function initializeDatabase() {
       console.error('Error al revertir división de modelo 752996 V2:', e);
     }
 
+    // Revert incorrect split of model 752996 - Version 3 (Robust restore with Paula's active order)
+    try {
+      const [run] = await connection.query("SELECT 1 FROM migrations_run WHERE migration_name = 'revert_split_model_752996_v3'");
+      if (run.length === 0) {
+        console.log('--- MIGRACIÓN MANUAL V3: Revertir división incorrecta de modelo 752996 ---');
+
+        // 1. Find Jairo's order dynamically
+        const [jairoRows] = await connection.query(`
+          SELECT p.id 
+          FROM produccion p
+          JOIN maquileros m ON p.maquilero_id = m.id
+          JOIN inventario i ON p.inventario_id = i.id
+          WHERE i.modelo = '752996' AND m.nombre LIKE '%Jairo%'
+        `);
+        const jairoOrderId = jairoRows.length > 0 ? jairoRows[0].id : 51;
+
+        console.log(`Restoring Jairo's production order ID ${jairoOrderId} to 151 pieces (Terminado)...`);
+        await connection.query(`
+          UPDATE produccion 
+          SET cantidad = 151, 
+              cantidad_recibida = 151, 
+              precio_total = 7550.00, 
+              estado = 'Terminado',
+              fecha_terminado = CURRENT_TIMESTAMP,
+              archivado = 0
+          WHERE id = ?
+        `, [jairoOrderId]);
+
+        // 2. Find Paula's order dynamically
+        const [paulaRows] = await connection.query(`
+          SELECT p.id 
+          FROM produccion p
+          JOIN maquileros m ON p.maquilero_id = m.id
+          JOIN inventario i ON p.inventario_id = i.id
+          WHERE i.modelo = '752996' AND m.nombre LIKE '%Paula%'
+        `);
+
+        // Find inventario and maquilero info
+        const [invRows] = await connection.query("SELECT id FROM inventario WHERE modelo = '752996'");
+        const invId = invRows.length > 0 ? invRows[0].id : 54;
+
+        const [maqRows] = await connection.query("SELECT id FROM maquileros WHERE nombre LIKE '%Paula%'");
+        const paulaMaqId = maqRows.length > 0 ? maqRows[0].id : 21;
+
+        if (paulaRows.length === 0) {
+          console.log(`Creating Paula's production order for 65 pieces (En proceso)...`);
+          await connection.query(`
+            INSERT INTO produccion (maquilero_id, inventario_id, cantidad, cantidad_recibida, precio_total, fecha_inicio, fecha_fin, estado, archivado)
+            VALUES (?, ?, 65, NULL, ?, '2026-05-22', '2026-06-02', 'En proceso', 0)
+          `, [paulaMaqId, invId, 65 * 50.00]);
+        } else {
+          console.log(`Updating existing Paula's production order ID ${paulaRows[0].id} to 65 pieces (En proceso)...`);
+          await connection.query(`
+            UPDATE produccion 
+            SET cantidad = 65, 
+                cantidad_recibida = NULL, 
+                precio_total = ?, 
+                estado = 'En proceso', 
+                archivado = 0 
+            WHERE id = ?
+          `, [65 * 50.00, paulaRows[0].id]);
+        }
+
+        // 3. Make sure the inventory cut for model '752996' is NOT marked as en_inventario = 1
+        await connection.query("UPDATE inventario SET en_inventario = 0 WHERE id = ?", [invId]);
+        console.log("Inventory cut restored to en_inventario = 0");
+
+        // Insert log in history
+        await connection.query(`
+          INSERT INTO historial (user_id, action, target, description) 
+          VALUES (1, 'EDIT', 'PRODUCCION', 'Restauró división correcta del modelo 752996: Jairo 151 pzas (Terminado) y Paula 65 pzas (En proceso)')
+        `);
+
+        // Register migration V3
+        await connection.query("INSERT INTO migrations_run (migration_name) VALUES ('revert_split_model_752996_v3')");
+        console.log('--- FIN DE MIGRACIÓN MANUAL V3: Revertir división completado ---');
+      }
+    } catch (e) {
+      console.error('Error al revertir división de modelo 752996 V3:', e);
+    }
+
     try {
       await connection.query(`
         CREATE TABLE IF NOT EXISTS calendario_eventos (

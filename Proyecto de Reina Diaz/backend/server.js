@@ -133,23 +133,35 @@ const checkAndMoveToInventory = async (produccionId, userId) => {
       return;
     }
 
-    // If the production order is archived, we hide the cut from Cortes
-    if (prod.archivado >= 1) {
+    // A cut is complete (en_inventario = 1) if all production orders for it are archived (archivado >= 1)
+    const [ordersStatus] = await connection.query(`
+      SELECT 
+        COUNT(*) as total_orders,
+        SUM(CASE WHEN archivado >= 1 THEN 1 ELSE 0 END) as archived_orders
+      FROM produccion
+      WHERE inventario_id = ?
+    `, [prod.cut_id]);
+
+    const totalOrders = ordersStatus[0].total_orders || 0;
+    const archivedOrders = ordersStatus[0].archived_orders || 0;
+    const shouldBeInInventory = totalOrders > 0 && totalOrders === archivedOrders;
+
+    if (shouldBeInInventory) {
       if (prod.en_inventario !== 1) {
         await connection.query("UPDATE inventario SET en_inventario = 1 WHERE id = ?", [prod.cut_id]);
         
-        const desc = `Marcó el modelo ${prod.modelo} como completado (oculto en Cortes) por liquidación de Orden #${produccionId}`;
+        const desc = `Marcó el modelo ${prod.modelo} como completado (oculto en Cortes) por liquidación de todas sus órdenes`;
         await connection.query(
           "INSERT INTO historial (user_id, action, target, description) VALUES (?, 'EDIT', 'INVENTARIO', ?)",
           [userId || 1, desc]
         );
       }
     } else {
-      // If the production order is NOT archived, we make the cut visible in Cortes
+      // If there are active production orders, we make the cut visible in Cortes
       if (prod.en_inventario === 1) {
         await connection.query("UPDATE inventario SET en_inventario = 0 WHERE id = ?", [prod.cut_id]);
 
-        const desc = `Restauró el modelo ${prod.modelo} a Cortes debido a desarchivado de la Orden #${produccionId}`;
+        const desc = `Restauró el modelo ${prod.modelo} a Cortes debido a que tiene órdenes de producción activas`;
         await connection.query(
           "INSERT INTO historial (user_id, action, target, description) VALUES (?, 'EDIT', 'INVENTARIO', ?)",
           [userId || 1, desc]
