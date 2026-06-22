@@ -17,6 +17,7 @@ import { useSettings } from '../../context/SettingsContext';
 import API_URL from '../../config';
 import Swal from 'sweetalert2';
 import { toast } from 'react-toastify';
+import ImageZoom from '../ImageZoom';
 
 export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) {
   const { settings, formatCurrency } = useSettings();
@@ -849,11 +850,10 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
               <div style={{ display: 'flex', gap: '1rem', alignItems: 'stretch' }}>
                 {analisisData.modelo_imagen && (
                   <div style={{ width: '100px', flexShrink: 0, borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border-color)', background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <img 
-                      src={`${API_URL}${analisisData.modelo_imagen}`} 
-                      alt="Modelo" 
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                      onError={(e) => { e.target.style.display = 'none'; e.target.parentElement.style.display = 'none'; }}
+                    <ImageZoom
+                      src={`${API_URL}${analisisData.modelo_imagen}`}
+                      alt="Modelo"
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />
                   </div>
                 )}
@@ -936,10 +936,10 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                           {t.modelo_imagen ? (
-                            <img 
-                              src={`${API_URL}${t.modelo_imagen}`} 
-                              alt={t.modelo_nombre} 
-                              style={{ width: '28px', height: '28px', borderRadius: '4px', objectFit: 'contain', background: 'var(--bg-card)' }} 
+                            <ImageZoom
+                              src={`${API_URL}${t.modelo_imagen}`}
+                              alt={t.modelo_nombre}
+                              style={{ width: '28px', height: '28px', borderRadius: '4px', objectFit: 'contain', background: 'var(--bg-card)' }}
                             />
                           ) : null}
                           <strong>{t.modelo_nombre || t.color}</strong>

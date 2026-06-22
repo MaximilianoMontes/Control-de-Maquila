@@ -14,6 +14,7 @@ import { useSettings } from '../../context/SettingsContext';
 import API_URL from '../../config';
 import Swal from 'sweetalert2';
 import { toast } from 'react-toastify';
+import ImageZoom from '../ImageZoom';
 
 export default function PlanchaModelos({ modelosCamion, fetchModelosCamion, fetchModelosDisponibles, userRole }) {
   const { settings, formatCurrency } = useSettings();
@@ -255,17 +256,16 @@ export default function PlanchaModelos({ modelosCamion, fetchModelosCamion, fetc
 
                       {/* Imagen y Detalles del modelo */}
                       <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                        {m.imagen ? (
-                          <img 
-                            src={`${API_URL}${m.imagen}`} 
-                            alt={m.modelo} 
-                            style={{ width: '60px', height: '60px', borderRadius: '8px', objectFit: 'contain', background: 'var(--bg-card)' }} 
-                          />
-                        ) : (
-                          <div style={{ width: '60px', height: '60px', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <Layers size={24} color="#64748b" />
-                          </div>
-                        )}
+                        <ImageZoom
+                          src={m.imagen ? `${API_URL}${m.imagen}` : null}
+                          alt={m.modelo}
+                          style={{ width: '60px', height: '60px', borderRadius: '8px', objectFit: 'contain', background: 'var(--bg-card)' }}
+                          fallback={
+                            <div style={{ width: '60px', height: '60px', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <Layers size={24} color="#64748b" />
+                            </div>
+                          }
+                        />
                         <div>
                           <h3 style={{ margin: 0, fontSize: '1.3rem' }}>{isEn ? 'Model' : 'Modelo'} {m.modelo}</h3>
                           <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '4px' }}>

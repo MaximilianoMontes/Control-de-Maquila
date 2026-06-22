@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { History, Layers, Search } from 'lucide-react';
 import { useSettings } from '../../context/SettingsContext';
 import API_URL from '../../config';
+import ImageZoom from '../ImageZoom';
 
 export default function PlanchaHistorial({ historialGeneral, fetchHistorialGeneral }) {
   const { settings, formatCurrency } = useSettings();
@@ -70,17 +71,16 @@ export default function PlanchaHistorial({ historialGeneral, fetchHistorialGener
                 <tr key={h.id}>
                   <td>{new Date(h.fecha_terminado || h.fecha_creacion).toLocaleString(isEn ? 'en-US' : 'es-MX')}</td>
                   <td>
-                    {h.modelo_imagen ? (
-                      <img 
-                        src={`${API_URL}${h.modelo_imagen}`} 
-                        alt={h.modelo_nombre} 
-                        style={{ width: '40px', height: '40px', borderRadius: '6px', objectFit: 'contain', background: 'var(--bg-card)' }} 
-                      />
-                    ) : (
-                      <div style={{ width: '40px', height: '40px', borderRadius: '6px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <Layers size={18} color="#64748b" />
-                      </div>
-                    )}
+                    <ImageZoom
+                      src={h.modelo_imagen ? `${API_URL}${h.modelo_imagen}` : null}
+                      alt={h.modelo_nombre}
+                      style={{ width: '40px', height: '40px', borderRadius: '6px', objectFit: 'contain', background: 'var(--bg-card)' }}
+                      fallback={
+                        <div style={{ width: '40px', height: '40px', borderRadius: '6px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <Layers size={18} color="#64748b" />
+                        </div>
+                      }
+                    />
                   </td>
                   <td>
                     <strong>{h.modelo_nombre}</strong>

@@ -11,6 +11,7 @@ import { useSettings } from '../../context/SettingsContext';
 import API_URL from '../../config';
 import Swal from 'sweetalert2';
 import { toast } from 'react-toastify';
+import ImageZoom from '../ImageZoom';
 
 export default function PlanchaBurros({ 
   burrosState, 
@@ -871,11 +872,14 @@ export default function PlanchaBurros({
                 onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.borderColor = 'var(--primary-color, #0ea5e9)'; }}
                 onMouseOut={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = 'var(--border-color)'; }}
               >
-                {m.imagen ? (
-                  <img src={`${API_URL}${m.imagen}`} style={{ width: '60px', height: '80px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--border-color)' }} />
-                ) : (
-                  <div style={{ width: '60px', height: '80px', background: 'var(--bg-input)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Layers color="#cbd5e1" /></div>
-                )}
+                <ImageZoom
+                  src={m.imagen ? `${API_URL}${m.imagen}` : null}
+                  alt={m.modelo}
+                  style={{ width: '60px', height: '80px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--border-color)' }}
+                  fallback={
+                    <div style={{ width: '60px', height: '80px', background: 'var(--bg-input)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Layers color="#cbd5e1" /></div>
+                  }
+                />
                 <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                   <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
