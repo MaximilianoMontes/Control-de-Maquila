@@ -244,7 +244,7 @@ export default function PlanchaPlanchadores({ planchadores, fetchPlanchadores })
             backdropFilter: 'blur(8px)' 
           }}
         >
-          <div className="glass-card" style={{ width: '95%', maxWidth: '660px', height: '96vh', maxHeight: '96vh', overflowY: 'auto', padding: '1.2rem 1.4rem', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.1)' }}>
+          <div className="glass-card" style={{ width: '90%', maxWidth: '950px', maxHeight: '82vh', overflowY: 'auto', padding: '1.2rem 1.4rem', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.1)' }}>
             
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
               <div>
