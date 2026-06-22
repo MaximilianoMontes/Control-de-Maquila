@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { Plus, X, UploadCloud, Search, Image as ImageIcon, Pencil, Trash2, RefreshCw, MessageSquare, PlusCircle } from 'lucide-react';
+import { Plus, X, UploadCloud, Search, Image as ImageIcon, Pencil, Trash2, RefreshCw, MessageSquare, PlusCircle, ChevronDown } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
@@ -35,11 +35,31 @@ export default function Cortes() {
   const [editImageUrl, setEditImageUrl] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [activeDropdownId, setActiveDropdownId] = useState(null);
 
   useEffect(() => {
     fetchItems();
     const interval = setInterval(fetchItems, 2000); // Auto-refresca cada 2 segundos en segundo plano
     return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (!e.target.closest('.actions-dropdown-container')) {
+        setActiveDropdownId(null);
+      }
+    };
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') {
+        setActiveDropdownId(null);
+      }
+    };
+    document.addEventListener('click', handleOutsideClick);
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('click', handleOutsideClick);
+      document.removeEventListener('keydown', handleEscape);
+    };
   }, []);
 
   const fetchItems = async () => {
@@ -255,7 +275,7 @@ export default function Cortes() {
               {filteredItems.length === 0 ? (
                 <tr><td colSpan={10} style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>{t('cortes.noResults')}</td></tr>
               ) : (
-                filteredItems.map(item => {
+                filteredItems.map((item, index) => {
                   const total = (parseFloat(item.precio) || 0) * (parseInt(item.piezas_en_proceso) || 0);
                   const imgSrc = getImgSrc(item.imagen);
                   return (
@@ -316,30 +336,68 @@ export default function Cortes() {
                       <td style={{ fontWeight: 700, fontSize: '1.1rem' }}>{item.piezas_en_proceso}</td>
                       <td style={{ fontWeight: 700, color: '#2563eb' }}>{formatCurrency(total)}</td>
                       <td>
-                        <div style={{ display: 'flex', gap: '0.5rem' }}>
-                          {item.observaciones && (
-                            <div className="tooltip-container" style={{ marginRight: '0.2rem' }}>
-                              <MessageSquare size={18} color="#64748b" />
-                              <div className="tooltip-box">{item.observaciones}</div>
-                            </div>
-                          )}
-                          {canEdit ? (
-                            <>
-                              <button className="btn-icon" onClick={(e) => openEdit(item, e)} title="Editar"><Pencil size={18} /></button>
-                              <button className="btn-icon" onClick={(e) => openReprogram(item, e)} title="Reprogramar" style={{ color: '#8b5cf6' }}><RefreshCw size={18} /></button>
-                              {(item.piezas_en_proceso > 0 ? item.total_asignado < item.piezas_en_proceso : item.producciones_count === 0) && (
-                                <button className="btn-icon" onClick={(e) => { e.stopPropagation(); navigate(`/produccion?productId=${item.id}`); }} title="Iniciar Producción" style={{ color: '#10b981' }}><PlusCircle size={18} /></button>
-                              )}
-                              <button className="btn-icon" onClick={(e) => handleDelete(item.id, e)} title="Eliminar" style={{ color: '#ef4444' }}><Trash2 size={18} /></button>
-                            </>
-                          ) : (
-                            <>
-                              {(item.piezas_en_proceso > 0 ? item.total_asignado < item.piezas_en_proceso : item.producciones_count === 0) && (
-                                <button className="btn-icon" onClick={(e) => { e.stopPropagation(); navigate(`/produccion?productId=${item.id}`); }} title="Iniciar Producción" style={{ color: '#10b981' }}><PlusCircle size={18} /></button>
-                              )}
-                              <button className="btn-icon" onClick={(e) => { e.stopPropagation(); openEdit(item, e); }} title="Ver Detalles"><Search size={18} /></button>
-                            </>
-                          )}
+                        <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'center' }}>
+                          <div className="actions-dropdown-container">
+                            <button 
+                              className="actions-dropdown-btn" 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveDropdownId(activeDropdownId === item.id ? null : item.id);
+                              }}
+                            >
+                              {isEn ? 'Actions' : 'Acciones'} <ChevronDown size={14} />
+                            </button>
+                            
+                            {activeDropdownId === item.id && (
+                              <div className={`actions-dropdown-menu ${index >= filteredItems.length - 3 && filteredItems.length > 3 ? 'open-upward' : ''}`}>
+                                {/* Iniciar Producción */}
+                                {(item.piezas_en_proceso > 0 ? item.total_asignado < item.piezas_en_proceso : item.producciones_count === 0) && (
+                                  <button className="actions-dropdown-item success" onClick={() => { setActiveDropdownId(null); navigate(`/produccion?productId=${item.id}`); }}>
+                                    <PlusCircle size={16} /> {isEn ? 'Start Production' : 'Iniciar Producción'}
+                                  </button>
+                                )}
+
+                                {/* Reprogramar (Solo Editores) */}
+                                {canEdit && (
+                                  <button className="actions-dropdown-item purple" onClick={(e) => { setActiveDropdownId(null); openReprogram(item, e); }}>
+                                    <RefreshCw size={16} /> {isEn ? 'Reprogram' : 'Reprogramar'}
+                                  </button>
+                                )}
+
+                                {/* Observaciones (Si existen) */}
+                                {item.observaciones && (
+                                  <button className="actions-dropdown-item" onClick={() => { 
+                                    setActiveDropdownId(null); 
+                                    Swal.fire({
+                                      title: isEn ? 'Observations' : 'Observaciones',
+                                      text: item.observaciones,
+                                      icon: 'info',
+                                      confirmButtonColor: '#3b82f6',
+                                      confirmButtonText: 'OK',
+                                      background: '#1e293b',
+                                      color: '#f8fafc'
+                                    });
+                                  }}>
+                                    <MessageSquare size={16} color="#64748b" /> {isEn ? 'Observations' : 'Observaciones'}
+                                  </button>
+                                )}
+
+                                <div style={{ height: '1px', background: 'var(--border-color)', margin: '4px 0' }}></div>
+
+                                {/* Editar / Ver Detalles */}
+                                <button className="actions-dropdown-item" onClick={(e) => { setActiveDropdownId(null); openEdit(item, e); }}>
+                                  <Pencil size={16} /> {canEdit ? (isEn ? 'Edit' : 'Editar') : (isEn ? 'View Details' : 'Ver Detalles')}
+                                </button>
+
+                                {/* Eliminar (Solo Editores) */}
+                                {canEdit && (
+                                  <button className="actions-dropdown-item danger" onClick={(e) => { setActiveDropdownId(null); handleDelete(item.id, e); }}>
+                                    <Trash2 size={16} /> {isEn ? 'Delete' : 'Eliminar'}
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </td>
                     </tr>
