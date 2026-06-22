@@ -244,12 +244,12 @@ export default function PlanchaPlanchadores({ planchadores, fetchPlanchadores })
             backdropFilter: 'blur(8px)' 
           }}
         >
-          <div className="glass-card" style={{ width: '90%', maxWidth: '800px', maxHeight: '90vh', overflowY: 'auto', padding: '2rem', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.1)' }}>
+          <div className="glass-card" style={{ width: '95%', maxWidth: '660px', maxHeight: '90vh', overflowY: 'auto', padding: '1.2rem 1.4rem', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.1)' }}>
             
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
               <div>
-                <h2 style={{ margin: 0, fontSize: '1.6rem' }}>{isEn ? 'Ironing History' : 'Historial de Planchado'}</h2>
-                <p style={{ margin: '0.2rem 0 0 0', color: '#60a5fa', fontWeight: 'bold' }}>👤 {planchadorDetalle.nombre}</p>
+                <h2 style={{ margin: 0, fontSize: '1.25rem' }}>{isEn ? 'Ironing History' : 'Historial de Planchado'}</h2>
+                <p style={{ margin: '0.1rem 0 0 0', color: '#60a5fa', fontWeight: 'bold', fontSize: '0.82rem' }}>👤 {planchadorDetalle.nombre}</p>
               </div>
               <button 
                 onClick={() => {
@@ -264,48 +264,48 @@ export default function PlanchaPlanchadores({ planchadores, fetchPlanchadores })
             </div>
 
             <div className="table-wrapper">
-              <table className="data-table">
+              <table className="data-table" style={{ fontSize: '0.78rem' }}>
                 <thead>
                   <tr>
-                    <th>{isEn ? 'Photo' : 'Foto'}</th>
-                    <th>{isEn ? 'Model' : 'Modelo'}</th>
-                    <th>{isEn ? 'Color' : 'Color'}</th>
-                    <th>{isEn ? 'Size' : 'Talla'}</th>
-                    <th>{isEn ? 'Ironed-Pcs' : 'Pzas-Planchadas'}</th>
-                    <th>{isEn ? 'Net' : 'Neto'}</th>
-                    <th>{isEn ? 'Fixed Pay' : 'Pago Fijo'}</th>
-                    <th>{isEn ? 'Total' : 'Total'}</th>
+                    <th style={{ padding: '6px 4px', width: '36px' }}>{isEn ? 'Foto' : 'Foto'}</th>
+                    <th style={{ padding: '6px 6px' }}>{isEn ? 'Model' : 'Modelo'}</th>
+                    <th style={{ padding: '6px 4px' }}>{isEn ? 'Color' : 'Color'}</th>
+                    <th style={{ padding: '6px 4px' }}>{isEn ? 'Size' : 'Talla'}</th>
+                    <th style={{ padding: '6px 4px', textAlign: 'center' }}>{isEn ? 'Pzas' : 'Pzas'}</th>
+                    <th style={{ padding: '6px 4px', textAlign: 'right' }}>{isEn ? 'Neto' : 'Neto'}</th>
+                    <th style={{ padding: '6px 4px', textAlign: 'right' }}>{isEn ? 'P.Fijo' : 'P.Fijo'}</th>
+                    <th style={{ padding: '6px 4px', textAlign: 'right' }}>{isEn ? 'Total' : 'Total'}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {planchadorDetalle.historial.length === 0 ? (
-                    <tr><td colSpan="8" style={{ textAlign: 'center', color: 'var(--text-muted, #94a3b8)' }}>{isEn ? 'This ironer has no registered completed jobs.' : 'Este planchador no tiene trabajos terminados registrados.'}</td></tr>
+                    <tr><td colSpan="8" style={{ textAlign: 'center', color: 'var(--text-muted, #94a3b8)', padding: '1rem' }}>{isEn ? 'This ironer has no registered completed jobs.' : 'Este planchador no tiene trabajos terminados registrados.'}</td></tr>
                   ) : (
                     planchadorDetalle.historial.map(h => (
                       <tr key={h.id}>
-                        <td>
+                        <td style={{ padding: '4px' }}>
                           {h.modelo_imagen ? (
                             <img 
                               src={`${API_URL}${h.modelo_imagen}`} 
                               alt={h.modelo_nombre} 
-                              style={{ width: '40px', height: '40px', borderRadius: '6px', objectFit: 'contain', background: 'var(--bg-card)' }} 
+                              style={{ width: '32px', height: '32px', borderRadius: '5px', objectFit: 'contain', background: 'var(--bg-card)', display: 'block' }} 
                             />
                           ) : (
-                            <div style={{ width: '40px', height: '40px', borderRadius: '6px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                              <Layers size={18} color="#64748b" />
+                            <div style={{ width: '32px', height: '32px', borderRadius: '5px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <Layers size={14} color="#64748b" />
                             </div>
                           )}
                         </td>
-                        <td>
-                          <strong>{h.modelo_nombre}</strong>
-                          <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{isEn ? 'Order' : 'Orden'}: {h.no_orden || 'N/A'}</p>
+                        <td style={{ padding: '4px 6px' }}>
+                          <strong style={{ fontSize: '0.8rem' }}>{h.modelo_nombre}</strong>
+                          <div style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', marginTop: '1px' }}>{isEn ? 'Order' : 'Orden'}: {h.no_orden || 'N/A'}</div>
                         </td>
-                        <td>{h.color || 'N/A'}</td>
-                        <td><span className="badge badge-info">{isEn ? 'S' : 'T'}{h.talla}</span></td>
-                        <td>{h.piezas}</td>
-                        <td style={{ color: '#34d399', fontWeight: 'bold' }}>{formatCurrency(h.neto)}</td>
-                        <td>{formatCurrency(h.ajuste)}</td>
-                        <td style={{ color: '#60a5fa', fontWeight: 'bold' }}>{formatCurrency(h.total)}</td>
+                        <td style={{ padding: '4px', whiteSpace: 'nowrap' }}>{h.color || '—'}</td>
+                        <td style={{ padding: '4px' }}><span className="badge badge-info" style={{ fontSize: '0.68rem', padding: '2px 5px' }}>{isEn ? 'S' : 'T'}{h.talla}</span></td>
+                        <td style={{ padding: '4px', textAlign: 'center' }}>{h.piezas}</td>
+                        <td style={{ padding: '4px', color: '#34d399', fontWeight: 'bold', textAlign: 'right', whiteSpace: 'nowrap' }}>{formatCurrency(h.neto)}</td>
+                        <td style={{ padding: '4px', textAlign: 'right', whiteSpace: 'nowrap' }}>{formatCurrency(h.ajuste)}</td>
+                        <td style={{ padding: '4px', color: '#60a5fa', fontWeight: 'bold', textAlign: 'right', whiteSpace: 'nowrap' }}>{formatCurrency(h.total)}</td>
                       </tr>
                     ))
                   )}
