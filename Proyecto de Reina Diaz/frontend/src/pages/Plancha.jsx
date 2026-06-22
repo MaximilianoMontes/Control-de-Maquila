@@ -32,6 +32,17 @@ import { useAuth } from '../context/AuthContext';
 import API_URL from '../config';
 import PlanchaSidebar from '../components/PlanchaSidebar';
 import Header from '../components/Header';
+import Swal from 'sweetalert2';
+import { toast } from 'react-toastify';
+
+const alert = (msg) => {
+  const lower = String(msg).toLowerCase();
+  if (lower.includes('éxito') || lower.includes('correctamente') || lower.includes('registrado') || lower.includes('actualizado') || lower.includes('eliminado') || lower.includes('aplicado') || lower.includes('éxitoso')) {
+    toast.success(msg, { theme: 'dark' });
+  } else {
+    toast.error(msg, { theme: 'dark' });
+  }
+};
 
 // Tallas asociadas a cada burro (1 al 12)
 const BURROS_TALLAS = {
@@ -818,18 +829,32 @@ export default function Plancha() {
   };
 
   const handleEliminarPlanchador = async (id) => {
-    if (!window.confirm('¿Estás seguro de que deseas eliminar este planchador?')) return;
-    try {
-      const token = localStorage.getItem('token');
-      await axios.delete(`${API_URL}/api/planchadores/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      fetchPlanchadores();
-      alert('Planchador eliminado');
-    } catch (e) {
-      console.error(e);
-      alert('Error al eliminar planchador');
-    }
+    Swal.fire({
+      title: '¿Eliminar este planchador?',
+      text: 'Esta acción no se puede deshacer.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+      background: '#1e293b',
+      color: '#f8fafc'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const token = localStorage.getItem('token');
+          await axios.delete(`${API_URL}/api/planchadores/${id}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          fetchPlanchadores();
+          toast.success('Planchador eliminado', { theme: 'dark' });
+        } catch (e) {
+          console.error(e);
+          toast.error('Error al eliminar planchador', { theme: 'dark' });
+        }
+      }
+    });
   };
 
   const handleVerHistorialPlanchador = async (id) => {
@@ -1204,73 +1229,137 @@ export default function Plancha() {
   };
 
   const handleDeleteTrabajo = async (id) => {
-    if (!window.confirm("¿Estás seguro de eliminar este trabajo? Las piezas regresarán a estar pendientes.")) return;
-    try {
-      const token = localStorage.getItem('token');
-      await axios.delete(`${API_URL}/api/plancha/trabajos/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (pagoPlanchadorId) {
-        handleCargarPagosPlanchador(pagoPlanchadorId);
+    Swal.fire({
+      title: '¿Eliminar este trabajo?',
+      text: 'Las piezas regresarán a estar pendientes.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+      background: '#1e293b',
+      color: '#f8fafc'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const token = localStorage.getItem('token');
+          await axios.delete(`${API_URL}/api/plancha/trabajos/${id}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (pagoPlanchadorId) {
+            handleCargarPagosPlanchador(pagoPlanchadorId);
+          }
+          fetchModelosDisponibles();
+          toast.success('Trabajo eliminado', { theme: 'dark' });
+        } catch (e) {
+          console.error(e);
+          toast.error(e.response?.data?.error || 'Error al eliminar', { theme: 'dark' });
+        }
       }
-      fetchModelosDisponibles();
-    } catch (e) {
-      console.error(e);
-      alert(e.response?.data?.error || 'Error al eliminar');
-    }
+    });
   };
 
   const handleRegistrarPago = async (e) => {
     e.preventDefault();
     if (!pagoPlanchadorId || !montoPago || parseFloat(montoPago) <= 0 || pagoSubmitting) return;
-    try {
-      setPagoSubmitting(true);
-      const token = localStorage.getItem('token');
-      await axios.post(`${API_URL}/api/plancha/pagos`, {
-        planchador_id: pagoPlanchadorId,
-        monto: parseFloat(montoPago),
-        tipo_pago: 'completo' // Siempre completo
-      }, { headers: { Authorization: `Bearer ${token}` } });
 
-      setMontoPago('');
-      handleCargarPagosPlanchador(pagoPlanchadorId);
-      alert('Pago registrado correctamente');
-    } catch (e) {
-      console.error(e);
-      alert(e.response?.data?.error || 'Error al registrar pago');
-    } finally {
-      setPagoSubmitting(false);
-    }
+    const selectedPlanchadorObj = planchadores.find(p => String(p.id) === String(pagoPlanchadorId));
+    const nombrePlanchador = selectedPlanchadorObj ? selectedPlanchadorObj.nombre : '';
+
+    Swal.fire({
+      title: isEn ? 'Register Payment?' : '¿Registrar Pago?',
+      text: isEn 
+        ? `Are you sure you want to register a payment of ${formatCurrency(montoPago)} for ${nombrePlanchador}?`
+        : `¿Estás seguro de registrar un pago de ${formatCurrency(montoPago)} para ${nombrePlanchador}?`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#3b82f6',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: isEn ? 'Yes, register' : 'Sí, registrar',
+      cancelButtonText: isEn ? 'Cancel' : 'Cancelar',
+      background: '#1e293b',
+      color: '#f8fafc'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          setPagoSubmitting(true);
+          const token = localStorage.getItem('token');
+          await axios.post(`${API_URL}/api/plancha/pagos`, {
+            planchador_id: pagoPlanchadorId,
+            monto: parseFloat(montoPago),
+            tipo_pago: 'completo' // Siempre completo
+          }, { headers: { Authorization: `Bearer ${token}` } });
+
+          setMontoPago('');
+          handleCargarPagosPlanchador(pagoPlanchadorId);
+          toast.success(isEn ? 'Payment registered successfully' : 'Pago registrado correctamente', { theme: 'dark' });
+        } catch (e) {
+          console.error(e);
+          toast.error(e.response?.data?.error || (isEn ? 'Error registering payment' : 'Error al registrar pago'), { theme: 'dark' });
+        } finally {
+          setPagoSubmitting(false);
+        }
+      }
+    });
   };
 
   const handleEliminarAjuste = async (id) => {
-    if (!confirm('¿Estás seguro de que deseas eliminar este ajuste/pago fijo?')) return;
-    try {
-      const token = localStorage.getItem('token');
-      await axios.delete(`${API_URL}/api/plancha/trabajos/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      alert('Ajuste eliminado correctamente');
-      handleCargarPagosPlanchador(pagoPlanchadorId);
-    } catch (e) {
-      console.error(e);
-      alert(e.response?.data?.error || 'Error al eliminar el ajuste');
-    }
+    Swal.fire({
+      title: '¿Eliminar este ajuste/pago fijo?',
+      text: 'Esta acción no se puede deshacer.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+      background: '#1e293b',
+      color: '#f8fafc'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const token = localStorage.getItem('token');
+          await axios.delete(`${API_URL}/api/plancha/trabajos/${id}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          toast.success('Ajuste eliminado correctamente', { theme: 'dark' });
+          handleCargarPagosPlanchador(pagoPlanchadorId);
+        } catch (e) {
+          console.error(e);
+          toast.error(e.response?.data?.error || 'Error al eliminar el ajuste', { theme: 'dark' });
+        }
+      }
+    });
   };
 
   const handleEliminarAsistencia = async (id) => {
-    if (!confirm('¿Estás seguro de que deseas eliminar esta asistencia?')) return;
-    try {
-      const token = localStorage.getItem('token');
-      await axios.delete(`${API_URL}/api/plancha/asistencias/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      alert('Asistencia eliminada correctamente');
-      handleCargarPagosPlanchador(pagoPlanchadorId);
-    } catch (e) {
-      console.error(e);
-      alert(e.response?.data?.error || 'Error al eliminar la asistencia');
-    }
+    Swal.fire({
+      title: '¿Eliminar esta asistencia?',
+      text: 'Esta acción no se puede deshacer.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+      background: '#1e293b',
+      color: '#f8fafc'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const token = localStorage.getItem('token');
+          await axios.delete(`${API_URL}/api/plancha/asistencias/${id}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          toast.success('Asistencia eliminada correctamente', { theme: 'dark' });
+          handleCargarPagosPlanchador(pagoPlanchadorId);
+        } catch (e) {
+          console.error(e);
+          toast.error(e.response?.data?.error || 'Error al eliminar la asistencia', { theme: 'dark' });
+        }
+      }
+    });
   };
 
   // --- MÉTODOS EXTRA (ASISTENCIAS, AJUSTES, CUADRE, REPORTES) ---

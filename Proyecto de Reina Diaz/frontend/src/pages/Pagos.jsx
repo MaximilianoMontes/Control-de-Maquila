@@ -4,6 +4,8 @@ import { useSearchParams } from 'react-router-dom';
 import { Printer, AlertCircle, History as HistoryIcon, Trash2 } from 'lucide-react';
 import { useSettings } from '../context/SettingsContext';
 import API_URL from '../config';
+import Swal from 'sweetalert2';
+import { toast } from 'react-toastify';
 
 export default function Pagos() {
   const { settings, t, formatCurrency } = useSettings();
@@ -142,65 +144,126 @@ export default function Pagos() {
 
   const handlePago = async (e) => {
     e.preventDefault();
-    try {
-      const token = localStorage.getItem('token');
-      await axios.post(`${API_URL}/api/pagos`, {
-        produccion_id: selectedOrden,
-        monto: parseFloat(monto),
-        tipo_pago: tipoPago
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setMonto('');
-      fetchPagos(selectedOrden);
-      fetchOrders();
-    } catch (e) {
-      console.error("Error al registrar pago:", e);
-      alert(e.response?.data?.error || t('pay.paymentError'));
-    }
+    if (!selectedOrden || !monto || parseFloat(monto) <= 0) return;
+
+    const maquileroNombre = ordenActual ? ordenActual.maquilero_nombre : '';
+    const folio = ordenActual ? getFolioNumber(ordenActual) : '';
+    const isEn = settings.language === 'en';
+
+    Swal.fire({
+      title: isEn ? 'Confirm Payment?' : '¿Confirmar Pago?',
+      text: isEn 
+        ? `Are you sure you want to register a payment of ${formatCurrency(monto)} for Order #${folio} (${maquileroNombre})?`
+        : `¿Estás seguro de registrar un pago de ${formatCurrency(monto)} para la Orden #${folio} (${maquileroNombre})?`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#3b82f6',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: isEn ? 'Yes, register' : 'Sí, registrar',
+      cancelButtonText: isEn ? 'Cancel' : 'Cancelar',
+      background: '#1e293b',
+      color: '#f8fafc'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const token = localStorage.getItem('token');
+          await axios.post(`${API_URL}/api/pagos`, {
+            produccion_id: selectedOrden,
+            monto: parseFloat(monto),
+            tipo_pago: tipoPago
+          }, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          setMonto('');
+          fetchPagos(selectedOrden);
+          fetchOrders();
+          toast.success(isEn ? 'Payment registered successfully' : 'Pago registrado correctamente', { theme: 'dark' });
+        } catch (e) {
+          console.error("Error al registrar pago:", e);
+          toast.error(e.response?.data?.error || (isEn ? 'Error registering payment' : 'Error al registrar pago'), { theme: 'dark' });
+        }
+      }
+    });
   };
 
   const handleDeletePago = async (pagoId) => {
+    const isEn = settings.language === 'en';
     const confirmMsg = t('pay.confirmDeletePago') || '¿Estás seguro de que deseas cancelar o eliminar este pago? Los descuentos personales cobrados en este pago volverán a estar pendientes.';
-    if (!window.confirm(confirmMsg)) return;
-
-    try {
-      const token = localStorage.getItem('token');
-      await axios.delete(`${API_URL}/api/pagos/${pagoId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      fetchPagos(selectedOrden);
-      fetchOrders();
-    } catch (e) {
-      console.error("Error al eliminar pago:", e);
-      alert(e.response?.data?.error || 'Error al eliminar pago');
-    }
+    
+    Swal.fire({
+      title: isEn ? 'Cancel this payment?' : '¿Cancelar este pago?',
+      text: confirmMsg,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: isEn ? 'Yes, delete' : 'Sí, eliminar',
+      cancelButtonText: isEn ? 'Cancel' : 'Cancelar',
+      background: '#1e293b',
+      color: '#f8fafc'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const token = localStorage.getItem('token');
+          await axios.delete(`${API_URL}/api/pagos/${pagoId}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          fetchPagos(selectedOrden);
+          fetchOrders();
+          toast.success(isEn ? 'Payment cancelled' : 'Pago eliminado correctamente', { theme: 'dark' });
+        } catch (e) {
+          console.error("Error al eliminar pago:", e);
+          toast.error(e.response?.data?.error || (isEn ? 'Error deleting payment' : 'Error al eliminar pago'), { theme: 'dark' });
+        }
+      }
+    });
   };
 
   const handleDescuento = async (e) => {
     e.preventDefault();
-    try {
-      const token = localStorage.getItem('token');
-      await axios.post(`${API_URL}/api/descuentos`, {
-        maquilero_id: selectedMaquilero,
-        inventario_id: selectedModelo,
-        motivo: motivoDescuento,
-        monto_total: parseFloat(montoDescuento),
-        piezas_afectadas: parseInt(piezasMalas)
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      // Limpiar y Recargar
-      setMotivoDescuento('');
-      setMontoDescuento('');
-      setPiezasMalas('');
-      fetchHistorialDescuentos(selectedMaquilero);
-      alert(t('pay.discountSuccess'));
-    } catch (e) {
-      console.error("Error al registrar descuento:", e);
-      alert(e.response?.data?.error || t('pay.discountError'));
-    }
+    const isEn = settings.language === 'en';
+    
+    const maquileroObj = maquileros.find(m => String(m.id) === String(selectedMaquilero));
+    const maquileroNombre = maquileroObj ? maquileroObj.nombre : '';
+
+    Swal.fire({
+      title: isEn ? 'Register Discount?' : '¿Registrar Descuento?',
+      text: isEn 
+        ? `Are you sure you want to register a discount of ${formatCurrency(montoDescuento)} for ${maquileroNombre}?`
+        : `¿Estás seguro de registrar un descuento de ${formatCurrency(montoDescuento)} para ${maquileroNombre}?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: isEn ? 'Yes, register' : 'Sí, registrar',
+      cancelButtonText: isEn ? 'Cancel' : 'Cancelar',
+      background: '#1e293b',
+      color: '#f8fafc'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const token = localStorage.getItem('token');
+          await axios.post(`${API_URL}/api/descuentos`, {
+            maquilero_id: selectedMaquilero,
+            inventario_id: selectedModelo,
+            motivo: motivoDescuento,
+            monto_total: parseFloat(montoDescuento),
+            piezas_afectadas: parseInt(piezasMalas)
+          }, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          
+          setMotivoDescuento('');
+          setMontoDescuento('');
+          setPiezasMalas('');
+          fetchHistorialDescuentos(selectedMaquilero);
+          toast.success(t('pay.discountSuccess') || (isEn ? 'Discount registered successfully' : 'Descuento registrado correctamente'), { theme: 'dark' });
+        } catch (e) {
+          console.error("Error al registrar descuento:", e);
+          toast.error(e.response?.data?.error || t('pay.discountError') || (isEn ? 'Error registering discount' : 'Error al registrar descuento'), { theme: 'dark' });
+        }
+      }
+    });
   };
 
   const getFolioNumber = (o) => {
