@@ -16,7 +16,8 @@ const getImgSrc = (img) => img ? (img.startsWith('http') ? img : `${API}${img}`)
 
 export default function Cortes() {
   const { user } = useAuth();
-  const { t, formatCurrency } = useSettings();
+  const { t, formatCurrency, settings } = useSettings();
+  const isEn = settings?.language === 'en';
   const navigate = useNavigate();
   const location = useLocation();
   const userRole = (user?.role || user?.rol || '').toString().toLowerCase().trim();
@@ -33,6 +34,7 @@ export default function Cortes() {
   const [editImageFile, setEditImageFile] = useState(null);
   const [editImageUrl, setEditImageUrl] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     fetchItems();
@@ -146,6 +148,8 @@ export default function Cortes() {
 
   const handleManualSubmit = async (e) => {
     e.preventDefault();
+    if (isSaving) return;
+    setIsSaving(true);
     try {
       const data = new FormData();
       Object.keys(formData).forEach(k => {
@@ -163,22 +167,24 @@ export default function Cortes() {
         const current = items.find(i => i.id === editingId);
         if (!imagenFile && !formData.imagenUrl && current?.imagen) data.append('imagenUrl', current.imagen);
         await axios.post(`${API}/api/inventario`, data, { headers: { 'Content-Type': 'multipart/form-data' } });
-        toast.success('Corte reprogramado con éxito', { theme: 'dark' });
+        toast.success(isEn ? 'Cut reprogrammed successfully' : 'Corte reprogramado con éxito', { theme: 'dark' });
       } else if (editMode) {
         const current = items.find(i => i.id === editingId);
         if (!imagenFile && !formData.imagenUrl && current?.imagen) data.append('imagen_actual', current.imagen);
         await axios.put(`${API}/api/inventario/${editingId}`, data, { headers: { 'Content-Type': 'multipart/form-data' } });
-        toast.success('Corte actualizado con éxito', { theme: 'dark' });
+        toast.success(isEn ? 'Cut updated successfully' : 'Corte actualizado con éxito', { theme: 'dark' });
       } else {
         await axios.post(`${API}/api/inventario`, data, { headers: { 'Content-Type': 'multipart/form-data' } });
-        toast.success('Corte guardado con éxito', { theme: 'dark' });
+        toast.success(isEn ? 'Cut saved successfully' : 'Corte guardado con éxito', { theme: 'dark' });
       }
       setIsModalOpen(false);
-      setFormData(emptyForm);
+      setFormData(getEmptyForm());
       setImagenFile(null);
       fetchItems();
     } catch (e) {
-      toast.error(e.response?.data?.error || 'Error al guardar', { theme: 'dark' });
+      toast.error(e.response?.data?.error || (isEn ? 'Error saving' : 'Error al guardar'), { theme: 'dark' });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -441,8 +447,10 @@ export default function Cortes() {
                 />
               </div>
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1.5rem' }}>
-                <button type="button" className="btn btn-secondary" onClick={() => setIsModalOpen(false)}>{t('cortes.cancel')}</button>
-                <button type="submit" className="btn btn-primary">{editMode ? t('cortes.update') : t('cortes.save')}</button>
+                <button type="button" className="btn btn-secondary" onClick={() => setIsModalOpen(false)} disabled={isSaving}>{t('cortes.cancel')}</button>
+                <button type="submit" className="btn btn-primary" disabled={isSaving}>
+                  {isSaving ? (isEn ? 'Saving...' : 'Guardando...') : (editMode ? t('cortes.update') : t('cortes.save'))}
+                </button>
               </div>
             </form>
           </div>
