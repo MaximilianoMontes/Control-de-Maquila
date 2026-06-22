@@ -6,6 +6,9 @@ import { useSettings } from '../context/SettingsContext';
 import { ChevronLeft, ChevronRight, Plus, Trash2, X, Calendar as CalendarIcon, Clock, AlignLeft, Home } from 'lucide-react';
 import API_URL from '../config';
 
+import Swal from 'sweetalert2';
+import { toast } from 'react-toastify';
+
 export default function Calendario() {
   const { user } = useAuth();
   const { t, settings } = useSettings();
@@ -119,27 +122,46 @@ export default function Calendario() {
     try {
       if (editingEvent) {
         await axios.put(`${API_URL}/api/calendario/${editingEvent.id}`, payload);
+        toast.success(isEn ? 'Event updated successfully' : 'Evento actualizado correctamente', { theme: 'dark' });
       } else {
         await axios.post(`${API_URL}/api/calendario`, payload);
+        toast.success(isEn ? 'Event saved successfully' : 'Evento guardado correctamente', { theme: 'dark' });
       }
       setShowModal(false);
       fetchEvents();
     } catch (error) {
-      alert(isEn ? 'Error saving event' : 'Error guardando evento');
+      toast.error(isEn ? 'Error saving event' : 'Error guardando evento', { theme: 'dark' });
     }
   };
 
   const deleteEvent = async () => {
     if (!editingEvent) return;
-    if (!confirm(isEn ? 'Are you sure you want to delete this event?' : '¿Estás seguro de que quieres eliminar este evento?')) return;
     
-    try {
-      await axios.delete(`${API_URL}/api/calendario/${editingEvent.id}`);
-      setShowModal(false);
-      fetchEvents();
-    } catch (error) {
-      alert(isEn ? 'Error deleting event' : 'Error eliminando evento');
-    }
+    Swal.fire({
+      title: isEn ? 'Delete event?' : '¿Eliminar evento?',
+      text: isEn 
+        ? 'Are you sure you want to delete this event?' 
+        : '¿Estás seguro de que quieres eliminar este evento?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: isEn ? 'Yes, delete' : 'Sí, eliminar',
+      cancelButtonText: isEn ? 'Cancel' : 'Cancelar',
+      background: '#1e293b',
+      color: '#f8fafc'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await axios.delete(`${API_URL}/api/calendario/${editingEvent.id}`);
+          setShowModal(false);
+          fetchEvents();
+          toast.success(isEn ? 'Event deleted successfully' : 'Evento eliminado correctamente', { theme: 'dark' });
+        } catch (error) {
+          toast.error(isEn ? 'Error deleting event' : 'Error al eliminar evento', { theme: 'dark' });
+        }
+      }
+    });
   };
 
   // Render grid

@@ -9,6 +9,8 @@ import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import axios from 'axios';
 import API_URL from '../config';
+import Swal from 'sweetalert2';
+import { toast } from 'react-toastify';
 
 const API = API_URL;
 
@@ -34,6 +36,7 @@ const displayDate = (date) => {
 export default function Extras() {
   const { user } = useAuth();
   const { settings, t, formatCurrency } = useSettings();
+  const isEn = settings?.language === 'en';
   const location = useLocation();
   const navigate = useNavigate();
   const userRole = (user?.role || user?.rol || '').toString().toLowerCase().trim();
@@ -146,9 +149,10 @@ export default function Extras() {
       });
       setIsShortcutMode(false);
       fetchOrders();
+      toast.success(isEn ? 'Extra work created successfully' : 'Trabajo extra creado correctamente', { theme: 'dark' });
     } catch (e) {
       const errorMsg = e.response?.data?.error;
-      alert(t('prod.alertCreateError') + (errorMsg || e.message));
+      toast.error(t('prod.alertCreateError') + (errorMsg || e.message), { theme: 'dark' });
     }
   };
 
@@ -156,49 +160,112 @@ export default function Extras() {
     e.preventDefault();
     try {
       await axios.put(`${API}/api/produccion/${editingOrder.id}`, formData);
-      alert(t('prod.alertUpdateSuccess'));
+      toast.success(t('prod.alertUpdateSuccess'), { theme: 'dark' });
       setIsEditModalOpen(false);
       setEditingOrder(null);
       fetchOrders();
     } catch (e) {
       const errorMsg = e.response?.data?.error;
-      alert(t('prod.alertUpdateError') + (errorMsg || e.message));
+      toast.error(t('prod.alertUpdateError') + (errorMsg || e.message), { theme: 'dark' });
     }
   };
 
-  const handleTerminar = async (id) => {
-    if (!confirm(t('prod.confirmFinish'))) return;
-    navigate(`/pagos?orden=${id}&tipo=completo`);
+  const handleTerminar = (id) => {
+    Swal.fire({
+      title: isEn ? 'Finish Order?' : '¿Terminar orden?',
+      text: t('prod.confirmFinish'),
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#3b82f6',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: isEn ? 'Yes, finish' : 'Sí, terminar',
+      cancelButtonText: isEn ? 'Cancel' : 'Cancelar',
+      background: '#1e293b',
+      color: '#f8fafc'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        navigate(`/pagos?orden=${id}&tipo=completo`);
+      }
+    });
   };
 
-  const handleTerminarParcial = async (id) => {
-    if (!confirm(t('prod.confirmPartial'))) return;
-    navigate(`/pagos?orden=${id}&tipo=abono`);
+  const handleTerminarParcial = (id) => {
+    Swal.fire({
+      title: isEn ? 'Partial Finish?' : '¿Terminar parcial?',
+      text: t('prod.confirmPartial'),
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#3b82f6',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: isEn ? 'Yes, partial' : 'Sí, abonar/parcial',
+      cancelButtonText: isEn ? 'Cancel' : 'Cancelar',
+      background: '#1e293b',
+      color: '#f8fafc'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        navigate(`/pagos?orden=${id}&tipo=abono`);
+      }
+    });
   };
 
-  const handleCancelar = async (id) => {
-    if (!confirm(t('prod.confirmCancel2'))) return;
-    try {
-      await axios.put(`${API}/api/produccion/${id}`, { estado: 'Cancelado', fecha_fin: new Date().toISOString().split('T')[0] });
-      fetchOrders();
-    } catch (e) { alert(t('prod.alertGenericError')); }
+  const handleCancelar = (id) => {
+    Swal.fire({
+      title: isEn ? 'Cancel Order?' : '¿Cancelar orden?',
+      text: t('prod.confirmCancel2'),
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: isEn ? 'Yes, cancel' : 'Sí, cancelar',
+      cancelButtonText: isEn ? 'Cancel' : 'Cancelar',
+      background: '#1e293b',
+      color: '#f8fafc'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await axios.put(`${API}/api/produccion/${id}`, { estado: 'Cancelado', fecha_fin: new Date().toISOString().split('T')[0] });
+          toast.success(isEn ? 'Order cancelled' : 'Orden cancelada', { theme: 'dark' });
+          fetchOrders();
+        } catch (e) {
+          toast.error(t('prod.alertGenericError'), { theme: 'dark' });
+        }
+      }
+    });
   };
 
   const handleArchivar = async (id, currentStatus) => {
     try {
       await axios.put(`${API}/api/produccion/${id}/archivo`, { archivado: !currentStatus });
-      fetchOrders();
-    } catch (e) { alert(t('prod.alertArchiveError')); }
-  };
-
-  const handleDelete = async (id) => {
-    if (!confirm(t('prod.confirmDelete'))) return;
-    try {
-      await axios.delete(`${API}/api/produccion/${id}`);
+      toast.success(isEn ? 'Archive status updated' : 'Estado de archivo actualizado', { theme: 'dark' });
       fetchOrders();
     } catch (e) {
-      alert(e.response?.data?.error || t('prod.alertDeleteError'));
+      toast.error(t('prod.alertArchiveError'), { theme: 'dark' });
     }
+  };
+
+  const handleDelete = (id) => {
+    Swal.fire({
+      title: isEn ? 'Delete extra work?' : '¿Eliminar trabajo extra?',
+      text: t('prod.confirmDelete'),
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: isEn ? 'Yes, delete' : 'Sí, eliminar',
+      cancelButtonText: isEn ? 'Cancel' : 'Cancelar',
+      background: '#1e293b',
+      color: '#f8fafc'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await axios.delete(`${API}/api/produccion/${id}`);
+          toast.success(isEn ? 'Deleted successfully' : 'Eliminado correctamente', { theme: 'dark' });
+          fetchOrders();
+        } catch (e) {
+          toast.error(e.response?.data?.error || t('prod.alertDeleteError'), { theme: 'dark' });
+        }
+      }
+    });
   };
 
   const handleRecibidasBlur = async (id, val) => {
@@ -214,17 +281,47 @@ export default function Extras() {
     const [tipo, porcentaje] = value.split('-');
     try {
       await axios.put(`${API}/api/produccion/${id}/ajuste`, { tipo, porcentaje: parseInt(porcentaje) });
+      toast.success(isEn ? 'Adjustment applied' : 'Ajuste aplicado', { theme: 'dark' });
       fetchOrders();
-    } catch (e) { alert(t('prod.alertAdjustError')); }
+    } catch (e) {
+      toast.error(t('prod.alertAdjustError'), { theme: 'dark' });
+    }
   };
 
-  const handleAddDay = async (id) => {
-    const dias = prompt(t('prod.promptDays'), "1");
-    if (!dias || isNaN(dias)) return;
-    try {
-      await axios.put(`${API}/api/produccion/${id}/agregar-dia`, { dias: parseInt(dias) });
-      fetchOrders();
-    } catch (e) { alert(t('prod.alertAddDayError')); }
+  const handleAddDay = (id) => {
+    Swal.fire({
+      title: isEn ? 'Add extension' : 'Agregar prórroga',
+      text: t('prod.promptDays'),
+      input: 'number',
+      inputValue: '1',
+      inputAttributes: {
+        min: 1,
+        step: 1
+      },
+      showCancelButton: true,
+      confirmButtonText: isEn ? 'Add' : 'Agregar',
+      cancelButtonText: isEn ? 'Cancel' : 'Cancelar',
+      confirmButtonColor: '#3b82f6',
+      cancelButtonColor: '#64748b',
+      background: '#1e293b',
+      color: '#f8fafc',
+      inputValidator: (value) => {
+        if (!value || isNaN(value) || parseInt(value) <= 0) {
+          return isEn ? 'You must enter a valid number of days!' : '¡Debes ingresar un número válido de días!';
+        }
+      }
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        const dias = parseInt(result.value);
+        try {
+          await axios.put(`${API}/api/produccion/${id}/agregar-dia`, { dias });
+          toast.success(isEn ? 'Days added successfully' : 'Días agregados correctamente', { theme: 'dark' });
+          fetchOrders();
+        } catch (e) {
+          toast.error(t('prod.alertAddDayError'), { theme: 'dark' });
+        }
+      }
+    });
   };
 
   const filteredOrders = orders.filter(o => 

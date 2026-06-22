@@ -34,6 +34,7 @@ const displayDate = (date) => {
 export default function Produccion() {
   const { user } = useAuth();
   const { settings, t, formatCurrency } = useSettings();
+  const isEn = settings?.language === 'en';
   const location = useLocation();
   const navigate = useNavigate();
   const userRole = (user?.role || user?.rol || '').toString().toLowerCase().trim();
@@ -298,16 +299,40 @@ export default function Produccion() {
     }
   };
 
-  const handleAddDay = async (id) => {
-    const dias = prompt(t('prod.promptDays'), "1");
-    if (!dias || isNaN(dias)) return;
-    try {
-      await axios.put(`${API}/api/produccion/${id}/agregar-dia`, { dias: parseInt(dias) });
-      toast.success('Prórroga agregada con éxito', { theme: 'dark' });
-      fetchOrders();
-    } catch (e) {
-      toast.error(t('prod.alertAddDayError'), { theme: 'dark' });
-    }
+  const handleAddDay = (id) => {
+    Swal.fire({
+      title: isEn ? 'Add extension' : 'Agregar prórroga',
+      text: t('prod.promptDays'),
+      input: 'number',
+      inputValue: '1',
+      inputAttributes: {
+        min: 1,
+        step: 1
+      },
+      showCancelButton: true,
+      confirmButtonText: isEn ? 'Add' : 'Agregar',
+      cancelButtonText: isEn ? 'Cancel' : 'Cancelar',
+      confirmButtonColor: '#3b82f6',
+      cancelButtonColor: '#64748b',
+      background: '#1e293b',
+      color: '#f8fafc',
+      inputValidator: (value) => {
+        if (!value || isNaN(value) || parseInt(value) <= 0) {
+          return isEn ? 'You must enter a valid number of days!' : '¡Debes ingresar un número válido de días!';
+        }
+      }
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        const dias = parseInt(result.value);
+        try {
+          await axios.put(`${API}/api/produccion/${id}/agregar-dia`, { dias });
+          toast.success(isEn ? 'Days added successfully' : 'Prórroga agregada con éxito', { theme: 'dark' });
+          fetchOrders();
+        } catch (e) {
+          toast.error(t('prod.alertAddDayError'), { theme: 'dark' });
+        }
+      }
+    });
   };
 
   const filteredOrders = orders.filter(o => 
