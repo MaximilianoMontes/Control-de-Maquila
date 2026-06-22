@@ -21,7 +21,6 @@ import Ayuda from './pages/Ayuda';
 import Calendario from './pages/Calendario';
 import Camion from './pages/Camion';
 import KillFeed from './components/KillFeed';
-import UxDemo from './pages/UxDemo';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { motion } from 'framer-motion';
@@ -90,7 +89,6 @@ function App() {
         <Route path="/calendario" element={<ProtectedRoute><Calendario /></ProtectedRoute>} />
         <Route path="/historial" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2', 'produccion', 'inventario1']}><MainLayout><Historial /></MainLayout></ProtectedRoute>} />
         <Route path="/ayuda" element={<ProtectedRoute><MainLayout><Ayuda /></MainLayout></ProtectedRoute>} />
-        <Route path="/ux-demo" element={<ProtectedRoute><MainLayout><UxDemo /></MainLayout></ProtectedRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />

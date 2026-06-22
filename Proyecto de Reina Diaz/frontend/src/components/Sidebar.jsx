@@ -12,8 +12,7 @@ import {
   Sparkles,
   Truck,
   Home,
-  Calendar,
-  Zap
+  Calendar
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
@@ -42,7 +41,6 @@ export default function Sidebar() {
     { path: '/reportes',   name: t('nav.reportes'),    icon: <FileText size={20} /> },
     ...(puedeVerPagos ? [{ path: '/pagos', name: t('nav.pagos'), icon: <Wallet size={20} /> }] : []),
     { path: '/historial',  name: t('nav.historial'),   icon: <History size={20} /> },
-    { path: '/ux-demo',    name: 'Pruebas UX',         icon: <Zap size={20} /> },
   ];
 
   const allowedNavItems = navItems;
