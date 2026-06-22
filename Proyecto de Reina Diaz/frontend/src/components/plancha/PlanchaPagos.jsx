@@ -22,25 +22,25 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
   const { settings, formatCurrency } = useSettings();
   const isEn = settings.language === 'en';
 
+  const normalizeTalla = (t) => {
+    if (!t) return "";
+    let str = t.toString().trim().toUpperCase();
+    // Strip ALL leading T characters (handles TT07, T07, 07, 7, etc.)
+    str = str.replace(/^T+/i, '');
+    if (/^\d+$/.test(str)) {
+      return str.padStart(2, '0');
+    }
+    return str;
+  };
+
+
   const displayTalla = (talla) => {
     if (!talla) return "";
-    const tStr = talla.toString().trim();
-    if (/^[tT]/i.test(tStr)) {
-      const clean = tStr.substring(1).trim();
-      const num = parseInt(clean, 10);
-      if (!isNaN(num) && num < 10 && !clean.startsWith("0")) {
-        return 'T0' + num;
-      }
-      return tStr.toUpperCase();
+    const norm = normalizeTalla(talla);
+    if (/^\d+$/.test(norm)) {
+      return 'T' + norm;
     }
-    const num = parseInt(tStr, 10);
-    if (!isNaN(num)) {
-      if (num < 10 && !tStr.startsWith("0")) {
-        return 'T0' + num;
-      }
-      return 'T' + tStr;
-    }
-    return tStr;
+    return norm;
   };
 
   const [pagoPlanchadorId, setPagoPlanchadorId] = useState('');

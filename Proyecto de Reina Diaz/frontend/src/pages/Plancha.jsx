@@ -56,7 +56,7 @@ export default function Plancha() {
     Array.from({ length: 12 }, (_, i) => ({
       numero: i + 1,
       talla: BURROS_TALLAS[i + 1],
-      is_comodin: true,
+      is_comodin: (i + 1) >= 11,
       planchador: null, // { id, nombre }
       modelos: [] // [{ id, modelo, imagen, piezas, maxPiezas }]
     }))
