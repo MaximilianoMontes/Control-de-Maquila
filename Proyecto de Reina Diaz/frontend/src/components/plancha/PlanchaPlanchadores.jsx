@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useSettings } from '../../context/SettingsContext';
 import API_URL from '../../config';
+import ImageZoom from '../ImageZoom';
 import Swal from 'sweetalert2';
 import { toast } from 'react-toastify';
 
@@ -284,17 +285,16 @@ export default function PlanchaPlanchadores({ planchadores, fetchPlanchadores })
                     planchadorDetalle.historial.map(h => (
                       <tr key={h.id}>
                         <td style={{ padding: '6px' }}>
-                          {h.modelo_imagen ? (
-                            <img 
-                              src={`${API_URL}${h.modelo_imagen}`} 
-                              alt={h.modelo_nombre} 
-                              style={{ width: '40px', height: '40px', borderRadius: '6px', objectFit: 'contain', background: 'var(--bg-card)', display: 'block' }} 
-                            />
-                          ) : (
-                            <div style={{ width: '40px', height: '40px', borderRadius: '6px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                              <Layers size={18} color="#64748b" />
-                            </div>
-                          )}
+                          <ImageZoom
+                            src={h.modelo_imagen ? `${API_URL}${h.modelo_imagen}` : null}
+                            alt={h.modelo_nombre}
+                            style={{ width: '40px', height: '40px', borderRadius: '6px', objectFit: 'contain', background: 'var(--bg-card)', display: 'block' }}
+                            fallback={
+                              <div style={{ width: '40px', height: '40px', borderRadius: '6px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <Layers size={18} color="#64748b" />
+                              </div>
+                            }
+                          />
                         </td>
                         <td style={{ padding: '6px 10px' }}>
                           <strong style={{ fontSize: '0.9rem' }}>{h.modelo_nombre}</strong>
