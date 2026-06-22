@@ -9,6 +9,8 @@ import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import axios from 'axios';
 import API_URL from '../config';
+import Swal from 'sweetalert2';
+import { toast } from 'react-toastify';
 
 const API = API_URL;
 
@@ -63,11 +65,12 @@ export default function Produccion() {
       }, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
       if (res.data.success) {
         setObsModalOpen(false);
+        toast.success("Observaciones guardadas", { theme: 'dark' });
         fetchOrders();
       }
     } catch (e) {
       console.error(e);
-      alert("Error al guardar observaciones");
+      toast.error("Error al guardar observaciones", { theme: 'dark' });
     }
   };
   const [verArchivados, setVerArchivados] = useState(false);
@@ -127,13 +130,14 @@ export default function Produccion() {
       await axios.post(`${API}/api/produccion`, { ...formData, cantidad: cantidadFinal, precio_total: total });
       setIsModalOpen(false);
       setFormData({ maquilero_id: '', inventario_id: '', fecha_inicio: '', fecha_fin: '' });
+      toast.success("Orden creada con éxito", { theme: 'dark' });
       fetchOrders();
     } catch (e) { 
       const errorMsg = e.response?.data?.error;
       if (errorMsg === 'errorDuplicate') {
-        alert(t('prod.errorDuplicate'));
+        toast.error(t('prod.errorDuplicate'), { theme: 'dark' });
       } else {
-        alert(t('prod.alertCreateError') + (errorMsg || e.message));
+        toast.error(t('prod.alertCreateError') + (errorMsg || e.message), { theme: 'dark' });
       }
     }
   };
@@ -145,16 +149,16 @@ export default function Produccion() {
       // ya que esos datos son para órdenes NUEVAS.
       // Solo enviamos lo que está en el formulario (maquilero, fechas, etc)
       await axios.put(`${API}/api/produccion/${editingOrder.id}`, formData);
-      alert(t('prod.alertUpdateSuccess'));
+      toast.success(t('prod.alertUpdateSuccess'), { theme: 'dark' });
       setIsEditModalOpen(false);
       setEditingOrder(null);
       fetchOrders();
     } catch (e) { 
       const errorMsg = e.response?.data?.error;
       if (errorMsg === 'errorDuplicate') {
-        alert(t('prod.errorDuplicate'));
+        toast.error(t('prod.errorDuplicate'), { theme: 'dark' });
       } else {
-        alert(t('prod.alertUpdateError') + (errorMsg || e.message));
+        toast.error(t('prod.alertUpdateError') + (errorMsg || e.message), { theme: 'dark' });
       }
     }
   };
@@ -169,55 +173,115 @@ export default function Produccion() {
     e.preventDefault();
     try {
       await axios.post(`${API}/api/produccion/${splitOrder.id}/dividir`, splitData);
-      alert('Orden dividida exitosamente.');
+      toast.success('Orden dividida exitosamente.', { theme: 'dark' });
       setIsSplitModalOpen(false);
       setSplitOrder(null);
       fetchOrders();
     } catch (e) {
-      alert('Error al dividir orden: ' + (e.response?.data?.error || e.message));
+      toast.error('Error al dividir orden: ' + (e.response?.data?.error || e.message), { theme: 'dark' });
     }
   };
 
 
   const handleTerminar = async (id) => {
-    if (!confirm(t('prod.confirmFinish'))) return;
-    navigate(`/pagos?orden=${id}&tipo=completo`);
+    Swal.fire({
+      title: t('prod.confirmFinish'),
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#10b981',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: 'Sí, terminar',
+      cancelButtonText: 'Cancelar',
+      background: '#1e293b',
+      color: '#f8fafc'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        navigate(`/pagos?orden=${id}&tipo=completo`);
+      }
+    });
   };
 
   const handleTerminarParcial = async (id) => {
-    if (!confirm(t('prod.confirmPartial'))) return;
-    navigate(`/pagos?orden=${id}&tipo=abono`);
+    Swal.fire({
+      title: t('prod.confirmPartial'),
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#eab308',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: 'Sí, marcar pago parcial',
+      cancelButtonText: 'Cancelar',
+      background: '#1e293b',
+      color: '#f8fafc'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        navigate(`/pagos?orden=${id}&tipo=abono`);
+      }
+    });
   };
 
   const handleCancelar = async (id) => {
-    if (!confirm(t('prod.confirmCancel2'))) return;
-    try {
-      await axios.put(`${API}/api/produccion/${id}`, { estado: 'Cancelado', fecha_fin: new Date().toISOString().split('T')[0] });
-      fetchOrders();
-    } catch (e) { alert(t('prod.alertGenericError')); }
+    Swal.fire({
+      title: t('prod.confirmCancel2'),
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: 'Sí, cancelar orden',
+      cancelButtonText: 'Cancelar',
+      background: '#1e293b',
+      color: '#f8fafc'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await axios.put(`${API}/api/produccion/${id}`, { estado: 'Cancelado', fecha_fin: new Date().toISOString().split('T')[0] });
+          toast.success('Orden cancelada correctamente', { theme: 'dark' });
+          fetchOrders();
+        } catch (e) {
+          toast.error(t('prod.alertGenericError'), { theme: 'dark' });
+        }
+      }
+    });
   };
 
   const handleArchivar = async (id, currentStatus) => {
     try {
       await axios.put(`${API}/api/produccion/${id}/archivo`, { archivado: !currentStatus });
+      toast.success(currentStatus ? 'Orden desarchivada' : 'Orden archivada', { theme: 'dark' });
       fetchOrders();
-    } catch (e) { alert(t('prod.alertArchiveError')); }
+    } catch (e) {
+      toast.error(t('prod.alertArchiveError'), { theme: 'dark' });
+    }
   };
 
   const handleDelete = async (id) => {
-    if (!confirm(t('prod.confirmDelete'))) return;
-    try {
-      await axios.delete(`${API}/api/produccion/${id}`);
-      fetchOrders();
-    } catch (e) { 
-      alert(e.response?.data?.error || t('prod.alertDeleteError')); 
-    }
+    Swal.fire({
+      title: t('prod.confirmDelete'),
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+      background: '#1e293b',
+      color: '#f8fafc'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await axios.delete(`${API}/api/produccion/${id}`);
+          toast.success('Orden eliminada correctamente', { theme: 'dark' });
+          fetchOrders();
+        } catch (e) { 
+          toast.error(e.response?.data?.error || t('prod.alertDeleteError'), { theme: 'dark' }); 
+        }
+      }
+    });
   };
 
   const handleRecibidasBlur = async (id, val) => {
     try {
       const cantidad_recibida = val === '' ? null : parseInt(val);
       await axios.put(`${API}/api/produccion/${id}`, { cantidad_recibida });
+      toast.success('Cantidad recibida actualizada', { theme: 'dark', autoClose: 1500 });
       fetchOrders();
     } catch (e) { console.error(e); }
   };
@@ -227,8 +291,11 @@ export default function Produccion() {
     const [tipo, porcentaje] = value.split('-');
     try {
       await axios.put(`${API}/api/produccion/${id}/ajuste`, { tipo, porcentaje: parseInt(porcentaje) });
+      toast.success('Ajuste aplicado correctamente', { theme: 'dark' });
       fetchOrders();
-    } catch (e) { alert(t('prod.alertAdjustError')); }
+    } catch (e) {
+      toast.error(t('prod.alertAdjustError'), { theme: 'dark' });
+    }
   };
 
   const handleAddDay = async (id) => {
@@ -236,8 +303,11 @@ export default function Produccion() {
     if (!dias || isNaN(dias)) return;
     try {
       await axios.put(`${API}/api/produccion/${id}/agregar-dia`, { dias: parseInt(dias) });
+      toast.success('Prórroga agregada con éxito', { theme: 'dark' });
       fetchOrders();
-    } catch (e) { alert(t('prod.alertAddDayError')); }
+    } catch (e) {
+      toast.error(t('prod.alertAddDayError'), { theme: 'dark' });
+    }
   };
 
   const filteredOrders = orders.filter(o => 

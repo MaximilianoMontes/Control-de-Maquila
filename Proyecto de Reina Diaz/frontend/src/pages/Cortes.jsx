@@ -5,6 +5,8 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import API_URL from '../config';
+import Swal from 'sweetalert2';
+import { toast } from 'react-toastify';
 
 const API = API_URL;
 
@@ -118,13 +120,28 @@ export default function Cortes() {
 
   const handleDelete = async (id, e) => {
     e.stopPropagation();
-    if (!confirm('¿Eliminar este producto del inventario?')) return;
-    try {
-      await axios.delete(`${API}/api/inventario/${id}`);
-      fetchItems();
-    } catch (e) {
-      alert(e.response?.data?.error || 'Error al eliminar');
-    }
+    Swal.fire({
+      title: '¿Eliminar este corte?',
+      text: 'Esta acción eliminará el registro de corte de forma permanente.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+      background: '#1e293b',
+      color: '#f8fafc'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await axios.delete(`${API}/api/inventario/${id}`);
+          toast.success('Corte eliminado con éxito', { theme: 'dark' });
+          fetchItems();
+        } catch (e) {
+          toast.error(e.response?.data?.error || 'Error al eliminar', { theme: 'dark' });
+        }
+      }
+    });
   };
 
   const handleManualSubmit = async (e) => {
@@ -146,19 +163,22 @@ export default function Cortes() {
         const current = items.find(i => i.id === editingId);
         if (!imagenFile && !formData.imagenUrl && current?.imagen) data.append('imagenUrl', current.imagen);
         await axios.post(`${API}/api/inventario`, data, { headers: { 'Content-Type': 'multipart/form-data' } });
+        toast.success('Corte reprogramado con éxito', { theme: 'dark' });
       } else if (editMode) {
         const current = items.find(i => i.id === editingId);
         if (!imagenFile && !formData.imagenUrl && current?.imagen) data.append('imagen_actual', current.imagen);
         await axios.put(`${API}/api/inventario/${editingId}`, data, { headers: { 'Content-Type': 'multipart/form-data' } });
+        toast.success('Corte actualizado con éxito', { theme: 'dark' });
       } else {
         await axios.post(`${API}/api/inventario`, data, { headers: { 'Content-Type': 'multipart/form-data' } });
+        toast.success('Corte guardado con éxito', { theme: 'dark' });
       }
       setIsModalOpen(false);
       setFormData(emptyForm);
       setImagenFile(null);
       fetchItems();
     } catch (e) {
-      alert(e.response?.data?.error || 'Error al guardar');
+      toast.error(e.response?.data?.error || 'Error al guardar', { theme: 'dark' });
     }
   };
 
@@ -172,8 +192,11 @@ export default function Cortes() {
       setEditImageItem(null);
       setEditImageFile(null);
       setEditImageUrl('');
+      toast.success('Imagen del modelo actualizada', { theme: 'dark' });
       fetchItems();
-    } catch (e) { alert('Error guardando imagen'); }
+    } catch (e) { 
+      toast.error('Error guardando imagen', { theme: 'dark' }); 
+    }
   };
 
   const filteredItems = items

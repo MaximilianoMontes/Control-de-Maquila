@@ -4,6 +4,8 @@ import { Plus, X, Pencil, Trash2, User, AlertTriangle, Search, ChevronLeft, Chev
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import API_URL from '../config';
+import Swal from 'sweetalert2';
+import { toast } from 'react-toastify';
 
 const API = API_URL;
 
@@ -59,13 +61,28 @@ export default function Maquileros() {
 
   const handleDelete = async (id, e) => {
     e.stopPropagation();
-    if (!confirm('¿Eliminar este maquilero?')) return;
-    try {
-      await axios.delete(`${API}/api/maquileros/${id}`);
-      fetchMaquileros();
-    } catch (e) { 
-      alert(e.response?.data?.error || 'Error al eliminar'); 
-    }
+    Swal.fire({
+      title: '¿Eliminar este maquilero?',
+      text: 'Esta acción eliminará de forma permanente al maquilero.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+      background: '#1e293b',
+      color: '#f8fafc'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await axios.delete(`${API}/api/maquileros/${id}`);
+          toast.success('Maquilero eliminado con éxito', { theme: 'dark' });
+          fetchMaquileros();
+        } catch (e) { 
+          toast.error(e.response?.data?.error || 'Error al eliminar', { theme: 'dark' }); 
+        }
+      }
+    });
   };
 
   const handleRowClick = async (id) => {
@@ -99,12 +116,16 @@ export default function Maquileros() {
         const current = maquileros.find(m => m.id === editingId);
         if (!imagenFile && current?.imagen) data.append('imagen_actual', current.imagen);
         await axios.put(`${API}/api/maquileros/${editingId}`, data, { headers: { 'Content-Type': 'multipart/form-data' } });
+        toast.success('Maquilero actualizado con éxito', { theme: 'dark' });
       } else {
         await axios.post(`${API}/api/maquileros`, data, { headers: { 'Content-Type': 'multipart/form-data' } });
+        toast.success('Maquilero guardado con éxito', { theme: 'dark' });
       }
       setIsModalOpen(false);
       fetchMaquileros();
-    } catch (e) { alert('Error al guardar'); }
+    } catch (e) { 
+      toast.error('Error al guardar', { theme: 'dark' }); 
+    }
   };
 
   const Avatar = ({ imagen, nombre, size = 120, showZoom = true }) => {
