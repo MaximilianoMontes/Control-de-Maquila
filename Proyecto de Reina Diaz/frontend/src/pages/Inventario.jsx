@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Search, Image as ImageIcon, Trash2, Calendar, ClipboardList, RefreshCw } from 'lucide-react';
+import { Search, Image as ImageIcon, Trash2, Calendar, ClipboardList, RefreshCw, ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
@@ -30,12 +30,32 @@ export default function Inventario() {
   const [items, setItems] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
+  const [activeDropdownId, setActiveDropdownId] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchItems();
     const interval = setInterval(fetchItems, 2000); // Auto-refresca cada 2 segundos en segundo plano
     return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (!e.target.closest('.actions-dropdown-container')) {
+        setActiveDropdownId(null);
+      }
+    };
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') {
+        setActiveDropdownId(null);
+      }
+    };
+    document.addEventListener('click', handleOutsideClick);
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('click', handleOutsideClick);
+      document.removeEventListener('keydown', handleEscape);
+    };
   }, []);
 
   const fetchItems = async () => {
@@ -177,7 +197,7 @@ export default function Inventario() {
                   </td>
                 </tr>
               ) : (
-                filteredItems.map(item => {
+                filteredItems.map((item, index) => {
                   const total = (parseFloat(item.precio) || 0) * (parseInt(item.piezas) || 0);
                   const imgSrc = getImgSrc(item.imagen);
                   return (
@@ -217,13 +237,32 @@ export default function Inventario() {
                       <td>{displayDate(item.fecha_ingreso)}</td>
                       {canEdit && (
                         <td>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <button className="btn-icon" onClick={() => navigate('/cortes', { state: { reprogramItem: item } })} title="Reprogramar" style={{ color: '#8b5cf6' }}>
-                              <RefreshCw size={18} />
-                            </button>
-                            <button className="btn-icon" onClick={() => handleDelete(item.id)} title="Eliminar del stock" style={{ color: '#ef4444' }}>
-                              <Trash2 size={18} />
-                            </button>
+                          <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'center' }}>
+                            <div className="actions-dropdown-container">
+                              <button 
+                                className="actions-dropdown-btn" 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setActiveDropdownId(activeDropdownId === item.id ? null : item.id);
+                                }}
+                              >
+                                {isEn ? 'Actions' : 'Acciones'} <ChevronDown size={14} />
+                              </button>
+                              
+                              {activeDropdownId === item.id && (
+                                <div className={`actions-dropdown-menu ${index >= filteredItems.length - 3 && filteredItems.length > 3 ? 'open-upward' : ''}`}>
+                                  {/* Reprogramar */}
+                                  <button className="actions-dropdown-item purple" onClick={() => { setActiveDropdownId(null); navigate('/cortes', { state: { reprogramItem: item } }); }}>
+                                    <RefreshCw size={16} /> {isEn ? 'Reprogram' : 'Reprogramar'}
+                                  </button>
+                                  
+                                  {/* Eliminar */}
+                                  <button className="actions-dropdown-item danger" onClick={() => { setActiveDropdownId(null); handleDelete(item.id); }}>
+                                    <Trash2 size={16} /> {isEn ? 'Delete from Stock' : 'Eliminar del stock'}
+                                  </button>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </td>
                       )}
