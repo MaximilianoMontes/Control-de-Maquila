@@ -1327,38 +1327,44 @@ async function initializeDatabase() {
       console.error('Error in final restoration migration:', e);
       global.migrationError = e.message + "\n" + e.stack;
     }
-
-    // Revert incorrect split of model 752996 (Paula Melgarejo Mena / Jairo)
+    // Revert incorrect split of model 752996 (Paula Melgarejo Mena / Jairo) - Version 2 (Robust)
     try {
-      const [run] = await connection.query("SELECT 1 FROM migrations_run WHERE migration_name = 'revert_split_model_752996_v1'");
+      const [run] = await connection.query("SELECT 1 FROM migrations_run WHERE migration_name = 'revert_split_model_752996_v2'");
       if (run.length === 0) {
-        console.log('--- MIGRACIÓN MANUAL: Revertir división incorrecta de modelo 752996 ---');
+        console.log('--- MIGRACIÓN MANUAL V2: Revertir división incorrecta de modelo 752996 ---');
 
-        // 1. Find Jairo's order for model 752996
-        const [jairoOrders] = await connection.query(`
-          SELECT p.id, p.cantidad, p.precio_total
+        // 1. Get all production orders for model 752996
+        const [orders] = await connection.query(`
+          SELECT p.id, p.maquilero_id, p.cantidad, p.precio_total, m.nombre as maquilero_nombre
           FROM produccion p
           JOIN maquileros m ON p.maquilero_id = m.id
           JOIN inventario i ON p.inventario_id = i.id
-          WHERE i.modelo = '752996' AND m.nombre LIKE '%Jairo%'
+          WHERE i.modelo = '752996'
         `);
+        console.log("Orders found for model 752996:", orders);
 
-        // 2. Find Paula's order #64 for model 752996
-        const [paulaOrders] = await connection.query(`
-          SELECT p.id, p.cantidad
-          FROM produccion p
-          JOIN maquileros m ON p.maquilero_id = m.id
-          JOIN inventario i ON p.inventario_id = i.id
-          WHERE i.modelo = '752996' AND m.nombre LIKE '%Paula%'
-        `);
+        // Paula's order ID is likely #64 (or matches 'Paula')
+        // Jairo's order is the other one (often quantity = 65, or matches 'Jairo')
+        let paulaOrderId = 64;
+        let jairoOrder = null;
 
-        console.log("Jairo orders found:", jairoOrders);
-        console.log("Paula orders found:", paulaOrders);
+        // Try to identify them dynamically
+        orders.forEach(o => {
+          if (o.maquilero_nombre.toLowerCase().includes('paula') || o.id === 64) {
+            paulaOrderId = o.id;
+          } else {
+            jairoOrder = o;
+          }
+        });
 
-        if (jairoOrders.length > 0) {
-          const jairoId = jairoOrders[0].id;
-          
-          // Update Jairo's order: set quantity to 151, received to 151, state to Terminado, and total price to 7550.00 (151 * 50)
+        // If we didn't identify Jairo's order by name, take the non-Paula order
+        if (!jairoOrder && orders.length > 0) {
+          jairoOrder = orders.find(o => o.id !== paulaOrderId);
+        }
+
+        if (jairoOrder) {
+          console.log(`Restoring Jairo's production order ID: ${jairoOrder.id}`);
+          // Update Jairo's order to: 151 pieces completed
           await connection.query(`
             UPDATE produccion 
             SET cantidad = 151, 
@@ -1368,26 +1374,29 @@ async function initializeDatabase() {
                 fecha_terminado = CURRENT_TIMESTAMP,
                 archivado = 0
             WHERE id = ?
-          `, [jairoId]);
-          console.log(`Jairo's production order ID ${jairoId} restored to 151 completed pieces.`);
+          `, [jairoOrder.id]);
+        } else {
+          console.log("Jairo order not found to restore.");
         }
 
-        if (paulaOrders.length > 0) {
-          for (const paulaOrder of paulaOrders) {
-            const paulaId = paulaOrder.id;
-            
-            // Clean up dependencies for Paula's order if they exist
-            await connection.query("DELETE FROM plancha_devoluciones WHERE produccion_id = ?", [paulaId]);
-            await connection.query("DELETE FROM plancha_trabajos WHERE camion_detalles_id IN (SELECT id FROM camion_detalles WHERE produccion_id = ?)", [paulaId]);
-            await connection.query("DELETE FROM camion_detalles WHERE produccion_id = ?", [paulaId]);
-            await connection.query("DELETE FROM pagos WHERE produccion_id = ?", [paulaId]);
-            await connection.query("DELETE FROM descuentos_personales WHERE inventario_id IN (SELECT inventario_id FROM produccion WHERE id = ?)", [paulaId]);
-            
-            // Delete Paula's production order
-            await connection.query("DELETE FROM produccion WHERE id = ?", [paulaId]);
-            console.log(`Paula's production order ID ${paulaId} deleted successfully.`);
-          }
+        // Clean up and delete Paula's order (ID = 64 or matching Paula)
+        const paulaExists = orders.some(o => o.id === paulaOrderId || o.maquilero_nombre.toLowerCase().includes('paula'));
+        if (paulaExists) {
+          console.log(`Deleting Paula's production order ID: ${paulaOrderId}`);
+          await connection.query("DELETE FROM plancha_devoluciones WHERE produccion_id = ?", [paulaOrderId]);
+          await connection.query("DELETE FROM plancha_trabajos WHERE camion_detalles_id IN (SELECT id FROM camion_detalles WHERE produccion_id = ?)", [paulaOrderId]);
+          await connection.query("DELETE FROM camion_detalles WHERE produccion_id = ?", [paulaOrderId]);
+          await connection.query("DELETE FROM pagos WHERE produccion_id = ?", [paulaOrderId]);
+          
+          // Delete Paula's production order
+          await connection.query("DELETE FROM produccion WHERE id = ?", [paulaOrderId]);
         }
+
+        // 3. Make sure the inventory cut for model '752996' is NOT marked as en_inventario = 1
+        await connection.query(`
+          UPDATE inventario SET en_inventario = 0 WHERE modelo = '752996'
+        `);
+        console.log("Inventory cut for 752996 restored to en_inventario = 0");
 
         // Insert log in history
         await connection.query(`
@@ -1395,12 +1404,12 @@ async function initializeDatabase() {
           VALUES (1, 'EDIT', 'PRODUCCION', 'Deshizo división incorrecta del modelo 752996: Restauró orden de Jairo a 151 pzas y eliminó orden de Paula')
         `);
 
-        // Register migration
-        await connection.query("INSERT INTO migrations_run (migration_name) VALUES ('revert_split_model_752996_v1')");
-        console.log('--- FIN DE MIGRACIÓN MANUAL: Revertir división completado ---');
+        // Register migration V2
+        await connection.query("INSERT INTO migrations_run (migration_name) VALUES ('revert_split_model_752996_v2')");
+        console.log('--- FIN DE MIGRACIÓN MANUAL V2: Revertir división completado ---');
       }
     } catch (e) {
-      console.error('Error al revertir división de modelo 752996:', e);
+      console.error('Error al revertir división de modelo 752996 V2:', e);
     }
 
     try {
@@ -1424,6 +1433,10 @@ async function initializeDatabase() {
     try {
       const fs = require('fs');
       const path = require('path');
+      const uploadsDir = path.join(__dirname, 'uploads');
+      if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+      }
       
       const [prods] = await connection.query(`
         SELECT p.*, m.nombre as maquilero_nombre, i.modelo, i.no_orden, i.en_inventario, i.piezas_en_proceso
@@ -1437,9 +1450,10 @@ async function initializeDatabase() {
       const [invReal] = await connection.query("SELECT * FROM inventario_real WHERE modelo = '752996'");
       const [camion] = await connection.query("SELECT * FROM camion_detalles WHERE modelo = '752996'");
       const [historial] = await connection.query("SELECT * FROM historial WHERE description LIKE '%752996%' ORDER BY id DESC LIMIT 50");
+      const [maquileros] = await connection.query("SELECT * FROM maquileros");
 
-      const debugData = { prods, inv, invReal, camion, historial };
-      fs.writeFileSync(path.join(__dirname, 'uploads', 'db_debug.json'), JSON.stringify(debugData, null, 2));
+      const debugData = { prods, inv, invReal, camion, historial, maquileros };
+      fs.writeFileSync(path.join(uploadsDir, 'db_debug.json'), JSON.stringify(debugData, null, 2));
       console.log("DB debug dump written successfully to uploads/db_debug.json");
     } catch (e) {
       console.error("Error writing db debug dump:", e);
