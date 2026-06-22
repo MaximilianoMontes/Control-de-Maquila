@@ -1328,6 +1328,81 @@ async function initializeDatabase() {
       global.migrationError = e.message + "\n" + e.stack;
     }
 
+    // Revert incorrect split of model 752996 (Paula Melgarejo Mena / Jairo)
+    try {
+      const [run] = await connection.query("SELECT 1 FROM migrations_run WHERE migration_name = 'revert_split_model_752996_v1'");
+      if (run.length === 0) {
+        console.log('--- MIGRACIÓN MANUAL: Revertir división incorrecta de modelo 752996 ---');
+
+        // 1. Find Jairo's order for model 752996
+        const [jairoOrders] = await connection.query(`
+          SELECT p.id, p.cantidad, p.precio_total
+          FROM produccion p
+          JOIN maquileros m ON p.maquilero_id = m.id
+          JOIN inventario i ON p.inventario_id = i.id
+          WHERE i.modelo = '752996' AND m.nombre LIKE '%Jairo%'
+        `);
+
+        // 2. Find Paula's order #64 for model 752996
+        const [paulaOrders] = await connection.query(`
+          SELECT p.id, p.cantidad
+          FROM produccion p
+          JOIN maquileros m ON p.maquilero_id = m.id
+          JOIN inventario i ON p.inventario_id = i.id
+          WHERE i.modelo = '752996' AND m.nombre LIKE '%Paula%'
+        `);
+
+        console.log("Jairo orders found:", jairoOrders);
+        console.log("Paula orders found:", paulaOrders);
+
+        if (jairoOrders.length > 0) {
+          const jairoId = jairoOrders[0].id;
+          
+          // Update Jairo's order: set quantity to 151, received to 151, state to Terminado, and total price to 7550.00 (151 * 50)
+          await connection.query(`
+            UPDATE produccion 
+            SET cantidad = 151, 
+                cantidad_recibida = 151, 
+                precio_total = 7550.00, 
+                estado = 'Terminado',
+                fecha_terminado = CURRENT_TIMESTAMP,
+                archivado = 0
+            WHERE id = ?
+          `, [jairoId]);
+          console.log(`Jairo's production order ID ${jairoId} restored to 151 completed pieces.`);
+        }
+
+        if (paulaOrders.length > 0) {
+          for (const paulaOrder of paulaOrders) {
+            const paulaId = paulaOrder.id;
+            
+            // Clean up dependencies for Paula's order if they exist
+            await connection.query("DELETE FROM plancha_devoluciones WHERE produccion_id = ?", [paulaId]);
+            await connection.query("DELETE FROM plancha_trabajos WHERE camion_detalles_id IN (SELECT id FROM camion_detalles WHERE produccion_id = ?)", [paulaId]);
+            await connection.query("DELETE FROM camion_detalles WHERE produccion_id = ?", [paulaId]);
+            await connection.query("DELETE FROM pagos WHERE produccion_id = ?", [paulaId]);
+            await connection.query("DELETE FROM descuentos_personales WHERE inventario_id IN (SELECT inventario_id FROM produccion WHERE id = ?)", [paulaId]);
+            
+            // Delete Paula's production order
+            await connection.query("DELETE FROM produccion WHERE id = ?", [paulaId]);
+            console.log(`Paula's production order ID ${paulaId} deleted successfully.`);
+          }
+        }
+
+        // Insert log in history
+        await connection.query(`
+          INSERT INTO historial (user_id, action, target, description) 
+          VALUES (1, 'EDIT', 'PRODUCCION', 'Deshizo división incorrecta del modelo 752996: Restauró orden de Jairo a 151 pzas y eliminó orden de Paula')
+        `);
+
+        // Register migration
+        await connection.query("INSERT INTO migrations_run (migration_name) VALUES ('revert_split_model_752996_v1')");
+        console.log('--- FIN DE MIGRACIÓN MANUAL: Revertir división completado ---');
+      }
+    } catch (e) {
+      console.error('Error al revertir división de modelo 752996:', e);
+    }
+
     try {
       await connection.query(`
         CREATE TABLE IF NOT EXISTS calendario_eventos (
