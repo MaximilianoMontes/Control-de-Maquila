@@ -22,6 +22,27 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
   const { settings, formatCurrency } = useSettings();
   const isEn = settings.language === 'en';
 
+  const displayTalla = (talla) => {
+    if (!talla) return "";
+    const tStr = talla.toString().trim();
+    if (/^[tT]/i.test(tStr)) {
+      const clean = tStr.substring(1).trim();
+      const num = parseInt(clean, 10);
+      if (!isNaN(num) && num < 10 && !clean.startsWith("0")) {
+        return 'T0' + num;
+      }
+      return tStr.toUpperCase();
+    }
+    const num = parseInt(tStr, 10);
+    if (!isNaN(num)) {
+      if (num < 10 && !tStr.startsWith("0")) {
+        return 'T0' + num;
+      }
+      return 'T' + tStr;
+    }
+    return tStr;
+  };
+
   const [pagoPlanchadorId, setPagoPlanchadorId] = useState('');
   const [planchadorPagoDetalle, setPlanchadorPagoDetalle] = useState(null);
   const [montoPago, setMontoPago] = useState('');
@@ -870,7 +891,7 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
                           <td style={{ fontWeight: '600' }}>{h.planchador_nombre}</td>
                           <td>{new Date(h.fecha_creacion).toLocaleString()}</td>
                           <td><span style={{ background: 'var(--bg-input)', padding: '2px 6px', borderRadius: '4px', fontSize: '0.8rem', fontWeight: '600' }}>{h.color || 'N/A'}</span></td>
-                          <td><span style={{ background: 'rgba(14, 165, 233, 0.1)', color: '#0ea5e9', padding: '2px 6px', borderRadius: '4px', fontSize: '0.8rem', fontWeight: '600' }}>T{h.talla}</span></td>
+                          <td><span style={{ background: 'rgba(14, 165, 233, 0.1)', color: '#0ea5e9', padding: '2px 6px', borderRadius: '4px', fontSize: '0.8rem', fontWeight: '600' }}>{displayTalla(h.talla)}</span></td>
                           <td style={{ fontWeight: 'bold' }}>{h.piezas}</td>
                         </tr>
                       ))}

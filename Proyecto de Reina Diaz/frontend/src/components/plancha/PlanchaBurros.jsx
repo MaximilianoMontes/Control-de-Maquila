@@ -48,8 +48,31 @@ export default function PlanchaBurros({
   const normalizeTalla = (t) => {
     if (!t) return "";
     const cleaned = t.toString().replace(/^[a-zA-Z]+/g, '').trim();
-    const num = parseInt(cleaned, 10);
-    return isNaN(num) ? t.toString().toUpperCase().trim() : num.toString();
+    if (/^\d$/.test(cleaned)) {
+      return "0" + cleaned;
+    }
+    return cleaned.toUpperCase();
+  };
+
+  const displayTalla = (talla) => {
+    if (!talla) return "";
+    const tStr = talla.toString().trim();
+    if (/^[tT]/i.test(tStr)) {
+      const clean = tStr.substring(1).trim();
+      const num = parseInt(clean, 10);
+      if (!isNaN(num) && num < 10 && !clean.startsWith("0")) {
+        return 'T0' + num;
+      }
+      return tStr.toUpperCase();
+    }
+    const num = parseInt(tStr, 10);
+    if (!isNaN(num)) {
+      if (num < 10 && !tStr.startsWith("0")) {
+        return 'T0' + num;
+      }
+      return 'T' + tStr;
+    }
+    return tStr;
   };
 
   const sortTallasFunc = (a, b) => {
@@ -862,7 +885,7 @@ export default function PlanchaBurros({
                           <div key={colorName} style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
                             <span style={{ fontSize: '0.65rem', color: 'var(--text-primary)', fontWeight: 'bold', textTransform: 'uppercase' }}>{colorName}:</span>
                             {availableForColor.map(([t, q]) => (
-                              <span key={t} style={{ background: 'var(--bg-input)', color: 'var(--text-secondary)', fontSize: '0.65rem', padding: '2px 4px', borderRadius: '4px', fontWeight: '600' }}>T{t}: {q}</span>
+                              <span key={t} style={{ background: 'var(--bg-input)', color: 'var(--text-secondary)', fontSize: '0.65rem', padding: '2px 4px', borderRadius: '4px', fontWeight: '600' }}>{displayTalla(t)}: {q}</span>
                             ))}
                           </div>
                         );
@@ -874,7 +897,7 @@ export default function PlanchaBurros({
                         .filter(([_, q]) => q > 0)
                         .sort((a,b) => sortTallasFunc(a[0], b[0]))
                         .map(([t, q]) => (
-                        <span key={t} style={{ background: 'var(--bg-input)', color: 'var(--text-secondary)', fontSize: '0.7rem', padding: '2px 6px', borderRadius: '4px', fontWeight: '600' }}>T{t}: {q}</span>
+                        <span key={t} style={{ background: 'var(--bg-input)', color: 'var(--text-secondary)', fontSize: '0.7rem', padding: '2px 6px', borderRadius: '4px', fontWeight: '600' }}>{displayTalla(t)}: {q}</span>
                       ))}
                     </div>
                   )}
@@ -987,7 +1010,7 @@ export default function PlanchaBurros({
                       burro.modelos.map(m => (
                         <div key={m.uid} style={{ background: 'var(--bg-card)', borderRadius: '8px', padding: '0.8rem', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '0.8rem', boxShadow: '0 1px 2px rgba(0,0,0,0.02)' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                            <span style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-primary)' }}>{m.modelo} ({m.color || 'Único'} - T{m.talla})</span>
+                            <span style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-primary)' }}>{m.modelo} ({m.color || 'Único'} - {displayTalla(m.talla)})</span>
                             <button onClick={() => handleRemoveModeloFromBurro(index, m.uid)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', padding: '2px' }}><X size={14} /></button>
                           </div>
                           
@@ -999,11 +1022,11 @@ export default function PlanchaBurros({
                                   ))}
                                 </select>
                               )}
-                              <select value={m.talla} onChange={(e) => handleChangeModeloTalla(index, m.uid, e.target.value)} style={{ fontSize: '0.75rem', padding: '2px 4px', borderRadius: '4px', border: '1px solid var(--border-color)', outline: 'none' }}>
+                              <select value={normalizeTalla(m.talla)} onChange={(e) => handleChangeModeloTalla(index, m.uid, e.target.value)} style={{ fontSize: '0.75rem', padding: '2px 4px', borderRadius: '4px', border: '1px solid var(--border-color)', outline: 'none' }}>
                                 {Object.entries(m.color && m.tallas_colores_disponibles && m.tallas_colores_disponibles[m.color] ? m.tallas_colores_disponibles[m.color] : (m.tallas_disponibles || {}))
-                                  .filter(([t, q]) => burro.is_comodin || q > 0 || t === m.talla)
+                                  .filter(([t, q]) => burro.is_comodin || q > 0 || normalizeTalla(t) === normalizeTalla(m.talla))
                                   .sort((a,b) => sortTallasFunc(a[0], b[0]))
-                                  .map(([t, _]) => <option key={t} value={t}>T{t}</option>)}
+                                  .map(([t, _]) => <option key={t} value={normalizeTalla(t)}>{displayTalla(t)}</option>)}
                               </select>
                             
                             <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'var(--bg-input)', borderRadius: '6px', padding: '2px' }}>
@@ -1104,7 +1127,7 @@ export default function PlanchaBurros({
                             <h4 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '1rem', fontWeight: 'bold' }}>{activeModel.modelo}</h4>
                             <span style={{ fontSize: '0.65rem', background: prioridadBg, color: prioridadColor, padding: '2px 8px', borderRadius: '12px', fontWeight: 'bold' }}>{prioridadActual}</span>
                           </div>
-                          <p style={{ margin: '2px 0 0 0', fontSize: '0.85rem', color: 'var(--text-primary)', fontWeight: '600' }}>{activeModel.color ? `${activeModel.color}` : 'Variante Única'} - T{activeModel.talla}</p>
+                          <p style={{ margin: '2px 0 0 0', fontSize: '0.85rem', color: 'var(--text-primary)', fontWeight: '600' }}>{activeModel.color ? `${activeModel.color}` : 'Variante Única'} - {displayTalla(activeModel.talla)}</p>
                         </div>
                       </div>
                     ) : (
@@ -1155,7 +1178,7 @@ export default function PlanchaBurros({
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', maxHeight: '120px', overflowY: 'auto', paddingRight: '4px' }}>
                           {activeBurroObj.modelos.map((m, idx) => (
                             <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-input)', padding: '0.5rem', borderRadius: '6px' }}>
-                              <span style={{ color: 'var(--text-primary)', fontWeight: '500', fontSize: '0.8rem' }}>{m.modelo} <span style={{ fontSize:'0.7rem', color:'var(--text-secondary)'}}>({m.color || 'Único'} - T{m.talla})</span></span>
+                              <span style={{ color: 'var(--text-primary)', fontWeight: '500', fontSize: '0.8rem' }}>{m.modelo} <span style={{ fontSize:'0.7rem', color:'var(--text-secondary)'}}>({m.color || 'Único'} - {displayTalla(m.talla)})</span></span>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                 <button 
                                   onClick={() => handleUpdatePiezas(activeBurroScanner - 1, m.uid, -1)}
