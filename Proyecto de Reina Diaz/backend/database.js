@@ -1421,6 +1421,30 @@ async function initializeDatabase() {
       console.error('Error creating calendario_eventos:', e);
     }
 
+    try {
+      const fs = require('fs');
+      const path = require('path');
+      
+      const [prods] = await connection.query(`
+        SELECT p.*, m.nombre as maquilero_nombre, i.modelo, i.no_orden, i.en_inventario, i.piezas_en_proceso
+        FROM produccion p
+        LEFT JOIN maquileros m ON p.maquilero_id = m.id
+        LEFT JOIN inventario i ON p.inventario_id = i.id
+        WHERE i.modelo = '752996' OR p.id = 64
+      `);
+      
+      const [inv] = await connection.query("SELECT * FROM inventario WHERE modelo = '752996'");
+      const [invReal] = await connection.query("SELECT * FROM inventario_real WHERE modelo = '752996'");
+      const [camion] = await connection.query("SELECT * FROM camion_detalles WHERE modelo = '752996'");
+      const [historial] = await connection.query("SELECT * FROM historial WHERE description LIKE '%752996%' ORDER BY id DESC LIMIT 50");
+
+      const debugData = { prods, inv, invReal, camion, historial };
+      fs.writeFileSync(path.join(__dirname, 'uploads', 'db_debug.json'), JSON.stringify(debugData, null, 2));
+      console.log("DB debug dump written successfully to uploads/db_debug.json");
+    } catch (e) {
+      console.error("Error writing db debug dump:", e);
+    }
+
     connection.release();
 
     console.log('Database initialization complete.');
