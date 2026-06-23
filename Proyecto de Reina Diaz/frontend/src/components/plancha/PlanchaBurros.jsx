@@ -936,8 +936,22 @@ export default function PlanchaBurros({
                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                    {planchadores.map(p => (
                      <div key={p.id} draggable onDragStart={(e) => handleDragStart(e, 'planchador', p)} style={{ padding: '0.8rem', background: 'var(--bg-input)', border: '1px solid var(--border-color)', borderRadius: '8px', cursor: 'grab', display: 'flex', alignItems: 'center', gap: '0.8rem', fontSize: '0.9rem', color: 'var(--text-primary)', fontWeight: '500', transition: 'background 0.2s' }} onMouseOver={e => e.currentTarget.style.opacity = '0.8'} onMouseOut={e => e.currentTarget.style.opacity = '1'}>
-                       <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#dbeafe', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>{p.nombre.charAt(0)}</div>
-                       {p.nombre}
+                       <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#dbeafe', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', flexShrink: 0 }}>{p.nombre.charAt(0)}</div>
+                       <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.nombre}</span>
+                       <button 
+                         type="button"
+                         onClick={() => {
+                           if (!activeBurroScanner) {
+                             playBeep('error');
+                             toast.warning(isEn ? 'First select a board' : 'Primero haz clic en un burro para seleccionarlo y poder asignar el planchador con este botón.', { theme: 'dark' });
+                             return;
+                           }
+                           handleDropOnBurro(null, activeBurroScanner - 1, { type: 'planchador', data: p });
+                         }} 
+                         style={{ background: '#0ea5e9', color: '#fff', border: 'none', borderRadius: '6px', padding: '4px 10px', fontSize: '0.75rem', cursor: 'pointer', flexShrink: 0 }}
+                       >
+                         Asignar
+                       </button>
                      </div>
                    ))}
                  </div>
