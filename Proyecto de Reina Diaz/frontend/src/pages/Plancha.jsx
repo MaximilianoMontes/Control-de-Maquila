@@ -38,6 +38,10 @@ export default function Plancha() {
   const initialTab = searchParams.get('tab') || 'plancha';
   const [activeTab, setActiveTab] = useState(initialTab);
 
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const toggleSidebar = () => setIsMobileSidebarOpen(prev => !prev);
+  const closeSidebar = () => setIsMobileSidebarOpen(false);
+
   useEffect(() => {
     const tab = searchParams.get('tab');
     if (tab) {
@@ -142,11 +146,17 @@ export default function Plancha() {
 
   return (
     <div className="app-layout">
-      {/* Sidebar exclusiva de Plancha */}
-      <PlanchaSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+      {isMobileSidebarOpen && (
+        <div className="sidebar-overlay" onClick={closeSidebar}></div>
+      )}
+
+      <div className={`sidebar-container ${isMobileSidebarOpen ? 'mobile-open' : ''}`}>
+        {/* Sidebar exclusiva de Plancha */}
+        <PlanchaSidebar activeTab={activeTab} setActiveTab={setActiveTab} onClose={closeSidebar} />
+      </div>
       
       <div className="main-container">
-        <Header />
+        <Header onToggleSidebar={toggleSidebar} />
 
         <main className="main-content" style={{ padding: '2rem' }}>
           {activeTab === 'planchadores' && (

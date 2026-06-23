@@ -33,6 +33,17 @@ export default function PlanchaBurros({
   const [draggedItem, setDraggedItem] = useState(null);
   const [activeBurroScanner, setActiveBurroScanner] = useState(null);
 
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+  const [mobileSubTab, setMobileSubTab] = useState('burros'); // 'burros', 'pendientes', 'detalle'
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Scanner Refs for event listeners
   const activeBurroScannerRef = useRef(activeBurroScanner);
   const burrosStateRef = useRef(burrosState);
@@ -839,11 +850,82 @@ export default function PlanchaBurros({
         </div>
       </div>
 
+      {isMobile && (
+        <div className="mobile-subtabs-container" style={{
+          display: 'flex',
+          background: 'var(--bg-card)',
+          padding: '6px',
+          borderRadius: '12px',
+          border: '1px solid var(--border-color)',
+          gap: '4px',
+          marginBottom: '1rem'
+        }}>
+          <button 
+            type="button"
+            onClick={() => setMobileSubTab('burros')}
+            style={{
+              flex: 1,
+              padding: '10px',
+              borderRadius: '8px',
+              border: 'none',
+              background: mobileSubTab === 'burros' ? 'var(--primary-color)' : 'transparent',
+              color: mobileSubTab === 'burros' ? '#fff' : 'var(--text-secondary)',
+              fontWeight: '600',
+              fontSize: '0.9rem',
+              cursor: 'pointer',
+              transition: 'all 0.2s'
+            }}
+          >
+            {isEn ? '1. Boards' : '1. Burros'}
+            {burrosState.filter(b => b.planchador).length > 0 && ` (${burrosState.filter(b => b.planchador).length})`}
+          </button>
+          <button 
+            type="button"
+            onClick={() => setMobileSubTab('pendientes')}
+            style={{
+              flex: 1,
+              padding: '10px',
+              borderRadius: '8px',
+              border: 'none',
+              background: mobileSubTab === 'pendientes' ? 'var(--primary-color)' : 'transparent',
+              color: mobileSubTab === 'pendientes' ? '#fff' : 'var(--text-secondary)',
+              fontWeight: '600',
+              fontSize: '0.9rem',
+              cursor: 'pointer',
+              transition: 'all 0.2s'
+            }}
+          >
+            {isEn ? '2. Pending' : '2. Pendientes'}
+            {modelosDisponibles.length > 0 && ` (${modelosDisponibles.length})`}
+          </button>
+          <button 
+            type="button"
+            onClick={() => setMobileSubTab('detalle')}
+            style={{
+              flex: 1,
+              padding: '10px',
+              borderRadius: '8px',
+              border: 'none',
+              background: mobileSubTab === 'detalle' ? 'var(--primary-color)' : 'transparent',
+              color: mobileSubTab === 'detalle' ? '#fff' : 'var(--text-secondary)',
+              fontWeight: '600',
+              fontSize: '0.9rem',
+              cursor: 'pointer',
+              transition: 'all 0.2s'
+            }}
+          >
+            {isEn ? '3. Details' : '3. Detalles'}
+            {activeBurroScanner && ` (#${String(activeBurroScanner).padStart(2, '0')})`}
+          </button>
+        </div>
+      )}
+
       {/* Main Content Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr 300px', gap: '1.5rem', alignItems: 'start' }}>
+      <div className="plancha-main-grid" style={{ display: 'grid', gridTemplateColumns: '320px 1fr 300px', gap: '1.5rem', alignItems: 'start' }}>
         
         {/* Left Column: Pendientes */}
-        <div style={{ background: 'var(--bg-card)', borderRadius: '16px', border: '1px solid var(--border-color)', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', height: 'calc(100vh - 250px)', position: 'sticky', top: '1.5rem' }}>
+        {(!isMobile || mobileSubTab === 'pendientes') && (
+          <div style={{ background: 'var(--bg-card)', borderRadius: '16px', border: '1px solid var(--border-color)', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', height: isMobile ? 'auto' : 'calc(100vh - 250px)', position: isMobile ? 'static' : 'sticky', top: '1.5rem' }}>
           <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border-color)' }}>
             <h3 style={{ margin: 0, fontSize: '1.2rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center' }}>
               {isEn ? 'Pending Models' : 'Modelos pendientes'} 
@@ -957,11 +1039,13 @@ export default function PlanchaBurros({
                  </div>
               </div>
             )}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Middle Column: Mapa de Burros */}
-        <div style={{ background: 'var(--bg-input)', borderRadius: '16px', border: '1px solid var(--border-color)', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        {(!isMobile || mobileSubTab === 'burros') && (
+          <div style={{ background: 'var(--bg-input)', borderRadius: '16px', border: '1px solid var(--border-color)', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <h3 style={{ margin: 0, fontSize: '1.2rem', color: 'var(--text-primary)' }}>{isEn ? 'Board Map' : 'Mapa de burros'}</h3>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -983,6 +1067,20 @@ export default function PlanchaBurros({
                   key={burro.numero}
                   onDragOver={e => e.preventDefault()}
                   onDrop={e => handleDropOnBurro(e, index)}
+                  onClick={(e) => {
+                    if (e.target.closest('button') || e.target.closest('select') || e.target.closest('input')) {
+                      return;
+                    }
+                    setActiveBurroScanner(burro.numero);
+                    if (isMobile) {
+                      setMobileSubTab('pendientes');
+                      toast.info(isEn 
+                        ? `Board ${burro.numero} selected. Choose a model or ironer.` 
+                        : `Burro ${burro.numero} seleccionado. Elige un modelo o planchador.`,
+                        { theme: 'dark', autoClose: 2000 }
+                      );
+                    }
+                  }}
                   style={{ 
                     background: 'var(--bg-card)',
                     border: isActiveScanner ? '2px solid #3b82f6' : hasPlanchador ? '1px solid #cbd5e1' : '1px dashed #cbd5e1',
@@ -993,7 +1091,8 @@ export default function PlanchaBurros({
                     gap: '1rem',
                     boxShadow: isActiveScanner ? '0 0 0 4px rgba(59, 130, 246, 0.1)' : '0 1px 3px rgba(0,0,0,0.05)',
                     position: 'relative',
-                    transition: 'all 0.2s'
+                    transition: 'all 0.2s',
+                    cursor: 'pointer'
                   }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1117,9 +1216,11 @@ export default function PlanchaBurros({
             })}
           </div>
         </div>
+      )}
 
         {/* Third Column: Detalle y Carga Operario */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        {(!isMobile || mobileSubTab === 'detalle') && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
           {/* Detalle de Asignación */}
           <div style={{ background: 'var(--bg-card, #fff)', borderRadius: '16px', border: '1px solid var(--border-color, #e2e8f0)', padding: '1.5rem' }}>
             <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', color: 'var(--text-primary)' }}>Detalle de Asignación</h3>
@@ -1395,6 +1496,7 @@ export default function PlanchaBurros({
             </div>
           </div>
         </div>
+      )}
 
       </div>
     </div>

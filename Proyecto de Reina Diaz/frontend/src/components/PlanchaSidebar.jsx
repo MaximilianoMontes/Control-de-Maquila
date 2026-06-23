@@ -7,7 +7,8 @@ import {
   Home, 
   LogOut,
   Shirt,
-  History
+  History,
+  LayoutDashboard
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
@@ -39,7 +40,7 @@ export default function PlanchaSidebar({ activeTab, setActiveTab, onClose }) {
   ];
 
   return (
-    <aside className="sidebar" style={{ borderRight: '1px solid rgba(14, 165, 233, 0.15)' }}>
+    <aside className="sidebar plancha-sidebar" style={{ borderRight: '1px solid rgba(14, 165, 233, 0.15)' }}>
       {/* Logo exclusivo del módulo de plancha */}
       <Link to="/" className="sidebar-logo" style={{ gap: '0.8rem' }}>
         <div 
@@ -87,6 +88,29 @@ export default function PlanchaSidebar({ activeTab, setActiveTab, onClose }) {
 
       {/* Botón para volver al Launcher de Apps */}
       <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        {/* Enlace directo a Maquila ERP */}
+        <Link 
+          to="/dashboard" 
+          className="btn" 
+          onClick={onClose}
+          style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            gap: '8px', 
+            background: 'linear-gradient(135deg, #7c3aed, #2563eb)', 
+            border: 'none', 
+            color: '#ffffff',
+            padding: '10px',
+            borderRadius: '8px',
+            fontSize: '0.95rem',
+            fontWeight: '600',
+            boxShadow: '0 4px 12px rgba(124, 58, 237, 0.25)'
+          }}
+        >
+          <LayoutDashboard size={18} /> {isEn ? 'Maquila ERP (Dashboard)' : 'Maquila ERP (Dashboard)'}
+        </Link>
+
         <Link 
           to="/" 
           className="btn" 
