@@ -2555,4 +2555,16 @@ body.dark-mode .search-clear-btn:hover {
   padding-left: 2.75rem;
 }
 
+/* Toastify Custom Style Overrides */
+.Toastify__toast-container {
+  width: 420px !important;
+  max-width: 95vw;
+}
+
+.Toastify__toast {
+  border-radius: 12px !important;
+  border: 1px solid var(--border-color) !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3) !important;
+}
+
 
