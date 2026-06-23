@@ -18,6 +18,7 @@ import API_URL from '../../config';
 import Swal from 'sweetalert2';
 import { toast } from 'react-toastify';
 import ImageZoom from '../ImageZoom';
+import SearchableSelect from '../SearchableSelect';
 
 export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) {
   const { settings, formatCurrency } = useSettings();
@@ -436,17 +437,15 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
           <form onSubmit={handleRegistrarPago} style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
             <div className="form-group">
               <label className="form-label">{isEn ? 'Select Ironer' : 'Seleccionar Planchador'}</label>
-              <select 
-                className="form-input" 
-                value={pagoPlanchadorId} 
-                onChange={e => handleCargarPagosPlanchador(e.target.value)} 
+              <SearchableSelect
+                options={planchadores}
+                value={pagoPlanchadorId}
+                onChange={handleCargarPagosPlanchador}
+                placeholder={isEn ? '-- Choose an Ironer --' : '-- Elige un Planchador --'}
+                labelKey="nombre"
+                valueKey="id"
                 required
-              >
-                <option value="">{isEn ? '-- Choose an Ironer --' : '-- Elige un Planchador --'}</option>
-                {planchadores.map(p => (
-                  <option key={p.id} value={p.id}>{p.nombre}</option>
-                ))}
-              </select>
+              />
             </div>
 
             {planchadorPagoDetalle && (() => {
@@ -751,16 +750,17 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
             </div>
             <div className="form-group">
               <label className="form-label">{isEn ? 'Ironer (Optional)' : 'Planchador (Opcional)'}</label>
-              <select 
-                className="form-input" 
-                value={reportPlanchadorId} 
-                onChange={e => setReportPlanchadorId(e.target.value)}
-              >
-                <option value="">{isEn ? '-- All Ironers --' : '-- Todos los Planchadores --'}</option>
-                {planchadores.map(p => (
-                  <option key={p.id} value={p.id}>{p.nombre}</option>
-                ))}
-              </select>
+              <SearchableSelect
+                options={[
+                  { id: "", nombre: isEn ? '-- All Ironers --' : '-- Todos los Planchadores --' },
+                  ...planchadores
+                ]}
+                value={reportPlanchadorId}
+                onChange={setReportPlanchadorId}
+                placeholder={isEn ? '-- All Ironers --' : '-- Todos los Planchadores --'}
+                labelKey="nombre"
+                valueKey="id"
+              />
             </div>
             <button 
               type="button" 
@@ -1021,17 +1021,15 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
               
               <div className="form-group">
                 <label className="form-label">{isEn ? 'Ironer' : 'Planchador'}</label>
-                <select 
-                  className="form-input" 
-                  value={ajustePlanchadorId} 
-                  onChange={e => setAjustePlanchadorId(e.target.value)}
+                <SearchableSelect
+                  options={planchadores.filter(p => !p.nombre.toLowerCase().includes('olga') && !p.nombre.toLowerCase().includes('luis'))}
+                  value={ajustePlanchadorId}
+                  onChange={setAjustePlanchadorId}
+                  placeholder={isEn ? '-- Choose an Ironer --' : '-- Elige un Planchador --'}
+                  labelKey="nombre"
+                  valueKey="id"
                   required
-                >
-                  <option value="">{isEn ? '-- Choose an Ironer --' : '-- Elige un Planchador --'}</option>
-                  {planchadores.filter(p => !p.nombre.toLowerCase().includes('olga') && !p.nombre.toLowerCase().includes('luis')).map(p => (
-                    <option key={p.id} value={p.id}>{p.nombre}</option>
-                  ))}
-                </select>
+                />
               </div>
  
               <div className="form-group">
@@ -1207,17 +1205,15 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
               
               <div className="form-group">
                 <label className="form-label">{isEn ? 'Ironer' : 'Planchador'}</label>
-                <select 
-                  className="form-input" 
-                  value={cuadrePlanchadorId} 
-                  onChange={e => setCuadrePlanchadorId(e.target.value)}
+                <SearchableSelect
+                  options={planchadores.filter(p => !p.nombre.toLowerCase().includes('olga') && !p.nombre.toLowerCase().includes('luis'))}
+                  value={cuadrePlanchadorId}
+                  onChange={setCuadrePlanchadorId}
+                  placeholder={isEn ? '-- Choose an Ironer --' : '-- Elige un Planchador --'}
+                  labelKey="nombre"
+                  valueKey="id"
                   required
-                >
-                  <option value="">{isEn ? '-- Choose an Ironer --' : '-- Elige un Planchador --'}</option>
-                  {planchadores.filter(p => !p.nombre.toLowerCase().includes('olga') && !p.nombre.toLowerCase().includes('luis')).map(p => (
-                    <option key={p.id} value={p.id}>{p.nombre}</option>
-                  ))}
-                </select>
+                />
               </div>
  
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>

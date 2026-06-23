@@ -750,16 +750,19 @@ export default function Produccion() {
 
               <div className="form-group">
                 <label className="form-label">Reasignar las restantes a: (Opcional)</label>
-                <select 
-                  className="form-input" 
-                  value={splitData.nuevo_maquilero_id} 
-                  onChange={e => setSplitData({...splitData, nuevo_maquilero_id: e.target.value})}
-                >
-                  <option value="">Dejar libres en Cortes (Inventario)</option>
-                  {[...maquileros].filter(m => m.id !== splitOrder.maquilero_id).sort((a,b) => a.nombre.localeCompare(b.nombre)).map(m => (
-                    <option key={m.id} value={m.id}>{m.nombre}</option>
-                  ))}
-                </select>
+                <SearchableSelect
+                  options={[
+                    { id: "", nombre: "Dejar libres en Cortes (Inventario)" },
+                    ...[...maquileros]
+                      .filter(m => m.id !== splitOrder.maquilero_id)
+                      .sort((a, b) => a.nombre.localeCompare(b.nombre))
+                  ]}
+                  value={splitData.nuevo_maquilero_id}
+                  onChange={id => setSplitData({...splitData, nuevo_maquilero_id: id})}
+                  placeholder="Dejar libres en Cortes (Inventario)"
+                  labelKey="nombre"
+                  valueKey="id"
+                />
               </div>
 
               <div className="modal-actions">
