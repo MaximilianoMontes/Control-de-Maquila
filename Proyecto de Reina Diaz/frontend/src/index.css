@@ -2325,6 +2325,44 @@ body.theme-teto {
     radial-gradient(at 100% 0%, rgba(255, 184, 0, 0.08) 0px, transparent 55%) !important;
 }
 
+/* Tema Limbus Company 🚂 (Estilo Gótico Industrial / Relojería) */
+body.theme-limbus {
+  --bg-dark: #0d0c0b;
+  --bg-card: #181614;
+  --bg-input: #221e1a;
+  --text-primary: #f5ebd5;
+  --text-secondary: #d49e2a;
+  --border-color: rgba(212, 158, 42, 0.18);
+  --glass-border: 1px solid rgba(212, 158, 42, 0.08);
+  --glass-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.5);
+  --bg-hover: rgba(212, 158, 42, 0.06);
+  --bg-th: rgba(212, 158, 42, 0.1);
+  --header-bg: rgba(24, 22, 20, 0.85);
+  --row-normal-bg: rgba(212, 158, 42, 0.08);
+  --row-normal-hover: rgba(212, 158, 42, 0.15);
+  --row-warning-bg: rgba(156, 28, 28, 0.08);
+  --row-warning-hover: rgba(156, 28, 28, 0.15);
+  --row-danger-bg: rgba(156, 28, 28, 0.12);
+  --row-danger-hover: rgba(156, 28, 28, 0.2);
+  --badge-bono-bg: rgba(212, 158, 42, 0.2);
+  --badge-bono-text: #d49e2a;
+  --badge-desc-bg: rgba(156, 28, 28, 0.25);
+  --badge-desc-text: #ff4d4d;
+  
+  /* Primary and danger accents overrides */
+  --primary-color: #d49e2a;
+  --primary-hover: #b37e1b;
+  --primary-shadow: rgba(212, 158, 42, 0.4);
+  --danger-color: #9c1c1c;
+  --danger-hover: #7a1414;
+  --success-color: #d49e2a;
+
+  /* Custom background clockwork golden and blood red neon glow */
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(212, 158, 42, 0.18) 0px, transparent 55%),
+    radial-gradient(at 100% 0%, rgba(156, 28, 28, 0.12) 0px, transparent 55%) !important;
+}
+
 /* Dropdown Actions Menu Styles */
 .actions-dropdown-container {
   position: relative;

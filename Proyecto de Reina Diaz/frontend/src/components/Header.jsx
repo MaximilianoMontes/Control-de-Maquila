@@ -616,6 +616,12 @@ export default function Header({ onToggleSidebar }) {
                     {settings.theme === 'teto' && <Check size={14} />} {t('settings.themeTeto')}
                   </button>
                   <button 
+                    className={`settings-option-btn ${settings.theme === 'limbus' ? 'active' : ''}`}
+                    onClick={() => toggleSetting('theme', 'limbus')}
+                  >
+                    {settings.theme === 'limbus' && <Check size={14} />} {t('settings.themeLimbus')}
+                  </button>
+                  <button 
                     className={`settings-option-btn ${settings.theme === 'system' ? 'active' : ''}`}
                     onClick={() => toggleSetting('theme', 'system')}
                     style={{ flexBasis: '100%' }}
