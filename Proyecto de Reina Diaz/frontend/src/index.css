@@ -2605,6 +2605,369 @@ body.theme-minecraft *::-webkit-scrollbar-thumb:hover {
   background: #5c8e32 !important;
 }
 
+/* ==========================================================================
+   TEMA GEOMETRY DASH 🟩 (Estilo Neón Digital)
+   ========================================================================== */
+body.theme-geometry {
+  --bg-dark: #090a0f;       /* Deep space black */
+  --bg-card: #12151e;       /* Dark tech gray */
+  --bg-input: #0b0c10;      /* Dark input slot */
+  --text-primary: #ffffff;  /* Solid white */
+  --text-secondary: #00e5ff; /* Cyan laser neon */
+  --border-color: #00c3ff;  /* Electric blue laser border */
+  --glass-border: 1px solid #1bf259; /* Laser green glow */
+  --glass-shadow: 0 0 15px rgba(0, 195, 255, 0.4); /* Neon blue shadow */
+  --bg-hover: rgba(27, 242, 89, 0.08);
+  --bg-th: rgba(0, 195, 255, 0.12);
+  --header-bg: rgba(18, 21, 30, 0.9);
+  
+  --row-normal-bg: rgba(27, 242, 89, 0.05);
+  --row-normal-hover: rgba(27, 242, 89, 0.12);
+  --row-warning-bg: rgba(255, 150, 0, 0.05);
+  --row-warning-hover: rgba(255, 150, 0, 0.12);
+  --row-danger-bg: rgba(255, 0, 85, 0.05);
+  --row-danger-hover: rgba(255, 0, 85, 0.12);
+  
+  --badge-bono-bg: rgba(27, 242, 89, 0.15);
+  --badge-bono-text: #1bf259;
+  --badge-desc-bg: rgba(255, 0, 85, 0.15);
+  --badge-desc-text: #ff0055;
+  
+  --primary-color: #1bf259;      /* Geometry Dash Lime Green */
+  --primary-hover: #17cf4c;
+  --primary-shadow: rgba(27, 242, 89, 0.4);
+  --danger-color: #ff0055;       /* Laser Red */
+  --danger-hover: #dd0044;
+  --success-color: #1bf259;
+  
+  --radius-lg: 4px;
+  --radius-md: 2px;
+  --transition: all 0.15s ease;
+  
+  background-color: #090a0f !important;
+  background-image: 
+    linear-gradient(0deg, rgba(0, 195, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 195, 255, 0.05) 1px, transparent 1px) !important;
+  background-size: 32px 32px !important;
+}
+
+body.theme-geometry h1,
+body.theme-geometry h2,
+body.theme-geometry h3,
+body.theme-geometry h4,
+body.theme-geometry h5,
+body.theme-geometry h6,
+body.theme-geometry .logo-text,
+body.theme-geometry .kpi-value {
+  font-family: 'Inter', sans-serif !important;
+  font-weight: 800 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1.5px !important;
+  color: #00e5ff !important;
+  text-shadow: 0 0 8px rgba(0, 229, 255, 0.4) !important;
+}
+
+body.theme-geometry .btn,
+body.theme-geometry button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle) {
+  border: 2px solid #1bf259 !important;
+  background: transparent !important;
+  color: #1bf259 !important;
+  box-shadow: 0 0 8px rgba(27, 242, 89, 0.2) !important;
+  border-radius: 4px !important;
+  font-weight: 700 !important;
+}
+
+body.theme-geometry .btn:hover,
+body.theme-geometry button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):hover {
+  background: #1bf259 !important;
+  color: #090a0f !important;
+  box-shadow: 0 0 15px #1bf259 !important;
+}
+
+/* ==========================================================================
+   TEMA FALLOUT ☢️ (Estilo Terminal Pip-Boy)
+   ========================================================================== */
+body.theme-fallout {
+  --bg-dark: #121810;       /* Dark Olive Black */
+  --bg-card: #1c261a;       /* Terminal Frame Green */
+  --bg-input: #0e130c;      /* Phosphor Shadow */
+  --text-primary: #33ff33;  /* Classic Pip-Boy Green Phosphor */
+  --text-secondary: #22aa22; /* Dim Green */
+  --border-color: #33ff33;  /* Phosphor lines */
+  --glass-border: 1px solid rgba(51, 255, 51, 0.3);
+  --glass-shadow: 0 0 10px rgba(51, 255, 51, 0.2);
+  --bg-hover: rgba(51, 255, 51, 0.1);
+  --bg-th: rgba(51, 255, 51, 0.15);
+  --header-bg: rgba(28, 38, 26, 0.9);
+  
+  --row-normal-bg: rgba(51, 255, 51, 0.05);
+  --row-normal-hover: rgba(51, 255, 51, 0.12);
+  --row-warning-bg: rgba(255, 180, 0, 0.05);
+  --row-warning-hover: rgba(255, 180, 0, 0.12);
+  --row-danger-bg: rgba(255, 51, 51, 0.05);
+  --row-danger-hover: rgba(255, 51, 51, 0.12);
+  
+  --badge-bono-bg: rgba(51, 255, 51, 0.18);
+  --badge-bono-text: #33ff33;
+  --badge-desc-bg: rgba(255, 51, 51, 0.18);
+  --badge-desc-text: #ff3333;
+  
+  --primary-color: #33ff33;      /* Vault-Tec Phosphor Green */
+  --primary-hover: #2be02b;
+  --primary-shadow: rgba(51, 255, 51, 0.4);
+  --danger-color: #ff3333;       /* Alert Red */
+  --danger-hover: #e02222;
+  --success-color: #33ff33;
+  
+  --radius-lg: 2px !important;
+  --radius-md: 1px !important;
+  
+  background-color: #121810 !important;
+  background-image: 
+    repeating-linear-gradient(
+      0deg,
+      rgba(51, 255, 51, 0.03),
+      rgba(51, 255, 51, 0.03) 1px,
+      transparent 1px,
+      transparent 2px
+    ) !important;
+}
+
+body.theme-fallout *,
+body.theme-fallout h1,
+body.theme-fallout h2,
+body.theme-fallout h3,
+body.theme-fallout h4,
+body.theme-fallout h5,
+body.theme-fallout h6,
+body.theme-fallout th,
+body.theme-fallout td,
+body.theme-fallout input,
+body.theme-fallout select,
+body.theme-fallout textarea,
+body.theme-fallout .btn,
+body.theme-fallout button {
+  font-family: 'Courier New', Courier, monospace !important;
+  text-shadow: 0 0 3px rgba(51, 255, 51, 0.6) !important;
+}
+
+body.theme-fallout .glass-card,
+body.theme-fallout .modal-content,
+body.theme-fallout .card,
+body.theme-fallout .settings-modal-card {
+  border: 2px solid #33ff33 !important;
+  background: #121810 !important;
+  border-radius: 0px !important;
+  box-shadow: 0 0 15px rgba(51, 255, 51, 0.15) !important;
+}
+
+body.theme-fallout .btn,
+body.theme-fallout button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle) {
+  border: 1px solid #33ff33 !important;
+  background: transparent !important;
+  color: #33ff33 !important;
+  border-radius: 0px !important;
+  text-transform: uppercase !important;
+}
+
+body.theme-fallout .btn:hover,
+body.theme-fallout button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):hover {
+  background: #33ff33 !important;
+  color: #121810 !important;
+  text-shadow: none !important;
+  box-shadow: 0 0 8px #33ff33 !important;
+}
+
+/* ==========================================================================
+   TEMA TEAM FORTRESS 2 🛡️ (Estilo Retro Industrial RED vs BLU)
+   ========================================================================== */
+body.theme-tf2 {
+  --bg-dark: #282421;       /* Dark Dust clay/coal */
+  --bg-card: #3a322d;       /* Gravel/Wood paneling */
+  --bg-input: #1e1b19;      /* Dark metallic frame */
+  --text-primary: #f5e7c8;  /* Off-white military paper */
+  --text-secondary: #b8a28a; /* Dusty beige */
+  --border-color: #5a4e44;  /* Industrial steel/iron */
+  --glass-border: 2px solid #5a4e44;
+  --glass-shadow: 4px 4px 0px rgba(0, 0, 0, 0.4);
+  --bg-hover: rgba(245, 231, 200, 0.06);
+  --bg-th: rgba(90, 78, 68, 0.4);
+  --header-bg: #3a322d;
+  
+  --row-normal-bg: rgba(184, 56, 59, 0.06); /* RED team tint */
+  --row-normal-hover: rgba(184, 56, 59, 0.12);
+  --row-warning-bg: rgba(235, 191, 75, 0.06); /* Mann Co Gold */
+  --row-warning-hover: rgba(235, 191, 75, 0.12);
+  --row-danger-bg: rgba(184, 56, 59, 0.1);
+  --row-danger-hover: rgba(184, 56, 59, 0.18);
+  
+  --badge-bono-bg: #5c2c1e;
+  --badge-bono-text: #f08155;
+  --badge-desc-bg: #4a1c1d;
+  --badge-desc-text: #f85858;
+  
+  --primary-color: #e28532;      /* TF2 Orange Accent */
+  --primary-hover: #c97126;
+  --primary-shadow: rgba(226, 133, 50, 0.4);
+  --danger-color: #b8383b;       /* RED Team Red */
+  --danger-hover: #9e2f31;
+  --success-color: #385c7a;      /* BLU Team Blue */
+  
+  --radius-lg: 0px !important;    /* Blocky vintage borders */
+  --radius-md: 0px !important;
+  
+  background-color: #282421 !important;
+  background-image: radial-gradient(circle, #332d29 10%, transparent 11%) !important;
+  background-size: 20px 20px !important;
+}
+
+body.theme-tf2 h1,
+body.theme-tf2 h2,
+body.theme-tf2 h3,
+body.theme-tf2 h4,
+body.theme-tf2 h5,
+body.theme-tf2 h6,
+body.theme-tf2 .logo-text,
+body.theme-tf2 .btn,
+body.theme-tf2 button,
+body.theme-tf2 .sidebar-item,
+body.theme-tf2 .plancha-sidebar-item,
+body.theme-tf2 th {
+  font-family: 'Impact', 'Arial Black', sans-serif !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1px !important;
+  font-weight: 900 !important;
+}
+
+body.theme-tf2 .glass-card,
+body.theme-tf2 .modal-content,
+body.theme-tf2 .card,
+body.theme-tf2 .settings-modal-card {
+  border: 3px solid #5a4e44 !important;
+  background: #3a322d !important;
+  border-radius: 0px !important;
+  box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.5) !important;
+}
+
+body.theme-tf2 .btn,
+body.theme-tf2 button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle) {
+  background: #e28532 !important;
+  color: #282421 !important;
+  border: 2px solid #282421 !important;
+  border-radius: 0px !important;
+  box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.4) !important;
+}
+
+body.theme-tf2 .btn:hover,
+body.theme-tf2 button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):hover {
+  background: #f5e7c8 !important;
+  color: #282421 !important;
+}
+
+body.theme-tf2 .btn-danger {
+  background: #b8383b !important;
+  color: #ffffff !important;
+}
+
+/* ==========================================================================
+   TEMA CYBERPUNK ⚡ (Estilo Futurista de Contraste Neón)
+   ========================================================================== */
+body.theme-cyberpunk {
+  --bg-dark: #000000;       /* Cyber Void Black */
+  --bg-card: #0a0b10;       /* Megacorp Dark Gray */
+  --bg-input: #10111a;      /* Cybernetic Port */
+  --text-primary: #ffff00;  /* High-visibility Yellow */
+  --text-secondary: #00f0ff; /* Neon Cyan */
+  --border-color: #ff0055;  /* Neon Magenta Border */
+  --glass-border: 1px solid #00f0ff;
+  --glass-shadow: 0 0 10px rgba(255, 0, 85, 0.3);
+  --bg-hover: rgba(0, 240, 255, 0.08);
+  --bg-th: rgba(255, 0, 85, 0.15);
+  --header-bg: rgba(10, 11, 16, 0.95);
+  
+  --row-normal-bg: rgba(0, 240, 255, 0.05);
+  --row-normal-hover: rgba(0, 240, 255, 0.12);
+  --row-warning-bg: rgba(255, 254, 0, 0.05);
+  --row-warning-hover: rgba(255, 254, 0, 0.12);
+  --row-danger-bg: rgba(255, 0, 85, 0.05);
+  --row-danger-hover: rgba(255, 0, 85, 0.12);
+  
+  --badge-bono-bg: rgba(0, 240, 255, 0.18);
+  --badge-bono-text: #00f0ff;
+  --badge-desc-bg: rgba(255, 0, 85, 0.18);
+  --badge-desc-text: #ff0055;
+  
+  --primary-color: #ff0055;      /* Neon Magenta */
+  --primary-hover: #dd004b;
+  --primary-shadow: rgba(255, 0, 85, 0.4);
+  --danger-color: #ff0055;
+  --danger-hover: #dd004b;
+  --success-color: #00f0ff;
+  
+  --radius-lg: 0px !important;    /* Angled/hard edges */
+  --radius-md: 0px !important;
+  
+  background-color: #000000 !important;
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(255, 0, 85, 0.15) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(0, 240, 255, 0.1) 0px, transparent 50%) !important;
+}
+
+body.theme-cyberpunk h1,
+body.theme-cyberpunk h2,
+body.theme-cyberpunk h3,
+body.theme-cyberpunk h4,
+body.theme-cyberpunk h5,
+body.theme-cyberpunk h6,
+body.theme-cyberpunk .logo-text,
+body.theme-cyberpunk .kpi-value {
+  font-family: 'Inter', sans-serif !important;
+  font-weight: 900 !important;
+  font-style: italic !important;
+  text-transform: uppercase !important;
+  letter-spacing: 2px !important;
+  text-shadow: 2px 2px 0px #ff0055, -2px -2px 0px #00f0ff !important;
+}
+
+body.theme-cyberpunk .glass-card,
+body.theme-cyberpunk .modal-content,
+body.theme-cyberpunk .card,
+body.theme-cyberpunk .settings-modal-card {
+  border-radius: 0px !important;
+  border: 2px solid #ff0055 !important;
+  background: #0a0b10 !important;
+  box-shadow: 4px 4px 0px #00f0ff !important;
+}
+
+body.theme-cyberpunk .btn,
+body.theme-cyberpunk button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle) {
+  border-radius: 0px !important;
+  border: 2px solid #00f0ff !important;
+  background: transparent !important;
+  color: #00f0ff !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.2) !important;
+  transition: all 0.2s ease !important;
+}
+
+body.theme-cyberpunk .btn:hover,
+body.theme-cyberpunk button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):hover {
+  background: #00f0ff !important;
+  color: #000000 !important;
+  box-shadow: 0 0 15px #00f0ff !important;
+}
+
+body.theme-cyberpunk .btn-primary {
+  border-color: #ffff00 !important;
+  color: #ffff00 !important;
+}
+body.theme-cyberpunk .btn-primary:hover {
+  background: #ffff00 !important;
+  color: #000000 !important;
+  box-shadow: 0 0 15px #ffff00 !important;
+}
+
 /* Dropdown Actions Menu Styles */
 .actions-dropdown-container {
   position: relative;

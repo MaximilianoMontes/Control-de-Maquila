@@ -129,6 +129,10 @@ const translations = {
     'settings.themeTeto': 'Kasane Teto 🥖',
     'settings.themeLimbus': 'Limbus Company 🚂',
     'settings.themeMinecraft': 'Minecraft ⛏️',
+    'settings.themeGeometry': 'Geometry Dash 🟩',
+    'settings.themeFallout': 'Fallout ☢️',
+    'settings.themeTf2': 'Team Fortress 2 🛡️',
+    'settings.themeCyberpunk': 'Cyberpunk ⚡',
     'settings.accentLabel': 'Color de Acento',
     'settings.accentDesc': 'Elige un color personalizado para destacar elementos de la interfaz.',
     'settings.currencyLabel': 'Formato de Moneda',
@@ -575,6 +579,10 @@ const translations = {
     'settings.themeTeto': 'Kasane Teto 🥖',
     'settings.themeLimbus': 'Limbus Company 🚂',
     'settings.themeMinecraft': 'Minecraft ⛏️',
+    'settings.themeGeometry': 'Geometry Dash 🟩',
+    'settings.themeFallout': 'Fallout ☢️',
+    'settings.themeTf2': 'Team Fortress 2 🛡️',
+    'settings.themeCyberpunk': 'Cyberpunk ⚡',
     'settings.accentLabel': 'Accent Color',
     'settings.accentDesc': 'Choose a custom color to highlight interface elements.',
     'settings.currencyLabel': 'Currency Format',
@@ -936,16 +944,16 @@ export const SettingsProvider = ({ children }) => {
   // Apply visual theme (Light / Dark / System)
   useEffect(() => {
     const applyTheme = () => {
-      document.body.classList.remove('dark-mode', 'theme-ocean', 'theme-nature', 'theme-sunset', 'theme-lavender', 'theme-cherry', 'theme-midnight', 'theme-dim', 'theme-miku', 'theme-teto', 'theme-limbus', 'theme-minecraft');
+      document.body.classList.remove('dark-mode', 'theme-ocean', 'theme-nature', 'theme-sunset', 'theme-lavender', 'theme-cherry', 'theme-midnight', 'theme-dim', 'theme-miku', 'theme-teto', 'theme-limbus', 'theme-minecraft', 'theme-geometry', 'theme-fallout', 'theme-tf2', 'theme-cyberpunk');
 
       const isSystemDark = settings.theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches;
-      const isAnyDark = ['dark', 'ocean', 'nature', 'sunset', 'lavender', 'cherry', 'midnight', 'dim', 'miku', 'teto', 'limbus', 'minecraft'].includes(settings.theme) || isSystemDark;
+      const isAnyDark = ['dark', 'ocean', 'nature', 'sunset', 'lavender', 'cherry', 'midnight', 'dim', 'miku', 'teto', 'limbus', 'minecraft', 'geometry', 'fallout', 'tf2', 'cyberpunk'].includes(settings.theme) || isSystemDark;
 
       if (isAnyDark) {
         document.body.classList.add('dark-mode');
       }
       
-      if (['ocean', 'nature', 'sunset', 'lavender', 'cherry', 'midnight', 'dim', 'miku', 'teto', 'limbus', 'minecraft'].includes(settings.theme)) {
+      if (['ocean', 'nature', 'sunset', 'lavender', 'cherry', 'midnight', 'dim', 'miku', 'teto', 'limbus', 'minecraft', 'geometry', 'fallout', 'tf2', 'cyberpunk'].includes(settings.theme)) {
         document.body.classList.add(`theme-${settings.theme}`);
       }
     };
