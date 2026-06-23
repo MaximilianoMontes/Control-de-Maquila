@@ -2321,9 +2321,44 @@ body.theme-miku aside {
   box-shadow: 0 0 20px rgba(57, 197, 187, 0.15), inset 0 0 12px rgba(57, 197, 187, 0.05) !important;
 }
 
+body.theme-miku .main-header {
+  position: relative;
+}
+
+body.theme-miku .main-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, #39c5bb, #ff2e7a, #39c5bb, #ff2e7a, #39c5bb);
+  background-size: 400% 100%;
+  animation: miku-eq-sweep 5s linear infinite;
+}
+
+body.theme-miku::after {
+  content: '♪   ♫   ♩   ♬   ♪   ♫';
+  position: fixed;
+  bottom: -50px;
+  left: 5%;
+  width: 90%;
+  text-align: center;
+  font-size: 24px;
+  color: rgba(57, 197, 187, 0.15);
+  text-shadow: 0 0 10px rgba(57, 197, 187, 0.5), 200px -100px 12px rgba(255, 46, 122, 0.1), -150px -250px 10px rgba(57, 197, 187, 0.15);
+  pointer-events: none;
+  z-index: 9999;
+  animation: miku-notes-float 8s linear infinite;
+  white-space: pre;
+}
+
+body.theme-miku .kpi-value {
+  animation: miku-eq-pulse 2s infinite ease-in-out;
+}
+
 body.theme-miku .btn,
-body.theme-miku button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn),
-body.theme-miku .actions-dropdown-item {
+body.theme-miku button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
   border-radius: 30px !important;
   border: 2px solid #39c5bb !important;
   background: transparent !important;
@@ -2337,8 +2372,35 @@ body.theme-miku .actions-dropdown-item {
 }
 
 body.theme-miku .btn:hover,
-body.theme-miku button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover,
-body.theme-miku .actions-dropdown-item:hover {
+body.theme-miku button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
+  background: #39c5bb !important;
+  color: #071112 !important;
+  box-shadow: 0 0 18px #39c5bb, 0 0 30px rgba(57, 197, 187, 0.4) !important;
+  transform: translateY(-2px) !important;
+}
+
+body.theme-miku .actions-dropdown-item,
+body.theme-miku a.actions-dropdown-item,
+body.theme-miku button.actions-dropdown-item {
+  border-radius: 30px !important;
+  border: 2px solid #39c5bb !important;
+  background: #0c2022 !important;
+  color: #39c5bb !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  box-shadow: 0 0 8px rgba(57, 197, 187, 0.25) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  cursor: pointer;
+  text-decoration: none !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+}
+
+body.theme-miku .actions-dropdown-item:hover,
+body.theme-miku a.actions-dropdown-item:hover,
+body.theme-miku button.actions-dropdown-item:hover {
   background: #39c5bb !important;
   color: #071112 !important;
   box-shadow: 0 0 18px #39c5bb, 0 0 30px rgba(57, 197, 187, 0.4) !important;
@@ -2417,6 +2479,20 @@ body.theme-teto {
     radial-gradient(at 100% 0%, rgba(255, 184, 0, 0.12) 0px, transparent 55%) !important;
 }
 
+body.theme-teto::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(rgba(255, 61, 90, 0.03) 1px, transparent 1px);
+  background-size: 100% 4px;
+  pointer-events: none;
+  z-index: 999;
+  animation: teto-scanline-sweep 6s linear infinite;
+}
+
 /* Kasane Teto Premium Overrides */
 body.theme-teto h1,
 body.theme-teto h2,
@@ -2451,8 +2527,7 @@ body.theme-teto aside {
 }
 
 body.theme-teto .btn,
-body.theme-teto button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn),
-body.theme-teto .actions-dropdown-item {
+body.theme-teto button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
   border-radius: 20px !important;
   border: 2px solid #ff3d5a !important;
   background: transparent !important;
@@ -2463,11 +2538,56 @@ body.theme-teto .actions-dropdown-item {
   box-shadow: 0 0 8px rgba(255, 61, 90, 0.25) !important;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
   cursor: pointer;
+  position: relative;
+}
+
+body.theme-teto .btn::after,
+body.theme-teto button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn)::after {
+  content: '🌀';
+  position: absolute;
+  right: 12px;
+  top: calc(50% - 8px);
+  font-size: 10px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+body.theme-teto .btn:hover::after,
+body.theme-teto button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover::after {
+  opacity: 1;
+  animation: teto-drill-spin 0.4s linear infinite;
 }
 
 body.theme-teto .btn:hover,
-body.theme-teto button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover,
-body.theme-teto .actions-dropdown-item:hover {
+body.theme-teto button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
+  background: #ff3d5a !important;
+  color: #ffebee !important;
+  box-shadow: 0 0 18px #ff3d5a, 0 0 30px rgba(255, 61, 90, 0.4) !important;
+  transform: translateY(-2px) !important;
+}
+
+body.theme-teto .actions-dropdown-item,
+body.theme-teto a.actions-dropdown-item,
+body.theme-teto button.actions-dropdown-item {
+  border-radius: 20px !important;
+  border: 2px solid #ff3d5a !important;
+  background: #1d0f12 !important;
+  color: #ff3d5a !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  box-shadow: 0 0 8px rgba(255, 61, 90, 0.25) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  cursor: pointer;
+  text-decoration: none !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+}
+
+body.theme-teto .actions-dropdown-item:hover,
+body.theme-teto a.actions-dropdown-item:hover,
+body.theme-teto button.actions-dropdown-item:hover {
   background: #ff3d5a !important;
   color: #ffebee !important;
   box-shadow: 0 0 18px #ff3d5a, 0 0 30px rgba(255, 61, 90, 0.4) !important;
@@ -2546,6 +2666,18 @@ body.theme-limbus {
     radial-gradient(at 100% 0%, rgba(156, 28, 28, 0.15) 0px, transparent 55%) !important;
 }
 
+body.theme-limbus::after {
+  content: '⚙';
+  position: fixed;
+  bottom: -120px;
+  right: -120px;
+  font-size: 450px;
+  color: rgba(212, 158, 42, 0.025);
+  pointer-events: none;
+  z-index: -1;
+  animation: limbus-gear-rotate 60s linear infinite;
+}
+
 /* Limbus Company Premium Overrides */
 body.theme-limbus h1,
 body.theme-limbus h2,
@@ -2576,13 +2708,12 @@ body.theme-limbus aside {
   border-radius: 4px !important; /* Sharp industrial corners */
   border: 3px double #d49e2a !important; /* Steampunk double brass border */
   background: #181614 !important;
-  box-shadow: 0 0 15px rgba(0, 0, 0, 0.7), inset 0 0 10px rgba(212, 158, 42, 0.05) !important;
+  animation: limbus-bough-pulse 4s infinite ease-in-out;
   backdrop-filter: none !important;
 }
 
 body.theme-limbus .btn,
-body.theme-limbus button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn),
-body.theme-limbus .actions-dropdown-item {
+body.theme-limbus button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
   border-radius: 2px !important;
   border: 2px solid #d49e2a !important;
   background: #1c1815 !important;
@@ -2597,8 +2728,36 @@ body.theme-limbus .actions-dropdown-item {
 }
 
 body.theme-limbus .btn:hover,
-body.theme-limbus button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover,
-body.theme-limbus .actions-dropdown-item:hover {
+body.theme-limbus button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
+  background: #d49e2a !important;
+  color: #181614 !important;
+  box-shadow: 0 0 15px rgba(212, 158, 42, 0.6) !important;
+  transform: translateY(-1px) !important;
+}
+
+body.theme-limbus .actions-dropdown-item,
+body.theme-limbus a.actions-dropdown-item,
+body.theme-limbus button.actions-dropdown-item {
+  border-radius: 2px !important;
+  border: 2px solid #d49e2a !important;
+  background: #1c1815 !important;
+  color: #d49e2a !important;
+  font-family: Georgia, serif !important;
+  font-weight: bold !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  box-shadow: 0 0 6px rgba(212, 158, 42, 0.2) !important;
+  transition: all 0.25s ease !important;
+  cursor: pointer;
+  text-decoration: none !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+}
+
+body.theme-limbus .actions-dropdown-item:hover,
+body.theme-limbus a.actions-dropdown-item:hover,
+body.theme-limbus button.actions-dropdown-item:hover {
   background: #d49e2a !important;
   color: #181614 !important;
   box-shadow: 0 0 15px rgba(212, 158, 42, 0.6) !important;
@@ -2693,6 +2852,20 @@ body.theme-ruina {
     radial-gradient(at 100% 0%, rgba(229, 193, 88, 0.15) 0px, transparent 60%) !important;
 }
 
+body.theme-ruina::before {
+  content: '';
+  position: fixed;
+  top: 10%;
+  left: 10%;
+  width: 2px;
+  height: 20px;
+  background: linear-gradient(180deg, #e5c158, transparent);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 0;
+  animation: ruina-star-shoot 8s linear infinite;
+}
+
 /* Library of Ruina Theme Premium Overrides */
 body.theme-ruina h1,
 body.theme-ruina h2,
@@ -2723,11 +2896,17 @@ body.theme-ruina aside {
   border: 1px solid rgba(229, 193, 88, 0.35) !important;
   background: rgba(12, 16, 36, 0.9) !important;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), inset 0 0 15px rgba(229, 193, 88, 0.03) !important;
+  transition: border-color 0.4s ease, box-shadow 0.4s ease !important;
+}
+
+body.theme-ruina .glass-card:hover,
+body.theme-ruina .card:hover {
+  border-color: #e5c158 !important;
+  box-shadow: 0 8px 32px rgba(229, 193, 88, 0.15), inset 0 0 25px rgba(229, 193, 88, 0.08) !important;
 }
 
 body.theme-ruina .btn,
-body.theme-ruina button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn),
-body.theme-ruina .actions-dropdown-item {
+body.theme-ruina button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
   border-radius: 4px !important;
   border: 1px solid #e5c158 !important;
   background: rgba(18, 22, 52, 0.5) !important;
@@ -2741,8 +2920,35 @@ body.theme-ruina .actions-dropdown-item {
 }
 
 body.theme-ruina .btn:hover,
-body.theme-ruina button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover,
-body.theme-ruina .actions-dropdown-item:hover {
+body.theme-ruina button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
+  background: #e5c158 !important;
+  color: #070913 !important;
+  box-shadow: 0 0 15px rgba(229, 193, 88, 0.5) !important;
+  transform: translateY(-1px) !important;
+}
+
+body.theme-ruina .actions-dropdown-item,
+body.theme-ruina a.actions-dropdown-item,
+body.theme-ruina button.actions-dropdown-item {
+  border-radius: 4px !important;
+  border: 1px solid #e5c158 !important;
+  background: #0c1024 !important;
+  color: #e5c158 !important;
+  font-family: Georgia, serif !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.5px !important;
+  box-shadow: 0 0 6px rgba(229, 193, 88, 0.15) !important;
+  transition: all 0.3s ease !important;
+  cursor: pointer;
+  text-decoration: none !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+}
+
+body.theme-ruina .actions-dropdown-item:hover,
+body.theme-ruina a.actions-dropdown-item:hover,
+body.theme-ruina button.actions-dropdown-item:hover {
   background: #e5c158 !important;
   color: #070913 !important;
   box-shadow: 0 0 15px rgba(229, 193, 88, 0.5) !important;
@@ -2854,6 +3060,14 @@ body.theme-minecraft aside {
     6px 6px 0px rgba(0, 0, 0, 0.6) !important;
 }
 
+body.theme-minecraft .glass-card {
+  box-shadow: 
+    inset 3px 3px 0px #4a4a4a, 
+    inset -3px -3px 0px #181818, 
+    inset 0 0 10px rgba(0,0,0,0.5),
+    6px 6px 0px rgba(0, 0, 0, 0.6) !important; /* Item Slot Frame */
+}
+
 /* Minecraft Headers, Buttons and UI Specific Text */
 body.theme-minecraft h1,
 body.theme-minecraft h2,
@@ -2890,8 +3104,7 @@ body.theme-minecraft td { font-size: 0.85rem !important; }
 
 /* Minecraft Button Styling (Classic Beveled 3D look) */
 body.theme-minecraft .btn,
-body.theme-minecraft button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn),
-body.theme-minecraft .actions-dropdown-item {
+body.theme-minecraft button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
   border-radius: 0px !important;
   border: 3px solid #000000 !important;
   background: #7e7e7e !important;
@@ -2909,8 +3122,41 @@ body.theme-minecraft .actions-dropdown-item {
 }
 
 body.theme-minecraft .btn:hover,
-body.theme-minecraft button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover,
-body.theme-minecraft .actions-dropdown-item:hover {
+body.theme-minecraft button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
+  background: #5c8e32 !important; /* Grass Green */
+  border-color: #000000 !important;
+  box-shadow: 
+    inset 2px 2px 0px #85c453, 
+    inset -2px -2px 0px #324e1b !important;
+  color: #ffff55 !important; /* Yellow hover text */
+}
+
+body.theme-minecraft .actions-dropdown-item,
+body.theme-minecraft a.actions-dropdown-item,
+body.theme-minecraft button.actions-dropdown-item {
+  border-radius: 0px !important;
+  border: 3px solid #000000 !important;
+  background: #2d2d2d !important;
+  color: #ffffff !important;
+  text-shadow: 2px 2px 0px #222 !important;
+  box-shadow: 
+    inset 2px 2px 0px #4a4a4a, 
+    inset -2px -2px 0px #181818 !important;
+  image-rendering: pixelated;
+  font-size: 0.65rem !important;
+  padding: 8px 14px !important;
+  position: relative;
+  transition: none !important;
+  cursor: pointer;
+  text-decoration: none !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+}
+
+body.theme-minecraft .actions-dropdown-item:hover,
+body.theme-minecraft a.actions-dropdown-item:hover,
+body.theme-minecraft button.actions-dropdown-item:hover {
   background: #5c8e32 !important; /* Grass Green */
   border-color: #000000 !important;
   box-shadow: 
@@ -2958,6 +3204,15 @@ body.theme-minecraft .btn-danger:hover {
   box-shadow: 
     inset 2px 2px 0px #ff8888, 
     inset -2px -2px 0px #770000 !important;
+}
+
+/* Minecraft XP Progress Bars */
+body.theme-minecraft .progress-bar-fill,
+body.theme-minecraft .progress-fill,
+body.theme-minecraft .kpi-progress-fill {
+  background: #55ff55 !important;
+  box-shadow: inset 0 2px 0 #85c453 !important;
+  image-rendering: pixelated !important;
 }
 
 /* Inputs and Forms */
@@ -3088,9 +3343,28 @@ body.theme-geometry .kpi-value {
   text-shadow: 0 0 8px rgba(0, 229, 255, 0.4) !important;
 }
 
+body.theme-geometry .sidebar-item.active::before,
+body.theme-geometry .plancha-sidebar-item.active::before,
+body.theme-geometry .tab-btn.active::before {
+  content: '';
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  background: #1bf259;
+  border: 2px solid #000;
+  margin-right: 8px;
+  box-shadow: inset -2px -2px 0 #17cf4c;
+  animation: gd-cube-jump 1.8s infinite ease-in-out;
+  vertical-align: middle;
+}
+
+body.theme-geometry .glass-card,
+body.theme-geometry .card {
+  animation: gd-beat-pulse 3s infinite ease-in-out;
+}
+
 body.theme-geometry .btn,
-body.theme-geometry button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle),
-body.theme-geometry .actions-dropdown-item {
+body.theme-geometry button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle) {
   border: 2px solid #1bf259 !important;
   background: transparent !important;
   color: #1bf259 !important;
@@ -3100,8 +3374,30 @@ body.theme-geometry .actions-dropdown-item {
 }
 
 body.theme-geometry .btn:hover,
-body.theme-geometry button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):hover,
-body.theme-geometry .actions-dropdown-item:hover {
+body.theme-geometry button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):hover {
+  background: #1bf259 !important;
+  color: #090a0f !important;
+  box-shadow: 0 0 15px #1bf259 !important;
+}
+
+body.theme-geometry .actions-dropdown-item,
+body.theme-geometry a.actions-dropdown-item,
+body.theme-geometry button.actions-dropdown-item {
+  border: 2px solid #1bf259 !important;
+  background: #12151e !important;
+  color: #1bf259 !important;
+  box-shadow: 0 0 8px rgba(27, 242, 89, 0.2) !important;
+  border-radius: 4px !important;
+  font-weight: 700 !important;
+  text-decoration: none !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+}
+
+body.theme-geometry .actions-dropdown-item:hover,
+body.theme-geometry a.actions-dropdown-item:hover,
+body.theme-geometry button.actions-dropdown-item:hover {
   background: #1bf259 !important;
   color: #090a0f !important;
   box-shadow: 0 0 15px #1bf259 !important;
@@ -3154,6 +3450,7 @@ body.theme-fallout {
       transparent 1px,
       transparent 2px
     ) !important;
+  animation: fallout-terminal-flicker 0.15s infinite alternate;
 }
 
 body.theme-fallout *,
@@ -3185,18 +3482,58 @@ body.theme-fallout .settings-modal-card {
 }
 
 body.theme-fallout .btn,
-body.theme-fallout button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle),
-body.theme-fallout .actions-dropdown-item {
+body.theme-fallout button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle) {
   border: 1px solid #33ff33 !important;
   background: transparent !important;
   color: #33ff33 !important;
   border-radius: 0px !important;
   text-transform: uppercase !important;
+  position: relative;
+}
+
+body.theme-fallout .btn::before,
+body.theme-fallout button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle)::before {
+  content: '[ V.A.T.S. 95% ]';
+  position: absolute;
+  top: -14px;
+  right: 4px;
+  font-size: 8px;
+  color: #33ff33;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+body.theme-fallout .btn:hover::before,
+body.theme-fallout button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):hover::before {
+  opacity: 1;
 }
 
 body.theme-fallout .btn:hover,
-body.theme-fallout button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):hover,
-body.theme-fallout .actions-dropdown-item:hover {
+body.theme-fallout button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):hover {
+  background: #33ff33 !important;
+  color: #121810 !important;
+  text-shadow: none !important;
+  box-shadow: 0 0 8px #33ff33 !important;
+}
+
+body.theme-fallout .actions-dropdown-item,
+body.theme-fallout a.actions-dropdown-item,
+body.theme-fallout button.actions-dropdown-item {
+  border: 1px solid #33ff33 !important;
+  background: #121810 !important;
+  color: #33ff33 !important;
+  border-radius: 0px !important;
+  text-transform: uppercase !important;
+  text-decoration: none !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+}
+
+body.theme-fallout .actions-dropdown-item:hover,
+body.theme-fallout a.actions-dropdown-item:hover,
+body.theme-fallout button.actions-dropdown-item:hover {
   background: #33ff33 !important;
   color: #121810 !important;
   text-shadow: none !important;
@@ -3275,19 +3612,79 @@ body.theme-tf2 .settings-modal-card {
   box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.5) !important;
 }
 
+body.theme-tf2 .progress-bar,
+body.theme-tf2 .kpi-progress {
+  background: #5a4e44 !important;
+  border: 2px solid #282421 !important;
+  position: relative;
+  overflow: visible !important;
+}
+body.theme-tf2 .progress-bar-fill,
+body.theme-tf2 .progress-fill,
+body.theme-tf2 .kpi-progress-fill {
+  background: #e28532 !important;
+  box-shadow: inset 0 2px 0 #f5e7c8 !important;
+}
+body.theme-tf2 .progress-bar-fill::after,
+body.theme-tf2 .progress-fill::after,
+body.theme-tf2 .kpi-progress-fill::after {
+  content: '💣';
+  position: absolute;
+  right: -8px;
+  top: -6px;
+  font-size: 14px;
+}
+
 body.theme-tf2 .btn,
-body.theme-tf2 button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle),
-body.theme-tf2 .actions-dropdown-item {
+body.theme-tf2 button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle) {
   background: #e28532 !important;
   color: #282421 !important;
   border: 2px solid #282421 !important;
   border-radius: 0px !important;
   box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.4) !important;
+  position: relative;
+}
+
+body.theme-tf2 .btn:hover::after,
+body.theme-tf2 button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):hover::after {
+  content: 'CRIT!';
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%) rotate(5deg);
+  background: #b8383b;
+  color: #ffffff;
+  padding: 2px 6px;
+  font-size: 10px;
+  font-weight: 900;
+  border: 2px solid #ffffff;
+  box-shadow: 2px 2px 0 #000;
+  animation: tf2-crit-pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
 
 body.theme-tf2 .btn:hover,
-body.theme-tf2 button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):hover,
-body.theme-tf2 .actions-dropdown-item:hover {
+body.theme-tf2 button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):hover {
+  background: #f5e7c8 !important;
+  color: #282421 !important;
+}
+
+body.theme-tf2 .actions-dropdown-item,
+body.theme-tf2 a.actions-dropdown-item,
+body.theme-tf2 button.actions-dropdown-item {
+  background: #e28532 !important;
+  color: #282421 !important;
+  border: 2px solid #282421 !important;
+  border-radius: 0px !important;
+  box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.4) !important;
+  text-decoration: none !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+}
+
+body.theme-tf2 .actions-dropdown-item:hover,
+body.theme-tf2 a.actions-dropdown-item:hover,
+body.theme-tf2 button.actions-dropdown-item:hover {
   background: #f5e7c8 !important;
   color: #282421 !important;
 }
@@ -3341,6 +3738,20 @@ body.theme-cyberpunk {
     radial-gradient(at 100% 100%, rgba(0, 240, 255, 0.1) 0px, transparent 50%) !important;
 }
 
+body.theme-cyberpunk::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+  background-size: 100% 8px;
+  pointer-events: none;
+  z-index: 999;
+  animation: teto-scanline-sweep 10s linear infinite;
+}
+
 body.theme-cyberpunk h1,
 body.theme-cyberpunk h2,
 body.theme-cyberpunk h3,
@@ -3357,6 +3768,11 @@ body.theme-cyberpunk .kpi-value {
   text-shadow: 2px 2px 0px #ff0055, -2px -2px 0px #00f0ff !important;
 }
 
+body.theme-cyberpunk .glass-card:hover,
+body.theme-cyberpunk .card:hover {
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.3), inset 0 0 10px rgba(255, 0, 85, 0.2) !important;
+}
+
 body.theme-cyberpunk .glass-card,
 body.theme-cyberpunk .modal-content,
 body.theme-cyberpunk .card,
@@ -3365,11 +3781,25 @@ body.theme-cyberpunk .settings-modal-card {
   border: 2px solid #ff0055 !important;
   background: #0a0b10 !important;
   box-shadow: 4px 4px 0px #00f0ff !important;
+  position: relative;
+  overflow: hidden;
+}
+
+body.theme-cyberpunk .glass-card::after,
+body.theme-cyberpunk .card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: #00f0ff;
+  opacity: 0.5;
+  animation: radar-sweep 4s linear infinite;
 }
 
 body.theme-cyberpunk .btn,
-body.theme-cyberpunk button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle),
-body.theme-cyberpunk .actions-dropdown-item {
+body.theme-cyberpunk button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle) {
   border-radius: 0px !important;
   border: 2px solid #00f0ff !important;
   background: transparent !important;
@@ -3381,8 +3811,33 @@ body.theme-cyberpunk .actions-dropdown-item {
 }
 
 body.theme-cyberpunk .btn:hover,
-body.theme-cyberpunk button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):hover,
-body.theme-cyberpunk .actions-dropdown-item:hover {
+body.theme-cyberpunk button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):hover {
+  background: #00f0ff !important;
+  color: #000000 !important;
+  box-shadow: 0 0 15px #00f0ff !important;
+  animation: cyberpunk-glitch-skew 0.3s infinite linear;
+}
+
+body.theme-cyberpunk .actions-dropdown-item,
+body.theme-cyberpunk a.actions-dropdown-item,
+body.theme-cyberpunk button.actions-dropdown-item {
+  border-radius: 0px !important;
+  border: 2px solid #00f0ff !important;
+  background: #0a0b10 !important;
+  color: #00f0ff !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.2) !important;
+  transition: all 0.2s ease !important;
+  text-decoration: none !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+}
+
+body.theme-cyberpunk .actions-dropdown-item:hover,
+body.theme-cyberpunk a.actions-dropdown-item:hover,
+body.theme-cyberpunk button.actions-dropdown-item:hover {
   background: #00f0ff !important;
   color: #000000 !important;
   box-shadow: 0 0 15px #00f0ff !important;
@@ -4327,16 +4782,31 @@ body.theme-backrooms {
   background-attachment: fixed !important;
   font-family: 'Courier New', Courier, monospace !important;
 }
+
+body.theme-backrooms::after {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: linear-gradient(rgba(18, 20, 12, 0.08) 50%, transparent 50%);
+  background-size: 100% 4px;
+  pointer-events: none;
+  z-index: 9999;
+  box-shadow: inset 0 0 80px rgba(0, 0, 0, 0.5) !important;
+}
+
 body.theme-backrooms h1, body.theme-backrooms h2, body.theme-backrooms h3, body.theme-backrooms .logo-text, body.theme-backrooms .kpi-value {
   color: #e6df45 !important;
   text-shadow: 0 0 5px rgba(230, 223, 69, 0.5) !important;
   text-transform: uppercase !important;
+  animation: backrooms-flicker 4s infinite alternate;
 }
+
 body.theme-backrooms .glass-card, body.theme-backrooms .modal-content, body.theme-backrooms .sidebar, body.theme-backrooms .plancha-sidebar, body.theme-backrooms aside {
   border: 1.5px solid #a69f7c !important;
   border-radius: 0px !important;
   background: #202216 !important;
 }
+
 body.theme-backrooms .btn, 
 body.theme-backrooms button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
   border: 1px solid #e6df45 !important;
@@ -4345,12 +4815,14 @@ body.theme-backrooms button:not(.close-btn):not(.search-clear-btn):not(.mobile-m
   border-radius: 0px !important;
   font-family: 'Courier New', Courier, monospace !important;
 }
+
 body.theme-backrooms .btn:hover, 
 body.theme-backrooms button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
   background: #e6df45 !important;
   color: #15170f !important;
   box-shadow: 0 0 12px rgba(230, 223, 69, 0.6) !important;
 }
+
 body.theme-backrooms .actions-dropdown-item,
 body.theme-backrooms a.actions-dropdown-item,
 body.theme-backrooms button.actions-dropdown-item {
@@ -4360,7 +4832,11 @@ body.theme-backrooms button.actions-dropdown-item {
   border-radius: 0px !important;
   font-family: 'Courier New', Courier, monospace !important;
   text-decoration: none !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
 }
+
 body.theme-backrooms .actions-dropdown-item:hover,
 body.theme-backrooms a.actions-dropdown-item:hover,
 body.theme-backrooms button.actions-dropdown-item:hover {
@@ -4399,16 +4875,39 @@ body.theme-terraria {
   
   font-family: 'Courier New', Courier, monospace !important;
 }
-body.theme-terraria h1, body.theme-terraria h2, body.theme-terraria h3, body.theme-terraria .logo-text, body.theme-terraria .kpi-value {
+
+body.theme-terraria h1, body.theme-terraria h2, body.theme-terraria h3, body.theme-terraria .logo-text {
   color: #81c784 !important;
   text-shadow: 2px 2px 0px #000 !important;
 }
+
+body.theme-terraria .kpi-value {
+  color: #81c784 !important;
+  text-shadow: 2px 2px 0px #000 !important;
+  position: relative;
+}
+
+body.theme-terraria .kpi-value::before {
+  content: '❤️ ';
+  color: #ff2222;
+  animation: terraria-heart-beat 1.2s infinite ease-in-out;
+  display: inline-block;
+  margin-right: 6px;
+}
+
+body.theme-terraria .kpi-card:nth-child(even) .kpi-value::before {
+  content: '⭐ ';
+  color: #00d2ff;
+  animation: terraria-star-float 2s infinite ease-in-out;
+}
+
 body.theme-terraria .glass-card, body.theme-terraria .modal-content, body.theme-terraria .sidebar, body.theme-terraria .plancha-sidebar, body.theme-terraria aside {
   border: 3px solid #4e3f35 !important;
   border-radius: 4px !important;
   background: #251d18 !important;
-  box-shadow: inset 2px 2px 0px #3c2f25, 4px 4px 0px rgba(0,0,0,0.5) !important;
+  box-shadow: inset 3px 3px 0px #3c2f25, inset -3px -3px 0px #1a1411, 4px 4px 0px rgba(0,0,0,0.5) !important;
 }
+
 body.theme-terraria .btn, 
 body.theme-terraria button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
   border: 2px solid #5c4b3f !important;
@@ -4419,11 +4918,14 @@ body.theme-terraria button:not(.close-btn):not(.search-clear-btn):not(.mobile-me
   text-shadow: 1px 1px 0px #000 !important;
   box-shadow: 2px 2px 0px rgba(0,0,0,0.3) !important;
 }
+
 body.theme-terraria .btn:hover, 
 body.theme-terraria button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
   background: linear-gradient(to bottom, #a0724f, #7c5132) !important;
   border-color: #875d3e !important;
+  animation: terraria-sparkle-hover 0.5s ease-out;
 }
+
 body.theme-terraria .actions-dropdown-item,
 body.theme-terraria a.actions-dropdown-item,
 body.theme-terraria button.actions-dropdown-item {
@@ -4435,7 +4937,11 @@ body.theme-terraria button.actions-dropdown-item {
   text-shadow: 1px 1px 0px #000 !important;
   box-shadow: 2px 2px 0px rgba(0,0,0,0.3) !important;
   text-decoration: none !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
 }
+
 body.theme-terraria .actions-dropdown-item:hover,
 body.theme-terraria a.actions-dropdown-item:hover,
 body.theme-terraria button.actions-dropdown-item:hover {
@@ -4472,6 +4978,7 @@ body.theme-castle {
   --primary-hover: #2b6cb0;
   --primary-shadow: rgba(49, 130, 206, 0.4);
 }
+
 body.theme-castle h1, body.theme-castle h2, body.theme-castle h3, body.theme-castle .logo-text, body.theme-castle .kpi-value {
   font-family: 'Impact', 'Arial Black', sans-serif !important;
   letter-spacing: 1px !important;
@@ -4480,12 +4987,14 @@ body.theme-castle h1, body.theme-castle h2, body.theme-castle h3, body.theme-cas
   -webkit-text-stroke: 1.5px #000;
   text-shadow: 3px 3px 0px #3182ce !important;
 }
+
 body.theme-castle .glass-card, body.theme-castle .modal-content, body.theme-castle .sidebar, body.theme-castle .plancha-sidebar, body.theme-castle aside {
   border: 3px solid #0c0d12 !important;
   border-radius: 20px !important;
   background: #1d1e26 !important;
   box-shadow: 6px 6px 0 #0c0d12 !important;
 }
+
 body.theme-castle .btn, 
 body.theme-castle button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
   border: 3px solid #0c0d12 !important;
@@ -4495,14 +5004,33 @@ body.theme-castle button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu
   font-family: 'Impact', 'Arial Black', sans-serif !important;
   text-transform: uppercase !important;
   box-shadow: 3px 3px 0 #0c0d12 !important;
-  transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+  transition: all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
 }
+
+body.theme-castle .btn-success {
+  box-shadow: 0 0 10px rgba(56, 161, 105, 0.4), 3px 3px 0 #0c0d12 !important;
+  animation: castle-poison-glow 2s infinite ease-in-out !important;
+}
+body.theme-castle .btn-danger {
+  box-shadow: 0 0 10px rgba(229, 62, 62, 0.4), 3px 3px 0 #0c0d12 !important;
+  animation: castle-fire-glow 1.5s infinite ease-in-out !important;
+}
+body.theme-castle .btn-primary {
+  box-shadow: 0 0 10px rgba(49, 130, 206, 0.4), 3px 3px 0 #0c0d12 !important;
+  animation: castle-ice-glow 2.5s infinite ease-in-out !important;
+}
+body.theme-castle .btn-warning {
+  box-shadow: 0 0 10px rgba(214, 158, 46, 0.4), 3px 3px 0 #0c0d12 !important;
+  animation: castle-lightning-glow 1s infinite alternate !important;
+}
+
 body.theme-castle .btn:hover, 
 body.theme-castle button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
   transform: scale(1.06) rotate(1deg) !important;
   background: #4299e1 !important;
   color: #ffffff !important;
 }
+
 body.theme-castle .actions-dropdown-item,
 body.theme-castle a.actions-dropdown-item,
 body.theme-castle button.actions-dropdown-item {
@@ -4515,7 +5043,24 @@ body.theme-castle button.actions-dropdown-item {
   box-shadow: 3px 3px 0 #0c0d12 !important;
   transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
   text-decoration: none !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
 }
+
+body.theme-castle .actions-dropdown-item.success {
+  animation: castle-poison-glow 2s infinite ease-in-out !important;
+}
+body.theme-castle .actions-dropdown-item.danger {
+  animation: castle-fire-glow 1.5s infinite ease-in-out !important;
+}
+body.theme-castle .actions-dropdown-item.blue {
+  animation: castle-ice-glow 2.5s infinite ease-in-out !important;
+}
+body.theme-castle .actions-dropdown-item.warning {
+  animation: castle-lightning-glow 1s infinite alternate !important;
+}
+
 body.theme-castle .actions-dropdown-item:hover,
 body.theme-castle a.actions-dropdown-item:hover,
 body.theme-castle button.actions-dropdown-item:hover {
@@ -4523,6 +5068,7 @@ body.theme-castle button.actions-dropdown-item:hover {
   background: #4299e1 !important;
   color: #ffffff !important;
 }
+
 body.theme-castle .btn-danger {
   background: #e53e3e !important;
 }
@@ -4566,6 +5112,7 @@ body.theme-starwars {
     radial-gradient(2px 2px at 80px 220px, #ddd, rgba(0,0,0,0)) !important;
   background-color: #030408 !important;
 }
+
 body.theme-starwars h1, body.theme-starwars h2, body.theme-starwars h3, body.theme-starwars .logo-text, body.theme-starwars .kpi-value {
   font-family: 'Inter', sans-serif !important;
   font-weight: 900 !important;
@@ -4574,11 +5121,26 @@ body.theme-starwars h1, body.theme-starwars h2, body.theme-starwars h3, body.the
   color: #00f0ff !important;
   text-shadow: 0 0 12px rgba(0, 240, 255, 0.7) !important;
 }
+
 body.theme-starwars .glass-card, body.theme-starwars .modal-content, body.theme-starwars .sidebar, body.theme-starwars .plancha-sidebar, body.theme-starwars aside {
   border: 1px solid #00f0ff !important;
   background: #090c15 !important;
   box-shadow: 0 0 15px rgba(0, 240, 255, 0.2) !important;
+  position: relative;
 }
+
+body.theme-starwars .glass-card::before, body.theme-starwars .card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: linear-gradient(rgba(0, 240, 255, 0.04) 50%, transparent 50%);
+  background-size: 100% 6px;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.7;
+  animation: starwars-hologram-sweep 8s linear infinite;
+}
+
 body.theme-starwars .btn, 
 body.theme-starwars button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
   border: 1px solid #00f0ff !important;
@@ -4588,32 +5150,42 @@ body.theme-starwars button:not(.close-btn):not(.search-clear-btn):not(.mobile-me
   border-radius: 0px !important;
   text-transform: uppercase !important;
   letter-spacing: 1px !important;
+  transition: all 0.3s ease;
 }
+
 body.theme-starwars .btn:hover, 
 body.theme-starwars button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
   background: #00f0ff !important;
   color: #030408 !important;
-  box-shadow: 0 0 15px #00f0ff !important;
+  box-shadow: 0 0 25px #00f0ff !important;
+  animation: starwars-lightsaber-glow 1.5s infinite alternate;
 }
+
 body.theme-starwars .actions-dropdown-item,
 body.theme-starwars a.actions-dropdown-item,
 body.theme-starwars button.actions-dropdown-item {
   border: 1px solid #00f0ff !important;
-  background: rgba(0, 240, 255, 0.05) !important;
+  background: #090c15 !important;
   color: #00f0ff !important;
   text-shadow: 0 0 5px rgba(0, 240, 255, 0.5) !important;
   border-radius: 0px !important;
   text-transform: uppercase !important;
   letter-spacing: 1px !important;
   text-decoration: none !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  transition: all 0.3s ease;
 }
+
 body.theme-starwars .actions-dropdown-item:hover,
 body.theme-starwars a.actions-dropdown-item:hover,
 body.theme-starwars button.actions-dropdown-item:hover {
   background: #00f0ff !important;
   color: #030408 !important;
-  box-shadow: 0 0 15px #00f0ff !important;
+  box-shadow: 0 0 25px #00f0ff !important;
 }
+
 body.theme-starwars .btn-danger {
   border-color: #ff1a1a !important;
   color: #ff1a1a !important;
@@ -4622,7 +5194,7 @@ body.theme-starwars .btn-danger {
 body.theme-starwars .btn-danger:hover {
   background: #ff1a1a !important;
   color: #ffffff !important;
-  box-shadow: 0 0 15px #ff1a1a !important;
+  box-shadow: 0 0 25px #ff1a1a !important;
 }
 
 /* 5. Call of Duty: Black Ops 3 Theme */
@@ -4660,6 +5232,16 @@ body.theme-cod3 {
     linear-gradient(-45deg, transparent 75%, rgba(255,119,0,0.02) 75%) !important;
   background-size: 30px 30px !important;
 }
+
+body.theme-cod3::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: radial-gradient(circle, transparent 30%, #07090c 90%), repeating-linear-gradient(0deg, rgba(255, 119, 0, 0.015), rgba(255, 119, 0, 0.015) 1px, transparent 1px, transparent 4px) !important;
+  pointer-events: none;
+  z-index: 999;
+}
+
 body.theme-cod3 h1, body.theme-cod3 h2, body.theme-cod3 h3, body.theme-cod3 .logo-text, body.theme-cod3 .kpi-value {
   font-family: 'Impact', 'Arial Black', sans-serif !important;
   letter-spacing: 1.5px !important;
@@ -4667,11 +5249,23 @@ body.theme-cod3 h1, body.theme-cod3 h2, body.theme-cod3 h3, body.theme-cod3 .log
   color: #ff7700 !important;
   text-shadow: 0 0 8px rgba(255, 119, 0, 0.5) !important;
 }
+
 body.theme-cod3 .glass-card, body.theme-cod3 .modal-content, body.theme-cod3 .sidebar, body.theme-cod3 .plancha-sidebar, body.theme-cod3 aside {
   border: 1px solid rgba(255, 119, 0, 0.4) !important;
   background: #11141b !important;
   box-shadow: 0 0 15px rgba(255, 119, 0, 0.15) !important;
+  position: relative;
 }
+
+body.theme-cod3 .glass-card::after, body.theme-cod3 .card::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 1px;
+  background: #ff7700;
+  opacity: 0.3;
+  animation: cod3-dni-sweep 3s linear infinite;
+}
+
 body.theme-cod3 .btn, 
 body.theme-cod3 button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
   border: 1px solid #ff7700 !important;
@@ -4682,13 +5276,46 @@ body.theme-cod3 button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-t
   font-family: 'Impact', 'Arial Black', sans-serif !important;
   font-weight: bold !important;
   letter-spacing: 1px !important;
+  position: relative;
 }
+
+body.theme-cod3 .btn::before, 
+body.theme-cod3 button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn)::before {
+  content: '<<';
+  position: absolute;
+  left: 8px;
+  opacity: 0;
+  transition: all 0.2s ease;
+  transform: translateX(4px);
+}
+body.theme-cod3 .btn::after, 
+body.theme-cod3 button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn)::after {
+  content: '>>';
+  position: absolute;
+  right: 8px;
+  opacity: 0;
+  transition: all 0.2s ease;
+  transform: translateX(-4px);
+}
+
+body.theme-cod3 .btn:hover::before, 
+body.theme-cod3 button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover::before {
+  opacity: 0.7;
+  transform: translateX(0);
+}
+body.theme-cod3 .btn:hover::after, 
+body.theme-cod3 button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover::after {
+  opacity: 0.7;
+  transform: translateX(0);
+}
+
 body.theme-cod3 .btn:hover, 
 body.theme-cod3 button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
   background: #ff7700 !important;
   color: #07090c !important;
   box-shadow: 0 0 15px rgba(255, 119, 0, 0.6) !important;
 }
+
 body.theme-cod3 .actions-dropdown-item,
 body.theme-cod3 a.actions-dropdown-item,
 body.theme-cod3 button.actions-dropdown-item {
@@ -4701,7 +5328,11 @@ body.theme-cod3 button.actions-dropdown-item {
   font-weight: bold !important;
   letter-spacing: 1px !important;
   text-decoration: none !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
 }
+
 body.theme-cod3 .actions-dropdown-item:hover,
 body.theme-cod3 a.actions-dropdown-item:hover,
 body.theme-cod3 button.actions-dropdown-item:hover {
@@ -4740,6 +5371,22 @@ body.theme-subnautica {
   
   background-image: radial-gradient(circle at 50% 50%, #081730 0%, #020612 100%) !important;
 }
+
+body.theme-subnautica::after {
+  content: '•  °  .  •  °  .  •';
+  position: fixed;
+  bottom: -40px;
+  left: 5%;
+  width: 90%;
+  font-size: 32px;
+  color: rgba(0, 210, 255, 0.12);
+  text-shadow: 0 0 10px rgba(0, 210, 255, 0.3), 220px -250px 12px rgba(0, 255, 204, 0.08), -150px -150px 8px rgba(0, 210, 255, 0.1);
+  pointer-events: none;
+  z-index: 9999;
+  animation: subnautica-bubbles-float 12s linear infinite;
+  white-space: pre;
+}
+
 body.theme-subnautica h1, body.theme-subnautica h2, body.theme-subnautica h3, body.theme-subnautica .logo-text, body.theme-subnautica .kpi-value {
   color: #00d2ff !important;
   text-shadow: 0 0 10px rgba(0, 210, 255, 0.5) !important;
@@ -4753,6 +5400,10 @@ body.theme-subnautica .glass-card, body.theme-subnautica .modal-content, body.th
   0% { box-shadow: 0 0 0 0 rgba(0, 210, 255, 0.4); }
   70% { box-shadow: 0 0 0 10px rgba(0, 210, 255, 0); }
   100% { box-shadow: 0 0 0 0 rgba(0, 210, 255, 0); }
+}
+@keyframes subnautica-bubbles-float {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-100vh); }
 }
 body.theme-subnautica .btn, 
 body.theme-subnautica button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
@@ -4777,6 +5428,9 @@ body.theme-subnautica button.actions-dropdown-item {
   color: #00d2ff !important;
   animation: sonar-pulse 2s infinite;
   text-decoration: none !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
 }
 body.theme-subnautica .actions-dropdown-item:hover,
 body.theme-subnautica a.actions-dropdown-item:hover,
@@ -4816,6 +5470,30 @@ body.theme-cuphead {
   
   font-family: 'Georgia', serif !important;
 }
+
+body.theme-cuphead::before {
+  content: '';
+  position: fixed;
+  top: -50%; left: -50%; width: 200%; height: 200%;
+  background: 
+    radial-gradient(circle at 10% 10%, rgba(40,34,29,0.15) 1px, transparent 1px),
+    radial-gradient(circle at 90% 85%, rgba(40,34,29,0.15) 2px, transparent 2px),
+    radial-gradient(circle at 50% 40%, rgba(40,34,29,0.12) 1.5px, transparent 1.5px);
+  background-size: 250px 250px;
+  pointer-events: none;
+  z-index: 9999;
+  animation: cuphead-film-grain 0.2s steps(4) infinite;
+  opacity: 0.8;
+}
+
+@keyframes cuphead-film-grain {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(-20px, -20px); }
+  50% { transform: translate(-10px, -30px); }
+  75% { transform: translate(-30px, -10px); }
+  100% { transform: translate(0, 0); }
+}
+
 @keyframes frame-wobble {
   0% { transform: rotate(0deg) translate(0, 0); }
   25% { transform: rotate(0.5deg) translate(1px, -1px); }
@@ -4823,6 +5501,12 @@ body.theme-cuphead {
   75% { transform: rotate(0.3deg) translate(1px, 1px); }
   100% { transform: rotate(0deg) translate(0, 0); }
 }
+
+@keyframes cuphead-squish {
+  0% { transform: scale(1); }
+  100% { transform: scale(0.95, 1.05); }
+}
+
 body.theme-cuphead h1, body.theme-cuphead h2, body.theme-cuphead h3, body.theme-cuphead .logo-text, body.theme-cuphead .kpi-value {
   font-family: 'Impact', sans-serif !important;
   text-transform: uppercase !important;
@@ -4850,8 +5534,8 @@ body.theme-cuphead .btn:hover,
 body.theme-cuphead button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
   background: #c9362b !important;
   color: #ffffff !important;
-  transform: translate(-2px, -2px) !important;
   box-shadow: 5px 5px 0 #28221d !important;
+  animation: cuphead-squish 0.6s ease-in-out infinite alternate !important;
 }
 body.theme-cuphead .actions-dropdown-item,
 body.theme-cuphead a.actions-dropdown-item,
@@ -4864,14 +5548,17 @@ body.theme-cuphead button.actions-dropdown-item {
   font-weight: bold !important;
   box-shadow: 3px 3px 0 #28221d !important;
   text-decoration: none !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
 }
 body.theme-cuphead .actions-dropdown-item:hover,
 body.theme-cuphead a.actions-dropdown-item:hover,
 body.theme-cuphead button.actions-dropdown-item:hover {
   background: #c9362b !important;
   color: #ffffff !important;
-  transform: translate(-2px, -2px) !important;
   box-shadow: 5px 5px 0 #28221d !important;
+  animation: cuphead-squish 0.6s ease-in-out infinite alternate !important;
 }
 
 /* 8. Doki Doki Literature Club Theme */
@@ -4942,6 +5629,7 @@ body.theme-ddlc .data-table tr:hover {
   color: #8b0000 !important;
   background: rgba(139, 0, 0, 0.1) !important;
   font-family: 'Courier New', Courier, monospace !important;
+  text-shadow: 2px -1px 0 #00ffff, -2px 1px 0 #ff00ff !important;
 }
 body.theme-ddlc .actions-dropdown-item,
 body.theme-ddlc a.actions-dropdown-item,
@@ -4953,6 +5641,9 @@ body.theme-ddlc button.actions-dropdown-item {
   font-weight: bold !important;
   transition: all 0.2s ease !important;
   text-decoration: none !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
 }
 body.theme-ddlc .actions-dropdown-item:hover,
 body.theme-ddlc a.actions-dropdown-item:hover,
@@ -4963,6 +5654,7 @@ body.theme-ddlc button.actions-dropdown-item:hover {
   color: #8b0000 !important;
   background: rgba(139, 0, 0, 0.1) !important;
   font-family: 'Courier New', Courier, monospace !important;
+  text-shadow: 2px -1px 0 #00ffff, -2px 1px 0 #ff00ff !important;
 }
 
 /* 9. Undertale / Deltarune Theme */
@@ -4996,54 +5688,120 @@ body.theme-undertale {
   background-image: none !important;
   font-family: 'Courier New', Courier, monospace !important;
 }
+
+/* Blinking typewriter cursor on headings */
+body.theme-undertale h1::after,
+body.theme-undertale h2::after,
+body.theme-undertale h3::after,
+body.theme-undertale .logo-text::after {
+  content: ' _';
+  color: #ff0000;
+  animation: undertale-cursor-blink 1s steps(2) infinite;
+}
+
 body.theme-undertale h1, body.theme-undertale h2, body.theme-undertale h3, body.theme-undertale .logo-text, body.theme-undertale .kpi-value {
   font-family: 'Courier New', Courier, monospace !important;
   color: #ffffff !important;
   text-shadow: none !important;
 }
+
+/* Battle box border style */
 body.theme-undertale .glass-card, body.theme-undertale .modal-content, body.theme-undertale .sidebar, body.theme-undertale .plancha-sidebar, body.theme-undertale aside {
-  border: 2px solid #ffffff !important;
+  border: 4px solid #ffffff !important;
   border-radius: 0px !important;
   background: #000000 !important;
+  box-shadow: none !important;
 }
+
+/* Undertale HP Progress Bars */
+body.theme-undertale .progress-bar,
+body.theme-undertale .kpi-progress {
+  background: #ff0000 !important; /* Red for empty HP */
+  border: 2px solid #000000 !important;
+  position: relative;
+  overflow: visible !important;
+  border-radius: 0px !important;
+}
+body.theme-undertale .progress-bar-fill,
+body.theme-undertale .progress-fill,
+body.theme-undertale .kpi-progress-fill {
+  background: #ffff00 !important; /* Yellow for active HP */
+  box-shadow: none !important;
+  border-radius: 0px !important;
+}
+body.theme-undertale .progress-bar::before,
+body.theme-undertale .kpi-progress::before {
+  content: 'HP';
+  position: absolute;
+  left: -25px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 10px;
+  font-weight: bold;
+  color: #ffff00;
+  font-family: 'Courier New', monospace;
+}
+
 body.theme-undertale .btn, 
 body.theme-undertale button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
-  border: 2px solid #ffffff !important;
+  border: 3px solid #ffffff !important;
   background: #000000 !important;
   color: #ffffff !important;
   border-radius: 0px !important;
   font-family: 'Courier New', Courier, monospace !important;
   text-transform: uppercase !important;
+  font-weight: bold !important;
+  box-shadow: none !important;
+  position: relative;
+  transition: all 0.1s ease !important;
 }
+
 body.theme-undertale .btn:hover, 
 body.theme-undertale button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
-  background: #ffffff !important;
-  color: #000000 !important;
+  background: #000000 !important;
+  color: #ffff00 !important; /* Yellow hover text like battle options */
+  border-color: #ffff00 !important;
 }
+
 body.theme-undertale .actions-dropdown-item,
 body.theme-undertale a.actions-dropdown-item,
 body.theme-undertale button.actions-dropdown-item {
-  border: 2px solid #ffffff !important;
+  border: 3px solid #ffffff !important;
   background: #000000 !important;
   color: #ffffff !important;
   border-radius: 0px !important;
   font-family: 'Courier New', Courier, monospace !important;
   text-transform: uppercase !important;
+  font-weight: bold !important;
   text-decoration: none !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  position: relative;
+  transition: all 0.1s ease !important;
 }
+
 body.theme-undertale .actions-dropdown-item:hover,
 body.theme-undertale a.actions-dropdown-item:hover,
 body.theme-undertale button.actions-dropdown-item:hover {
-  background: #ffffff !important;
-  color: #000000 !important;
+  background: #000000 !important;
+  color: #ffff00 !important;
+  border-color: #ffff00 !important;
 }
+
+/* Red soul heart slides in on hover */
 body.theme-undertale .nav-link:hover::before,
 body.theme-undertale .nav-link.active::before,
-body.theme-undertale .btn:hover::before {
+body.theme-undertale .btn:hover::before,
+body.theme-undertale .actions-dropdown-item:hover::before,
+body.theme-undertale a.actions-dropdown-item:hover::before,
+body.theme-undertale button.actions-dropdown-item:hover::before {
   content: "❤ " !important;
   color: #ff0000 !important;
-  text-shadow: 0 0 5px #ff0000 !important;
+  text-shadow: 0 0 8px #ff0000 !important;
   margin-right: 6px !important;
+  display: inline-block !important;
+  animation: undertale-soul-pulse 0.6s infinite alternate ease-in-out !important;
 }
 
 /* 10. Lobotomy Corporation Theme (Faithful Steampunk Clinical facility style) */
@@ -5087,6 +5845,17 @@ body.theme-lobotomy {
   background-attachment: fixed !important;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
 }
+
+/* Qliphoth Meltdown levels flashing screen border when meltdown is warning */
+body.theme-lobotomy::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  box-shadow: inset 0 0 40px rgba(0, 212, 255, 0.05);
+  pointer-events: none;
+  z-index: 9999;
+}
+
 body.theme-lobotomy h1, body.theme-lobotomy h2, body.theme-lobotomy h3, body.theme-lobotomy .logo-text, body.theme-lobotomy .kpi-value {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
   color: #00d4ff !important;
@@ -5095,12 +5864,17 @@ body.theme-lobotomy h1, body.theme-lobotomy h2, body.theme-lobotomy h3, body.the
   text-transform: uppercase !important;
   letter-spacing: 1px !important;
 }
+
+/* Containment unit style panels with clinical grid and double border */
 body.theme-lobotomy .glass-card, body.theme-lobotomy .modal-content, body.theme-lobotomy .sidebar, body.theme-lobotomy .plancha-sidebar, body.theme-lobotomy aside {
-  border: 1px solid #00d4ff !important;
+  border: 2px solid #00d4ff !important;
   border-radius: 0px !important;
   background: #0c1015 !important;
   box-shadow: 0 0 15px rgba(0, 212, 255, 0.15), inset 0 0 10px rgba(0, 212, 255, 0.05) !important;
+  background-image: linear-gradient(rgba(0, 212, 255, 0.01) 1px, transparent 1px) !important;
+  background-size: 100% 12px !important;
 }
+
 body.theme-lobotomy .main-header {
   border-bottom: 2px solid #00d4ff !important;
 }
@@ -5117,12 +5891,14 @@ body.theme-lobotomy .badge {
   border-radius: 0px !important;
   font-weight: bold !important;
 }
+
 /* Meltdown / Breach Flashing warning animation */
 @keyframes lobotomy-breach {
   0% { border-color: #ff3333 !important; box-shadow: 0 0 5px #ff3333 !important; background: rgba(255, 51, 51, 0.05) !important; }
-  50% { border-color: #ff3333 !important; box-shadow: 0 0 20px #ff3333, inset 0 0 10px rgba(255, 51, 51, 0.2) !important; background: rgba(255, 51, 51, 0.15) !important; }
+  50% { border-color: #ff3333 !important; box-shadow: 0 0 25px #ff3333, inset 0 0 10px rgba(255, 51, 51, 0.2) !important; background: rgba(255, 51, 51, 0.15) !important; }
   100% { border-color: #ff3333 !important; box-shadow: 0 0 5px #ff3333 !important; background: rgba(255, 51, 51, 0.05) !important; }
 }
+
 /* Qliphoth Threat Levels: ZAYIN, TETH, HE, WAW, ALEPH representation */
 body.theme-lobotomy .badge-success {
   background: rgba(0, 255, 204, 0.15) !important;
@@ -5134,12 +5910,17 @@ body.theme-lobotomy .badge-info {
   color: #00d4ff !important;
   border: 1px solid #00d4ff !important;
 }
+
+/* Moving Hazard Stripes for warning badges */
 body.theme-lobotomy .badge-warning {
   background: repeating-linear-gradient(45deg, #ffd700, #ffd700 8px, #000 8px, #000 16px) !important;
+  background-size: 24px 24px !important;
+  animation: lobotomy-hazard-slide 1.5s linear infinite !important;
   color: #ffffff !important;
   border: 1px solid #ffd700 !important;
   text-shadow: 1px 1px 2px #000 !important;
 }
+
 body.theme-lobotomy .badge-partial {
   background: rgba(155, 81, 224, 0.15) !important;
   color: #b388ff !important;
@@ -5159,6 +5940,25 @@ body.theme-lobotomy .badge-desc-bg, body.theme-lobotomy .badge-desc {
   color: #ffffff !important;
   border-radius: 0px !important;
 }
+
+/* Energy Gauge style progress bar filling with green blocks (PE-Boxes) */
+body.theme-lobotomy .progress-bar,
+body.theme-lobotomy .kpi-progress {
+  background: #11161d !important;
+  border: 2px solid #00d4ff !important;
+  border-radius: 0px !important;
+  position: relative;
+  overflow: hidden !important;
+}
+body.theme-lobotomy .progress-bar-fill,
+body.theme-lobotomy .progress-fill,
+body.theme-lobotomy .kpi-progress-fill {
+  background: repeating-linear-gradient(90deg, #00ffcc, #00ffcc 12px, #0c1015 12px, #0c1015 15px) !important;
+  box-shadow: 0 0 10px rgba(0, 255, 204, 0.5) !important;
+  border-radius: 0px !important;
+  image-rendering: pixelated !important;
+}
+
 body.theme-lobotomy .btn, 
 body.theme-lobotomy button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
   border-radius: 0px !important;
@@ -5171,13 +5971,27 @@ body.theme-lobotomy button:not(.close-btn):not(.search-clear-btn):not(.mobile-me
   letter-spacing: 1px !important;
   box-shadow: 0 0 5px rgba(0, 212, 255, 0.2) !important;
   transition: all 0.2s ease !important;
+  position: relative;
 }
+
+/* Qliphoth Counter warning symbol in hover of button */
+body.theme-lobotomy .btn:hover::before,
+body.theme-lobotomy button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover::before {
+  content: '⚠️';
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 10px;
+}
+
 body.theme-lobotomy .btn:hover, 
 body.theme-lobotomy button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
   background: #00d4ff !important;
   color: #07090e !important;
   box-shadow: 0 0 15px #00d4ff, inset 0 0 5px rgba(255, 255, 255, 0.5) !important;
 }
+
 body.theme-lobotomy .actions-dropdown-item,
 body.theme-lobotomy a.actions-dropdown-item,
 body.theme-lobotomy button.actions-dropdown-item {
@@ -5230,17 +6044,42 @@ body.theme-papers {
   --primary-shadow: rgba(143, 128, 90, 0.4);
   
   font-family: 'Courier New', Courier, monospace !important;
+  background-image: 
+    radial-gradient(circle at 10% 20%, rgba(0, 0, 0, 0.15) 1px, transparent 1px),
+    radial-gradient(circle at 90% 80%, rgba(0, 0, 0, 0.15) 1.5px, transparent 1.5px) !important;
+  background-size: 80px 80px !important;
 }
+
 body.theme-papers h1, body.theme-papers h2, body.theme-papers h3, body.theme-papers .logo-text, body.theme-papers .kpi-value {
   color: #c5c9c6 !important;
   text-shadow: 2px 2px 0px #1d1e1d !important;
   text-transform: uppercase !important;
 }
+
+/* Stamped seals in the background of cards */
 body.theme-papers .glass-card, body.theme-papers .modal-content, body.theme-papers .sidebar, body.theme-papers .plancha-sidebar, body.theme-papers aside {
   border: 2px solid #434744 !important;
   border-radius: 0px !important;
   background: #2f3230 !important;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 4px 4px 0px rgba(0,0,0,0.4) !important;
 }
+
+body.theme-papers .kpi-card::after {
+  content: 'ARSTOTZKA';
+  position: absolute;
+  bottom: 8px; right: 12px;
+  font-size: 10px;
+  color: rgba(197, 201, 198, 0.06);
+  font-weight: bold;
+  letter-spacing: 2px;
+  transform: rotate(-10deg);
+  pointer-events: none;
+  border: 1px dashed rgba(197, 201, 198, 0.06);
+  padding: 2px 4px;
+}
+
 body.theme-papers .btn, 
 body.theme-papers button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
   border: 2px solid #434744 !important;
@@ -5249,12 +6088,49 @@ body.theme-papers button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu
   border-radius: 0px !important;
   font-family: 'Courier New', Courier, monospace !important;
   text-transform: uppercase !important;
+  position: relative;
 }
+
+/* Dynamic stamp overlays on button hover */
+body.theme-papers .btn-primary:hover::after {
+  content: 'APPROVED';
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%) rotate(-10deg);
+  color: rgba(97, 177, 111, 0.3) !important;
+  border: 2px dashed rgba(97, 177, 111, 0.3) !important;
+  font-size: 11px;
+  font-weight: bold;
+  padding: 1px 4px;
+  pointer-events: none;
+  letter-spacing: 1px;
+  border-radius: 3px;
+  z-index: 10;
+  background: #1d1e1d;
+}
+body.theme-papers .btn-danger:hover::after {
+  content: 'DENIED';
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%) rotate(10deg);
+  color: rgba(230, 96, 96, 0.3) !important;
+  border: 2px dashed rgba(230, 96, 96, 0.3) !important;
+  font-size: 11px;
+  font-weight: bold;
+  padding: 1px 4px;
+  pointer-events: none;
+  letter-spacing: 1px;
+  border-radius: 3px;
+  z-index: 10;
+  background: #1d1e1d;
+}
+
 body.theme-papers .btn:hover, 
 body.theme-papers button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
   background: #8f805a !important;
   color: #1d1e1d !important;
 }
+
 body.theme-papers .actions-dropdown-item,
 body.theme-papers a.actions-dropdown-item,
 body.theme-papers button.actions-dropdown-item {
@@ -5265,7 +6141,9 @@ body.theme-papers button.actions-dropdown-item {
   font-family: 'Courier New', Courier, monospace !important;
   text-transform: uppercase !important;
   text-decoration: none !important;
+  position: relative;
 }
+
 body.theme-papers .actions-dropdown-item:hover,
 body.theme-papers a.actions-dropdown-item:hover,
 body.theme-papers button.actions-dropdown-item:hover {
@@ -5300,27 +6178,60 @@ body.theme-plague {
   --primary-color: #ff6200;
   --primary-hover: #e65500;
   --primary-shadow: rgba(255, 98, 0, 0.4);
+  
+  background-color: #070608 !important;
+  background-image: radial-gradient(circle at 50% 50%, #1a0808 0%, #070608 100%) !important;
 }
+
+/* Red biohazard radar vertical scanner sweep line */
+body.theme-plague::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: linear-gradient(to bottom, rgba(230, 0, 0, 0) 95%, rgba(230, 0, 0, 0.12) 98%, rgba(230, 0, 0, 0) 100%);
+  pointer-events: none;
+  z-index: 9999;
+  animation: plague-laser-sweep 8s linear infinite;
+}
+
 body.theme-plague h1, body.theme-plague h2, body.theme-plague h3, body.theme-plague .logo-text, body.theme-plague .kpi-value {
   color: #e60000 !important;
   text-shadow: 0 0 10px rgba(230, 0, 0, 0.6) !important;
 }
+
+/* Pulse radar glowing border */
 body.theme-plague .glass-card, body.theme-plague .modal-content, body.theme-plague .sidebar, body.theme-plague .plancha-sidebar, body.theme-plague aside {
   border: 1px solid #471c1c !important;
   background: #121014 !important;
+  box-shadow: 0 0 15px rgba(230, 0, 0, 0.05), inset 0 0 8px rgba(230, 0, 0, 0.02) !important;
 }
+
+/* Spinning DNA helix next to KPIs */
+body.theme-plague .kpi-value::after {
+  content: ' 🧬';
+  font-size: 1rem;
+  display: inline-block;
+  animation: plague-dna-spin 4s linear infinite;
+  opacity: 0.6;
+  color: #ff6200;
+  text-shadow: none !important;
+}
+
 @keyframes plague-pulse {
   0% { box-shadow: 0 0 0 0 rgba(230, 0, 0, 0.4); }
   70% { box-shadow: 0 0 0 8px rgba(230, 0, 0, 0); }
   100% { box-shadow: 0 0 0 0 rgba(230, 0, 0, 0); }
 }
+
 body.theme-plague .btn, 
 body.theme-plague button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
   border: 1px solid #471c1c !important;
   background: #121014 !important;
   color: #e2e9e3 !important;
   border-radius: 4px !important;
+  transition: all 0.2s ease !important;
 }
+
 body.theme-plague .btn:hover, 
 body.theme-plague button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
   border-color: #e60000 !important;
@@ -5328,6 +6239,7 @@ body.theme-plague button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu
   background: #e60000 !important;
   animation: plague-pulse 1.5s infinite;
 }
+
 body.theme-plague .actions-dropdown-item,
 body.theme-plague a.actions-dropdown-item,
 body.theme-plague button.actions-dropdown-item {
@@ -5336,7 +6248,9 @@ body.theme-plague button.actions-dropdown-item {
   color: #e2e9e3 !important;
   border-radius: 4px !important;
   text-decoration: none !important;
+  transition: all 0.2s ease !important;
 }
+
 body.theme-plague .actions-dropdown-item:hover,
 body.theme-plague a.actions-dropdown-item:hover,
 body.theme-plague button.actions-dropdown-item:hover {
@@ -5377,15 +6291,61 @@ body.theme-pvz {
   background-image: 
     repeating-linear-gradient(90deg, #09110a, #09110a 20px, #0a130b 20px, #0a130b 40px) !important;
 }
+
+/* Falling pixelated yellow suns */
+body.theme-pvz::before {
+  content: '☀️';
+  position: fixed;
+  top: -50px;
+  left: 15%;
+  font-size: 24px;
+  color: #ffc107;
+  text-shadow: 0 0 10px #ffc107, 35vw 25vh 0 #ffc107, 65vw 45vh 0 #ffc107;
+  pointer-events: none;
+  z-index: 9999;
+  animation: pvz-sun-fall 16s linear infinite;
+  opacity: 0.5;
+}
+
 body.theme-pvz h1, body.theme-pvz h2, body.theme-pvz h3, body.theme-pvz .logo-text, body.theme-pvz .kpi-value {
   font-family: 'Comic Sans MS', sans-serif !important;
   color: #ffc107 !important;
   text-shadow: 2px 2px 0px #0a130b !important;
 }
+
 body.theme-pvz .glass-card, body.theme-pvz .modal-content, body.theme-pvz .sidebar, body.theme-pvz .plancha-sidebar, body.theme-pvz aside {
   border: 2px solid #2e4d30 !important;
   background: #182419 !important;
 }
+
+/* Lawn progress bar with sliding zombie head */
+body.theme-pvz .progress-bar,
+body.theme-pvz .kpi-progress {
+  background: repeating-linear-gradient(90deg, #182419, #182419 10px, #101911 10px, #101911 20px) !important;
+  border: 2px solid #554433 !important;
+  position: relative;
+  overflow: visible !important;
+  border-radius: 0px !important;
+}
+body.theme-pvz .progress-bar-fill,
+body.theme-pvz .progress-fill,
+body.theme-pvz .kpi-progress-fill {
+  background: repeating-linear-gradient(90deg, #4caf50, #4caf50 15px, #388e3c 15px, #388e3c 30px) !important; /* Alternating rows of green grass */
+  box-shadow: none !important;
+  border-radius: 0px !important;
+}
+body.theme-pvz .progress-bar-fill::after,
+body.theme-pvz .progress-fill::after,
+body.theme-pvz .kpi-progress-fill::after {
+  content: '🧟';
+  position: absolute;
+  right: -10px;
+  top: -6px;
+  font-size: 16px;
+  text-shadow: 1px 1px 0 #000;
+  animation: pvz-zombie-bob 1s ease-in-out infinite alternate;
+}
+
 body.theme-pvz .btn, 
 body.theme-pvz button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
   border-radius: 20px 20px 4px 4px !important;
@@ -5395,13 +6355,18 @@ body.theme-pvz button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-to
   font-family: 'Comic Sans MS', sans-serif !important;
   font-weight: bold !important;
   text-transform: uppercase !important;
+  box-shadow: 3px 3px 0 rgba(0,0,0,0.3) !important;
+  transition: all 0.15s ease !important;
 }
+
 body.theme-pvz .btn:hover, 
 body.theme-pvz button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
   background: #4caf50 !important;
   border-color: #ffc107 !important;
   color: #ffffff !important;
+  transform: scale(1.03) !important;
 }
+
 body.theme-pvz .actions-dropdown-item,
 body.theme-pvz a.actions-dropdown-item,
 body.theme-pvz button.actions-dropdown-item {
@@ -5413,13 +6378,17 @@ body.theme-pvz button.actions-dropdown-item {
   font-weight: bold !important;
   text-transform: uppercase !important;
   text-decoration: none !important;
+  box-shadow: 3px 3px 0 rgba(0,0,0,0.3) !important;
+  transition: all 0.15s ease !important;
 }
+
 body.theme-pvz .actions-dropdown-item:hover,
 body.theme-pvz a.actions-dropdown-item:hover,
 body.theme-pvz button.actions-dropdown-item:hover {
   background: #4caf50 !important;
   border-color: #ffc107 !important;
   color: #ffffff !important;
+  transform: scale(1.03) !important;
 }
 
 /* ==========================================================================
@@ -5708,6 +6677,185 @@ body.theme-pvz .launcher-app-item:hover .launcher-app-icon {
 body.theme-pvz .launcher-app-name {
   font-family: 'Comic Sans MS', sans-serif !important;
   color: #ffc107 !important;
+}
+
+/* ==========================================================================
+   CUSTOM ANIMATIONS / KEYFRAMES FOR ALL THEMES
+   ========================================================================== */
+
+/* 1. Hatsune Miku Animations */
+@keyframes miku-eq-sweep {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+@keyframes miku-notes-float {
+  0% { transform: translateY(0); opacity: 0; }
+  10% { opacity: 0.4; }
+  90% { opacity: 0.4; }
+  100% { transform: translateY(-100vh); opacity: 0; }
+}
+@keyframes miku-eq-pulse {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 2px #39c5bb); }
+  50% { transform: scale(1.03); filter: drop-shadow(0 0 8px #39c5bb); }
+}
+
+/* 2. Kasane Teto & Cyberpunk Scanline */
+@keyframes teto-scanline-sweep {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+@keyframes teto-drill-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 3. Limbus Company Animations */
+@keyframes limbus-gear-rotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+@keyframes limbus-bough-pulse {
+  0%, 100% { border-color: rgba(212, 158, 42, 0.4); box-shadow: 0 0 10px rgba(212, 158, 42, 0.1); }
+  50% { border-color: rgba(212, 158, 42, 0.8); box-shadow: 0 0 25px rgba(212, 158, 42, 0.35); }
+}
+
+/* 4. Library of Ruina Animations */
+@keyframes ruina-star-shoot {
+  0% { transform: translate(0, 0) rotate(-45deg); opacity: 0; }
+  10% { opacity: 0.8; }
+  30% { transform: translate(150px, 150px) rotate(-45deg); opacity: 0; }
+  100% { transform: translate(150px, 150px) rotate(-45deg); opacity: 0; }
+}
+
+/* 5. Geometry Dash Animations */
+@keyframes gd-cube-jump {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-8px) rotate(90deg); }
+  50% { transform: translateY(0) rotate(180deg); }
+  75% { transform: translateY(-8px) rotate(270deg); }
+}
+@keyframes gd-beat-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.008); }
+}
+
+/* 6. Fallout Terminal Flicker */
+@keyframes fallout-terminal-flicker {
+  0% { opacity: 0.98; }
+  100% { opacity: 1; }
+}
+
+/* 7. Team Fortress 2 Crit Pop */
+@keyframes tf2-crit-pop {
+  0% { transform: translateX(-50%) scale(0) rotate(0deg); opacity: 0; }
+  50% { transform: translateX(-50%) scale(1.2) rotate(8deg); opacity: 1; }
+  100% { transform: translateX(-50%) scale(1) rotate(5deg); opacity: 1; }
+}
+
+/* 8. Cyberpunk Glitch Skew */
+@keyframes cyberpunk-glitch-skew {
+  0%, 100% { transform: skewX(0deg); }
+  10% { transform: skewX(3deg); filter: hue-rotate(10deg); }
+  20% { transform: skewX(-3deg); filter: hue-rotate(-10deg); }
+  30% { transform: skewX(0deg); }
+}
+
+/* 9. Escape the Backrooms Fluorescent Flicker */
+@keyframes backrooms-flicker {
+  0%, 100% { opacity: 1; }
+  30% { opacity: 1; }
+  31% { opacity: 0.4; }
+  32% { opacity: 1; }
+  85% { opacity: 1; }
+  86% { opacity: 0.7; }
+  87% { opacity: 1; }
+}
+
+/* 10. Terraria Animations */
+@keyframes terraria-heart-beat {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+}
+@keyframes terraria-star-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+@keyframes terraria-sparkle-hover {
+  0% { filter: brightness(1); }
+  50% { filter: brightness(1.4) drop-shadow(0 0 5px #ffff00); }
+  100% { filter: brightness(1); }
+}
+
+/* 11. Castle Crashers Magic Glows */
+@keyframes castle-poison-glow {
+  0%, 100% { box-shadow: 0 0 8px rgba(56, 161, 105, 0.4), 3px 3px 0 #0c0d12 !important; }
+  50% { box-shadow: 0 0 20px rgba(56, 161, 105, 0.8), 3px 3px 0 #0c0d12 !important; }
+}
+@keyframes castle-fire-glow {
+  0%, 100% { box-shadow: 0 0 6px rgba(229, 62, 62, 0.4), 3px 3px 0 #0c0d12 !important; filter: brightness(1); }
+  50% { box-shadow: 0 0 22px rgba(229, 62, 62, 0.8), 3px 3px 0 #0c0d12 !important; filter: brightness(1.2); }
+}
+@keyframes castle-ice-glow {
+  0%, 100% { box-shadow: 0 0 8px rgba(49, 130, 206, 0.4), 3px 3px 0 #0c0d12 !important; }
+  50% { box-shadow: 0 0 20px rgba(49, 130, 206, 0.8), 3px 3px 0 #0c0d12 !important; }
+}
+@keyframes castle-lightning-glow {
+  0%, 100% { box-shadow: 0 0 10px rgba(214, 158, 46, 0.4), 3px 3px 0 #0c0d12 !important; }
+  50% { box-shadow: 0 0 24px rgba(214, 158, 46, 0.9), 3px 3px 0 #0c0d12 !important; }
+}
+
+/* 12. Star Wars Animations */
+@keyframes starwars-lightsaber-glow {
+  0%, 100% { box-shadow: 0 0 15px #00f0ff !important; }
+  50% { box-shadow: 0 0 35px #00f0ff, 0 0 10px rgba(0, 240, 255, 0.5) !important; }
+}
+@keyframes starwars-hologram-sweep {
+  0% { background-position: 0 0; }
+  100% { background-position: 0 100%; }
+}
+
+/* 13. Call of Duty: Black Ops 3 DNI sweep */
+@keyframes cod3-dni-sweep {
+  0% { transform: translateY(0); opacity: 0.1; }
+  50% { opacity: 0.4; }
+  100% { transform: translateY(100%); opacity: 0.1; }
+}
+
+/* 14. Undertale / Deltarune Animations */
+@keyframes undertale-cursor-blink {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
+}
+@keyframes undertale-soul-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.25); }
+}
+
+/* 15. Lobotomy Corporation Animations */
+@keyframes lobotomy-hazard-slide {
+  0% { background-position: 0 0; }
+  100% { background-position: 32px 0; }
+}
+
+/* 16. Plague Inc scanning sweep & DNA spin */
+@keyframes plague-laser-sweep {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+@keyframes plague-dna-spin {
+  0% { transform: rotateY(0deg); }
+  100% { transform: rotateY(360deg); }
+}
+
+/* 17. Plants vs. Zombies sun fall & zombie bobbing */
+@keyframes pvz-sun-fall {
+  0% { transform: translateY(-10%) rotate(0deg); }
+  100% { transform: translateY(110vh) rotate(360deg); }
+}
+@keyframes pvz-zombie-bob {
+  0% { transform: translateY(0) rotate(-3deg); }
+  100% { transform: translateY(-3px) rotate(3deg); }
 }
 
 
