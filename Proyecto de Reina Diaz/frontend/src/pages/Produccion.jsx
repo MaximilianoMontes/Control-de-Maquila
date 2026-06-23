@@ -455,20 +455,20 @@ export default function Produccion() {
                       <td>#{orders.length - orders.findIndex(item => item.id === o.id)}</td>
                       <td style={{ fontWeight: 600 }}>{o.maquilero_nombre}</td>
                       <td>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                           {prodImg ? (
                             <img 
                               src={prodImg} 
                               alt="" 
-                              style={{ width: 32, height: 32, borderRadius: 4, objectFit: 'contain', backgroundColor: '#ffffff', cursor: 'zoom-in' }} 
+                              style={{ width: 52, height: 52, borderRadius: 8, objectFit: 'contain', backgroundColor: '#ffffff', border: '1px solid var(--border-color)', cursor: 'zoom-in' }} 
                               onClick={() => setSelectedImage(prodImg)}
                             />
                           ) : (
-                            <div style={{ width: 32, height: 32, background: '#f1f5f9', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                              <ImageIcon size={16} />
+                            <div style={{ width: 52, height: 52, background: '#f1f5f9', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border-color)' }}>
+                              <ImageIcon size={22} color="#cbd5e1" />
                             </div>
                           )}
-                          <span>{o.producto_modelo || 'N/A'}</span>
+                          <span style={{ fontWeight: 600 }}>{o.producto_modelo || 'N/A'}</span>
                         </div>
                       </td>
                       <td style={{ textAlign: 'center' }}>{o.cantidad}</td>
