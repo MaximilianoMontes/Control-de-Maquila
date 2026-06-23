@@ -2249,6 +2249,82 @@ body.theme-dim {
   --badge-desc-text: #f87171;
 }
 
+/* Tema Hatsune Miku 🌐 (Estilo Cyberpunk Vocaloid) */
+body.theme-miku {
+  --bg-dark: #071112;
+  --bg-card: #0c2022;
+  --bg-input: #122c2f;
+  --text-primary: #e0fcfb;
+  --text-secondary: #39c5bb;
+  --border-color: rgba(57, 197, 187, 0.15);
+  --glass-border: 1px solid rgba(57, 197, 187, 0.08);
+  --glass-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.45);
+  --bg-hover: rgba(57, 197, 187, 0.05);
+  --bg-th: rgba(57, 197, 187, 0.08);
+  --header-bg: rgba(12, 32, 34, 0.85);
+  --row-normal-bg: rgba(57, 197, 187, 0.08);
+  --row-normal-hover: rgba(57, 197, 187, 0.15);
+  --row-warning-bg: rgba(255, 46, 122, 0.08);
+  --row-warning-hover: rgba(255, 46, 122, 0.15);
+  --row-danger-bg: rgba(255, 46, 122, 0.12);
+  --row-danger-hover: rgba(255, 46, 122, 0.2);
+  --badge-bono-bg: rgba(57, 197, 187, 0.2);
+  --badge-bono-text: #39c5bb;
+  --badge-desc-bg: rgba(255, 46, 122, 0.25);
+  --badge-desc-text: #ff5b97;
+  
+  /* Primary and danger accents overrides */
+  --primary-color: #39c5bb;
+  --primary-hover: #2ba69e;
+  --primary-shadow: rgba(57, 197, 187, 0.4);
+  --danger-color: #ff2e7a;
+  --danger-hover: #e01b63;
+  --success-color: #39c5bb;
+
+  /* Custom background neon glow */
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(57, 197, 187, 0.15) 0px, transparent 55%),
+    radial-gradient(at 100% 0%, rgba(255, 46, 122, 0.1) 0px, transparent 55%) !important;
+}
+
+/* Tema Kasane Teto 🥖 (Estilo Quimera Vocaloid) */
+body.theme-teto {
+  --bg-dark: #0f0709;
+  --bg-card: #1d0f12;
+  --bg-input: #29161a;
+  --text-primary: #ffebee;
+  --text-secondary: #ff4d6a;
+  --border-color: rgba(255, 77, 106, 0.15);
+  --glass-border: 1px solid rgba(255, 77, 106, 0.08);
+  --glass-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.45);
+  --bg-hover: rgba(255, 77, 106, 0.05);
+  --bg-th: rgba(255, 77, 106, 0.08);
+  --header-bg: rgba(29, 15, 18, 0.85);
+  --row-normal-bg: rgba(255, 184, 0, 0.06);
+  --row-normal-hover: rgba(255, 184, 0, 0.12);
+  --row-warning-bg: rgba(255, 61, 90, 0.08);
+  --row-warning-hover: rgba(255, 61, 90, 0.15);
+  --row-danger-bg: rgba(255, 61, 90, 0.12);
+  --row-danger-hover: rgba(255, 61, 90, 0.2);
+  --badge-bono-bg: rgba(255, 184, 0, 0.2);
+  --badge-bono-text: #ffb800;
+  --badge-desc-bg: rgba(255, 61, 90, 0.25);
+  --badge-desc-text: #ff4d6a;
+  
+  /* Primary and danger accents overrides */
+  --primary-color: #ff3d5a;
+  --primary-hover: #e02442;
+  --primary-shadow: rgba(255, 61, 90, 0.4);
+  --danger-color: #ff3d5a;
+  --danger-hover: #e02442;
+  --success-color: #ffb800;
+
+  /* Custom background strawberry drills neon glow */
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(255, 61, 90, 0.15) 0px, transparent 55%),
+    radial-gradient(at 100% 0%, rgba(255, 184, 0, 0.08) 0px, transparent 55%) !important;
+}
+
 /* Dropdown Actions Menu Styles */
 .actions-dropdown-container {
   position: relative;
@@ -2624,6 +2700,8 @@ body.dark-mode .search-clear-btn:hover {
   /* Make sidebar container a wrapper for mobile drawer */
   .sidebar-container {
     display: block;
+    position: relative;
+    z-index: 1000;
   }
 
   /* Transform Sidebar into absolute drawer */
@@ -2662,17 +2740,11 @@ body.dark-mode .search-clear-btn:hover {
   }
 
   /* Plancha Layout Responsive Stacking */
-  div[style*="grid-template-columns"][style*="320px"] {
+  .plancha-main-grid {
     grid-template-columns: 1fr !important;
     display: flex !important;
     flex-direction: column !important;
     gap: 1.5rem !important;
-  }
-
-  div[style*="height"][style*="calc(100vh - 250px)"] {
-    height: auto !important;
-    max-height: none !important;
-    position: static !important;
   }
 }
 
@@ -2797,6 +2869,78 @@ body.dark-mode .search-clear-btn:hover {
   div[style*="grid-template-columns: repeat(3, 1fr)"],
   div[style*="gridTemplateColumns: 'repeat(3, 1fr)'"] {
     grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)) !important;
+  }
+
+  /* App Launcher mobile adjustments */
+  .launcher-grid-wrapper {
+    padding: 20px !important;
+  }
+  
+  .launcher-grid {
+    gap: 20px !important;
+    grid-template-columns: repeat(auto-fit, minmax(110px, 130px)) !important;
+  }
+  
+  .launcher-app-icon {
+    width: 110px !important;
+    height: 110px !important;
+    border-radius: 24px !important;
+  }
+  
+  .launcher-app-icon svg {
+    width: 72px !important;
+    height: 72px !important;
+  }
+
+  .launcher-header {
+    padding: 0 16px !important;
+  }
+
+  .launcher-company-name {
+    display: none !important;
+  }
+
+  /* Universal page header stacking on mobile */
+  div[style*="display: flex"][style*="justify-content: space-between"],
+  div[style*="display: 'flex'"][style*="justifyContent: 'space-between'"] {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 1rem !important;
+  }
+
+  div[style*="display: flex"][style*="justify-content: space-between"] > div,
+  div[style*="display: flex"][style*="justify-content: space-between"] input,
+  div[style*="display: flex"][style*="justify-content: space-between"] .form-input {
+    width: 100% !important;
+  }
+
+  /* Robust Mobile Drawer open transition */
+  .sidebar-container.mobile-open .sidebar,
+  .sidebar-container.mobile-open aside,
+  .sidebar-container.mobile-open .plancha-sidebar {
+    transform: translateX(0) !important;
+    visibility: visible !important;
+  }
+
+  /* Centered Full-Width Dropdowns (Notifications, Help, Profile) on Mobile */
+  .header-help-container,
+  .header-profile-container {
+    position: static !important;
+  }
+
+  .header-dropdown,
+  .notifications-dropdown,
+  .help-dropdown {
+    position: absolute !important;
+    top: 70px !important;
+    left: 10px !important;
+    right: 10px !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    z-index: 1001 !important;
+    transform: none !important;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4) !important;
   }
 }
 

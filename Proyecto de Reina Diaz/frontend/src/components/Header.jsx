@@ -604,6 +604,18 @@ export default function Header({ onToggleSidebar }) {
                     {settings.theme === 'dim' && <Check size={14} />} {t('settings.themeDim')}
                   </button>
                   <button 
+                    className={`settings-option-btn ${settings.theme === 'miku' ? 'active' : ''}`}
+                    onClick={() => toggleSetting('theme', 'miku')}
+                  >
+                    {settings.theme === 'miku' && <Check size={14} />} {t('settings.themeMiku')}
+                  </button>
+                  <button 
+                    className={`settings-option-btn ${settings.theme === 'teto' ? 'active' : ''}`}
+                    onClick={() => toggleSetting('theme', 'teto')}
+                  >
+                    {settings.theme === 'teto' && <Check size={14} />} {t('settings.themeTeto')}
+                  </button>
+                  <button 
                     className={`settings-option-btn ${settings.theme === 'system' ? 'active' : ''}`}
                     onClick={() => toggleSetting('theme', 'system')}
                     style={{ flexBasis: '100%' }}

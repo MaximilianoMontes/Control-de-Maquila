@@ -15,6 +15,14 @@ export default function Calendario() {
   const navigate = useNavigate();
   const isEn = settings.language === 'en';
 
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const [currentDate, setCurrentDate] = useState(new Date());
   const [events, setEvents] = useState([]);
   
@@ -60,8 +68,8 @@ export default function Calendario() {
 
   const monthNamesEs = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
   const monthNamesEn = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-  const dayNamesEs = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-  const dayNamesEn = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const dayNamesEs = isMobile ? ['D', 'L', 'M', 'M', 'J', 'V', 'S'] : ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+  const dayNamesEn = isMobile ? ['S', 'M', 'T', 'W', 'T', 'F', 'S'] : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   const monthNames = isEn ? monthNamesEn : monthNamesEs;
   const dayNames = isEn ? dayNamesEn : dayNamesEs;
@@ -204,7 +212,7 @@ export default function Calendario() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', height: '100vh', padding: '2rem', boxSizing: 'border-box', fontFamily: 'Inter, sans-serif', backgroundColor: 'var(--bg-body)' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%', boxSizing: 'border-box', fontFamily: 'Inter, sans-serif' }}>
       <style>{`
         .calendar-container {
           background: var(--bg-card);
@@ -214,19 +222,19 @@ export default function Calendario() {
           box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
           display: flex;
           flex-direction: column;
-          height: calc(100vh - 180px);
+          height: calc(100vh - 210px);
         }
         .calendar-header {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          padding: 1.5rem;
+          padding: 1.25rem 1.5rem;
           border-bottom: 1px solid var(--border-color);
         }
         .calendar-header-actions {
           display: flex;
           align-items: center;
-          gap: 1rem;
+          gap: 0.75rem;
         }
         .calendar-nav-btn {
           background: transparent;
@@ -253,14 +261,14 @@ export default function Calendario() {
         .calendar-day-header {
           background: var(--bg-card);
           text-align: center;
-          padding: 1rem;
+          padding: 0.85rem 0.5rem;
           font-weight: 600;
           color: var(--text-secondary);
           font-size: 0.9rem;
         }
         .calendar-day {
           background: var(--bg-card);
-          min-height: 100px;
+          min-height: 80px;
           padding: 0.5rem;
           cursor: pointer;
           transition: background 0.2s;
@@ -277,8 +285,8 @@ export default function Calendario() {
         .calendar-day.today .day-number {
           background: #8b5cf6;
           color: white;
-          width: 28px;
-          height: 28px;
+          width: 26px;
+          height: 26px;
           border-radius: 50%;
           display: flex;
           align-items: center;
@@ -286,12 +294,12 @@ export default function Calendario() {
           font-weight: bold;
         }
         .day-number {
-          font-size: 0.9rem;
+          font-size: 0.85rem;
           color: var(--text-primary);
-          margin-bottom: 0.5rem;
+          margin-bottom: 0.25rem;
           align-self: flex-end;
-          width: 28px;
-          height: 28px;
+          width: 26px;
+          height: 26px;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -305,7 +313,7 @@ export default function Calendario() {
         }
         .calendar-event {
           color: white;
-          font-size: 0.75rem;
+          font-size: 0.725rem;
           padding: 2px 6px;
           border-radius: 4px;
           white-space: nowrap;
@@ -376,17 +384,52 @@ export default function Calendario() {
           border-color: white;
           box-shadow: 0 0 0 2px var(--text-primary);
         }
+
+        @media (max-width: 768px) {
+          .calendar-container {
+            height: auto !important;
+            min-height: 480px;
+          }
+          .calendar-header {
+            padding: 1rem;
+            flex-direction: column;
+            gap: 0.75rem;
+            align-items: flex-start;
+          }
+          .calendar-header-actions {
+            width: 100%;
+            justify-content: space-between;
+          }
+          .calendar-day-header {
+            padding: 0.5rem 2px !important;
+            font-size: 0.75rem !important;
+          }
+          .calendar-day {
+            min-height: 65px !important;
+            padding: 2px !important;
+          }
+          .day-number {
+            font-size: 0.8rem !important;
+            width: 20px !important;
+            height: 20px !important;
+            margin-bottom: 2px !important;
+          }
+          .calendar-day.today .day-number {
+            width: 20px !important;
+            height: 20px !important;
+            font-size: 0.8rem !important;
+          }
+          .calendar-event {
+            font-size: 0.625rem !important;
+            padding: 1px 3px !important;
+            border-radius: 2px !important;
+          }
+        }
       `}</style>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <button className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '6px' }} onClick={() => navigate('/')}>
-            <Home size={18} />
-            {isEn ? 'Home' : 'Volver al Inicio'}
-          </button>
-          <h1 className="gradient-text" style={{ fontSize: '2rem', margin: 0 }}>{isEn ? 'Calendar & Alerts' : 'Calendario y Alertas'}</h1>
-        </div>
-        <button className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px' }} onClick={() => openModal()}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+        <h1 className="gradient-text" style={{ fontSize: isMobile ? '1.5rem' : '2rem', margin: 0 }}>{isEn ? 'Calendar & Alerts' : 'Calendario y Alertas'}</h1>
+        <button className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: isMobile ? '0.6rem 1rem' : '0.75rem 1.5rem', fontSize: isMobile ? '0.9rem' : '1rem' }} onClick={() => openModal()}>
           <Plus size={18} />
           {isEn ? 'New Event' : 'Nuevo Evento'}
         </button>
