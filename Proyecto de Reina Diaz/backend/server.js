@@ -1905,11 +1905,11 @@ app.get('/api/reportes/produccion', async (req, res) => {
         title: tLabel("Reporte de Órdenes Terminadas", "Finished Production Orders Report"),
         subtitle: subtitleDate + tLabel(" - Generado el ", " - Generated on ") + formatDateToDMY(new Date()),
         headers: [
-          { label: tLabel("MAQUILERO", "TAILOR"), property: "maquilero", width: 110 },
-          { label: tLabel("MODELO", "MODEL"), property: "modelo", width: 80 },
-          { label: tLabel("CODIGO", "CODE"), property: "codigo", width: 110 },
+          { label: tLabel("MAQUILERO", "TAILOR"), property: "maquilero", width: 120 },
+          { label: tLabel("MODELO", "MODEL"), property: "modelo", width: 70 },
+          { label: tLabel("CODIGO", "CODE"), property: "codigo", width: 90 },
           { label: tLabel("COLOR", "COLOR"), property: "color", width: 100 },
-          { label: tLabel("CLIENTE", "CLIENT"), property: "cliente", width: 150 },
+          { label: tLabel("CLIENTE", "CLIENT"), property: "cliente", width: 152 },
           { label: tLabel("ORDEN", "ORDER"), property: "orden", width: 90 },
           { label: tLabel("PIEZAS", "PIECES"), property: "piezas", width: 60 },
           { label: tLabel("ENTREGA", "DELIVERY"), property: "entrega", width: 100 }
@@ -1929,7 +1929,7 @@ app.get('/api/reportes/produccion', async (req, res) => {
           piezas: String(o.cantidad || 0),
           entrega: formatDateToDMY(o.fecha_fin)
         })),
-        options: { padding: 2 }
+        options: { padding: 4 }
       };
 
       await doc.table(tableConfig, {
@@ -1941,7 +1941,7 @@ app.get('/api/reportes/produccion', async (req, res) => {
              if (indexColumn === 1 && order.producto_imagen) {
                 const imgPath = path.join(__dirname, order.producto_imagen);
                 if (fs.existsSync(imgPath)) {
-                   doc.image(imgPath, rectRow.x + 110 + 10, rectRow.y + 5, { fit: [60, 60] });
+                   doc.image(imgPath, rectRow.x + 120 + 5, rectRow.y + 5, { fit: [60, 60] });
                 }
              }
           } catch(e) {}
@@ -2012,13 +2012,13 @@ app.get('/api/reportes/inventario', async (req, res) => {
           "Current stock, costs, and units registered in warehouse - Generated on "
         ) + formatDateToDMY(new Date()),
         headers: [
-          { label: tLabel("MODELO", "MODEL"), property: "modelo", width: 80 },
-          { label: tLabel("CODIGO", "CODE"), property: "codigo", width: 160 },
-          { label: tLabel("COLOR", "COLOR"), property: "color", width: 120 },
+          { label: tLabel("MODELO", "MODEL"), property: "modelo", width: 70 },
+          { label: tLabel("CODIGO", "CODE"), property: "codigo", width: 140 },
+          { label: tLabel("COLOR", "COLOR"), property: "color", width: 112 },
           { label: tLabel("CLIENTE", "CLIENT"), property: "cliente", width: 180 },
           { label: tLabel("ORDEN", "ORDER"), property: "orden", width: 100 },
-          { label: tLabel("PRECIO", "PRICE"), property: "precio", width: 80 },
-          { label: tLabel("PZAS PROC.", "PROC. PCS"), property: "piezas", width: 80 }
+          { label: tLabel("PRECIO", "PRICE"), property: "precio", width: 90 },
+          { label: tLabel("PZAS PROC.", "PROC. PCS"), property: "piezas", width: 90 }
         ],
         datas: items.map(i => ({
           modelo: '\n\n\n\n\n\n',
@@ -2034,7 +2034,7 @@ app.get('/api/reportes/inventario', async (req, res) => {
           precio: '$' + (i.precio || 0),
           piezas: String(i.piezas_en_proceso || 0)
         })),
-        options: { padding: 2 }
+        options: { padding: 4 }
       };
 
       await doc.table(tableConfig, {
@@ -2046,7 +2046,7 @@ app.get('/api/reportes/inventario', async (req, res) => {
              if (indexColumn === 0 && item.imagen) {
                 const imgPath = path.join(__dirname, item.imagen);
                 if (fs.existsSync(imgPath)) {
-                   doc.image(imgPath, rectRow.x + 10, rectRow.y + 5, { fit: [60, 60] });
+                   doc.image(imgPath, rectRow.x + 5, rectRow.y + 5, { fit: [60, 60] });
                 }
              }
           } catch(e) {}
@@ -2080,7 +2080,7 @@ app.get('/api/reportes/recoleccion', async (req, res) => {
       FROM produccion p 
       JOIN maquileros m ON p.maquilero_id = m.id 
       LEFT JOIN inventario i ON p.inventario_id = i.id
-      WHERE 1=1
+      WHERE p.archivado = 0 AND p.estado IN ('En proceso', 'Terminado Parcial') AND (p.es_extra = 0 OR p.es_extra IS NULL)
     `;
     const params = [];
     let subtitleDateText = "";
@@ -2101,7 +2101,6 @@ app.get('/api/reportes/recoleccion', async (req, res) => {
       params.push(d);
       subtitleDateText = tLabel(`del día ${formatDateToDMY(d)}`, `for ${formatDateToDMY(d)}`);
     } else {
-      query += ` AND p.archivado = 0 AND p.estado IN ('En proceso', 'Terminado Parcial')`;
       subtitleDateText = tLabel("estimada", "estimated");
     }
     query += ` ORDER BY p.fecha_fin ASC`;
@@ -2131,12 +2130,12 @@ app.get('/api/reportes/recoleccion', async (req, res) => {
         title: tLabel("Reporte de Recolección", "Recollection Report"),
         subtitle: tLabel(`Producción a entregar ${subtitleDateText}`, `Production to collect ${subtitleDateText}`) + tLabel(" - Generado el ", " - Generated on ") + formatDateToDMY(new Date()),
         headers: [
-          { label: tLabel("MAQUILERO", "TAILOR"), property: "maquilero", width: 110 },
-          { label: tLabel("MODELO", "MODEL"), property: "modelo", width: 80 },
-          { label: tLabel("CODIGO", "CODE"), property: "codigo", width: 110 },
+          { label: tLabel("MAQUILERO", "TAILOR"), property: "maquilero", width: 120 },
+          { label: tLabel("MODELO", "MODEL"), property: "modelo", width: 70 },
+          { label: tLabel("CODIGO", "CODE"), property: "codigo", width: 90 },
           { label: tLabel("COLOR", "COLOR"), property: "color", width: 100 },
-          { label: tLabel("OBSERVACIÓN", "OBSERVATION"), property: "observacion", width: 150 },
-          { label: tLabel("ORDEN", "ORDER"), property: "orden", width: 90 },
+          { label: tLabel("OBSERVACIÓN", "OBSERVATION"), property: "observacion", width: 162 },
+          { label: tLabel("ORDEN", "ORDER"), property: "orden", width: 80 },
           { label: tLabel("PIEZAS", "PIECES"), property: "piezas", width: 60 },
           { label: tLabel("ENTREGA", "DELIVERY"), property: "entrega", width: 100 }
         ],
@@ -2155,7 +2154,7 @@ app.get('/api/reportes/recoleccion', async (req, res) => {
           piezas: String(o.cantidad || 0),
           entrega: formatDateToDMY(o.fecha_fin)
         })),
-        options: { padding: 2 }
+        options: { padding: 4 }
       };
 
       await doc.table(tableConfig, {
@@ -2167,7 +2166,7 @@ app.get('/api/reportes/recoleccion', async (req, res) => {
              if (indexColumn === 1 && order.producto_imagen) {
                 const imgPath = path.join(__dirname, order.producto_imagen);
                 if (fs.existsSync(imgPath)) {
-                   doc.image(imgPath, rectRow.x + 110 + 10, rectRow.y + 5, { fit: [60, 60] });
+                   doc.image(imgPath, rectRow.x + 120 + 5, rectRow.y + 5, { fit: [60, 60] });
                 }
              }
           } catch(e) {}
@@ -2249,8 +2248,8 @@ app.get('/api/reportes/pagos', async (req, res) => {
         title: tLabel("Reporte de Pagos a Maquileros", "Payments to Tailors Report"),
         subtitle: tLabel(`Pagos realizados `, `Payments made `) + subtitleDate + tLabel(" - Generado el ", " - Generated on ") + formatDateToDMY(new Date()),
         headers: [
-          { label: tLabel("FECHA", "DATE"), property: "fecha", width: 80 },
-          { label: tLabel("MAQUILERO", "TAILOR"), property: "maquilero", width: 160 },
+          { label: tLabel("FECHA", "DATE"), property: "fecha", width: 85 },
+          { label: tLabel("MAQUILERO", "TAILOR"), property: "maquilero", width: 170 },
           { label: tLabel("MODELO", "MODEL"), property: "modelo", width: 100 },
           { label: tLabel("TIPO", "TYPE"), property: "tipo", width: 80 },
           { label: tLabel("MONTO", "AMOUNT"), property: "monto", width: 100 }
@@ -2262,7 +2261,7 @@ app.get('/api/reportes/pagos', async (req, res) => {
           tipo: (r.tipo_pago === 'completo' ? tLabel('LIQUIDACIÓN', 'SETTLEMENT') : (r.tipo_pago === 'abono' ? tLabel('ABONO', 'DEPOSIT') : (r.tipo_pago || 'ABONO'))).toUpperCase(),
           monto: '$' + Number(r.monto).toFixed(2)
         })),
-        options: { padding: 2 }
+        options: { padding: 4 }
       };
 
       await doc.table(tableConfig, {
