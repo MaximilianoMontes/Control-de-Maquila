@@ -2453,7 +2453,8 @@ body.theme-minecraft .kpi-value,
 body.theme-minecraft .badge,
 body.theme-minecraft th,
 body.theme-minecraft .logo-text,
-body.theme-minecraft .tab-btn {
+body.theme-minecraft .tab-btn,
+body.theme-minecraft .actions-dropdown-item {
   font-family: 'Press Start 2P', 'Courier New', monospace !important;
   text-transform: uppercase !important;
   letter-spacing: -0.5px !important;
@@ -2468,7 +2469,8 @@ body.theme-minecraft td { font-size: 0.85rem !important; }
 
 /* Minecraft Button Styling (Classic Beveled 3D look) */
 body.theme-minecraft .btn,
-body.theme-minecraft button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
+body.theme-minecraft button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn),
+body.theme-minecraft .actions-dropdown-item {
   border-radius: 0px !important;
   border: 3px solid #000000 !important;
   background: #7e7e7e !important;
@@ -2486,7 +2488,8 @@ body.theme-minecraft button:not(.close-btn):not(.search-clear-btn):not(.mobile-m
 }
 
 body.theme-minecraft .btn:hover,
-body.theme-minecraft button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
+body.theme-minecraft button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover,
+body.theme-minecraft .actions-dropdown-item:hover {
   background: #5c8e32 !important; /* Grass Green */
   border-color: #000000 !important;
   box-shadow: 
@@ -2496,7 +2499,8 @@ body.theme-minecraft button:not(.close-btn):not(.search-clear-btn):not(.mobile-m
 }
 
 body.theme-minecraft .btn:active,
-body.theme-minecraft button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):active {
+body.theme-minecraft button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):active,
+body.theme-minecraft .actions-dropdown-item:active {
   box-shadow: 
     inset -2px -2px 0px #bfbfbf, 
     inset 2px 2px 0px #3c3c3c !important;
