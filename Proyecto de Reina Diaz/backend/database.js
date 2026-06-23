@@ -1493,6 +1493,76 @@ async function initializeDatabase() {
       console.error('Error al revertir división de modelo 752996 V3:', e);
     }
 
+    // Revert split and truck shipments completely for model 752996 - Version 4 (Full Jairo active order 216 pieces)
+    try {
+      const [run] = await connection.query("SELECT 1 FROM migrations_run WHERE migration_name = 'revert_split_model_752996_v4'");
+      if (run.length === 0) {
+        console.log('--- MIGRACIÓN MANUAL V4: Restaurar Jairo a 216 pzas En Proceso ---');
+
+        // Find Jairo's order dynamically
+        const [jairoRows] = await connection.query(`
+          SELECT p.id, p.inventario_id
+          FROM produccion p
+          JOIN maquileros m ON p.maquilero_id = m.id
+          JOIN inventario i ON p.inventario_id = i.id
+          WHERE i.modelo = '752996' AND m.nombre LIKE '%Jairo%'
+        `);
+        const jairoOrderId = jairoRows.length > 0 ? jairoRows[0].id : 51;
+        const invId = jairoRows.length > 0 ? jairoRows[0].inventario_id : 54;
+
+        // 1. Delete all shipments from camion_detalles for Jairo's order so they are not on any truck
+        await connection.query("DELETE FROM plancha_devoluciones WHERE produccion_id = ?", [jairoOrderId]);
+        await connection.query("DELETE FROM plancha_trabajos WHERE camion_detalles_id IN (SELECT id FROM camion_detalles WHERE produccion_id = ?)", [jairoOrderId]);
+        await connection.query("DELETE FROM camion_detalles WHERE produccion_id = ?", [jairoOrderId]);
+
+        // 2. Restore Jairo's order to 216 pieces En proceso, active
+        await connection.query(`
+          UPDATE produccion 
+          SET cantidad = 216, 
+              cantidad_recibida = NULL, 
+              precio_total = 10800.00, 
+              estado = 'En proceso',
+              fecha_terminado = NULL,
+              archivado = 0
+          WHERE id = ?
+        `, [jairoOrderId]);
+
+        // 3. Delete Paula's production order completely for model 752996
+        const [paulaRows] = await connection.query(`
+          SELECT p.id 
+          FROM produccion p
+          JOIN maquileros m ON p.maquilero_id = m.id
+          JOIN inventario i ON p.inventario_id = i.id
+          WHERE i.modelo = '752996' AND m.nombre LIKE '%Paula%'
+        `);
+        for (const p of paulaRows) {
+          await connection.query("DELETE FROM plancha_devoluciones WHERE produccion_id = ?", [p.id]);
+          await connection.query("DELETE FROM plancha_trabajos WHERE camion_detalles_id IN (SELECT id FROM camion_detalles WHERE produccion_id = ?)", [p.id]);
+          await connection.query("DELETE FROM camion_detalles WHERE produccion_id = ?", [p.id]);
+          await connection.query("DELETE FROM pagos WHERE produccion_id = ?", [p.id]);
+          await connection.query("DELETE FROM produccion WHERE id = ?", [p.id]);
+        }
+
+        // 4. Reset the inventory cut to en_inventario = 0
+        await connection.query("UPDATE inventario SET en_inventario = 0 WHERE id = ?", [invId]);
+
+        // 5. Reset inventario_real to 216 pieces
+        await connection.query("UPDATE inventario_real SET piezas = 216 WHERE modelo = '752996'");
+
+        // Insert log in history
+        await connection.query(`
+          INSERT INTO historial (user_id, action, target, description) 
+          VALUES (1, 'EDIT', 'PRODUCCION', 'Restauró orden de Jairo a 216 pzas En Proceso y eliminó orden de Paula para el modelo 752996')
+        `);
+
+        // Register migration V4
+        await connection.query("INSERT INTO migrations_run (migration_name) VALUES ('revert_split_model_752996_v4')");
+        console.log('--- FIN DE MIGRACIÓN MANUAL V4: Restauración completada ---');
+      }
+    } catch (e) {
+      console.error('Error al revertir división de modelo 752996 V4:', e);
+    }
+
     try {
       await connection.query(`
         CREATE TABLE IF NOT EXISTS calendario_eventos (
