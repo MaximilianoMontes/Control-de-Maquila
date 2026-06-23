@@ -3596,4 +3596,207 @@ body.dark-mode .search-clear-btn:hover {
   }
 }
 
+/* ==========================================================================
+   LAUNCHER MODULE THEME OVERRIDES (Estilos Dinámicos de Pantalla de Inicio)
+   ========================================================================== */
+
+/* 1. Miku Theme */
+body.theme-miku .launcher-app-icon {
+  border-radius: 20px !important;
+  border: 3px solid #39c5bb !important;
+  background: #0c2022 !important;
+  box-shadow: 0 0 15px rgba(57, 197, 187, 0.4) !important;
+}
+body.theme-miku .launcher-app-icon svg rect {
+  fill: transparent !important;
+  filter: none !important;
+  rx: 20px !important;
+}
+body.theme-miku .launcher-app-name {
+  color: #39c5bb !important;
+}
+body.theme-miku .launcher-app-item:hover .launcher-app-name {
+  color: #e0fcfb !important;
+}
+
+/* 2. Teto Theme */
+body.theme-teto .launcher-app-icon {
+  border-radius: 20px !important;
+  border: 3px solid #ff3d5a !important;
+  background: #1d0f12 !important;
+  box-shadow: 0 0 15px rgba(255, 61, 90, 0.4) !important;
+}
+body.theme-teto .launcher-app-icon svg rect {
+  fill: transparent !important;
+  filter: none !important;
+  rx: 20px !important;
+}
+body.theme-teto .launcher-app-name {
+  color: #ff4d6a !important;
+}
+body.theme-teto .launcher-app-item:hover .launcher-app-name {
+  color: #ffebee !important;
+}
+
+/* 3. Limbus Company Theme */
+body.theme-limbus .launcher-app-icon {
+  border-radius: 4px !important;
+  border: 3px solid #d49e2a !important;
+  background: #181614 !important;
+  box-shadow: 0 0 15px rgba(212, 158, 42, 0.3) !important;
+}
+body.theme-limbus .launcher-app-icon svg rect {
+  fill: transparent !important;
+  filter: none !important;
+  rx: 4px !important;
+}
+body.theme-limbus .launcher-app-name {
+  color: #d49e2a !important;
+}
+body.theme-limbus .launcher-app-item:hover .launcher-app-name {
+  color: #f5ebd5 !important;
+}
+
+/* 4. Minecraft Theme */
+body.theme-minecraft .launcher-app-icon {
+  border-radius: 0px !important;
+  border: 4px solid #1e1e1e !important;
+  background: #2d2d2d !important;
+  box-shadow: 
+    inset 3px 3px 0px #4a4a4a, 
+    inset -3px -3px 0px #181818, 
+    5px 5px 0px rgba(0, 0, 0, 0.6) !important;
+}
+body.theme-minecraft .launcher-app-icon svg rect {
+  fill: transparent !important;
+  filter: none !important;
+  rx: 0px !important;
+}
+body.theme-minecraft .launcher-app-name {
+  font-family: 'Press Start 2P', monospace !important;
+  font-size: 0.65rem !important;
+  color: #ffffff !important;
+  text-shadow: 2px 2px 0px #000 !important;
+  text-transform: uppercase !important;
+  margin-top: 18px !important;
+}
+body.theme-minecraft .launcher-app-item:hover .launcher-app-name {
+  color: #ffff55 !important;
+}
+
+/* 5. Geometry Dash Theme */
+body.theme-geometry .launcher-app-icon {
+  border-radius: 8px !important;
+  border: 3px solid #00c3ff !important;
+  background: #12151e !important;
+  box-shadow: 0 0 15px rgba(0, 195, 255, 0.4) !important;
+}
+body.theme-geometry .launcher-app-icon svg rect {
+  fill: transparent !important;
+  filter: none !important;
+  rx: 8px !important;
+}
+body.theme-geometry .launcher-app-item:hover .launcher-app-icon {
+  border-color: #1bf259 !important;
+  box-shadow: 0 0 25px rgba(27, 242, 89, 0.6) !important;
+}
+body.theme-geometry .launcher-app-name {
+  font-family: 'Inter', sans-serif !important;
+  color: #00e5ff !important;
+  font-weight: 800 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1px !important;
+  text-shadow: 0 0 8px rgba(0, 229, 255, 0.4) !important;
+}
+body.theme-geometry .launcher-app-item:hover .launcher-app-name {
+  color: #ffffff !important;
+}
+
+/* 6. Fallout Theme */
+body.theme-fallout .launcher-app-icon {
+  border-radius: 0px !important;
+  border: 2px solid #33ff33 !important;
+  background: #121810 !important;
+  box-shadow: 0 0 10px rgba(51, 255, 51, 0.2) !important;
+}
+body.theme-fallout .launcher-app-icon svg rect {
+  fill: transparent !important;
+  filter: none !important;
+  rx: 0px !important;
+}
+body.theme-fallout .launcher-app-item:hover .launcher-app-icon {
+  box-shadow: 0 0 20px rgba(51, 255, 51, 0.5) !important;
+}
+body.theme-fallout .launcher-app-name {
+  font-family: 'Courier New', Courier, monospace !important;
+  color: #33ff33 !important;
+  text-shadow: 0 0 3px rgba(51, 255, 51, 0.6) !important;
+  text-transform: uppercase !important;
+  font-weight: bold !important;
+}
+body.theme-fallout .launcher-app-item:hover .launcher-app-name {
+  color: #ffffff !important;
+}
+
+/* 7. Team Fortress 2 Theme */
+body.theme-tf2 .launcher-app-item:first-child .launcher-app-icon {
+  border-radius: 0px !important;
+  border: 4px solid #5a4e44 !important;
+  background: #b8383b !important; /* RED Team */
+  box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.4) !important;
+}
+body.theme-tf2 .launcher-app-item:nth-child(2) .launcher-app-icon {
+  border-radius: 0px !important;
+  border: 4px solid #5a4e44 !important;
+  background: #385c7a !important; /* BLU Team */
+  box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.4) !important;
+}
+body.theme-tf2 .launcher-app-icon svg rect {
+  fill: transparent !important;
+  filter: none !important;
+  rx: 0px !important;
+}
+body.theme-tf2 .launcher-app-item:hover .launcher-app-icon {
+  background: #e28532 !important; /* Mann Co Orange */
+  border-color: #f5e7c8 !important;
+}
+body.theme-tf2 .launcher-app-name {
+  font-family: 'Impact', 'Arial Black', sans-serif !important;
+  color: #f5e7c8 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1px !important;
+}
+body.theme-tf2 .launcher-app-item:hover .launcher-app-name {
+  color: #e28532 !important;
+}
+
+/* 8. Cyberpunk Theme */
+body.theme-cyberpunk .launcher-app-icon {
+  border-radius: 0px !important;
+  border: 3px solid #ff0055 !important;
+  background: #0a0b10 !important;
+  box-shadow: 4px 4px 0px #00f0ff !important;
+}
+body.theme-cyberpunk .launcher-app-icon svg rect {
+  fill: transparent !important;
+  filter: none !important;
+  rx: 0px !important;
+}
+body.theme-cyberpunk .launcher-app-item:hover .launcher-app-icon {
+  border-color: #00f0ff !important;
+  box-shadow: 4px 4px 0px #ff0055, 0 0 15px #00f0ff !important;
+}
+body.theme-cyberpunk .launcher-app-name {
+  font-family: 'Inter', sans-serif !important;
+  color: #ffff00 !important;
+  font-weight: 800 !important;
+  font-style: italic !important;
+  text-transform: uppercase !important;
+  text-shadow: 2px 2px 0px #ff0055 !important;
+}
+body.theme-cyberpunk .launcher-app-item:hover .launcher-app-name {
+  color: #00f0ff !important;
+  text-shadow: 2px 2px 0px #ff0055, -2px -2px 0px #00f0ff !important;
+}
+
 
