@@ -2567,4 +2567,181 @@ body.dark-mode .search-clear-btn:hover {
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3) !important;
 }
 
+/* ==========================================================================
+   RESPONSIVE DESIGN SYSTEM (Mobile & Tablet Adaptability)
+   ========================================================================== */
+
+/* Mobile menu toggle button (hidden on desktop) */
+.mobile-menu-toggle {
+  display: none;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+}
+
+.mobile-menu-toggle:hover {
+  background: var(--bg-hover);
+}
+
+/* Sidebar overlay for mobile drawer */
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 999;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.sidebar-container {
+  display: contents; /* Behaves as direct child of CSS grid on desktop */
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* --------------------------------------------------------------------------
+   Breakpoint 1: Tablets & Laptops (max-width: 1024px)
+   -------------------------------------------------------------------------- */
+@media (max-width: 1024px) {
+  .app-layout {
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Make sidebar container a wrapper for mobile drawer */
+  .sidebar-container {
+    display: block;
+  }
+
+  /* Transform Sidebar into absolute drawer */
+  .sidebar, .plancha-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 280px;
+    max-width: 80vw;
+    z-index: 1000;
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 0 25px rgba(0, 0, 0, 0.5);
+  }
+
+  .sidebar-container.mobile-open .sidebar,
+  .sidebar-container.mobile-open .plancha-sidebar {
+    transform: translateX(0) !important;
+  }
+
+  /* Show mobile menu button */
+  .mobile-menu-toggle {
+    display: flex;
+  }
+
+  /* Adjust main container & header */
+  .main-header {
+    padding: 0 1.5rem;
+    height: 65px;
+  }
+
+  .main-content {
+    padding: 1.5rem;
+    height: calc(100vh - 65px);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Breakpoint 2: Mobile Devices (max-width: 768px)
+   -------------------------------------------------------------------------- */
+@media (max-width: 768px) {
+  .main-header {
+    padding: 0 1rem;
+    height: 60px;
+    gap: 0.5rem;
+  }
+
+  .main-content {
+    padding: 1rem;
+    height: calc(100vh - 60px);
+  }
+
+  /* Collapse header search bar to icon-only button to save space */
+  .header-search-container {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    justify-content: center;
+    border-radius: 50%;
+  }
+
+  .header-search-input-placeholder,
+  .header-search-badge {
+    display: none;
+  }
+
+  /* Hide textual badges in header controls */
+  .header-help-trigger span {
+    display: none;
+  }
+
+  .header-help-trigger {
+    padding: 8px;
+    border-radius: 50%;
+  }
+
+  /* Auto-stack all form grids that are 2-columns on desktop */
+  div[style*="display: grid"][style*="grid-template-columns"],
+  div[style*="display: grid"][style*="gridTemplateColumns"],
+  div[style*="display: 'grid'"][style*="gridTemplateColumns"] {
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem !important;
+  }
+
+  /* Responsive Modals */
+  .modal-content {
+    width: 95vw !important;
+    max-width: 95vw !important;
+    padding: 1.25rem !important;
+    margin: 0 auto;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  /* Responsive Buttons inside actions */
+  .modal-actions {
+    flex-direction: column-reverse;
+    gap: 0.5rem;
+  }
+  
+  .modal-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Touch optimizations for Searchable Select */
+  .searchable-select-trigger {
+    padding: 0.875rem 1rem !important;
+  }
+  .searchable-select-option {
+    padding: 0.8rem 1rem !important;
+    font-size: 1rem !important;
+  }
+  .searchable-select-search-input {
+    padding: 0.6rem 0.875rem !important;
+    font-size: 1rem !important;
+  }
+}
+
 

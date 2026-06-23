@@ -12,7 +12,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 
-export default function PlanchaSidebar({ activeTab, setActiveTab }) {
+export default function PlanchaSidebar({ activeTab, setActiveTab, onClose }) {
   const { logout } = useAuth();
   const { t, settings } = useSettings();
   const location = useLocation();
@@ -25,6 +25,7 @@ export default function PlanchaSidebar({ activeTab, setActiveTab }) {
     } else {
       navigate(`/plancha?tab=${tabId}`);
     }
+    if (onClose) onClose();
   };
 
   const isEn = settings.language === 'en';
@@ -89,6 +90,7 @@ export default function PlanchaSidebar({ activeTab, setActiveTab }) {
         <Link 
           to="/" 
           className="btn" 
+          onClick={onClose}
           style={{ 
             display: 'flex', 
             alignItems: 'center', 
@@ -108,7 +110,7 @@ export default function PlanchaSidebar({ activeTab, setActiveTab }) {
         {/* Cerrar Sesión */}
         <button 
           className="btn logout-btn" 
-          onClick={logout}
+          onClick={() => { logout(); if (onClose) onClose(); }}
           style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
         >
           <LogOut size={18} /> {t('nav.logout')}

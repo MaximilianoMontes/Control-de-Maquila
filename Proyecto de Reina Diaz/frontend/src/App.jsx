@@ -28,17 +28,28 @@ import { motion } from 'framer-motion';
 function MainLayout({ children }) {
   const [searchParams] = useSearchParams();
   const fromPlancha = searchParams.get('from') === 'plancha';
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
+  const toggleSidebar = () => setIsMobileSidebarOpen(prev => !prev);
+  const closeSidebar = () => setIsMobileSidebarOpen(false);
 
   return (
     <div className="app-layout">
-      {fromPlancha ? (
-        <PlanchaSidebar activeTab="ayuda" setActiveTab={() => {}} />
-      ) : (
-        <Sidebar />
+      {isMobileSidebarOpen && (
+        <div className="sidebar-overlay" onClick={closeSidebar}></div>
       )}
+      
+      <div className={`sidebar-container ${isMobileSidebarOpen ? 'mobile-open' : ''}`}>
+        {fromPlancha ? (
+          <PlanchaSidebar activeTab="ayuda" setActiveTab={() => {}} onClose={closeSidebar} />
+        ) : (
+          <Sidebar onClose={closeSidebar} />
+        )}
+      </div>
+      
       <KillFeed />
       <div className="main-container">
-        <Header />
+        <Header onToggleSidebar={toggleSidebar} />
         <main className="main-content">
           <motion.div
             key={window.location.pathname}
