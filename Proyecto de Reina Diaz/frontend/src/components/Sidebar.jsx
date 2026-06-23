@@ -17,7 +17,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 
-export default function Sidebar() {
+export default function Sidebar({ onClose }) {
   const location = useLocation();
   const { user, logout } = useAuth();
   const { t, settings } = useSettings();
@@ -47,7 +47,7 @@ export default function Sidebar() {
 
   return (
     <aside className="sidebar">
-      <Link to="/dashboard" className="sidebar-logo">
+      <Link to="/dashboard" className="sidebar-logo" onClick={onClose}>
         <img src="/logo.png" alt="Logo Maquila" className="logo-img" />
         <span className="gradient-text">Maquila ERP</span>
       </Link>
@@ -58,6 +58,7 @@ export default function Sidebar() {
             key={item.path} 
             to={item.path} 
             className={`nav-link ${location.pathname === item.path ? 'active' : ''}`}
+            onClick={onClose}
           >
             {item.icon}
             {item.name}
@@ -70,6 +71,7 @@ export default function Sidebar() {
         <Link 
           to="/" 
           className="btn" 
+          onClick={onClose}
           style={{ 
             display: 'flex', 
             alignItems: 'center', 
@@ -86,7 +88,11 @@ export default function Sidebar() {
           <Home size={18} /> Volver al Inicio
         </Link>
 
-        <button className="btn logout-btn" onClick={logout} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+        <button 
+          className="btn logout-btn" 
+          onClick={() => { logout(); if (onClose) onClose(); }} 
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+        >
           <LogOut size={20} /> {t('nav.logout')}
         </button>
       </div>

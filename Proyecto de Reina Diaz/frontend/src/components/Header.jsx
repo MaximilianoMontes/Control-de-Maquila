@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import API_URL from '../config';
 import { 
+  Menu,
   Search, 
   Bell, 
   HelpCircle, 
@@ -36,7 +37,7 @@ import {
   Calendar
 } from 'lucide-react';
 
-export default function Header() {
+export default function Header({ onToggleSidebar }) {
   const { user, logout } = useAuth();
   const { settings, updateSetting, t, translateLog } = useSettings();
   const navigate = useNavigate();
@@ -268,6 +269,15 @@ export default function Header() {
   return (
     <>
       <header className="main-header">
+        {/* Hamburger Menu for Mobile */}
+        <button 
+          className="mobile-menu-toggle"
+          onClick={onToggleSidebar}
+          aria-label="Toggle Menu"
+        >
+          <Menu size={22} />
+        </button>
+
         {/* Search bar/Command search button */}
         <div className="header-search-container" onClick={() => setShowCommandPalette(true)}>
           <Search size={18} color="var(--text-secondary)" />
