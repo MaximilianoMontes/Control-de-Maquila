@@ -6,6 +6,7 @@ import { useSettings } from '../context/SettingsContext';
 import API_URL from '../config';
 import Swal from 'sweetalert2';
 import { toast } from 'react-toastify';
+import SearchableSelect from '../components/SearchableSelect';
 
 export default function Pagos() {
   const { settings, t, formatCurrency } = useSettings();
@@ -284,6 +285,28 @@ export default function Pagos() {
   const totalPagado = ordenActual ? parseFloat(ordenActual.pagado || 0) : 0;
   const restante = ordenActual ? (ordenActual.precio_total - totalPagado) : 0;
 
+  const selectOrderOptions = [
+    ...activeProds.map(o => ({
+      id: o.id.toString(),
+      nombre: `${t('pay.order')} #${getFolioNumber(o)} - ${o.maquilero_nombre}`
+    })),
+    ...activeExtras.map(o => ({
+      id: o.id.toString(),
+      nombre: `${t('pay.order')} #${getFolioNumber(o)} - ${o.maquilero_nombre} (EXTRA)`
+    })),
+    ...archivedOrders.map(o => ({
+      id: o.id.toString(),
+      nombre: `${t('pay.order')} #${getFolioNumber(o)} - ${o.maquilero_nombre}${o.es_extra === 1 || o.es_extra ? ' (EXTRA)' : ''} (${settings.language === 'en' ? 'Archived' : 'Archivada'})`
+    }))
+  ];
+
+  const selectModeloOptions = [...inventario]
+    .sort((a, b) => (a.modelo || '').localeCompare(b.modelo || '', undefined, { numeric: true }))
+    .map(i => ({
+      id: i.id.toString(),
+      nombre: `${i.modelo} - ${i.numero}`
+    }));
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '4rem' }}>
       {/* SECCIÓN 1: PAGOS DE ÓRDENES */}
@@ -294,39 +317,15 @@ export default function Pagos() {
             <form onSubmit={handlePago}>
               <div className="form-group">
                 <label className="form-label">{t('pay.selectOrder')}</label>
-                <select className="form-input" style={{ backgroundColor: 'var(--bg-input)' }} value={selectedOrden} onChange={e => setSelectedOrden(e.target.value)} required>
-                  <option value="">{t('pay.chooseOrder')}</option>
-                  
-                  {activeProds.length > 0 && (
-                    <optgroup label={settings.language === 'en' ? 'Active Production' : 'Producción Activa'}>
-                      {activeProds.map(o => (
-                        <option key={o.id} value={o.id}>
-                          {t('pay.order')} #{getFolioNumber(o)} - {o.maquilero_nombre}
-                        </option>
-                      ))}
-                    </optgroup>
-                  )}
-
-                  {activeExtras.length > 0 && (
-                    <optgroup label={settings.language === 'en' ? 'Active Extras' : 'Extras Activos'}>
-                      {activeExtras.map(o => (
-                        <option key={o.id} value={o.id}>
-                          {t('pay.order')} #{getFolioNumber(o)} - {o.maquilero_nombre} (EXTRA)
-                        </option>
-                      ))}
-                    </optgroup>
-                  )}
-
-                  {archivedOrders.length > 0 && (
-                    <optgroup label={settings.language === 'en' ? 'History / Archived' : 'Historial / Archivadas'}>
-                      {archivedOrders.map(o => (
-                        <option key={o.id} value={o.id}>
-                          {t('pay.order')} #{getFolioNumber(o)} - {o.maquilero_nombre}{o.es_extra === 1 || o.es_extra ? ' (EXTRA)' : ''} ({settings.language === 'en' ? 'Archived' : 'Archivada'})
-                        </option>
-                      ))}
-                    </optgroup>
-                  )}
-                </select>
+                <SearchableSelect
+                  options={selectOrderOptions}
+                  value={selectedOrden}
+                  onChange={setSelectedOrden}
+                  placeholder={t('pay.chooseOrder')}
+                  labelKey="nombre"
+                  valueKey="id"
+                  required
+                />
               </div>
 
               {ordenActual && (
@@ -475,18 +474,28 @@ export default function Pagos() {
             <form onSubmit={handleDescuento}>
               <div className="form-group">
                 <label className="form-label">{t('pay.chooseTailor')}</label>
-                <select className="form-input" value={selectedMaquilero} onChange={e => setSelectedMaquilero(e.target.value)} required>
-                  <option value="">{t('pay.chooseSelect')}</option>
-                  {[...maquileros].sort((a, b) => a.nombre.localeCompare(b.nombre, 'es')).map(m => <option key={m.id} value={m.id}>{m.nombre}</option>)}
-                </select>
+                <SearchableSelect
+                  options={[...maquileros].sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'))}
+                  value={selectedMaquilero}
+                  onChange={setSelectedMaquilero}
+                  placeholder={t('pay.chooseSelect')}
+                  labelKey="nombre"
+                  valueKey="id"
+                  required
+                />
               </div>
 
               <div className="form-group">
                 <label className="form-label">{t('pay.model')}</label>
-                <select className="form-input" value={selectedModelo} onChange={e => setSelectedModelo(e.target.value)} required>
-                  <option value="">{t('pay.chooseSelect')}</option>
-                  {[...inventario].sort((a, b) => (a.modelo || '').localeCompare(b.modelo || '', undefined, { numeric: true })).map(i => <option key={i.id} value={i.id}>{i.modelo} - {i.numero}</option>)}
-                </select>
+                <SearchableSelect
+                  options={selectModeloOptions}
+                  value={selectedModelo}
+                  onChange={setSelectedModelo}
+                  placeholder={t('pay.chooseSelect')}
+                  labelKey="nombre"
+                  valueKey="id"
+                  required
+                />
               </div>
 
               <div className="form-group">
