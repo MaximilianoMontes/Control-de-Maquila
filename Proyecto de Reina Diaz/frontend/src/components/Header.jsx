@@ -548,92 +548,32 @@ export default function Header({ onToggleSidebar }) {
               <div className="settings-item">
                 <span className="settings-item-label">{t('settings.themeLabel')}</span>
                 <span className="settings-item-desc">{t('settings.themeDesc')}</span>
-                <div className="settings-options-row" style={{ flexWrap: 'wrap' }}>
-                  <button 
-                    className={`settings-option-btn ${settings.theme === 'light' ? 'active' : ''}`}
-                    onClick={() => toggleSetting('theme', 'light')}
+                <div style={{ marginTop: '8px' }}>
+                  <select 
+                    className="form-input" 
+                    value={settings.theme} 
+                    onChange={(e) => toggleSetting('theme', e.target.value)}
+                    style={{ width: '100%', cursor: 'pointer', padding: '10px 12px' }}
                   >
-                    {settings.theme === 'light' && <Check size={14} />} {t('settings.themeLight')}
-                  </button>
-                  <button 
-                    className={`settings-option-btn ${settings.theme === 'dark' ? 'active' : ''}`}
-                    onClick={() => toggleSetting('theme', 'dark')}
-                  >
-                    {settings.theme === 'dark' && <Check size={14} />} {t('settings.themeDark')}
-                  </button>
-                  <button 
-                    className={`settings-option-btn ${settings.theme === 'ocean' ? 'active' : ''}`}
-                    onClick={() => toggleSetting('theme', 'ocean')}
-                  >
-                    {settings.theme === 'ocean' && <Check size={14} />} {t('settings.themeOcean')}
-                  </button>
-                  <button 
-                    className={`settings-option-btn ${settings.theme === 'nature' ? 'active' : ''}`}
-                    onClick={() => toggleSetting('theme', 'nature')}
-                  >
-                    {settings.theme === 'nature' && <Check size={14} />} {t('settings.themeNature')}
-                  </button>
-                  <button 
-                    className={`settings-option-btn ${settings.theme === 'sunset' ? 'active' : ''}`}
-                    onClick={() => toggleSetting('theme', 'sunset')}
-                  >
-                    {settings.theme === 'sunset' && <Check size={14} />} {t('settings.themeSunset')}
-                  </button>
-                  <button 
-                    className={`settings-option-btn ${settings.theme === 'lavender' ? 'active' : ''}`}
-                    onClick={() => toggleSetting('theme', 'lavender')}
-                  >
-                    {settings.theme === 'lavender' && <Check size={14} />} {t('settings.themeLavender')}
-                  </button>
-                  <button 
-                    className={`settings-option-btn ${settings.theme === 'cherry' ? 'active' : ''}`}
-                    onClick={() => toggleSetting('theme', 'cherry')}
-                  >
-                    {settings.theme === 'cherry' && <Check size={14} />} {t('settings.themeCherry')}
-                  </button>
-                  <button 
-                    className={`settings-option-btn ${settings.theme === 'midnight' ? 'active' : ''}`}
-                    onClick={() => toggleSetting('theme', 'midnight')}
-                  >
-                    {settings.theme === 'midnight' && <Check size={14} />} {t('settings.themeMidnight')}
-                  </button>
-                  <button 
-                    className={`settings-option-btn ${settings.theme === 'dim' ? 'active' : ''}`}
-                    onClick={() => toggleSetting('theme', 'dim')}
-                  >
-                    {settings.theme === 'dim' && <Check size={14} />} {t('settings.themeDim')}
-                  </button>
-                  <button 
-                    className={`settings-option-btn ${settings.theme === 'miku' ? 'active' : ''}`}
-                    onClick={() => toggleSetting('theme', 'miku')}
-                  >
-                    {settings.theme === 'miku' && <Check size={14} />} {t('settings.themeMiku')}
-                  </button>
-                  <button 
-                    className={`settings-option-btn ${settings.theme === 'teto' ? 'active' : ''}`}
-                    onClick={() => toggleSetting('theme', 'teto')}
-                  >
-                    {settings.theme === 'teto' && <Check size={14} />} {t('settings.themeTeto')}
-                  </button>
-                  <button 
-                    className={`settings-option-btn ${settings.theme === 'limbus' ? 'active' : ''}`}
-                    onClick={() => toggleSetting('theme', 'limbus')}
-                  >
-                    {settings.theme === 'limbus' && <Check size={14} />} {t('settings.themeLimbus')}
-                  </button>
-                  <button 
-                    className={`settings-option-btn ${settings.theme === 'minecraft' ? 'active' : ''}`}
-                    onClick={() => toggleSetting('theme', 'minecraft')}
-                  >
-                    {settings.theme === 'minecraft' && <Check size={14} />} {t('settings.themeMinecraft')}
-                  </button>
-                  <button 
-                    className={`settings-option-btn ${settings.theme === 'system' ? 'active' : ''}`}
-                    onClick={() => toggleSetting('theme', 'system')}
-                    style={{ flexBasis: '100%' }}
-                  >
-                    {settings.theme === 'system' && <Check size={14} />} {t('settings.themeSystem')}
-                  </button>
+                    <option value="light">{t('settings.themeLight')}</option>
+                    <option value="dark">{t('settings.themeDark')}</option>
+                    <option value="ocean">{t('settings.themeOcean')}</option>
+                    <option value="nature">{t('settings.themeNature')}</option>
+                    <option value="sunset">{t('settings.themeSunset')}</option>
+                    <option value="lavender">{t('settings.themeLavender')}</option>
+                    <option value="cherry">{t('settings.themeCherry')}</option>
+                    <option value="midnight">{t('settings.themeMidnight')}</option>
+                    <option value="dim">{t('settings.themeDim')}</option>
+                    <option value="miku">{t('settings.themeMiku')}</option>
+                    <option value="teto">{t('settings.themeTeto')}</option>
+                    <option value="limbus">{t('settings.themeLimbus')}</option>
+                    <option value="minecraft">{t('settings.themeMinecraft')}</option>
+                    <option value="geometry">{t('settings.themeGeometry')}</option>
+                    <option value="fallout">{t('settings.themeFallout')}</option>
+                    <option value="tf2">{t('settings.themeTf2')}</option>
+                    <option value="cyberpunk">{t('settings.themeCyberpunk')}</option>
+                    <option value="system">{t('settings.themeSystem')}</option>
+                  </select>
                 </div>
               </div>
 
