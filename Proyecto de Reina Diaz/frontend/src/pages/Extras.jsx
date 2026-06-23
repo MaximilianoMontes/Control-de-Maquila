@@ -656,7 +656,7 @@ export default function Extras() {
                     className="form-input" 
                     value={formData.cantidad} 
                     onChange={e => setFormData({...formData, cantidad: e.target.value})}
-                    disabled={(!canEdit && isEditModalOpen) || (isShortcutMode && isModalOpen)}
+                    disabled={!canEdit && isEditModalOpen}
                     placeholder="Cantidad de piezas"
                   />
                 </div>
