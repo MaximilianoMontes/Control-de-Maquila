@@ -128,6 +128,7 @@ const translations = {
     'settings.themeMiku': 'Hatsune Miku 🌐',
     'settings.themeTeto': 'Kasane Teto 🥖',
     'settings.themeLimbus': 'Limbus Company 🚂',
+    'settings.themeRuina': 'Library of Ruina 📖',
     'settings.themeMinecraft': 'Minecraft ⛏️',
     'settings.themeGeometry': 'Geometry Dash 🟩',
     'settings.themeFallout': 'Fallout ☢️',
@@ -578,6 +579,7 @@ const translations = {
     'settings.themeMiku': 'Hatsune Miku 🌐',
     'settings.themeTeto': 'Kasane Teto 🥖',
     'settings.themeLimbus': 'Limbus Company 🚂',
+    'settings.themeRuina': 'Library of Ruina 📖',
     'settings.themeMinecraft': 'Minecraft ⛏️',
     'settings.themeGeometry': 'Geometry Dash 🟩',
     'settings.themeFallout': 'Fallout ☢️',
@@ -944,16 +946,16 @@ export const SettingsProvider = ({ children }) => {
   // Apply visual theme (Light / Dark / System)
   useEffect(() => {
     const applyTheme = () => {
-      document.body.classList.remove('dark-mode', 'theme-ocean', 'theme-nature', 'theme-sunset', 'theme-lavender', 'theme-cherry', 'theme-midnight', 'theme-dim', 'theme-miku', 'theme-teto', 'theme-limbus', 'theme-minecraft', 'theme-geometry', 'theme-fallout', 'theme-tf2', 'theme-cyberpunk');
+      document.body.classList.remove('dark-mode', 'theme-ocean', 'theme-nature', 'theme-sunset', 'theme-lavender', 'theme-cherry', 'theme-midnight', 'theme-dim', 'theme-miku', 'theme-teto', 'theme-limbus', 'theme-ruina', 'theme-minecraft', 'theme-geometry', 'theme-fallout', 'theme-tf2', 'theme-cyberpunk');
 
       const isSystemDark = settings.theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches;
-      const isAnyDark = ['dark', 'ocean', 'nature', 'sunset', 'lavender', 'cherry', 'midnight', 'dim', 'miku', 'teto', 'limbus', 'minecraft', 'geometry', 'fallout', 'tf2', 'cyberpunk'].includes(settings.theme) || isSystemDark;
+      const isAnyDark = ['dark', 'ocean', 'nature', 'sunset', 'lavender', 'cherry', 'midnight', 'dim', 'miku', 'teto', 'limbus', 'ruina', 'minecraft', 'geometry', 'fallout', 'tf2', 'cyberpunk'].includes(settings.theme) || isSystemDark;
 
       if (isAnyDark) {
         document.body.classList.add('dark-mode');
       }
       
-      if (['ocean', 'nature', 'sunset', 'lavender', 'cherry', 'midnight', 'dim', 'miku', 'teto', 'limbus', 'minecraft', 'geometry', 'fallout', 'tf2', 'cyberpunk'].includes(settings.theme)) {
+      if (['ocean', 'nature', 'sunset', 'lavender', 'cherry', 'midnight', 'dim', 'miku', 'teto', 'limbus', 'ruina', 'minecraft', 'geometry', 'fallout', 'tf2', 'cyberpunk'].includes(settings.theme)) {
         document.body.classList.add(`theme-${settings.theme}`);
       }
     };

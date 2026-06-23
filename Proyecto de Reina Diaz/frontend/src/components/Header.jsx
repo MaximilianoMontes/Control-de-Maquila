@@ -567,6 +567,7 @@ export default function Header({ onToggleSidebar }) {
                     <option value="miku">{t('settings.themeMiku')}</option>
                     <option value="teto">{t('settings.themeTeto')}</option>
                     <option value="limbus">{t('settings.themeLimbus')}</option>
+                    <option value="ruina">{t('settings.themeRuina')}</option>
                     <option value="minecraft">{t('settings.themeMinecraft')}</option>
                     <option value="geometry">{t('settings.themeGeometry')}</option>
                     <option value="fallout">{t('settings.themeFallout')}</option>

@@ -2250,18 +2250,18 @@ body.theme-dim {
   --badge-desc-text: #f87171;
 }
 
-/* Tema Hatsune Miku 🌐 (Estilo Cyberpunk Vocaloid) */
+/* Tema Hatsune Miku 🌐 (Estilo Cyberpunk Vocaloid / Digital Hologram) */
 body.theme-miku {
   --bg-dark: #071112;
   --bg-card: #0c2022;
   --bg-input: #122c2f;
   --text-primary: #e0fcfb;
   --text-secondary: #39c5bb;
-  --border-color: rgba(57, 197, 187, 0.15);
-  --glass-border: 1px solid rgba(57, 197, 187, 0.08);
+  --border-color: rgba(57, 197, 187, 0.25);
+  --glass-border: 1px solid rgba(57, 197, 187, 0.15);
   --glass-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.45);
-  --bg-hover: rgba(57, 197, 187, 0.05);
-  --bg-th: rgba(57, 197, 187, 0.08);
+  --bg-hover: rgba(57, 197, 187, 0.08);
+  --bg-th: rgba(57, 197, 187, 0.12);
   --header-bg: rgba(12, 32, 34, 0.85);
   --row-normal-bg: rgba(57, 197, 187, 0.08);
   --row-normal-hover: rgba(57, 197, 187, 0.15);
@@ -2284,22 +2284,113 @@ body.theme-miku {
 
   /* Custom background neon glow */
   background-image: 
-    radial-gradient(at 0% 0%, rgba(57, 197, 187, 0.15) 0px, transparent 55%),
-    radial-gradient(at 100% 0%, rgba(255, 46, 122, 0.1) 0px, transparent 55%) !important;
+    radial-gradient(at 0% 0%, rgba(57, 197, 187, 0.18) 0px, transparent 55%),
+    radial-gradient(at 100% 0%, rgba(255, 46, 122, 0.12) 0px, transparent 55%) !important;
 }
 
-/* Tema Kasane Teto 🥖 (Estilo Quimera Vocaloid) */
+/* Hatsune Miku Premium Overrides */
+body.theme-miku h1,
+body.theme-miku h2,
+body.theme-miku h3,
+body.theme-miku h4,
+body.theme-miku h5,
+body.theme-miku h6,
+body.theme-miku .logo-text,
+body.theme-miku .kpi-value {
+  font-weight: 800 !important;
+  letter-spacing: 0.5px !important;
+  text-shadow: 0 0 10px rgba(57, 197, 187, 0.65) !important;
+  color: #e0fcfb !important;
+}
+
+body.theme-miku .glass-card,
+body.theme-miku .modal-content,
+body.theme-miku .card,
+body.theme-miku .settings-modal-card,
+body.theme-miku .header-dropdown,
+body.theme-miku .notifications-dropdown,
+body.theme-miku .help-dropdown,
+body.theme-miku .sidebar,
+body.theme-miku .plancha-sidebar,
+body.theme-miku aside {
+  border-radius: 16px !important;
+  border: 2px solid rgba(57, 197, 187, 0.4) !important;
+  background: rgba(12, 32, 34, 0.9) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  box-shadow: 0 0 20px rgba(57, 197, 187, 0.15), inset 0 0 12px rgba(57, 197, 187, 0.05) !important;
+}
+
+body.theme-miku .btn,
+body.theme-miku button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn),
+body.theme-miku .actions-dropdown-item {
+  border-radius: 30px !important;
+  border: 2px solid #39c5bb !important;
+  background: transparent !important;
+  color: #39c5bb !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  box-shadow: 0 0 8px rgba(57, 197, 187, 0.25) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  cursor: pointer;
+}
+
+body.theme-miku .btn:hover,
+body.theme-miku button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover,
+body.theme-miku .actions-dropdown-item:hover {
+  background: #39c5bb !important;
+  color: #071112 !important;
+  box-shadow: 0 0 18px #39c5bb, 0 0 30px rgba(57, 197, 187, 0.4) !important;
+  transform: translateY(-2px) !important;
+}
+
+body.theme-miku .btn-primary {
+  border-color: #ff2e7a !important;
+  color: #ff2e7a !important;
+  box-shadow: 0 0 8px rgba(255, 46, 122, 0.25) !important;
+}
+
+body.theme-miku .btn-primary:hover {
+  background: #ff2e7a !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 18px #ff2e7a, 0 0 30px rgba(255, 46, 122, 0.4) !important;
+}
+
+body.theme-miku .form-input,
+body.theme-miku input:not([type="checkbox"]):not([type="radio"]),
+body.theme-miku select,
+body.theme-miku textarea {
+  border-radius: 8px !important;
+  border: 1px solid rgba(57, 197, 187, 0.3) !important;
+  background: rgba(18, 44, 47, 0.8) !important;
+  color: #e0fcfb !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+  transition: all 0.2s ease !important;
+}
+
+body.theme-miku .form-input:focus,
+body.theme-miku input:focus,
+body.theme-miku select:focus,
+body.theme-miku textarea:focus {
+  border-color: #39c5bb !important;
+  box-shadow: 0 0 10px rgba(57, 197, 187, 0.5), inset 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+  outline: none !important;
+}
+
+
+/* Tema Kasane Teto 🥖 (Estilo Quimera / Strawberry drills / Cyberpunk Red) */
 body.theme-teto {
   --bg-dark: #0f0709;
   --bg-card: #1d0f12;
   --bg-input: #29161a;
   --text-primary: #ffebee;
   --text-secondary: #ff4d6a;
-  --border-color: rgba(255, 77, 106, 0.15);
-  --glass-border: 1px solid rgba(255, 77, 106, 0.08);
+  --border-color: rgba(255, 77, 106, 0.25);
+  --glass-border: 1px solid rgba(255, 77, 106, 0.15);
   --glass-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.45);
-  --bg-hover: rgba(255, 77, 106, 0.05);
-  --bg-th: rgba(255, 77, 106, 0.08);
+  --bg-hover: rgba(255, 77, 106, 0.08);
+  --bg-th: rgba(255, 77, 106, 0.12);
   --header-bg: rgba(29, 15, 18, 0.85);
   --row-normal-bg: rgba(255, 184, 0, 0.06);
   --row-normal-hover: rgba(255, 184, 0, 0.12);
@@ -2322,22 +2413,113 @@ body.theme-teto {
 
   /* Custom background strawberry drills neon glow */
   background-image: 
-    radial-gradient(at 0% 0%, rgba(255, 61, 90, 0.15) 0px, transparent 55%),
-    radial-gradient(at 100% 0%, rgba(255, 184, 0, 0.08) 0px, transparent 55%) !important;
+    radial-gradient(at 0% 0%, rgba(255, 61, 90, 0.18) 0px, transparent 55%),
+    radial-gradient(at 100% 0%, rgba(255, 184, 0, 0.12) 0px, transparent 55%) !important;
 }
 
-/* Tema Limbus Company 🚂 (Estilo Gótico Industrial / Relojería) */
+/* Kasane Teto Premium Overrides */
+body.theme-teto h1,
+body.theme-teto h2,
+body.theme-teto h3,
+body.theme-teto h4,
+body.theme-teto h5,
+body.theme-teto h6,
+body.theme-teto .logo-text,
+body.theme-teto .kpi-value {
+  font-weight: 800 !important;
+  letter-spacing: 0.5px !important;
+  text-shadow: 0 0 10px rgba(255, 77, 106, 0.65) !important;
+  color: #ffebee !important;
+}
+
+body.theme-teto .glass-card,
+body.theme-teto .modal-content,
+body.theme-teto .card,
+body.theme-teto .settings-modal-card,
+body.theme-teto .header-dropdown,
+body.theme-teto .notifications-dropdown,
+body.theme-teto .help-dropdown,
+body.theme-teto .sidebar,
+body.theme-teto .plancha-sidebar,
+body.theme-teto aside {
+  border-radius: 24px !important; /* Twin-drills playful curves */
+  border: 2px solid rgba(255, 77, 106, 0.4) !important;
+  background: rgba(29, 15, 18, 0.9) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  box-shadow: 0 0 20px rgba(255, 77, 106, 0.15), inset 0 0 12px rgba(255, 77, 106, 0.05) !important;
+}
+
+body.theme-teto .btn,
+body.theme-teto button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn),
+body.theme-teto .actions-dropdown-item {
+  border-radius: 20px !important;
+  border: 2px solid #ff3d5a !important;
+  background: transparent !important;
+  color: #ff3d5a !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  box-shadow: 0 0 8px rgba(255, 61, 90, 0.25) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  cursor: pointer;
+}
+
+body.theme-teto .btn:hover,
+body.theme-teto button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover,
+body.theme-teto .actions-dropdown-item:hover {
+  background: #ff3d5a !important;
+  color: #ffebee !important;
+  box-shadow: 0 0 18px #ff3d5a, 0 0 30px rgba(255, 61, 90, 0.4) !important;
+  transform: translateY(-2px) !important;
+}
+
+body.theme-teto .btn-primary {
+  border-color: #ffb800 !important;
+  color: #ffb800 !important;
+  box-shadow: 0 0 8px rgba(255, 184, 0, 0.25) !important;
+}
+
+body.theme-teto .btn-primary:hover {
+  background: #ffb800 !important;
+  color: #0f0709 !important;
+  box-shadow: 0 0 18px #ffb800, 0 0 30px rgba(255, 184, 0, 0.4) !important;
+}
+
+body.theme-teto .form-input,
+body.theme-teto input:not([type="checkbox"]):not([type="radio"]),
+body.theme-teto select,
+body.theme-teto textarea {
+  border-radius: 12px !important;
+  border: 1px solid rgba(255, 77, 106, 0.3) !important;
+  background: rgba(41, 22, 26, 0.8) !important;
+  color: #ffebee !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+  transition: all 0.2s ease !important;
+}
+
+body.theme-teto .form-input:focus,
+body.theme-teto input:focus,
+body.theme-teto select:focus,
+body.theme-teto textarea:focus {
+  border-color: #ffb800 !important;
+  box-shadow: 0 0 10px rgba(255, 184, 0, 0.5), inset 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+  outline: none !important;
+}
+
+
+/* Tema Limbus Company 🚂 (Estilo Gótico Industrial / Relojería / Steampunk Brass) */
 body.theme-limbus {
   --bg-dark: #0d0c0b;
   --bg-card: #181614;
   --bg-input: #221e1a;
   --text-primary: #f5ebd5;
   --text-secondary: #d49e2a;
-  --border-color: rgba(212, 158, 42, 0.18);
-  --glass-border: 1px solid rgba(212, 158, 42, 0.08);
+  --border-color: rgba(212, 158, 42, 0.28);
+  --glass-border: 1px solid rgba(212, 158, 42, 0.15);
   --glass-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.5);
-  --bg-hover: rgba(212, 158, 42, 0.06);
-  --bg-th: rgba(212, 158, 42, 0.1);
+  --bg-hover: rgba(212, 158, 42, 0.08);
+  --bg-th: rgba(212, 158, 42, 0.12);
   --header-bg: rgba(24, 22, 20, 0.85);
   --row-normal-bg: rgba(212, 158, 42, 0.08);
   --row-normal-hover: rgba(212, 158, 42, 0.15);
@@ -2360,8 +2542,247 @@ body.theme-limbus {
 
   /* Custom background clockwork golden and blood red neon glow */
   background-image: 
-    radial-gradient(at 0% 0%, rgba(212, 158, 42, 0.18) 0px, transparent 55%),
-    radial-gradient(at 100% 0%, rgba(156, 28, 28, 0.12) 0px, transparent 55%) !important;
+    radial-gradient(at 0% 0%, rgba(212, 158, 42, 0.2) 0px, transparent 55%),
+    radial-gradient(at 100% 0%, rgba(156, 28, 28, 0.15) 0px, transparent 55%) !important;
+}
+
+/* Limbus Company Premium Overrides */
+body.theme-limbus h1,
+body.theme-limbus h2,
+body.theme-limbus h3,
+body.theme-limbus h4,
+body.theme-limbus h5,
+body.theme-limbus h6,
+body.theme-limbus .logo-text,
+body.theme-limbus .kpi-value {
+  font-family: Georgia, 'Times New Roman', serif !important;
+  font-weight: bold !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1px !important;
+  text-shadow: 0 0 8px rgba(212, 158, 42, 0.5) !important;
+  color: #f5ebd5 !important;
+}
+
+body.theme-limbus .glass-card,
+body.theme-limbus .modal-content,
+body.theme-limbus .card,
+body.theme-limbus .settings-modal-card,
+body.theme-limbus .header-dropdown,
+body.theme-limbus .notifications-dropdown,
+body.theme-limbus .help-dropdown,
+body.theme-limbus .sidebar,
+body.theme-limbus .plancha-sidebar,
+body.theme-limbus aside {
+  border-radius: 4px !important; /* Sharp industrial corners */
+  border: 3px double #d49e2a !important; /* Steampunk double brass border */
+  background: #181614 !important;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.7), inset 0 0 10px rgba(212, 158, 42, 0.05) !important;
+  backdrop-filter: none !important;
+}
+
+body.theme-limbus .btn,
+body.theme-limbus button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn),
+body.theme-limbus .actions-dropdown-item {
+  border-radius: 2px !important;
+  border: 2px solid #d49e2a !important;
+  background: #1c1815 !important;
+  color: #d49e2a !important;
+  font-family: Georgia, serif !important;
+  font-weight: bold !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  box-shadow: 0 0 6px rgba(212, 158, 42, 0.2) !important;
+  transition: all 0.25s ease !important;
+  cursor: pointer;
+}
+
+body.theme-limbus .btn:hover,
+body.theme-limbus button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover,
+body.theme-limbus .actions-dropdown-item:hover {
+  background: #d49e2a !important;
+  color: #181614 !important;
+  box-shadow: 0 0 15px rgba(212, 158, 42, 0.6) !important;
+  transform: translateY(-1px) !important;
+}
+
+body.theme-limbus .btn-primary {
+  border-color: #d49e2a !important;
+  background: rgba(212, 158, 42, 0.15) !important;
+}
+
+body.theme-limbus .btn-danger {
+  border-color: #9c1c1c !important;
+  color: #ff4d4d !important;
+  background: #1e1111 !important;
+}
+body.theme-limbus .btn-danger:hover {
+  background: #9c1c1c !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 15px rgba(156, 28, 28, 0.6) !important;
+}
+
+body.theme-limbus .form-input,
+body.theme-limbus input:not([type="checkbox"]):not([type="radio"]),
+body.theme-limbus select,
+body.theme-limbus textarea {
+  border-radius: 2px !important;
+  border: 1px solid rgba(212, 158, 42, 0.4) !important;
+  background: #221e1a !important;
+  color: #f5ebd5 !important;
+  font-family: Georgia, serif !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5) !important;
+}
+
+body.theme-limbus .form-input:focus,
+body.theme-limbus input:focus,
+body.theme-limbus select:focus,
+body.theme-limbus textarea:focus {
+  border-color: #d49e2a !important;
+  box-shadow: 0 0 8px rgba(212, 158, 42, 0.4), inset 0 2px 4px rgba(0, 0, 0, 0.5) !important;
+  outline: none !important;
+}
+
+body.theme-limbus table,
+body.theme-limbus th,
+body.theme-limbus td {
+  border-radius: 0px !important;
+  border-color: rgba(212, 158, 42, 0.2) !important;
+}
+body.theme-limbus th {
+  background: #221e1a !important;
+  color: #d49e2a !important;
+}
+
+
+/* Tema Library of Ruina 📖 (Estilo Biblioteca Gótica / Celestial Indigo & Gold) */
+body.theme-ruina {
+  --bg-dark: #070913;
+  --bg-card: #0c1024;
+  --bg-input: #121634;
+  --text-primary: #f2f5fc;
+  --text-secondary: #e5c158;
+  --border-color: rgba(229, 193, 88, 0.25);
+  --glass-border: 1px solid rgba(229, 193, 88, 0.15);
+  --glass-shadow: 0 4px 25px 0 rgba(0, 0, 0, 0.55);
+  --bg-hover: rgba(229, 193, 88, 0.08);
+  --bg-th: rgba(229, 193, 88, 0.12);
+  --header-bg: rgba(12, 16, 36, 0.85);
+  --row-normal-bg: rgba(229, 193, 88, 0.08);
+  --row-normal-hover: rgba(229, 193, 88, 0.15);
+  --row-warning-bg: rgba(239, 68, 68, 0.06);
+  --row-warning-hover: rgba(239, 68, 68, 0.12);
+  --row-danger-bg: rgba(239, 68, 68, 0.1);
+  --row-danger-hover: rgba(239, 68, 68, 0.16);
+  --badge-bono-bg: rgba(229, 193, 88, 0.2);
+  --badge-bono-text: #e5c158;
+  --badge-desc-bg: rgba(239, 68, 68, 0.25);
+  --badge-desc-text: #ff6b6b;
+  
+  /* Primary and danger accents overrides */
+  --primary-color: #e5c158;
+  --primary-hover: #c9a53d;
+  --primary-shadow: rgba(229, 193, 88, 0.4);
+  --danger-color: #d32f2f;
+  --danger-hover: #b71c1c;
+  --success-color: #e5c158;
+
+  /* Starry cosmic blue & solar gold gradient background */
+  background-image: 
+    radial-gradient(circle at 50% 50%, rgba(229, 193, 88, 0.04) 0px, transparent 60%),
+    radial-gradient(at 0% 0%, rgba(12, 16, 36, 0.95) 0px, transparent 60%),
+    radial-gradient(at 100% 0%, rgba(229, 193, 88, 0.15) 0px, transparent 60%) !important;
+}
+
+/* Library of Ruina Theme Premium Overrides */
+body.theme-ruina h1,
+body.theme-ruina h2,
+body.theme-ruina h3,
+body.theme-ruina h4,
+body.theme-ruina h5,
+body.theme-ruina h6,
+body.theme-ruina .logo-text,
+body.theme-ruina .kpi-value {
+  font-family: Georgia, 'Times New Roman', serif !important;
+  font-weight: bold !important;
+  letter-spacing: 0.5px !important;
+  text-shadow: 0 0 10px rgba(229, 193, 88, 0.45) !important;
+  color: #f2f5fc !important;
+}
+
+body.theme-ruina .glass-card,
+body.theme-ruina .modal-content,
+body.theme-ruina .card,
+body.theme-ruina .settings-modal-card,
+body.theme-ruina .header-dropdown,
+body.theme-ruina .notifications-dropdown,
+body.theme-ruina .help-dropdown,
+body.theme-ruina .sidebar,
+body.theme-ruina .plancha-sidebar,
+body.theme-ruina aside {
+  border-radius: 8px !important;
+  border: 1px solid rgba(229, 193, 88, 0.35) !important;
+  background: rgba(12, 16, 36, 0.9) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), inset 0 0 15px rgba(229, 193, 88, 0.03) !important;
+}
+
+body.theme-ruina .btn,
+body.theme-ruina button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn),
+body.theme-ruina .actions-dropdown-item {
+  border-radius: 4px !important;
+  border: 1px solid #e5c158 !important;
+  background: rgba(18, 22, 52, 0.5) !important;
+  color: #e5c158 !important;
+  font-family: Georgia, serif !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.5px !important;
+  box-shadow: 0 0 6px rgba(229, 193, 88, 0.15) !important;
+  transition: all 0.3s ease !important;
+  cursor: pointer;
+}
+
+body.theme-ruina .btn:hover,
+body.theme-ruina button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover,
+body.theme-ruina .actions-dropdown-item:hover {
+  background: #e5c158 !important;
+  color: #070913 !important;
+  box-shadow: 0 0 15px rgba(229, 193, 88, 0.5) !important;
+  transform: translateY(-1px) !important;
+}
+
+body.theme-ruina .btn-primary {
+  background: rgba(229, 193, 88, 0.12) !important;
+}
+
+body.theme-ruina .form-input,
+body.theme-ruina input:not([type="checkbox"]):not([type="radio"]),
+body.theme-ruina select,
+body.theme-ruina textarea {
+  border-radius: 4px !important;
+  border: 1px solid rgba(229, 193, 88, 0.3) !important;
+  background: rgba(18, 22, 52, 0.8) !important;
+  color: #f2f5fc !important;
+  font-family: Georgia, serif !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4) !important;
+}
+
+body.theme-ruina .form-input:focus,
+body.theme-ruina input:focus,
+body.theme-ruina select:focus,
+body.theme-ruina textarea:focus {
+  border-color: #e5c158 !important;
+  box-shadow: 0 0 10px rgba(229, 193, 88, 0.45), inset 0 2px 4px rgba(0, 0, 0, 0.4) !important;
+  outline: none !important;
+}
+
+body.theme-ruina table,
+body.theme-ruina th,
+body.theme-ruina td {
+  border-radius: 0px !important;
+  border-color: rgba(229, 193, 88, 0.15) !important;
+}
+body.theme-ruina th {
+  background: #121634 !important;
+  color: #e5c158 !important;
 }
 
 /* Tema Minecraft ⛏️ (Estilo Retro Pixelado) */
@@ -3602,59 +4023,121 @@ body.dark-mode .search-clear-btn:hover {
 
 /* 1. Miku Theme */
 body.theme-miku .launcher-app-icon {
-  border-radius: 20px !important;
+  border-radius: 50% !important; /* Circular holo-disc look */
   border: 3px solid #39c5bb !important;
   background: #0c2022 !important;
-  box-shadow: 0 0 15px rgba(57, 197, 187, 0.4) !important;
+  box-shadow: 0 0 15px rgba(57, 197, 187, 0.4), inset 0 0 8px rgba(57, 197, 187, 0.2) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 body.theme-miku .launcher-app-icon svg rect {
   fill: transparent !important;
   filter: none !important;
-  rx: 20px !important;
+  rx: 50% !important;
+}
+body.theme-miku .launcher-app-item:hover .launcher-app-icon {
+  border-color: #ff2e7a !important;
+  box-shadow: 0 0 25px #39c5bb, 0 0 40px rgba(255, 46, 122, 0.5) !important;
+  transform: scale(1.05) translateY(-5px) !important;
 }
 body.theme-miku .launcher-app-name {
+  font-family: 'Inter', sans-serif !important;
   color: #39c5bb !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.5px !important;
+  text-shadow: 0 0 8px rgba(57, 197, 187, 0.5) !important;
 }
 body.theme-miku .launcher-app-item:hover .launcher-app-name {
-  color: #e0fcfb !important;
+  color: #ff2e7a !important;
+  text-shadow: 0 0 12px rgba(255, 46, 122, 0.6) !important;
 }
 
 /* 2. Teto Theme */
 body.theme-teto .launcher-app-icon {
-  border-radius: 20px !important;
+  border-radius: 24px !important; /* Playful curvy look */
   border: 3px solid #ff3d5a !important;
   background: #1d0f12 !important;
-  box-shadow: 0 0 15px rgba(255, 61, 90, 0.4) !important;
+  box-shadow: 0 0 15px rgba(255, 61, 90, 0.4), inset 0 0 8px rgba(255, 61, 90, 0.2) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 body.theme-teto .launcher-app-icon svg rect {
   fill: transparent !important;
   filter: none !important;
-  rx: 20px !important;
+  rx: 24px !important;
+}
+body.theme-teto .launcher-app-item:hover .launcher-app-icon {
+  border-color: #ffb800 !important;
+  box-shadow: 0 0 25px #ff3d5a, 0 0 40px rgba(255, 184, 0, 0.5) !important;
+  transform: scale(1.05) translateY(-5px) !important;
 }
 body.theme-teto .launcher-app-name {
+  font-family: 'Inter', sans-serif !important;
   color: #ff4d6a !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.5px !important;
+  text-shadow: 0 0 8px rgba(255, 77, 106, 0.5) !important;
 }
 body.theme-teto .launcher-app-item:hover .launcher-app-name {
-  color: #ffebee !important;
+  color: #ffb800 !important;
+  text-shadow: 0 0 12px rgba(255, 184, 0, 0.6) !important;
 }
 
 /* 3. Limbus Company Theme */
 body.theme-limbus .launcher-app-icon {
   border-radius: 4px !important;
-  border: 3px solid #d49e2a !important;
+  border: 3px double #d49e2a !important; /* Steampunk dual gold border */
   background: #181614 !important;
   box-shadow: 0 0 15px rgba(212, 158, 42, 0.3) !important;
+  transition: all 0.25s ease !important;
 }
 body.theme-limbus .launcher-app-icon svg rect {
   fill: transparent !important;
   filter: none !important;
   rx: 4px !important;
 }
+body.theme-limbus .launcher-app-item:hover .launcher-app-icon {
+  border-color: #d49e2a !important;
+  background: #1c1815 !important;
+  box-shadow: 0 0 25px rgba(212, 158, 42, 0.6) !important;
+  transform: translateY(-3px) !important;
+}
 body.theme-limbus .launcher-app-name {
+  font-family: Georgia, serif !important;
   color: #d49e2a !important;
+  font-weight: bold !important;
+  text-transform: uppercase !important;
+  text-shadow: 0 0 5px rgba(212, 158, 42, 0.4) !important;
 }
 body.theme-limbus .launcher-app-item:hover .launcher-app-name {
   color: #f5ebd5 !important;
+}
+
+/* 4. Library of Ruina Theme */
+body.theme-ruina .launcher-app-icon {
+  border-radius: 8px !important;
+  border: 3px solid #e5c158 !important;
+  background: #0c1024 !important;
+  box-shadow: 0 0 15px rgba(229, 193, 88, 0.3) !important;
+  transition: all 0.3s ease !important;
+}
+body.theme-ruina .launcher-app-icon svg rect {
+  fill: transparent !important;
+  filter: none !important;
+  rx: 8px !important;
+}
+body.theme-ruina .launcher-app-item:hover .launcher-app-icon {
+  border-color: #ffffff !important;
+  box-shadow: 0 0 25px rgba(229, 193, 88, 0.6) !important;
+  transform: scale(1.05) translateY(-5px) !important;
+}
+body.theme-ruina .launcher-app-name {
+  font-family: Georgia, serif !important;
+  color: #e5c158 !important;
+  text-shadow: 0 0 5px rgba(229, 193, 88, 0.5) !important;
+  font-weight: bold !important;
+  text-transform: uppercase !important;
+}
+body.theme-ruina .launcher-app-item:hover .launcher-app-name {
+  color: #ffffff !important;
 }
 
 /* 4. Minecraft Theme */
