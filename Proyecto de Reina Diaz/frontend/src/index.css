@@ -4337,14 +4337,18 @@ body.theme-backrooms .glass-card, body.theme-backrooms .modal-content, body.them
   border-radius: 0px !important;
   background: #202216 !important;
 }
-body.theme-backrooms .btn, body.theme-backrooms button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
+body.theme-backrooms .btn, 
+body.theme-backrooms button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn), 
+body.theme-backrooms .actions-dropdown-item {
   border: 1px solid #e6df45 !important;
   background: #15170f !important;
   color: #e6df45 !important;
   border-radius: 0px !important;
   font-family: 'Courier New', Courier, monospace !important;
 }
-body.theme-backrooms .btn:hover, body.theme-backrooms button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
+body.theme-backrooms .btn:hover, 
+body.theme-backrooms button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover, 
+body.theme-backrooms .actions-dropdown-item:hover {
   background: #e6df45 !important;
   color: #15170f !important;
   box-shadow: 0 0 12px rgba(230, 223, 69, 0.6) !important;
@@ -4390,7 +4394,9 @@ body.theme-terraria .glass-card, body.theme-terraria .modal-content, body.theme-
   background: #251d18 !important;
   box-shadow: inset 2px 2px 0px #3c2f25, 4px 4px 0px rgba(0,0,0,0.5) !important;
 }
-body.theme-terraria .btn, body.theme-terraria button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
+body.theme-terraria .btn, 
+body.theme-terraria button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn), 
+body.theme-terraria .actions-dropdown-item {
   border: 2px solid #5c4b3f !important;
   background: linear-gradient(to bottom, #875d3e, #5c3b24) !important;
   color: #ffffff !important;
@@ -4399,7 +4405,9 @@ body.theme-terraria .btn, body.theme-terraria button:not(.close-btn):not(.search
   text-shadow: 1px 1px 0px #000 !important;
   box-shadow: 2px 2px 0px rgba(0,0,0,0.3) !important;
 }
-body.theme-terraria .btn:hover, body.theme-terraria button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
+body.theme-terraria .btn:hover, 
+body.theme-terraria button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover, 
+body.theme-terraria .actions-dropdown-item:hover {
   background: linear-gradient(to bottom, #a0724f, #7c5132) !important;
   border-color: #875d3e !important;
 }
@@ -4446,7 +4454,9 @@ body.theme-castle .glass-card, body.theme-castle .modal-content, body.theme-cast
   background: #1d1e26 !important;
   box-shadow: 6px 6px 0 #0c0d12 !important;
 }
-body.theme-castle .btn, body.theme-castle button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
+body.theme-castle .btn, 
+body.theme-castle button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn), 
+body.theme-castle .actions-dropdown-item {
   border: 3px solid #0c0d12 !important;
   background: #3182ce !important;
   color: #ffffff !important;
@@ -4456,7 +4466,9 @@ body.theme-castle .btn, body.theme-castle button:not(.close-btn):not(.search-cle
   box-shadow: 3px 3px 0 #0c0d12 !important;
   transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
 }
-body.theme-castle .btn:hover, body.theme-castle button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
+body.theme-castle .btn:hover, 
+body.theme-castle button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover, 
+body.theme-castle .actions-dropdown-item:hover {
   transform: scale(1.06) rotate(1deg) !important;
   background: #4299e1 !important;
   color: #ffffff !important;
@@ -4517,7 +4529,9 @@ body.theme-starwars .glass-card, body.theme-starwars .modal-content, body.theme-
   background: #090c15 !important;
   box-shadow: 0 0 15px rgba(0, 240, 255, 0.2) !important;
 }
-body.theme-starwars .btn, body.theme-starwars button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
+body.theme-starwars .btn, 
+body.theme-starwars button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn), 
+body.theme-starwars .actions-dropdown-item {
   border: 1px solid #00f0ff !important;
   background: rgba(0, 240, 255, 0.05) !important;
   color: #00f0ff !important;
@@ -4526,7 +4540,9 @@ body.theme-starwars .btn, body.theme-starwars button:not(.close-btn):not(.search
   text-transform: uppercase !important;
   letter-spacing: 1px !important;
 }
-body.theme-starwars .btn:hover, body.theme-starwars button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
+body.theme-starwars .btn:hover, 
+body.theme-starwars button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover, 
+body.theme-starwars .actions-dropdown-item:hover {
   background: #00f0ff !important;
   color: #030408 !important;
   box-shadow: 0 0 15px #00f0ff !important;
@@ -4589,7 +4605,9 @@ body.theme-cod3 .glass-card, body.theme-cod3 .modal-content, body.theme-cod3 .si
   background: #11141b !important;
   box-shadow: 0 0 15px rgba(255, 119, 0, 0.15) !important;
 }
-body.theme-cod3 .btn, body.theme-cod3 button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
+body.theme-cod3 .btn, 
+body.theme-cod3 button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn), 
+body.theme-cod3 .actions-dropdown-item {
   border: 1px solid #ff7700 !important;
   background: #1a1e28 !important;
   color: #ff7700 !important;
@@ -4599,7 +4617,9 @@ body.theme-cod3 .btn, body.theme-cod3 button:not(.close-btn):not(.search-clear-b
   font-weight: bold !important;
   letter-spacing: 1px !important;
 }
-body.theme-cod3 .btn:hover, body.theme-cod3 button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
+body.theme-cod3 .btn:hover, 
+body.theme-cod3 button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover, 
+body.theme-cod3 .actions-dropdown-item:hover {
   background: #ff7700 !important;
   color: #07090c !important;
   box-shadow: 0 0 15px rgba(255, 119, 0, 0.6) !important;
@@ -4649,14 +4669,18 @@ body.theme-subnautica .glass-card, body.theme-subnautica .modal-content, body.th
   70% { box-shadow: 0 0 0 10px rgba(0, 210, 255, 0); }
   100% { box-shadow: 0 0 0 0 rgba(0, 210, 255, 0); }
 }
-body.theme-subnautica .btn, body.theme-subnautica button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
+body.theme-subnautica .btn, 
+body.theme-subnautica button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn), 
+body.theme-subnautica .actions-dropdown-item {
   border: 1.5px solid #00d2ff !important;
   border-radius: 20px !important;
   background: transparent !important;
   color: #00d2ff !important;
   animation: sonar-pulse 2s infinite;
 }
-body.theme-subnautica .btn:hover, body.theme-subnautica button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
+body.theme-subnautica .btn:hover, 
+body.theme-subnautica button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover, 
+body.theme-subnautica .actions-dropdown-item:hover {
   background: #00d2ff !important;
   color: #020612 !important;
   box-shadow: 0 0 15px #00d2ff !important;
@@ -4712,7 +4736,9 @@ body.theme-cuphead .glass-card, body.theme-cuphead .modal-content, body.theme-cu
   box-shadow: 5px 5px 0 #28221d !important;
   animation: frame-wobble 0.6s step-end infinite;
 }
-body.theme-cuphead .btn, body.theme-cuphead button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
+body.theme-cuphead .btn, 
+body.theme-cuphead button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn), 
+body.theme-cuphead .actions-dropdown-item {
   border: 2px solid #28221d !important;
   background: #df9c2c !important;
   color: #28221d !important;
@@ -4721,7 +4747,9 @@ body.theme-cuphead .btn, body.theme-cuphead button:not(.close-btn):not(.search-c
   font-weight: bold !important;
   box-shadow: 3px 3px 0 #28221d !important;
 }
-body.theme-cuphead .btn:hover, body.theme-cuphead button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
+body.theme-cuphead .btn:hover, 
+body.theme-cuphead button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover, 
+body.theme-cuphead .actions-dropdown-item:hover {
   background: #c9362b !important;
   color: #ffffff !important;
   transform: translate(-2px, -2px) !important;
@@ -4777,7 +4805,9 @@ body.theme-ddlc .glass-card, body.theme-ddlc .modal-content, body.theme-ddlc .si
   border: 2px solid #ffb3c6 !important;
   background: #ffffff !important;
 }
-body.theme-ddlc .btn, body.theme-ddlc button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
+body.theme-ddlc .btn, 
+body.theme-ddlc button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn), 
+body.theme-ddlc .actions-dropdown-item {
   border-radius: 30px !important;
   border: 2px solid #ff4d79 !important;
   background: #ffffff !important;
@@ -4788,7 +4818,8 @@ body.theme-ddlc .btn, body.theme-ddlc button:not(.close-btn):not(.search-clear-b
 body.theme-ddlc .btn:hover, 
 body.theme-ddlc button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover, 
 body.theme-ddlc .nav-link:hover, 
-body.theme-ddlc .data-table tr:hover {
+body.theme-ddlc .data-table tr:hover, 
+body.theme-ddlc .actions-dropdown-item:hover {
   animation: ddlc-jitter 0.15s infinite !important;
   box-shadow: 3px -3px 0 #00ffff, -3px 3px 0 #ff00ff !important;
   border-color: #8b0000 !important;
@@ -4838,7 +4869,9 @@ body.theme-undertale .glass-card, body.theme-undertale .modal-content, body.them
   border-radius: 0px !important;
   background: #000000 !important;
 }
-body.theme-undertale .btn, body.theme-undertale button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
+body.theme-undertale .btn, 
+body.theme-undertale button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn), 
+body.theme-undertale .actions-dropdown-item {
   border: 2px solid #ffffff !important;
   background: #000000 !important;
   color: #ffffff !important;
@@ -4846,7 +4879,9 @@ body.theme-undertale .btn, body.theme-undertale button:not(.close-btn):not(.sear
   font-family: 'Courier New', Courier, monospace !important;
   text-transform: uppercase !important;
 }
-body.theme-undertale .btn:hover, body.theme-undertale button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
+body.theme-undertale .btn:hover, 
+body.theme-undertale button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover, 
+body.theme-undertale .actions-dropdown-item:hover {
   background: #ffffff !important;
   color: #000000 !important;
 }
@@ -4859,55 +4894,135 @@ body.theme-undertale .btn:hover::before {
   margin-right: 6px !important;
 }
 
-/* 10. Lobotomy Corporation Theme */
+/* 10. Lobotomy Corporation Theme (Faithful Steampunk Clinical facility style) */
 body.theme-lobotomy {
-  --bg-dark: #12161a;
-  --bg-card: #1b2026;
-  --bg-input: #101418;
-  --text-primary: #c5d4db;
-  --text-secondary: #708899;
-  --border-color: #2b3846;
-  --glass-border: 1px solid #364656;
-  --glass-shadow: 0 6px 25px rgba(0,0,0,0.55);
-  --bg-hover: rgba(0, 195, 255, 0.08);
-  --bg-th: rgba(0, 195, 255, 0.12);
-  --header-bg: rgba(27, 32, 38, 0.95);
-  --row-normal-bg: rgba(0, 195, 255, 0.05);
-  --row-normal-hover: rgba(0, 195, 255, 0.12);
-  --row-warning-bg: rgba(255, 215, 0, 0.08);
+  --bg-dark: #07090e; /* Deep clinical void black-blue */
+  --bg-card: #0c1015; /* Containment control room panels */
+  --bg-input: #11161d;
+  --text-primary: #bdfcfa; /* High-tech clinical teal */
+  --text-secondary: #528c9e;
+  --border-color: rgba(0, 212, 255, 0.3); /* Clinical cyan */
+  --glass-border: 1px solid rgba(0, 212, 255, 0.4);
+  --glass-shadow: 0 0 15px rgba(0, 212, 255, 0.15);
+  --bg-hover: rgba(0, 212, 255, 0.08);
+  --bg-th: rgba(0, 212, 255, 0.15);
+  --header-bg: rgba(12, 16, 21, 0.95);
+  --row-normal-bg: rgba(0, 255, 204, 0.04);
+  --row-normal-hover: rgba(0, 255, 204, 0.12);
+  --row-warning-bg: rgba(255, 215, 0, 0.06);
   --row-warning-hover: rgba(255, 215, 0, 0.15);
-  --row-danger-bg: rgba(217, 56, 56, 0.08);
-  --row-danger-hover: rgba(217, 56, 56, 0.15);
-  --badge-bono-bg: rgba(0, 195, 255, 0.2);
-  --badge-bono-text: #00c3ff;
-  --badge-desc-bg: rgba(217, 56, 56, 0.25);
-  --badge-desc-text: #f95c5c;
+  --row-danger-bg: rgba(230, 40, 40, 0.08);
+  --row-danger-hover: rgba(230, 40, 40, 0.18);
   
-  --primary-color: #00c3ff;
+  --badge-bono-bg: rgba(0, 255, 204, 0.2);
+  --badge-bono-text: #00ffcc;
+  --badge-desc-bg: rgba(230, 40, 40, 0.2);
+  --badge-desc-text: #ff5555;
+  
+  --primary-color: #00d4ff;
   --primary-hover: #009ecb;
-  --primary-shadow: rgba(0, 195, 255, 0.4);
-  --danger-color: #d93838;
-  --danger-hover: #b52929;
+  --primary-shadow: rgba(0, 212, 255, 0.4);
+  --danger-color: #ff3333;
+  --danger-hover: #cc2222;
+  --success-color: #00ffcc;
+  
+  background-image: 
+    radial-gradient(circle at 20% 30%, rgba(0, 212, 255, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(230, 40, 40, 0.05) 0%, transparent 50%) !important;
+  font-family: 'Courier New', Courier, monospace !important;
 }
 body.theme-lobotomy h1, body.theme-lobotomy h2, body.theme-lobotomy h3, body.theme-lobotomy .logo-text, body.theme-lobotomy .kpi-value {
-  color: #00c3ff !important;
-  text-shadow: 0 0 8px rgba(0, 195, 255, 0.4) !important;
+  font-family: 'Courier New', Courier, monospace !important;
+  color: #00d4ff !important;
+  font-weight: bold !important;
+  text-shadow: 0 0 10px rgba(0, 212, 255, 0.6) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1px !important;
 }
 body.theme-lobotomy .glass-card, body.theme-lobotomy .modal-content, body.theme-lobotomy .sidebar, body.theme-lobotomy .plancha-sidebar, body.theme-lobotomy aside {
-  border: 1.5px solid #2b3846 !important;
-  border-radius: 4px !important;
-  background: #1b2026 !important;
+  border: 1px solid #00d4ff !important;
+  border-radius: 0px !important;
+  background: #0c1015 !important;
+  box-shadow: 0 0 15px rgba(0, 212, 255, 0.15), inset 0 0 10px rgba(0, 212, 255, 0.05) !important;
 }
-body.theme-lobotomy .btn, body.theme-lobotomy button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
-  border: 1px solid #2b3846 !important;
-  background: #101418 !important;
-  color: #c5d4db !important;
-  border-radius: 4px !important;
+body.theme-lobotomy .main-header {
+  border-bottom: 2px solid #00d4ff !important;
 }
-body.theme-lobotomy .btn:hover, body.theme-lobotomy button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
-  border-color: #00c3ff !important;
-  color: #00c3ff !important;
-  box-shadow: 0 0 10px rgba(0, 195, 255, 0.3) !important;
+body.theme-lobotomy .sidebar {
+  border-right: 2px solid #00d4ff !important;
+}
+body.theme-lobotomy .data-table th {
+  background: #11161d !important;
+  border-bottom: 2px solid #00d4ff !important;
+  color: #00d4ff !important;
+  font-weight: bold !important;
+}
+body.theme-lobotomy .badge {
+  border-radius: 0px !important;
+  font-weight: bold !important;
+}
+/* Meltdown / Breach Flashing warning animation */
+@keyframes lobotomy-breach {
+  0% { border-color: #ff3333 !important; box-shadow: 0 0 5px #ff3333 !important; }
+  50% { border-color: #ff3333 !important; box-shadow: 0 0 20px #ff3333, inset 0 0 10px rgba(255, 51, 51, 0.2) !important; }
+  100% { border-color: #ff3333 !important; box-shadow: 0 0 5px #ff3333 !important; }
+}
+/* Qliphoth Threat Levels: ZAYIN, TETH, HE, WAW, ALEPH representation */
+body.theme-lobotomy .badge-success {
+  background: rgba(0, 255, 204, 0.2) !important;
+  color: #00ffcc !important;
+  border: 1px solid #00ffcc !important;
+}
+body.theme-lobotomy .badge-info {
+  background: rgba(0, 212, 255, 0.2) !important;
+  color: #00d4ff !important;
+  border: 1px solid #00d4ff !important;
+}
+body.theme-lobotomy .badge-warning {
+  background: repeating-linear-gradient(45deg, #ffd700, #ffd700 6px, #000 6px, #000 12px) !important;
+  color: #ffffff !important;
+  border: 1px solid #ffd700 !important;
+  text-shadow: 1px 1px 2px #000 !important;
+}
+body.theme-lobotomy .badge-partial {
+  background: rgba(155, 81, 224, 0.25) !important;
+  color: #b388ff !important;
+  border: 1px solid #9b51e0 !important;
+}
+body.theme-lobotomy .badge-danger, 
+body.theme-lobotomy .btn-danger, 
+body.theme-lobotomy .row-danger {
+  animation: lobotomy-breach 1.5s infinite !important;
+}
+body.theme-lobotomy .row-danger {
+  border-left: 4px solid #ff3333 !important;
+  background: rgba(255, 51, 51, 0.08) !important;
+}
+body.theme-lobotomy .badge-desc-bg, body.theme-lobotomy .badge-desc {
+  background: #ff3333 !important;
+  color: #ffffff !important;
+  border-radius: 0px !important;
+}
+body.theme-lobotomy .btn, 
+body.theme-lobotomy button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn), 
+body.theme-lobotomy .actions-dropdown-item {
+  border-radius: 0px !important;
+  border: 1px solid #00d4ff !important;
+  background: #0c1015 !important;
+  color: #00d4ff !important;
+  font-family: 'Courier New', Courier, monospace !important;
+  font-weight: bold !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1px !important;
+  box-shadow: 0 0 5px rgba(0, 212, 255, 0.2) !important;
+  transition: all 0.2s ease !important;
+}
+body.theme-lobotomy .btn:hover, 
+body.theme-lobotomy button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover, 
+body.theme-lobotomy .actions-dropdown-item:hover {
+  background: #00d4ff !important;
+  color: #07090e !important;
+  box-shadow: 0 0 15px #00d4ff, inset 0 0 5px rgba(255, 255, 255, 0.5) !important;
 }
 
 /* 11. Papers, Please Theme */
@@ -4950,7 +5065,9 @@ body.theme-papers .glass-card, body.theme-papers .modal-content, body.theme-pape
   border-radius: 0px !important;
   background: #2f3230 !important;
 }
-body.theme-papers .btn, body.theme-papers button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
+body.theme-papers .btn, 
+body.theme-papers button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn), 
+body.theme-papers .actions-dropdown-item {
   border: 2px solid #434744 !important;
   background: #1d1e1d !important;
   color: #c5c9c6 !important;
@@ -4958,7 +5075,9 @@ body.theme-papers .btn, body.theme-papers button:not(.close-btn):not(.search-cle
   font-family: 'Courier New', Courier, monospace !important;
   text-transform: uppercase !important;
 }
-body.theme-papers .btn:hover, body.theme-papers button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
+body.theme-papers .btn:hover, 
+body.theme-papers button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover, 
+body.theme-papers .actions-dropdown-item:hover {
   background: #8f805a !important;
   color: #1d1e1d !important;
 }
@@ -4975,7 +5094,7 @@ body.theme-plague {
   --glass-shadow: 0 0 25px rgba(230, 0, 0, 0.15);
   --bg-hover: rgba(230, 0, 0, 0.06);
   --bg-th: rgba(230, 0, 0, 0.1);
-  --header-bg: rgba(18, 16, 20, 0.9);
+  --header-bg: rgba(18, 16, 20, 0.95);
   --row-normal-bg: rgba(0, 230, 91, 0.05);
   --row-normal-hover: rgba(0, 230, 91, 0.12);
   --row-warning-bg: rgba(255, 98, 0, 0.08);
@@ -5004,13 +5123,17 @@ body.theme-plague .glass-card, body.theme-plague .modal-content, body.theme-plag
   70% { box-shadow: 0 0 0 8px rgba(230, 0, 0, 0); }
   100% { box-shadow: 0 0 0 0 rgba(230, 0, 0, 0); }
 }
-body.theme-plague .btn, body.theme-plague button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
+body.theme-plague .btn, 
+body.theme-plague button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn), 
+body.theme-plague .actions-dropdown-item {
   border: 1px solid #471c1c !important;
   background: #121014 !important;
   color: #e2e9e3 !important;
   border-radius: 4px !important;
 }
-body.theme-plague .btn:hover, body.theme-plague button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
+body.theme-plague .btn:hover, 
+body.theme-plague button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover, 
+body.theme-plague .actions-dropdown-item:hover {
   border-color: #e60000 !important;
   color: #ffffff !important;
   background: #e60000 !important;
@@ -5057,7 +5180,9 @@ body.theme-pvz .glass-card, body.theme-pvz .modal-content, body.theme-pvz .sideb
   border: 2px solid #2e4d30 !important;
   background: #182419 !important;
 }
-body.theme-pvz .btn, body.theme-pvz button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
+body.theme-pvz .btn, 
+body.theme-pvz button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn), 
+body.theme-pvz .actions-dropdown-item {
   border-radius: 20px 20px 4px 4px !important;
   border: 3px solid #554433 !important;
   background: #6d7973 !important;
@@ -5066,7 +5191,9 @@ body.theme-pvz .btn, body.theme-pvz button:not(.close-btn):not(.search-clear-btn
   font-weight: bold !important;
   text-transform: uppercase !important;
 }
-body.theme-pvz .btn:hover, body.theme-pvz button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
+body.theme-pvz .btn:hover, 
+body.theme-pvz button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover, 
+body.theme-pvz .actions-dropdown-item:hover {
   background: #4caf50 !important;
   border-color: #ffc107 !important;
   color: #ffffff !important;
@@ -5271,25 +5398,31 @@ body.theme-undertale .launcher-app-name {
   color: #ffffff !important;
 }
 
-/* 10. Lobotomy Corporation Launcher */
+/* 10. Lobotomy Corporation Launcher (Steampunk double border Qliphoth meltdown hover) */
 body.theme-lobotomy .launcher-app-icon {
-  border-radius: 4px !important;
-  border: 1px solid #364656 !important;
-  background: #1b2026 !important;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.4) !important;
+  border-radius: 0px !important;
+  border: 2px solid #00d4ff !important;
+  background: #0c1015 !important;
+  box-shadow: 0 0 10px rgba(0, 212, 255, 0.3) !important;
 }
 body.theme-lobotomy .launcher-app-icon svg rect {
   fill: transparent !important;
   filter: none !important;
-  rx: 4px !important;
+  rx: 0px !important;
 }
 body.theme-lobotomy .launcher-app-item:hover .launcher-app-icon {
-  border-color: #00c3ff !important;
-  box-shadow: 0 0 15px rgba(0, 195, 255, 0.5) !important;
+  border-color: #ff3333 !important;
+  box-shadow: 0 0 20px #ff3333, inset 0 0 5px rgba(255, 51, 51, 0.5) !important;
+  transform: scale(1.05) !important;
 }
 body.theme-lobotomy .launcher-app-name {
-  font-family: 'Inter', sans-serif !important;
-  color: #00c3ff !important;
+  font-family: 'Courier New', Courier, monospace !important;
+  color: #00d4ff !important;
+  text-shadow: 0 0 3px rgba(0, 212, 255, 0.4) !important;
+}
+body.theme-lobotomy .launcher-app-item:hover .launcher-app-name {
+  color: #ff3333 !important;
+  text-shadow: 0 0 8px rgba(255, 51, 51, 0.6) !important;
 }
 
 /* 11. Papers, Please Launcher */
