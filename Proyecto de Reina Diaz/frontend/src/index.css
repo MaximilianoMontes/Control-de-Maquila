@@ -2742,6 +2742,42 @@ body.dark-mode .search-clear-btn:hover {
     padding: 0.6rem 0.875rem !important;
     font-size: 1rem !important;
   }
+
+  /* Universal page title adjustments for mobile */
+  h1.gradient-text {
+    font-size: 1.75rem !important;
+  }
+
+  /* Table mobile responsive adjustments */
+  .table-wrapper {
+    -webkit-overflow-scrolling: touch;
+  }
+  .table-wrapper::-webkit-scrollbar {
+    height: 6px !important;
+    background: transparent !important;
+    display: block !important;
+  }
+  .table-wrapper::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.18) !important;
+    border-radius: 3px !important;
+  }
+
+  .data-table th, .data-table td {
+    padding: 0.75rem 0.875rem !important;
+    font-size: 0.875rem !important;
+  }
+  
+  .data-table th {
+    font-size: 0.8rem !important;
+    padding-top: 0.875rem !important;
+    padding-bottom: 0.875rem !important;
+  }
+
+  /* Adjust actions dropdown buttons on mobile tables to be slightly more compact */
+  .actions-dropdown-btn {
+    padding: 6px 10px !important;
+    font-size: 0.8rem !important;
+  }
 }
 
 
