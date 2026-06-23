@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
 :root {
   --bg-dark: #ffffff;
@@ -2361,6 +2362,243 @@ body.theme-limbus {
   background-image: 
     radial-gradient(at 0% 0%, rgba(212, 158, 42, 0.18) 0px, transparent 55%),
     radial-gradient(at 100% 0%, rgba(156, 28, 28, 0.12) 0px, transparent 55%) !important;
+}
+
+/* Tema Minecraft ⛏️ (Estilo Retro Pixelado) */
+body.theme-minecraft {
+  --bg-dark: #1b1b1b;       /* Bedrock/Deepslate */
+  --bg-card: #2d2d2d;       /* Stone/Dark Oak */
+  --bg-input: #151515;      /* Obsidian/Dispenser slot */
+  --text-primary: #f0f0f0;  /* Off-white */
+  --text-secondary: #aaaaaa; /* Stone gray */
+  --border-color: #000000;  /* Solid black border for blocky feel */
+  --glass-border: 3px solid #555555; /* Minecraft UI double border */
+  --glass-shadow: 6px 6px 0px #000000; /* Flat 3D shadow */
+  --bg-hover: rgba(255, 255, 255, 0.08);
+  --bg-th: rgba(0, 0, 0, 0.4);
+  --header-bg: #2d2d2d;
+  
+  /* Rows in table (retro feel) */
+  --row-normal-bg: rgba(85, 255, 85, 0.05); /* Lime green */
+  --row-normal-hover: rgba(85, 255, 85, 0.12);
+  --row-warning-bg: rgba(255, 170, 0, 0.05); /* Gold */
+  --row-warning-hover: rgba(255, 170, 0, 0.12);
+  --row-danger-bg: rgba(255, 85, 85, 0.05);  /* Redstone */
+  --row-danger-hover: rgba(255, 85, 85, 0.12);
+  
+  --badge-bono-bg: #1a331a;
+  --badge-bono-text: #55ff55;
+  --badge-desc-bg: #331a1a;
+  --badge-desc-text: #ff5555;
+  
+  --primary-color: #5c8e32;      /* Minecraft Green */
+  --primary-hover: #4e782a;
+  --primary-shadow: rgba(92, 142, 50, 0.4);
+  --danger-color: #ff5555;       /* Redstone Red */
+  --danger-hover: #ff2222;
+  --success-color: #55ff55;
+  
+  --radius-lg: 0px !important;    /* Absolute square corners */
+  --radius-md: 0px !important;
+  --transition: none !important;  /* Snappy instant feel */
+  
+  /* Grid background linear gradients */
+  background-color: #1a1a1a !important;
+  background-image: 
+    linear-gradient(0deg, rgba(0, 0, 0, 0.25) 2px, transparent 2px),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.25) 2px, transparent 2px) !important;
+  background-size: 16px 16px !important;
+  font-family: 'Inter', sans-serif;
+}
+
+/* Enforce square corners and blocky borders for Minecraft */
+body.theme-minecraft .glass-card,
+body.theme-minecraft .modal-content,
+body.theme-minecraft .card,
+body.theme-minecraft .settings-modal-card,
+body.theme-minecraft .header-dropdown,
+body.theme-minecraft .notifications-dropdown,
+body.theme-minecraft .help-dropdown,
+body.theme-minecraft .sidebar,
+body.theme-minecraft .plancha-sidebar,
+body.theme-minecraft aside {
+  border-radius: 0px !important;
+  border: 4px solid #1e1e1e !important;
+  background: #2d2d2d !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: 
+    inset 3px 3px 0px #4a4a4a, 
+    inset -3px -3px 0px #181818, 
+    6px 6px 0px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* Minecraft Headers, Buttons and UI Specific Text */
+body.theme-minecraft h1,
+body.theme-minecraft h2,
+body.theme-minecraft h3,
+body.theme-minecraft h4,
+body.theme-minecraft h5,
+body.theme-minecraft h6,
+body.theme-minecraft .btn,
+body.theme-minecraft button,
+body.theme-minecraft .sidebar-item,
+body.theme-minecraft .plancha-sidebar-item,
+body.theme-minecraft .gradient-text,
+body.theme-minecraft .settings-item-label,
+body.theme-minecraft .settings-option-btn,
+body.theme-minecraft .command-palette-option-badge,
+body.theme-minecraft .kpi-label,
+body.theme-minecraft .kpi-value,
+body.theme-minecraft .badge,
+body.theme-minecraft th,
+body.theme-minecraft .logo-text,
+body.theme-minecraft .tab-btn {
+  font-family: 'Press Start 2P', 'Courier New', monospace !important;
+  text-transform: uppercase !important;
+  letter-spacing: -0.5px !important;
+}
+
+body.theme-minecraft h1 { font-size: 1.1rem !important; line-height: 1.6 !important; }
+body.theme-minecraft h2 { font-size: 0.95rem !important; line-height: 1.5 !important; }
+body.theme-minecraft h3 { font-size: 0.8rem !important; line-height: 1.4 !important; }
+body.theme-minecraft .logo-text { font-size: 0.95rem !important; color: #ffff55 !important; text-shadow: 2px 2px 0px #000 !important; }
+body.theme-minecraft th { font-size: 0.6rem !important; color: #ffff55 !important; background: #3c3c3c !important; }
+body.theme-minecraft td { font-size: 0.85rem !important; }
+
+/* Minecraft Button Styling (Classic Beveled 3D look) */
+body.theme-minecraft .btn,
+body.theme-minecraft button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
+  border-radius: 0px !important;
+  border: 3px solid #000000 !important;
+  background: #7e7e7e !important;
+  color: #ffffff !important;
+  text-shadow: 2px 2px 0px #222 !important;
+  box-shadow: 
+    inset 2px 2px 0px #bfbfbf, 
+    inset -2px -2px 0px #3c3c3c !important;
+  image-rendering: pixelated;
+  font-size: 0.65rem !important;
+  padding: 8px 14px !important;
+  position: relative;
+  transition: none !important;
+  cursor: pointer;
+}
+
+body.theme-minecraft .btn:hover,
+body.theme-minecraft button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
+  background: #5c8e32 !important; /* Grass Green */
+  border-color: #000000 !important;
+  box-shadow: 
+    inset 2px 2px 0px #85c453, 
+    inset -2px -2px 0px #324e1b !important;
+  color: #ffff55 !important; /* Yellow hover text */
+}
+
+body.theme-minecraft .btn:active,
+body.theme-minecraft button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):active {
+  box-shadow: 
+    inset -2px -2px 0px #bfbfbf, 
+    inset 2px 2px 0px #3c3c3c !important;
+  transform: translateY(1px);
+}
+
+/* Active buttons and options */
+body.theme-minecraft .btn-primary,
+body.theme-minecraft button.active,
+body.theme-minecraft .settings-option-btn.active,
+body.theme-minecraft .tab-btn.active {
+  background: #5c8e32 !important;
+  box-shadow: 
+    inset 2px 2px 0px #85c453, 
+    inset -2px -2px 0px #324e1b !important;
+}
+
+body.theme-minecraft .btn-primary:hover {
+  background: #7faa45 !important;
+  box-shadow: 
+    inset 2px 2px 0px #b2db6b, 
+    inset -2px -2px 0px #4a6328 !important;
+}
+
+/* Danger buttons */
+body.theme-minecraft .btn-danger {
+  background: #ff5555 !important;
+  box-shadow: 
+    inset 2px 2px 0px #ffaaaa, 
+    inset -2px -2px 0px #aa2222 !important;
+}
+body.theme-minecraft .btn-danger:hover {
+  background: #ff2222 !important;
+  box-shadow: 
+    inset 2px 2px 0px #ff8888, 
+    inset -2px -2px 0px #770000 !important;
+}
+
+/* Inputs and Forms */
+body.theme-minecraft .form-input,
+body.theme-minecraft input:not([type="checkbox"]):not([type="radio"]),
+body.theme-minecraft select,
+body.theme-minecraft textarea {
+  border-radius: 0px !important;
+  border: 3px solid #1e1e1e !important;
+  background: #151515 !important;
+  color: #e0e0e0 !important;
+  box-shadow: inset 2px 2px 0px #0a0a0a !important;
+}
+body.theme-minecraft .form-input:focus,
+body.theme-minecraft input:focus,
+body.theme-minecraft select:focus,
+body.theme-minecraft textarea:focus {
+  border-color: #55ffff !important; /* Diamond Blue highlight */
+  outline: none !important;
+}
+
+/* Table styling */
+body.theme-minecraft table,
+body.theme-minecraft th,
+body.theme-minecraft td {
+  border-radius: 0px !important;
+  border: 3px solid #1e1e1e !important;
+}
+
+/* Sidebar Minecraft theme adjustments */
+body.theme-minecraft .sidebar,
+body.theme-minecraft .plancha-sidebar,
+body.theme-minecraft aside {
+  border-right: 4px solid #1e1e1e !important;
+  background: #222222 !important;
+}
+
+body.theme-minecraft .sidebar-item,
+body.theme-minecraft .plancha-sidebar-item {
+  border-radius: 0px !important;
+  border: 2px solid transparent !important;
+  font-size: 0.6rem !important;
+  padding: 12px 16px !important;
+}
+
+body.theme-minecraft .sidebar-item.active,
+body.theme-minecraft .plancha-sidebar-item.active {
+  background: #3a3a3a !important;
+  border: 2px solid #5c8e32 !important;
+  color: #55ff55 !important;
+}
+
+/* Scrollbar styles */
+body.theme-minecraft *::-webkit-scrollbar {
+  width: 12px !important;
+  height: 12px !important;
+}
+body.theme-minecraft *::-webkit-scrollbar-track {
+  background: #151515 !important;
+}
+body.theme-minecraft *::-webkit-scrollbar-thumb {
+  background: #4a4a4a !important;
+  border: 3px solid #151515 !important;
+}
+body.theme-minecraft *::-webkit-scrollbar-thumb:hover {
+  background: #5c8e32 !important;
 }
 
 /* Dropdown Actions Menu Styles */

@@ -622,6 +622,12 @@ export default function Header({ onToggleSidebar }) {
                     {settings.theme === 'limbus' && <Check size={14} />} {t('settings.themeLimbus')}
                   </button>
                   <button 
+                    className={`settings-option-btn ${settings.theme === 'minecraft' ? 'active' : ''}`}
+                    onClick={() => toggleSetting('theme', 'minecraft')}
+                  >
+                    {settings.theme === 'minecraft' && <Check size={14} />} {t('settings.themeMinecraft')}
+                  </button>
+                  <button 
                     className={`settings-option-btn ${settings.theme === 'system' ? 'active' : ''}`}
                     onClick={() => toggleSetting('theme', 'system')}
                     style={{ flexBasis: '100%' }}

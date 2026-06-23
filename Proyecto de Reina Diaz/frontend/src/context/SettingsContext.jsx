@@ -128,6 +128,7 @@ const translations = {
     'settings.themeMiku': 'Hatsune Miku 🌐',
     'settings.themeTeto': 'Kasane Teto 🥖',
     'settings.themeLimbus': 'Limbus Company 🚂',
+    'settings.themeMinecraft': 'Minecraft ⛏️',
     'settings.accentLabel': 'Color de Acento',
     'settings.accentDesc': 'Elige un color personalizado para destacar elementos de la interfaz.',
     'settings.currencyLabel': 'Formato de Moneda',
@@ -573,6 +574,7 @@ const translations = {
     'settings.themeMiku': 'Hatsune Miku 🌐',
     'settings.themeTeto': 'Kasane Teto 🥖',
     'settings.themeLimbus': 'Limbus Company 🚂',
+    'settings.themeMinecraft': 'Minecraft ⛏️',
     'settings.accentLabel': 'Accent Color',
     'settings.accentDesc': 'Choose a custom color to highlight interface elements.',
     'settings.currencyLabel': 'Currency Format',
@@ -934,16 +936,16 @@ export const SettingsProvider = ({ children }) => {
   // Apply visual theme (Light / Dark / System)
   useEffect(() => {
     const applyTheme = () => {
-      document.body.classList.remove('dark-mode', 'theme-ocean', 'theme-nature', 'theme-sunset', 'theme-lavender', 'theme-cherry', 'theme-midnight', 'theme-dim', 'theme-miku', 'theme-teto', 'theme-limbus');
+      document.body.classList.remove('dark-mode', 'theme-ocean', 'theme-nature', 'theme-sunset', 'theme-lavender', 'theme-cherry', 'theme-midnight', 'theme-dim', 'theme-miku', 'theme-teto', 'theme-limbus', 'theme-minecraft');
 
       const isSystemDark = settings.theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches;
-      const isAnyDark = ['dark', 'ocean', 'nature', 'sunset', 'lavender', 'cherry', 'midnight', 'dim', 'miku', 'teto', 'limbus'].includes(settings.theme) || isSystemDark;
+      const isAnyDark = ['dark', 'ocean', 'nature', 'sunset', 'lavender', 'cherry', 'midnight', 'dim', 'miku', 'teto', 'limbus', 'minecraft'].includes(settings.theme) || isSystemDark;
 
       if (isAnyDark) {
         document.body.classList.add('dark-mode');
       }
       
-      if (['ocean', 'nature', 'sunset', 'lavender', 'cherry', 'midnight', 'dim', 'miku', 'teto', 'limbus'].includes(settings.theme)) {
+      if (['ocean', 'nature', 'sunset', 'lavender', 'cherry', 'midnight', 'dim', 'miku', 'teto', 'limbus', 'minecraft'].includes(settings.theme)) {
         document.body.classList.add(`theme-${settings.theme}`);
       }
     };
