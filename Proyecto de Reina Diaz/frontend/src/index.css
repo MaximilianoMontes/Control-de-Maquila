@@ -2668,7 +2668,8 @@ body.theme-geometry .kpi-value {
 }
 
 body.theme-geometry .btn,
-body.theme-geometry button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle) {
+body.theme-geometry button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle),
+body.theme-geometry .actions-dropdown-item {
   border: 2px solid #1bf259 !important;
   background: transparent !important;
   color: #1bf259 !important;
@@ -2678,7 +2679,8 @@ body.theme-geometry button:not(.close-btn):not(.search-clear-btn):not(.mobile-me
 }
 
 body.theme-geometry .btn:hover,
-body.theme-geometry button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):hover {
+body.theme-geometry button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):hover,
+body.theme-geometry .actions-dropdown-item:hover {
   background: #1bf259 !important;
   color: #090a0f !important;
   box-shadow: 0 0 15px #1bf259 !important;
@@ -2762,7 +2764,8 @@ body.theme-fallout .settings-modal-card {
 }
 
 body.theme-fallout .btn,
-body.theme-fallout button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle) {
+body.theme-fallout button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle),
+body.theme-fallout .actions-dropdown-item {
   border: 1px solid #33ff33 !important;
   background: transparent !important;
   color: #33ff33 !important;
@@ -2771,7 +2774,8 @@ body.theme-fallout button:not(.close-btn):not(.search-clear-btn):not(.mobile-men
 }
 
 body.theme-fallout .btn:hover,
-body.theme-fallout button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):hover {
+body.theme-fallout button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):hover,
+body.theme-fallout .actions-dropdown-item:hover {
   background: #33ff33 !important;
   color: #121810 !important;
   text-shadow: none !important;
@@ -2832,7 +2836,8 @@ body.theme-tf2 .btn,
 body.theme-tf2 button,
 body.theme-tf2 .sidebar-item,
 body.theme-tf2 .plancha-sidebar-item,
-body.theme-tf2 th {
+body.theme-tf2 th,
+body.theme-tf2 .actions-dropdown-item {
   font-family: 'Impact', 'Arial Black', sans-serif !important;
   text-transform: uppercase !important;
   letter-spacing: 1px !important;
@@ -2850,7 +2855,8 @@ body.theme-tf2 .settings-modal-card {
 }
 
 body.theme-tf2 .btn,
-body.theme-tf2 button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle) {
+body.theme-tf2 button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle),
+body.theme-tf2 .actions-dropdown-item {
   background: #e28532 !important;
   color: #282421 !important;
   border: 2px solid #282421 !important;
@@ -2859,7 +2865,8 @@ body.theme-tf2 button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-to
 }
 
 body.theme-tf2 .btn:hover,
-body.theme-tf2 button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):hover {
+body.theme-tf2 button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):hover,
+body.theme-tf2 .actions-dropdown-item:hover {
   background: #f5e7c8 !important;
   color: #282421 !important;
 }
@@ -2940,7 +2947,8 @@ body.theme-cyberpunk .settings-modal-card {
 }
 
 body.theme-cyberpunk .btn,
-body.theme-cyberpunk button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle) {
+body.theme-cyberpunk button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle),
+body.theme-cyberpunk .actions-dropdown-item {
   border-radius: 0px !important;
   border: 2px solid #00f0ff !important;
   background: transparent !important;
@@ -2952,7 +2960,8 @@ body.theme-cyberpunk button:not(.close-btn):not(.search-clear-btn):not(.mobile-m
 }
 
 body.theme-cyberpunk .btn:hover,
-body.theme-cyberpunk button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):hover {
+body.theme-cyberpunk button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):hover,
+body.theme-cyberpunk .actions-dropdown-item:hover {
   background: #00f0ff !important;
   color: #000000 !important;
   box-shadow: 0 0 15px #00f0ff !important;
