@@ -4288,4 +4288,1070 @@ body[class*="theme-"] .launcher-container {
   background-image: none !important;
 }
 
+/* ==========================================================================
+   THEMES INYECTADOS ADICIONALES (13 JUEGOS CLÁSICOS Y MODERNOS)
+   ========================================================================== */
+
+/* 1. Escape the Backrooms Theme */
+body.theme-backrooms {
+  --bg-dark: #2d3020;
+  --bg-card: #202216;
+  --bg-input: #15170f;
+  --text-primary: #e6dfb8;
+  --text-secondary: #a69f7c;
+  --border-color: rgba(166, 159, 124, 0.2);
+  --glass-border: 1px solid rgba(166, 159, 124, 0.15);
+  --glass-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.5);
+  --bg-hover: rgba(230, 223, 184, 0.08);
+  --bg-th: rgba(230, 223, 184, 0.12);
+  --header-bg: rgba(32, 34, 22, 0.9);
+  --row-normal-bg: rgba(230, 223, 70, 0.05);
+  --row-normal-hover: rgba(230, 223, 70, 0.12);
+  --row-warning-bg: rgba(245, 158, 11, 0.08);
+  --row-warning-hover: rgba(245, 158, 11, 0.15);
+  --row-danger-bg: rgba(239, 68, 68, 0.1);
+  --row-danger-hover: rgba(239, 68, 68, 0.18);
+  --badge-bono-bg: rgba(230, 223, 70, 0.2);
+  --badge-bono-text: #e6df45;
+  --badge-desc-bg: rgba(239, 68, 68, 0.25);
+  --badge-desc-text: #f87171;
+  
+  --primary-color: #d1c838;
+  --primary-hover: #b0a82e;
+  --primary-shadow: rgba(209, 200, 56, 0.4);
+  
+  background-image: 
+    linear-gradient(rgba(18, 20, 12, 0.45) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(18, 20, 12, 0.45) 1px, transparent 1px) !important;
+  background-size: 20px 20px !important;
+  background-attachment: fixed !important;
+  font-family: 'Courier New', Courier, monospace !important;
+}
+body.theme-backrooms h1, body.theme-backrooms h2, body.theme-backrooms h3, body.theme-backrooms .logo-text, body.theme-backrooms .kpi-value {
+  color: #e6df45 !important;
+  text-shadow: 0 0 5px rgba(230, 223, 69, 0.5) !important;
+  text-transform: uppercase !important;
+}
+body.theme-backrooms .glass-card, body.theme-backrooms .modal-content, body.theme-backrooms .sidebar, body.theme-backrooms .plancha-sidebar, body.theme-backrooms aside {
+  border: 1.5px solid #a69f7c !important;
+  border-radius: 0px !important;
+  background: #202216 !important;
+}
+body.theme-backrooms .btn, body.theme-backrooms button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
+  border: 1px solid #e6df45 !important;
+  background: #15170f !important;
+  color: #e6df45 !important;
+  border-radius: 0px !important;
+  font-family: 'Courier New', Courier, monospace !important;
+}
+body.theme-backrooms .btn:hover, body.theme-backrooms button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
+  background: #e6df45 !important;
+  color: #15170f !important;
+  box-shadow: 0 0 12px rgba(230, 223, 69, 0.6) !important;
+}
+
+/* 2. Terraria Theme */
+body.theme-terraria {
+  --bg-dark: #160e0a;
+  --bg-card: #251d18;
+  --bg-input: #1a1411;
+  --text-primary: #f0eae5;
+  --text-secondary: #bfb2ab;
+  --border-color: #4e3f35;
+  --glass-border: 1px solid #5c4b3f;
+  --glass-shadow: 0 6px 20px rgba(0,0,0,0.6);
+  --bg-hover: rgba(135, 93, 62, 0.15);
+  --bg-th: rgba(135, 93, 62, 0.2);
+  --header-bg: rgba(37, 29, 24, 0.95);
+  --row-normal-bg: rgba(76, 175, 80, 0.08);
+  --row-normal-hover: rgba(76, 175, 80, 0.15);
+  --row-warning-bg: rgba(255, 152, 0, 0.08);
+  --row-warning-hover: rgba(255, 152, 0, 0.15);
+  --row-danger-bg: rgba(244, 67, 54, 0.1);
+  --row-danger-hover: rgba(244, 67, 54, 0.18);
+  --badge-bono-bg: rgba(76, 175, 80, 0.25);
+  --badge-bono-text: #81c784;
+  --badge-desc-bg: rgba(244, 67, 54, 0.25);
+  --badge-desc-text: #e57373;
+  
+  --primary-color: #875d3e;
+  --primary-hover: #a0724f;
+  --primary-shadow: rgba(135, 93, 62, 0.4);
+  
+  font-family: 'Courier New', Courier, monospace !important;
+}
+body.theme-terraria h1, body.theme-terraria h2, body.theme-terraria h3, body.theme-terraria .logo-text, body.theme-terraria .kpi-value {
+  color: #81c784 !important;
+  text-shadow: 2px 2px 0px #000 !important;
+}
+body.theme-terraria .glass-card, body.theme-terraria .modal-content, body.theme-terraria .sidebar, body.theme-terraria .plancha-sidebar, body.theme-terraria aside {
+  border: 3px solid #4e3f35 !important;
+  border-radius: 4px !important;
+  background: #251d18 !important;
+  box-shadow: inset 2px 2px 0px #3c2f25, 4px 4px 0px rgba(0,0,0,0.5) !important;
+}
+body.theme-terraria .btn, body.theme-terraria button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
+  border: 2px solid #5c4b3f !important;
+  background: linear-gradient(to bottom, #875d3e, #5c3b24) !important;
+  color: #ffffff !important;
+  border-radius: 4px !important;
+  font-family: 'Courier New', Courier, monospace !important;
+  text-shadow: 1px 1px 0px #000 !important;
+  box-shadow: 2px 2px 0px rgba(0,0,0,0.3) !important;
+}
+body.theme-terraria .btn:hover, body.theme-terraria button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
+  background: linear-gradient(to bottom, #a0724f, #7c5132) !important;
+  border-color: #875d3e !important;
+}
+
+/* 3. Castle Crashers Theme */
+body.theme-castle {
+  --bg-dark: #12131a;
+  --bg-card: #1d1e26;
+  --bg-input: #262833;
+  --text-primary: #ffffff;
+  --text-secondary: #8b92a6;
+  --border-color: #0c0d12;
+  --glass-border: 3px solid #0c0d12;
+  --glass-shadow: 0 8px 0 rgba(0, 0, 0, 0.5);
+  --bg-hover: rgba(255, 255, 255, 0.05);
+  --bg-th: rgba(255, 255, 255, 0.08);
+  --header-bg: rgba(29, 30, 38, 0.95);
+  --row-normal-bg: rgba(56, 161, 105, 0.1);
+  --row-normal-hover: rgba(56, 161, 105, 0.2);
+  --row-warning-bg: rgba(214, 158, 46, 0.1);
+  --row-warning-hover: rgba(214, 158, 46, 0.2);
+  --row-danger-bg: rgba(229, 62, 62, 0.12);
+  --row-danger-hover: rgba(229, 62, 62, 0.22);
+  --badge-bono-bg: #38a169;
+  --badge-bono-text: #ffffff;
+  --badge-desc-bg: #e53e3e;
+  --badge-desc-text: #ffffff;
+  
+  --primary-color: #3182ce;
+  --primary-hover: #2b6cb0;
+  --primary-shadow: rgba(49, 130, 206, 0.4);
+}
+body.theme-castle h1, body.theme-castle h2, body.theme-castle h3, body.theme-castle .logo-text, body.theme-castle .kpi-value {
+  font-family: 'Impact', 'Arial Black', sans-serif !important;
+  letter-spacing: 1px !important;
+  text-transform: uppercase !important;
+  color: #ffffff !important;
+  -webkit-text-stroke: 1.5px #000;
+  text-shadow: 3px 3px 0px #3182ce !important;
+}
+body.theme-castle .glass-card, body.theme-castle .modal-content, body.theme-castle .sidebar, body.theme-castle .plancha-sidebar, body.theme-castle aside {
+  border: 3px solid #0c0d12 !important;
+  border-radius: 20px !important;
+  background: #1d1e26 !important;
+  box-shadow: 6px 6px 0 #0c0d12 !important;
+}
+body.theme-castle .btn, body.theme-castle button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
+  border: 3px solid #0c0d12 !important;
+  background: #3182ce !important;
+  color: #ffffff !important;
+  border-radius: 12px !important;
+  font-family: 'Impact', 'Arial Black', sans-serif !important;
+  text-transform: uppercase !important;
+  box-shadow: 3px 3px 0 #0c0d12 !important;
+  transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+}
+body.theme-castle .btn:hover, body.theme-castle button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
+  transform: scale(1.06) rotate(1deg) !important;
+  background: #4299e1 !important;
+  color: #ffffff !important;
+}
+body.theme-castle .btn-danger {
+  background: #e53e3e !important;
+}
+body.theme-castle .btn-danger:hover {
+  background: #f56565 !important;
+}
+
+/* 4. Star Wars Theme */
+body.theme-starwars {
+  --bg-dark: #030408;
+  --bg-card: #090c15;
+  --bg-input: #101424;
+  --text-primary: #d1f7ff;
+  --text-secondary: #6cb0c0;
+  --border-color: rgba(0, 240, 255, 0.2);
+  --glass-border: 1px solid rgba(0, 240, 255, 0.25);
+  --glass-shadow: 0 0 20px rgba(0, 240, 255, 0.15);
+  --bg-hover: rgba(0, 240, 255, 0.08);
+  --bg-th: rgba(0, 240, 255, 0.12);
+  --header-bg: rgba(9, 12, 21, 0.9);
+  --row-normal-bg: rgba(0, 240, 255, 0.05);
+  --row-normal-hover: rgba(0, 240, 255, 0.12);
+  --row-warning-bg: rgba(245, 158, 11, 0.08);
+  --row-warning-hover: rgba(245, 158, 11, 0.15);
+  --row-danger-bg: rgba(255, 26, 26, 0.08);
+  --row-danger-hover: rgba(255, 26, 26, 0.15);
+  --badge-bono-bg: rgba(0, 240, 255, 0.2);
+  --badge-bono-text: #00f0ff;
+  --badge-desc-bg: rgba(255, 26, 26, 0.25);
+  --badge-desc-text: #ff3b3b;
+  
+  --primary-color: #00f0ff;
+  --primary-hover: #00bcd4;
+  --primary-shadow: rgba(0, 240, 255, 0.4);
+  --danger-color: #ff1a1a;
+  --danger-hover: #d30000;
+  
+  background-image: 
+    radial-gradient(2px 2px at 20px 30px, #eee, rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 150px 80px, #fff, rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 80px 220px, #ddd, rgba(0,0,0,0)) !important;
+  background-color: #030408 !important;
+}
+body.theme-starwars h1, body.theme-starwars h2, body.theme-starwars h3, body.theme-starwars .logo-text, body.theme-starwars .kpi-value {
+  font-family: 'Inter', sans-serif !important;
+  font-weight: 900 !important;
+  letter-spacing: 2px !important;
+  text-transform: uppercase !important;
+  color: #00f0ff !important;
+  text-shadow: 0 0 12px rgba(0, 240, 255, 0.7) !important;
+}
+body.theme-starwars .glass-card, body.theme-starwars .modal-content, body.theme-starwars .sidebar, body.theme-starwars .plancha-sidebar, body.theme-starwars aside {
+  border: 1px solid #00f0ff !important;
+  background: #090c15 !important;
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.2) !important;
+}
+body.theme-starwars .btn, body.theme-starwars button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
+  border: 1px solid #00f0ff !important;
+  background: rgba(0, 240, 255, 0.05) !important;
+  color: #00f0ff !important;
+  text-shadow: 0 0 5px rgba(0, 240, 255, 0.5) !important;
+  border-radius: 0px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1px !important;
+}
+body.theme-starwars .btn:hover, body.theme-starwars button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
+  background: #00f0ff !important;
+  color: #030408 !important;
+  box-shadow: 0 0 15px #00f0ff !important;
+}
+body.theme-starwars .btn-danger {
+  border-color: #ff1a1a !important;
+  color: #ff1a1a !important;
+  background: rgba(255, 26, 26, 0.05) !important;
+}
+body.theme-starwars .btn-danger:hover {
+  background: #ff1a1a !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 15px #ff1a1a !important;
+}
+
+/* 5. Call of Duty: Black Ops 3 Theme */
+body.theme-cod3 {
+  --bg-dark: #07090c;
+  --bg-card: #11141b;
+  --bg-input: #1a1e28;
+  --text-primary: #e1e6eb;
+  --text-secondary: #707c8a;
+  --border-color: #ff7700;
+  --glass-border: 1px solid rgba(255, 119, 0, 0.3);
+  --glass-shadow: 0 8px 30px rgba(0,0,0,0.6);
+  --bg-hover: rgba(255, 119, 0, 0.08);
+  --bg-th: rgba(255, 119, 0, 0.12);
+  --header-bg: rgba(17, 20, 27, 0.95);
+  --row-normal-bg: rgba(255, 119, 0, 0.05);
+  --row-normal-hover: rgba(255, 119, 0, 0.12);
+  --row-warning-bg: rgba(245, 158, 11, 0.08);
+  --row-warning-hover: rgba(245, 158, 11, 0.15);
+  --row-danger-bg: rgba(239, 68, 68, 0.1);
+  --row-danger-hover: rgba(239, 68, 68, 0.18);
+  --badge-bono-bg: rgba(255, 119, 0, 0.2);
+  --badge-bono-text: #ff7700;
+  --badge-desc-bg: rgba(239, 68, 68, 0.25);
+  --badge-desc-text: #f87171;
+  
+  --primary-color: #ff7700;
+  --primary-hover: #e06600;
+  --primary-shadow: rgba(255, 119, 0, 0.4);
+  
+  background-image: 
+    linear-gradient(45deg, rgba(255,119,0,0.02) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(255,119,0,0.02) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, rgba(255,119,0,0.02) 75%),
+    linear-gradient(-45deg, transparent 75%, rgba(255,119,0,0.02) 75%) !important;
+  background-size: 30px 30px !important;
+}
+body.theme-cod3 h1, body.theme-cod3 h2, body.theme-cod3 h3, body.theme-cod3 .logo-text, body.theme-cod3 .kpi-value {
+  font-family: 'Impact', 'Arial Black', sans-serif !important;
+  letter-spacing: 1.5px !important;
+  text-transform: uppercase !important;
+  color: #ff7700 !important;
+  text-shadow: 0 0 8px rgba(255, 119, 0, 0.5) !important;
+}
+body.theme-cod3 .glass-card, body.theme-cod3 .modal-content, body.theme-cod3 .sidebar, body.theme-cod3 .plancha-sidebar, body.theme-cod3 aside {
+  border: 1px solid rgba(255, 119, 0, 0.4) !important;
+  background: #11141b !important;
+  box-shadow: 0 0 15px rgba(255, 119, 0, 0.15) !important;
+}
+body.theme-cod3 .btn, body.theme-cod3 button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
+  border: 1px solid #ff7700 !important;
+  background: #1a1e28 !important;
+  color: #ff7700 !important;
+  border-radius: 0px !important;
+  text-transform: uppercase !important;
+  font-family: 'Impact', 'Arial Black', sans-serif !important;
+  font-weight: bold !important;
+  letter-spacing: 1px !important;
+}
+body.theme-cod3 .btn:hover, body.theme-cod3 button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
+  background: #ff7700 !important;
+  color: #07090c !important;
+  box-shadow: 0 0 15px rgba(255, 119, 0, 0.6) !important;
+}
+
+/* 6. Subnautica Theme */
+body.theme-subnautica {
+  --bg-dark: #020612;
+  --bg-card: #061329;
+  --bg-input: #0b1e3d;
+  --text-primary: #e0f7fc;
+  --text-secondary: #6792a4;
+  --border-color: rgba(0, 210, 255, 0.25);
+  --glass-border: 1px solid rgba(0, 210, 255, 0.3);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  --bg-hover: rgba(0, 210, 255, 0.08);
+  --bg-th: rgba(0, 210, 255, 0.12);
+  --header-bg: rgba(6, 19, 41, 0.9);
+  --row-normal-bg: rgba(0, 255, 204, 0.05);
+  --row-normal-hover: rgba(0, 255, 204, 0.12);
+  --row-warning-bg: rgba(255, 144, 0, 0.08);
+  --row-warning-hover: rgba(255, 144, 0, 0.15);
+  --row-danger-bg: rgba(239, 68, 68, 0.1);
+  --row-danger-hover: rgba(239, 68, 68, 0.18);
+  --badge-bono-bg: rgba(0, 255, 204, 0.2);
+  --badge-bono-text: #00ffcc;
+  --badge-desc-bg: rgba(255, 144, 0, 0.2);
+  --badge-desc-text: #ff9000;
+  
+  --primary-color: #00d2ff;
+  --primary-hover: #00a5cc;
+  --primary-shadow: rgba(0, 210, 255, 0.4);
+  
+  background-image: radial-gradient(circle at 50% 50%, #081730 0%, #020612 100%) !important;
+}
+body.theme-subnautica h1, body.theme-subnautica h2, body.theme-subnautica h3, body.theme-subnautica .logo-text, body.theme-subnautica .kpi-value {
+  color: #00d2ff !important;
+  text-shadow: 0 0 10px rgba(0, 210, 255, 0.5) !important;
+}
+body.theme-subnautica .glass-card, body.theme-subnautica .modal-content, body.theme-subnautica .sidebar, body.theme-subnautica .plancha-sidebar, body.theme-subnautica aside {
+  border: 1.5px solid rgba(0, 210, 255, 0.4) !important;
+  background: rgba(6, 19, 41, 0.85) !important;
+  box-shadow: 0 0 20px rgba(0, 210, 255, 0.15) !important;
+}
+@keyframes sonar-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(0, 210, 255, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(0, 210, 255, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(0, 210, 255, 0); }
+}
+body.theme-subnautica .btn, body.theme-subnautica button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
+  border: 1.5px solid #00d2ff !important;
+  border-radius: 20px !important;
+  background: transparent !important;
+  color: #00d2ff !important;
+  animation: sonar-pulse 2s infinite;
+}
+body.theme-subnautica .btn:hover, body.theme-subnautica button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
+  background: #00d2ff !important;
+  color: #020612 !important;
+  box-shadow: 0 0 15px #00d2ff !important;
+}
+
+/* 7. Cuphead Theme */
+body.theme-cuphead {
+  --bg-dark: #e6d7bc;
+  --bg-card: #faf1db;
+  --bg-input: #ebdcb9;
+  --text-primary: #28221d;
+  --text-secondary: #61554a;
+  --border-color: #28221d;
+  --glass-border: 2px solid #28221d;
+  --glass-shadow: 4px 4px 0px #28221d;
+  --bg-hover: rgba(40, 34, 29, 0.08);
+  --bg-th: rgba(40, 34, 29, 0.12);
+  --header-bg: rgba(250, 241, 219, 0.95);
+  --row-normal-bg: rgba(201, 54, 43, 0.05);
+  --row-normal-hover: rgba(201, 54, 43, 0.12);
+  --row-warning-bg: rgba(223, 156, 44, 0.08);
+  --row-warning-hover: rgba(223, 156, 44, 0.15);
+  --row-danger-bg: rgba(201, 54, 43, 0.1);
+  --row-danger-hover: rgba(201, 54, 43, 0.18);
+  --badge-bono-bg: #df9c2c;
+  --badge-bono-text: #28221d;
+  --badge-desc-bg: #c9362b;
+  --badge-desc-text: #ffffff;
+  
+  --primary-color: #c9362b;
+  --primary-hover: #b02e24;
+  --primary-shadow: rgba(201, 54, 43, 0.4);
+  
+  font-family: 'Georgia', serif !important;
+}
+@keyframes frame-wobble {
+  0% { transform: rotate(0deg) translate(0, 0); }
+  25% { transform: rotate(0.5deg) translate(1px, -1px); }
+  50% { transform: rotate(-0.5deg) translate(-1px, 1px); }
+  75% { transform: rotate(0.3deg) translate(1px, 1px); }
+  100% { transform: rotate(0deg) translate(0, 0); }
+}
+body.theme-cuphead h1, body.theme-cuphead h2, body.theme-cuphead h3, body.theme-cuphead .logo-text, body.theme-cuphead .kpi-value {
+  font-family: 'Impact', sans-serif !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1px !important;
+  color: #c9362b !important;
+}
+body.theme-cuphead .glass-card, body.theme-cuphead .modal-content, body.theme-cuphead .sidebar, body.theme-cuphead .plancha-sidebar, body.theme-cuphead aside {
+  border: 2px solid #28221d !important;
+  border-radius: 4px !important;
+  background: #faf1db !important;
+  box-shadow: 5px 5px 0 #28221d !important;
+  animation: frame-wobble 0.6s step-end infinite;
+}
+body.theme-cuphead .btn, body.theme-cuphead button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
+  border: 2px solid #28221d !important;
+  background: #df9c2c !important;
+  color: #28221d !important;
+  border-radius: 0px !important;
+  font-family: 'Georgia', serif !important;
+  font-weight: bold !important;
+  box-shadow: 3px 3px 0 #28221d !important;
+}
+body.theme-cuphead .btn:hover, body.theme-cuphead button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
+  background: #c9362b !important;
+  color: #ffffff !important;
+  transform: translate(-2px, -2px) !important;
+  box-shadow: 5px 5px 0 #28221d !important;
+}
+
+/* 8. Doki Doki Literature Club Theme */
+body.theme-ddlc {
+  --bg-dark: #fff2f6;
+  --bg-card: #ffffff;
+  --bg-input: #fff8fa;
+  --text-primary: #ff4d79;
+  --text-secondary: #ff85a2;
+  --border-color: #ffb3c6;
+  --glass-border: 2px solid #ffb3c6;
+  --glass-shadow: 0 8px 24px rgba(255, 179, 198, 0.3);
+  --bg-hover: rgba(255, 77, 121, 0.05);
+  --bg-th: rgba(255, 77, 121, 0.1);
+  --header-bg: rgba(255, 255, 255, 0.95);
+  --row-normal-bg: rgba(255, 77, 121, 0.04);
+  --row-normal-hover: rgba(255, 77, 121, 0.08);
+  --row-warning-bg: rgba(245, 158, 11, 0.08);
+  --row-warning-hover: rgba(245, 158, 11, 0.15);
+  --row-danger-bg: rgba(139, 0, 0, 0.05);
+  --row-danger-hover: rgba(139, 0, 0, 0.12);
+  --badge-bono-bg: rgba(255, 77, 121, 0.15);
+  --badge-bono-text: #ff4d79;
+  --badge-desc-bg: rgba(139, 0, 0, 0.15);
+  --badge-desc-text: #8b0000;
+  
+  --primary-color: #ff4d79;
+  --primary-hover: #ff1a53;
+  --primary-shadow: rgba(255, 77, 121, 0.4);
+  
+  background-image: 
+    repeating-linear-gradient(45deg, #fff0f4, #fff0f4 15px, #fff5f8 15px, #fff5f8 30px) !important;
+}
+@keyframes ddlc-jitter {
+  0% { transform: translate(0); }
+  20% { transform: translate(-2px, 2px) skewX(2deg); }
+  40% { transform: translate(2px, -1px) skewY(-1deg); }
+  60% { transform: translate(-1px, -2px) skewX(-2deg); }
+  80% { transform: translate(2px, 1px) skewY(1deg); }
+  100% { transform: translate(0); }
+}
+body.theme-ddlc h1, body.theme-ddlc h2, body.theme-ddlc h3, body.theme-ddlc .logo-text, body.theme-ddlc .kpi-value {
+  font-family: 'Comic Sans MS', sans-serif !important;
+  color: #ff4d79 !important;
+  text-shadow: 1px 1px 0px #ffffff, 2px 2px 0px #ffb3c6 !important;
+}
+body.theme-ddlc .glass-card, body.theme-ddlc .modal-content, body.theme-ddlc .sidebar, body.theme-ddlc .plancha-sidebar, body.theme-ddlc aside {
+  border-radius: 20px !important;
+  border: 2px solid #ffb3c6 !important;
+  background: #ffffff !important;
+}
+body.theme-ddlc .btn, body.theme-ddlc button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
+  border-radius: 30px !important;
+  border: 2px solid #ff4d79 !important;
+  background: #ffffff !important;
+  color: #ff4d79 !important;
+  font-weight: bold !important;
+  transition: all 0.2s ease !important;
+}
+body.theme-ddlc .btn:hover, 
+body.theme-ddlc button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover, 
+body.theme-ddlc .nav-link:hover, 
+body.theme-ddlc .data-table tr:hover {
+  animation: ddlc-jitter 0.15s infinite !important;
+  box-shadow: 3px -3px 0 #00ffff, -3px 3px 0 #ff00ff !important;
+  border-color: #8b0000 !important;
+  color: #8b0000 !important;
+  background: rgba(139, 0, 0, 0.1) !important;
+  font-family: 'Courier New', Courier, monospace !important;
+}
+
+/* 9. Undertale / Deltarune Theme */
+body.theme-undertale {
+  --bg-dark: #000000;
+  --bg-card: #000000;
+  --bg-input: #000000;
+  --text-primary: #ffffff;
+  --text-secondary: #aaaaaa;
+  --border-color: #ffffff;
+  --glass-border: 2px solid #ffffff;
+  --glass-shadow: 0 0 0 transparent;
+  --bg-hover: rgba(255, 255, 255, 0.15);
+  --bg-th: rgba(255, 255, 255, 0.2);
+  --header-bg: #000000;
+  --row-normal-bg: rgba(255, 0, 0, 0.05);
+  --row-normal-hover: rgba(255, 0, 0, 0.15);
+  --row-warning-bg: rgba(255, 255, 0, 0.08);
+  --row-warning-hover: rgba(255, 255, 0, 0.15);
+  --row-danger-bg: rgba(255, 0, 0, 0.1);
+  --row-danger-hover: rgba(255, 0, 0, 0.2);
+  --badge-bono-bg: #ffff00;
+  --badge-bono-text: #000000;
+  --badge-desc-bg: #ff0000;
+  --badge-desc-text: #ffffff;
+  
+  --primary-color: #ffffff;
+  --primary-hover: #dddddd;
+  --primary-shadow: rgba(255, 255, 255, 0.2);
+  
+  background-image: none !important;
+  font-family: 'Courier New', Courier, monospace !important;
+}
+body.theme-undertale h1, body.theme-undertale h2, body.theme-undertale h3, body.theme-undertale .logo-text, body.theme-undertale .kpi-value {
+  font-family: 'Courier New', Courier, monospace !important;
+  color: #ffffff !important;
+  text-shadow: none !important;
+}
+body.theme-undertale .glass-card, body.theme-undertale .modal-content, body.theme-undertale .sidebar, body.theme-undertale .plancha-sidebar, body.theme-undertale aside {
+  border: 2px solid #ffffff !important;
+  border-radius: 0px !important;
+  background: #000000 !important;
+}
+body.theme-undertale .btn, body.theme-undertale button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
+  border: 2px solid #ffffff !important;
+  background: #000000 !important;
+  color: #ffffff !important;
+  border-radius: 0px !important;
+  font-family: 'Courier New', Courier, monospace !important;
+  text-transform: uppercase !important;
+}
+body.theme-undertale .btn:hover, body.theme-undertale button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
+  background: #ffffff !important;
+  color: #000000 !important;
+}
+body.theme-undertale .nav-link:hover::before,
+body.theme-undertale .nav-link.active::before,
+body.theme-undertale .btn:hover::before {
+  content: "❤ " !important;
+  color: #ff0000 !important;
+  text-shadow: 0 0 5px #ff0000 !important;
+  margin-right: 6px !important;
+}
+
+/* 10. Lobotomy Corporation Theme */
+body.theme-lobotomy {
+  --bg-dark: #12161a;
+  --bg-card: #1b2026;
+  --bg-input: #101418;
+  --text-primary: #c5d4db;
+  --text-secondary: #708899;
+  --border-color: #2b3846;
+  --glass-border: 1px solid #364656;
+  --glass-shadow: 0 6px 25px rgba(0,0,0,0.55);
+  --bg-hover: rgba(0, 195, 255, 0.08);
+  --bg-th: rgba(0, 195, 255, 0.12);
+  --header-bg: rgba(27, 32, 38, 0.95);
+  --row-normal-bg: rgba(0, 195, 255, 0.05);
+  --row-normal-hover: rgba(0, 195, 255, 0.12);
+  --row-warning-bg: rgba(255, 215, 0, 0.08);
+  --row-warning-hover: rgba(255, 215, 0, 0.15);
+  --row-danger-bg: rgba(217, 56, 56, 0.08);
+  --row-danger-hover: rgba(217, 56, 56, 0.15);
+  --badge-bono-bg: rgba(0, 195, 255, 0.2);
+  --badge-bono-text: #00c3ff;
+  --badge-desc-bg: rgba(217, 56, 56, 0.25);
+  --badge-desc-text: #f95c5c;
+  
+  --primary-color: #00c3ff;
+  --primary-hover: #009ecb;
+  --primary-shadow: rgba(0, 195, 255, 0.4);
+  --danger-color: #d93838;
+  --danger-hover: #b52929;
+}
+body.theme-lobotomy h1, body.theme-lobotomy h2, body.theme-lobotomy h3, body.theme-lobotomy .logo-text, body.theme-lobotomy .kpi-value {
+  color: #00c3ff !important;
+  text-shadow: 0 0 8px rgba(0, 195, 255, 0.4) !important;
+}
+body.theme-lobotomy .glass-card, body.theme-lobotomy .modal-content, body.theme-lobotomy .sidebar, body.theme-lobotomy .plancha-sidebar, body.theme-lobotomy aside {
+  border: 1.5px solid #2b3846 !important;
+  border-radius: 4px !important;
+  background: #1b2026 !important;
+}
+body.theme-lobotomy .btn, body.theme-lobotomy button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
+  border: 1px solid #2b3846 !important;
+  background: #101418 !important;
+  color: #c5d4db !important;
+  border-radius: 4px !important;
+}
+body.theme-lobotomy .btn:hover, body.theme-lobotomy button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
+  border-color: #00c3ff !important;
+  color: #00c3ff !important;
+  box-shadow: 0 0 10px rgba(0, 195, 255, 0.3) !important;
+}
+
+/* 11. Papers, Please Theme */
+body.theme-papers {
+  --bg-dark: #232524;
+  --bg-card: #2f3230;
+  --bg-input: #1d1e1d;
+  --text-primary: #c5c9c6;
+  --text-secondary: #828684;
+  --border-color: #434744;
+  --glass-border: 2px solid #434744;
+  --glass-shadow: 4px 4px 0px rgba(0,0,0,0.4);
+  --bg-hover: rgba(197, 201, 198, 0.08);
+  --bg-th: rgba(197, 201, 198, 0.12);
+  --header-bg: rgba(47, 50, 48, 0.95);
+  --row-normal-bg: rgba(34, 112, 48, 0.08);
+  --row-normal-hover: rgba(34, 112, 48, 0.18);
+  --row-warning-bg: rgba(143, 128, 90, 0.08);
+  --row-warning-hover: rgba(143, 128, 90, 0.15);
+  --row-danger-bg: rgba(166, 45, 45, 0.08);
+  --row-danger-hover: rgba(166, 45, 45, 0.18);
+  --badge-bono-bg: rgba(34, 112, 48, 0.25);
+  --badge-bono-text: #61b16f;
+  --badge-desc-bg: rgba(166, 45, 45, 0.25);
+  --badge-desc-text: #e66060;
+  
+  --primary-color: #8f805a;
+  --primary-hover: #ab9a6d;
+  --primary-shadow: rgba(143, 128, 90, 0.4);
+  
+  font-family: 'Courier New', Courier, monospace !important;
+}
+body.theme-papers h1, body.theme-papers h2, body.theme-papers h3, body.theme-papers .logo-text, body.theme-papers .kpi-value {
+  color: #c5c9c6 !important;
+  text-shadow: 2px 2px 0px #1d1e1d !important;
+  text-transform: uppercase !important;
+}
+body.theme-papers .glass-card, body.theme-papers .modal-content, body.theme-papers .sidebar, body.theme-papers .plancha-sidebar, body.theme-papers aside {
+  border: 2px solid #434744 !important;
+  border-radius: 0px !important;
+  background: #2f3230 !important;
+}
+body.theme-papers .btn, body.theme-papers button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
+  border: 2px solid #434744 !important;
+  background: #1d1e1d !important;
+  color: #c5c9c6 !important;
+  border-radius: 0px !important;
+  font-family: 'Courier New', Courier, monospace !important;
+  text-transform: uppercase !important;
+}
+body.theme-papers .btn:hover, body.theme-papers button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
+  background: #8f805a !important;
+  color: #1d1e1d !important;
+}
+
+/* 12. Plague Inc. Theme */
+body.theme-plague {
+  --bg-dark: #070608;
+  --bg-card: #121014;
+  --bg-input: #19171d;
+  --text-primary: #e2e9e3;
+  --text-secondary: #7c8c80;
+  --border-color: #321616;
+  --glass-border: 1px solid #471c1c;
+  --glass-shadow: 0 0 25px rgba(230, 0, 0, 0.15);
+  --bg-hover: rgba(230, 0, 0, 0.06);
+  --bg-th: rgba(230, 0, 0, 0.1);
+  --header-bg: rgba(18, 16, 20, 0.9);
+  --row-normal-bg: rgba(0, 230, 91, 0.05);
+  --row-normal-hover: rgba(0, 230, 91, 0.12);
+  --row-warning-bg: rgba(255, 98, 0, 0.08);
+  --row-warning-hover: rgba(255, 98, 0, 0.15);
+  --row-danger-bg: rgba(230, 0, 0, 0.08);
+  --row-danger-hover: rgba(230, 0, 0, 0.18);
+  --badge-bono-bg: rgba(0, 230, 91, 0.2);
+  --badge-bono-text: #00ff66;
+  --badge-desc-bg: rgba(230, 0, 0, 0.2);
+  --badge-desc-text: #ff3333;
+  
+  --primary-color: #ff6200;
+  --primary-hover: #e65500;
+  --primary-shadow: rgba(255, 98, 0, 0.4);
+}
+body.theme-plague h1, body.theme-plague h2, body.theme-plague h3, body.theme-plague .logo-text, body.theme-plague .kpi-value {
+  color: #e60000 !important;
+  text-shadow: 0 0 10px rgba(230, 0, 0, 0.6) !important;
+}
+body.theme-plague .glass-card, body.theme-plague .modal-content, body.theme-plague .sidebar, body.theme-plague .plancha-sidebar, body.theme-plague aside {
+  border: 1px solid #471c1c !important;
+  background: #121014 !important;
+}
+@keyframes plague-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(230, 0, 0, 0.4); }
+  70% { box-shadow: 0 0 0 8px rgba(230, 0, 0, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(230, 0, 0, 0); }
+}
+body.theme-plague .btn, body.theme-plague button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
+  border: 1px solid #471c1c !important;
+  background: #121014 !important;
+  color: #e2e9e3 !important;
+  border-radius: 4px !important;
+}
+body.theme-plague .btn:hover, body.theme-plague button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
+  border-color: #e60000 !important;
+  color: #ffffff !important;
+  background: #e60000 !important;
+  animation: plague-pulse 1.5s infinite;
+}
+
+/* 13. Plants vs. Zombies Theme */
+body.theme-pvz {
+  --bg-dark: #0a130b;
+  --bg-card: #182419;
+  --bg-input: #101911;
+  --text-primary: #e8f5e9;
+  --text-secondary: #a5d6a7;
+  --border-color: #2e4d30;
+  --glass-border: 2px solid #2e4d30;
+  --glass-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+  --bg-hover: rgba(76, 175, 80, 0.1);
+  --bg-th: rgba(76, 175, 80, 0.15);
+  --header-bg: rgba(24, 36, 25, 0.95);
+  --row-normal-bg: rgba(76, 175, 80, 0.08);
+  --row-normal-hover: rgba(76, 175, 80, 0.15);
+  --row-warning-bg: rgba(255, 193, 7, 0.08);
+  --row-warning-hover: rgba(255, 193, 7, 0.15);
+  --row-danger-bg: rgba(109, 121, 115, 0.08);
+  --row-danger-hover: rgba(109, 121, 115, 0.15);
+  --badge-bono-bg: #ffc107;
+  --badge-bono-text: #0a130b;
+  --badge-desc-bg: #6d7973;
+  --badge-desc-text: #ffffff;
+  
+  --primary-color: #4caf50;
+  --primary-hover: #388e3c;
+  --primary-shadow: rgba(76, 175, 80, 0.4);
+  
+  background-image: 
+    repeating-linear-gradient(90deg, #09110a, #09110a 20px, #0a130b 20px, #0a130b 40px) !important;
+}
+body.theme-pvz h1, body.theme-pvz h2, body.theme-pvz h3, body.theme-pvz .logo-text, body.theme-pvz .kpi-value {
+  font-family: 'Comic Sans MS', sans-serif !important;
+  color: #ffc107 !important;
+  text-shadow: 2px 2px 0px #0a130b !important;
+}
+body.theme-pvz .glass-card, body.theme-pvz .modal-content, body.theme-pvz .sidebar, body.theme-pvz .plancha-sidebar, body.theme-pvz aside {
+  border: 2px solid #2e4d30 !important;
+  background: #182419 !important;
+}
+body.theme-pvz .btn, body.theme-pvz button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
+  border-radius: 20px 20px 4px 4px !important;
+  border: 3px solid #554433 !important;
+  background: #6d7973 !important;
+  color: #ffffff !important;
+  font-family: 'Comic Sans MS', sans-serif !important;
+  font-weight: bold !important;
+  text-transform: uppercase !important;
+}
+body.theme-pvz .btn:hover, body.theme-pvz button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
+  background: #4caf50 !important;
+  border-color: #ffc107 !important;
+  color: #ffffff !important;
+}
+
+/* ==========================================================================
+   LAUNCHER OVERRIDES FOR NEW THEMES
+   ========================================================================== */
+
+/* 1. Escape the Backrooms Launcher */
+body.theme-backrooms .launcher-app-icon {
+  border-radius: 0px !important;
+  border: 2px solid #e6df45 !important;
+  background: #15170f !important;
+  box-shadow: 0 0 10px rgba(230, 223, 69, 0.3) !important;
+}
+body.theme-backrooms .launcher-app-icon svg rect {
+  fill: transparent !important;
+  filter: none !important;
+  rx: 0px !important;
+}
+body.theme-backrooms .launcher-app-item:hover .launcher-app-icon {
+  box-shadow: 0 0 20px rgba(230, 223, 69, 0.7) !important;
+}
+body.theme-backrooms .launcher-app-name {
+  font-family: 'Courier New', Courier, monospace !important;
+  color: #e6df45 !important;
+  text-shadow: 0 0 3px rgba(230, 223, 69, 0.4) !important;
+}
+
+/* 2. Terraria Launcher */
+body.theme-terraria .launcher-app-icon {
+  border-radius: 6px !important;
+  border: 3px solid #4e3f35 !important;
+  background: linear-gradient(to bottom, #875d3e, #5c3b24) !important;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.5) !important;
+}
+body.theme-terraria .launcher-app-icon svg rect {
+  fill: transparent !important;
+  filter: none !important;
+  rx: 6px !important;
+}
+body.theme-terraria .launcher-app-item:hover .launcher-app-icon {
+  background: linear-gradient(to bottom, #a0724f, #7c5132) !important;
+}
+body.theme-terraria .launcher-app-name {
+  font-family: 'Courier New', Courier, monospace !important;
+  color: #f0eae5 !important;
+  text-shadow: 2px 2px 0px #000 !important;
+}
+
+/* 3. Castle Crashers Launcher */
+body.theme-castle .launcher-app-icon {
+  border-radius: 16px !important;
+  border: 3px solid #0c0d12 !important;
+  background: #1d1e26 !important;
+  box-shadow: 4px 4px 0px #0c0d12 !important;
+}
+body.theme-castle .launcher-app-icon svg rect {
+  fill: transparent !important;
+  filter: none !important;
+  rx: 16px !important;
+}
+body.theme-castle .launcher-app-item:hover .launcher-app-icon {
+  border-color: #ffffff !important;
+  box-shadow: 6px 6px 0px #0c0d12 !important;
+}
+body.theme-castle .launcher-app-name {
+  font-family: 'Impact', 'Arial Black', sans-serif !important;
+  color: #ffffff !important;
+  text-shadow: 2px 2px 0px #0c0d12 !important;
+}
+
+/* 4. Star Wars Launcher */
+body.theme-starwars .launcher-app-icon {
+  border-radius: 50% !important;
+  border: 2px solid #00f0ff !important;
+  background: #090c15 !important;
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.4) !important;
+}
+body.theme-starwars .launcher-app-icon svg rect {
+  fill: transparent !important;
+  filter: none !important;
+  rx: 50% !important;
+}
+body.theme-starwars .launcher-app-item:hover .launcher-app-icon {
+  box-shadow: 0 0 25px rgba(0, 240, 255, 0.8) !important;
+}
+body.theme-starwars .launcher-app-name {
+  font-family: 'Inter', sans-serif !important;
+  color: #00f0ff !important;
+  text-shadow: 0 0 5px rgba(0, 240, 255, 0.6) !important;
+}
+
+/* 5. Call of Duty: Black Ops 3 Launcher */
+body.theme-cod3 .launcher-app-icon {
+  border-radius: 0px !important;
+  border: 2px solid #ff7700 !important;
+  background: #11141b !important;
+  box-shadow: 0 0 15px rgba(255, 119, 0, 0.3) !important;
+}
+body.theme-cod3 .launcher-app-icon svg rect {
+  fill: transparent !important;
+  filter: none !important;
+  rx: 0px !important;
+}
+body.theme-cod3 .launcher-app-item:hover .launcher-app-icon {
+  box-shadow: 0 0 25px rgba(255, 119, 0, 0.8) !important;
+}
+body.theme-cod3 .launcher-app-name {
+  font-family: 'Impact', 'Arial Black', sans-serif !important;
+  color: #ff7700 !important;
+  text-shadow: 0 0 5px rgba(255, 119, 0, 0.6) !important;
+}
+
+/* 6. Subnautica Launcher */
+body.theme-subnautica .launcher-app-icon {
+  border-radius: 30% !important;
+  border: 2px solid #00d2ff !important;
+  background: #061329 !important;
+  box-shadow: 0 0 15px rgba(0, 210, 255, 0.4) !important;
+}
+body.theme-subnautica .launcher-app-icon svg rect {
+  fill: transparent !important;
+  filter: none !important;
+  rx: 30% !important;
+}
+body.theme-subnautica .launcher-app-item:hover .launcher-app-icon {
+  box-shadow: 0 0 25px rgba(0, 210, 255, 0.8) !important;
+}
+body.theme-subnautica .launcher-app-name {
+  font-family: 'Inter', sans-serif !important;
+  color: #00d2ff !important;
+  text-shadow: 0 0 5px rgba(0, 210, 255, 0.6) !important;
+}
+
+/* 7. Cuphead Launcher */
+body.theme-cuphead .launcher-app-icon {
+  border-radius: 4px !important;
+  border: 2px solid #28221d !important;
+  background: #faf1db !important;
+  box-shadow: 4px 4px 0px #28221d !important;
+  animation: frame-wobble 0.6s step-end infinite;
+}
+body.theme-cuphead .launcher-app-icon svg rect {
+  fill: transparent !important;
+  filter: none !important;
+  rx: 4px !important;
+}
+body.theme-cuphead .launcher-app-item:hover .launcher-app-icon {
+  background: #df9c2c !important;
+}
+body.theme-cuphead .launcher-app-name {
+  font-family: 'Impact', sans-serif !important;
+  color: #28221d !important;
+}
+
+/* 8. Doki Doki Literature Club Launcher */
+body.theme-ddlc .launcher-app-icon {
+  border-radius: 24px !important;
+  border: 2px solid #ffb3c6 !important;
+  background: #ffffff !important;
+  box-shadow: 0 8px 15px rgba(255, 179, 198, 0.3) !important;
+}
+body.theme-ddlc .launcher-app-icon svg rect {
+  fill: transparent !important;
+  filter: none !important;
+  rx: 24px !important;
+}
+body.theme-ddlc .launcher-app-item:hover .launcher-app-icon {
+  animation: ddlc-jitter 0.15s infinite !important;
+  box-shadow: 3px -3px 0 #00ffff, -3px 3px 0 #ff00ff !important;
+}
+body.theme-ddlc .launcher-app-name {
+  font-family: 'Comic Sans MS', sans-serif !important;
+  color: #ff4d79 !important;
+}
+
+/* 9. Undertale / Deltarune Launcher */
+body.theme-undertale .launcher-app-icon {
+  border-radius: 0px !important;
+  border: 2px solid #ffffff !important;
+  background: #000000 !important;
+}
+body.theme-undertale .launcher-app-icon svg rect {
+  fill: transparent !important;
+  filter: none !important;
+  rx: 0px !important;
+}
+body.theme-undertale .launcher-app-item:hover .launcher-app-icon::before {
+  content: "❤" !important;
+  color: #ff0000 !important;
+  position: absolute !important;
+  top: -15px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  font-size: 20px !important;
+  text-shadow: 0 0 5px #ff0000 !important;
+}
+body.theme-undertale .launcher-app-name {
+  font-family: 'Courier New', Courier, monospace !important;
+  color: #ffffff !important;
+}
+
+/* 10. Lobotomy Corporation Launcher */
+body.theme-lobotomy .launcher-app-icon {
+  border-radius: 4px !important;
+  border: 1px solid #364656 !important;
+  background: #1b2026 !important;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.4) !important;
+}
+body.theme-lobotomy .launcher-app-icon svg rect {
+  fill: transparent !important;
+  filter: none !important;
+  rx: 4px !important;
+}
+body.theme-lobotomy .launcher-app-item:hover .launcher-app-icon {
+  border-color: #00c3ff !important;
+  box-shadow: 0 0 15px rgba(0, 195, 255, 0.5) !important;
+}
+body.theme-lobotomy .launcher-app-name {
+  font-family: 'Inter', sans-serif !important;
+  color: #00c3ff !important;
+}
+
+/* 11. Papers, Please Launcher */
+body.theme-papers .launcher-app-icon {
+  border-radius: 0px !important;
+  border: 2px solid #434744 !important;
+  background: #2d312f !important;
+  box-shadow: 4px 4px 0px rgba(0,0,0,0.4) !important;
+}
+body.theme-papers .launcher-app-icon svg rect {
+  fill: transparent !important;
+  filter: none !important;
+  rx: 0px !important;
+}
+body.theme-papers .launcher-app-item:hover .launcher-app-icon {
+  background: #8f805a !important;
+}
+body.theme-papers .launcher-app-name {
+  font-family: 'Courier New', Courier, monospace !important;
+  color: #c5c9c6 !important;
+}
+
+/* 12. Plague Inc. Launcher */
+body.theme-plague .launcher-app-icon {
+  border-radius: 8px !important;
+  border: 1px solid #471c1c !important;
+  background: #121014 !important;
+  box-shadow: 0 0 10px rgba(230,0,0,0.2) !important;
+}
+body.theme-plague .launcher-app-icon svg rect {
+  fill: transparent !important;
+  filter: none !important;
+  rx: 8px !important;
+}
+body.theme-plague .launcher-app-item:hover .launcher-app-icon {
+  border-color: #e60000 !important;
+  box-shadow: 0 0 20px rgba(230,0,0,0.6) !important;
+}
+body.theme-plague .launcher-app-name {
+  font-family: 'Inter', sans-serif !important;
+  color: #e60000 !important;
+}
+
+/* 13. Plants vs. Zombies Launcher */
+body.theme-pvz .launcher-app-icon {
+  border-radius: 20px 20px 4px 4px !important;
+  border: 3px solid #554433 !important;
+  background: #6d7973 !important;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3) !important;
+}
+body.theme-pvz .launcher-app-icon svg rect {
+  fill: transparent !important;
+  filter: none !important;
+  rx: 4px !important;
+}
+body.theme-pvz .launcher-app-item:hover .launcher-app-icon {
+  background: #4caf50 !important;
+  border-color: #ffc107 !important;
+}
+body.theme-pvz .launcher-app-name {
+  font-family: 'Comic Sans MS', sans-serif !important;
+  color: #ffc107 !important;
+}
+
 

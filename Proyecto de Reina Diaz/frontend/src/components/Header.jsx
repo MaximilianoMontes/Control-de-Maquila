@@ -573,6 +573,19 @@ export default function Header({ onToggleSidebar }) {
                     <option value="fallout">{t('settings.themeFallout')}</option>
                     <option value="tf2">{t('settings.themeTf2')}</option>
                     <option value="cyberpunk">{t('settings.themeCyberpunk')}</option>
+                    <option value="backrooms">{t('settings.themeBackrooms')}</option>
+                    <option value="terraria">{t('settings.themeTerraria')}</option>
+                    <option value="castle">{t('settings.themeCastle')}</option>
+                    <option value="starwars">{t('settings.themeStarwars')}</option>
+                    <option value="cod3">{t('settings.themeCod3')}</option>
+                    <option value="subnautica">{t('settings.themeSubnautica')}</option>
+                    <option value="cuphead">{t('settings.themeCuphead')}</option>
+                    <option value="ddlc">{t('settings.themeDdlc')}</option>
+                    <option value="undertale">{t('settings.themeUndertale')}</option>
+                    <option value="lobotomy">{t('settings.themeLobotomy')}</option>
+                    <option value="papers">{t('settings.themePapers')}</option>
+                    <option value="plague">{t('settings.themePlague')}</option>
+                    <option value="pvz">{t('settings.themePvz')}</option>
                     <option value="system">{t('settings.themeSystem')}</option>
                   </select>
                 </div>

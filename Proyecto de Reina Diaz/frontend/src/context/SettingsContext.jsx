@@ -134,6 +134,19 @@ const translations = {
     'settings.themeFallout': 'Fallout ☢️',
     'settings.themeTf2': 'Team Fortress 2 🛡️',
     'settings.themeCyberpunk': 'Cyberpunk ⚡',
+    'settings.themeBackrooms': 'Escape the Backrooms 🟨',
+    'settings.themeTerraria': 'Terraria 🌳',
+    'settings.themeCastle': 'Castle Crashers 🏰',
+    'settings.themeStarwars': 'Star Wars 🚀',
+    'settings.themeCod3': 'Call of Duty: Black Ops 3 🪖',
+    'settings.themeSubnautica': 'Subnautica 🐙',
+    'settings.themeCuphead': 'Cuphead ☕',
+    'settings.themeDdlc': 'Doki Doki Literature Club 🎀',
+    'settings.themeUndertale': 'Undertale / Deltarune 💀',
+    'settings.themeLobotomy': 'Lobotomy Corporation 👁️',
+    'settings.themePapers': 'Papers, Please 🛂',
+    'settings.themePlague': 'Plague Inc ☣️',
+    'settings.themePvz': 'Plants vs Zombies 🌻',
     'settings.accentLabel': 'Color de Acento',
     'settings.accentDesc': 'Elige un color personalizado para destacar elementos de la interfaz.',
     'settings.currencyLabel': 'Formato de Moneda',
@@ -585,6 +598,19 @@ const translations = {
     'settings.themeFallout': 'Fallout ☢️',
     'settings.themeTf2': 'Team Fortress 2 🛡️',
     'settings.themeCyberpunk': 'Cyberpunk ⚡',
+    'settings.themeBackrooms': 'Escape the Backrooms 🟨',
+    'settings.themeTerraria': 'Terraria 🌳',
+    'settings.themeCastle': 'Castle Crashers 🏰',
+    'settings.themeStarwars': 'Star Wars 🚀',
+    'settings.themeCod3': 'Call of Duty: Black Ops 3 🪖',
+    'settings.themeSubnautica': 'Subnautica 🐙',
+    'settings.themeCuphead': 'Cuphead ☕',
+    'settings.themeDdlc': 'Doki Doki Literature Club 🎀',
+    'settings.themeUndertale': 'Undertale / Deltarune 💀',
+    'settings.themeLobotomy': 'Lobotomy Corporation 👁️',
+    'settings.themePapers': 'Papers, Please 🛂',
+    'settings.themePlague': 'Plague Inc ☣️',
+    'settings.themePvz': 'Plants vs Zombies 🌻',
     'settings.accentLabel': 'Accent Color',
     'settings.accentDesc': 'Choose a custom color to highlight interface elements.',
     'settings.currencyLabel': 'Currency Format',
@@ -946,16 +972,29 @@ export const SettingsProvider = ({ children }) => {
   // Apply visual theme (Light / Dark / System)
   useEffect(() => {
     const applyTheme = () => {
-      document.body.classList.remove('dark-mode', 'theme-ocean', 'theme-nature', 'theme-sunset', 'theme-lavender', 'theme-cherry', 'theme-midnight', 'theme-dim', 'theme-miku', 'theme-teto', 'theme-limbus', 'theme-ruina', 'theme-minecraft', 'theme-geometry', 'theme-fallout', 'theme-tf2', 'theme-cyberpunk');
+      document.body.classList.remove(
+        'dark-mode', 'theme-ocean', 'theme-nature', 'theme-sunset', 'theme-lavender', 'theme-cherry', 'theme-midnight', 'theme-dim', 
+        'theme-miku', 'theme-teto', 'theme-limbus', 'theme-ruina', 'theme-minecraft', 'theme-geometry', 'theme-fallout', 'theme-tf2', 'theme-cyberpunk',
+        'theme-backrooms', 'theme-terraria', 'theme-castle', 'theme-starwars', 'theme-cod3', 'theme-subnautica', 'theme-cuphead', 'theme-ddlc', 
+        'theme-undertale', 'theme-lobotomy', 'theme-papers', 'theme-plague', 'theme-pvz'
+      );
 
       const isSystemDark = settings.theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches;
-      const isAnyDark = ['dark', 'ocean', 'nature', 'sunset', 'lavender', 'cherry', 'midnight', 'dim', 'miku', 'teto', 'limbus', 'ruina', 'minecraft', 'geometry', 'fallout', 'tf2', 'cyberpunk'].includes(settings.theme) || isSystemDark;
+      const isAnyDark = [
+        'dark', 'ocean', 'nature', 'sunset', 'lavender', 'cherry', 'midnight', 'dim', 'miku', 'teto', 'limbus', 'ruina', 'minecraft', 
+        'geometry', 'fallout', 'tf2', 'cyberpunk', 'backrooms', 'terraria', 'castle', 'starwars', 'cod3', 'subnautica', 'cuphead', 
+        'undertale', 'lobotomy', 'papers', 'plague', 'pvz'
+      ].includes(settings.theme) || isSystemDark;
 
       if (isAnyDark) {
         document.body.classList.add('dark-mode');
       }
       
-      if (['ocean', 'nature', 'sunset', 'lavender', 'cherry', 'midnight', 'dim', 'miku', 'teto', 'limbus', 'ruina', 'minecraft', 'geometry', 'fallout', 'tf2', 'cyberpunk'].includes(settings.theme)) {
+      if ([
+        'ocean', 'nature', 'sunset', 'lavender', 'cherry', 'midnight', 'dim', 'miku', 'teto', 'limbus', 'ruina', 'minecraft', 
+        'geometry', 'fallout', 'tf2', 'cyberpunk', 'backrooms', 'terraria', 'castle', 'starwars', 'cod3', 'subnautica', 'cuphead', 
+        'ddlc', 'undertale', 'lobotomy', 'papers', 'plague', 'pvz'
+      ].includes(settings.theme)) {
         document.body.classList.add(`theme-${settings.theme}`);
       }
     };
