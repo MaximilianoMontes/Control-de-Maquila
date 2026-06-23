@@ -4338,8 +4338,7 @@ body.theme-backrooms .glass-card, body.theme-backrooms .modal-content, body.them
   background: #202216 !important;
 }
 body.theme-backrooms .btn, 
-body.theme-backrooms button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn), 
-body.theme-backrooms .actions-dropdown-item {
+body.theme-backrooms button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
   border: 1px solid #e6df45 !important;
   background: #15170f !important;
   color: #e6df45 !important;
@@ -4347,8 +4346,24 @@ body.theme-backrooms .actions-dropdown-item {
   font-family: 'Courier New', Courier, monospace !important;
 }
 body.theme-backrooms .btn:hover, 
-body.theme-backrooms button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover, 
-body.theme-backrooms .actions-dropdown-item:hover {
+body.theme-backrooms button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
+  background: #e6df45 !important;
+  color: #15170f !important;
+  box-shadow: 0 0 12px rgba(230, 223, 69, 0.6) !important;
+}
+body.theme-backrooms .actions-dropdown-item,
+body.theme-backrooms a.actions-dropdown-item,
+body.theme-backrooms button.actions-dropdown-item {
+  border: 1px solid #e6df45 !important;
+  background: #15170f !important;
+  color: #e6df45 !important;
+  border-radius: 0px !important;
+  font-family: 'Courier New', Courier, monospace !important;
+  text-decoration: none !important;
+}
+body.theme-backrooms .actions-dropdown-item:hover,
+body.theme-backrooms a.actions-dropdown-item:hover,
+body.theme-backrooms button.actions-dropdown-item:hover {
   background: #e6df45 !important;
   color: #15170f !important;
   box-shadow: 0 0 12px rgba(230, 223, 69, 0.6) !important;
@@ -4395,8 +4410,7 @@ body.theme-terraria .glass-card, body.theme-terraria .modal-content, body.theme-
   box-shadow: inset 2px 2px 0px #3c2f25, 4px 4px 0px rgba(0,0,0,0.5) !important;
 }
 body.theme-terraria .btn, 
-body.theme-terraria button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn), 
-body.theme-terraria .actions-dropdown-item {
+body.theme-terraria button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
   border: 2px solid #5c4b3f !important;
   background: linear-gradient(to bottom, #875d3e, #5c3b24) !important;
   color: #ffffff !important;
@@ -4406,10 +4420,28 @@ body.theme-terraria .actions-dropdown-item {
   box-shadow: 2px 2px 0px rgba(0,0,0,0.3) !important;
 }
 body.theme-terraria .btn:hover, 
-body.theme-terraria button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover, 
-body.theme-terraria .actions-dropdown-item:hover {
+body.theme-terraria button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
   background: linear-gradient(to bottom, #a0724f, #7c5132) !important;
   border-color: #875d3e !important;
+}
+body.theme-terraria .actions-dropdown-item,
+body.theme-terraria a.actions-dropdown-item,
+body.theme-terraria button.actions-dropdown-item {
+  border: 2px solid #5c4b3f !important;
+  background: linear-gradient(to bottom, #875d3e, #5c3b24) !important;
+  color: #ffffff !important;
+  border-radius: 4px !important;
+  font-family: 'Courier New', Courier, monospace !important;
+  text-shadow: 1px 1px 0px #000 !important;
+  box-shadow: 2px 2px 0px rgba(0,0,0,0.3) !important;
+  text-decoration: none !important;
+}
+body.theme-terraria .actions-dropdown-item:hover,
+body.theme-terraria a.actions-dropdown-item:hover,
+body.theme-terraria button.actions-dropdown-item:hover {
+  background: linear-gradient(to bottom, #a0724f, #7c5132) !important;
+  border-color: #875d3e !important;
+  color: #ffffff !important;
 }
 
 /* 3. Castle Crashers Theme */
@@ -4455,8 +4487,7 @@ body.theme-castle .glass-card, body.theme-castle .modal-content, body.theme-cast
   box-shadow: 6px 6px 0 #0c0d12 !important;
 }
 body.theme-castle .btn, 
-body.theme-castle button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn), 
-body.theme-castle .actions-dropdown-item {
+body.theme-castle button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
   border: 3px solid #0c0d12 !important;
   background: #3182ce !important;
   color: #ffffff !important;
@@ -4467,8 +4498,27 @@ body.theme-castle .actions-dropdown-item {
   transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
 }
 body.theme-castle .btn:hover, 
-body.theme-castle button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover, 
-body.theme-castle .actions-dropdown-item:hover {
+body.theme-castle button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
+  transform: scale(1.06) rotate(1deg) !important;
+  background: #4299e1 !important;
+  color: #ffffff !important;
+}
+body.theme-castle .actions-dropdown-item,
+body.theme-castle a.actions-dropdown-item,
+body.theme-castle button.actions-dropdown-item {
+  border: 3px solid #0c0d12 !important;
+  background: #3182ce !important;
+  color: #ffffff !important;
+  border-radius: 12px !important;
+  font-family: 'Impact', 'Arial Black', sans-serif !important;
+  text-transform: uppercase !important;
+  box-shadow: 3px 3px 0 #0c0d12 !important;
+  transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+  text-decoration: none !important;
+}
+body.theme-castle .actions-dropdown-item:hover,
+body.theme-castle a.actions-dropdown-item:hover,
+body.theme-castle button.actions-dropdown-item:hover {
   transform: scale(1.06) rotate(1deg) !important;
   background: #4299e1 !important;
   color: #ffffff !important;
@@ -4530,8 +4580,7 @@ body.theme-starwars .glass-card, body.theme-starwars .modal-content, body.theme-
   box-shadow: 0 0 15px rgba(0, 240, 255, 0.2) !important;
 }
 body.theme-starwars .btn, 
-body.theme-starwars button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn), 
-body.theme-starwars .actions-dropdown-item {
+body.theme-starwars button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
   border: 1px solid #00f0ff !important;
   background: rgba(0, 240, 255, 0.05) !important;
   color: #00f0ff !important;
@@ -4541,8 +4590,26 @@ body.theme-starwars .actions-dropdown-item {
   letter-spacing: 1px !important;
 }
 body.theme-starwars .btn:hover, 
-body.theme-starwars button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover, 
-body.theme-starwars .actions-dropdown-item:hover {
+body.theme-starwars button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
+  background: #00f0ff !important;
+  color: #030408 !important;
+  box-shadow: 0 0 15px #00f0ff !important;
+}
+body.theme-starwars .actions-dropdown-item,
+body.theme-starwars a.actions-dropdown-item,
+body.theme-starwars button.actions-dropdown-item {
+  border: 1px solid #00f0ff !important;
+  background: rgba(0, 240, 255, 0.05) !important;
+  color: #00f0ff !important;
+  text-shadow: 0 0 5px rgba(0, 240, 255, 0.5) !important;
+  border-radius: 0px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1px !important;
+  text-decoration: none !important;
+}
+body.theme-starwars .actions-dropdown-item:hover,
+body.theme-starwars a.actions-dropdown-item:hover,
+body.theme-starwars button.actions-dropdown-item:hover {
   background: #00f0ff !important;
   color: #030408 !important;
   box-shadow: 0 0 15px #00f0ff !important;
@@ -4606,8 +4673,7 @@ body.theme-cod3 .glass-card, body.theme-cod3 .modal-content, body.theme-cod3 .si
   box-shadow: 0 0 15px rgba(255, 119, 0, 0.15) !important;
 }
 body.theme-cod3 .btn, 
-body.theme-cod3 button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn), 
-body.theme-cod3 .actions-dropdown-item {
+body.theme-cod3 button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
   border: 1px solid #ff7700 !important;
   background: #1a1e28 !important;
   color: #ff7700 !important;
@@ -4618,8 +4684,27 @@ body.theme-cod3 .actions-dropdown-item {
   letter-spacing: 1px !important;
 }
 body.theme-cod3 .btn:hover, 
-body.theme-cod3 button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover, 
-body.theme-cod3 .actions-dropdown-item:hover {
+body.theme-cod3 button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
+  background: #ff7700 !important;
+  color: #07090c !important;
+  box-shadow: 0 0 15px rgba(255, 119, 0, 0.6) !important;
+}
+body.theme-cod3 .actions-dropdown-item,
+body.theme-cod3 a.actions-dropdown-item,
+body.theme-cod3 button.actions-dropdown-item {
+  border: 1px solid #ff7700 !important;
+  background: #1a1e28 !important;
+  color: #ff7700 !important;
+  border-radius: 0px !important;
+  text-transform: uppercase !important;
+  font-family: 'Impact', 'Arial Black', sans-serif !important;
+  font-weight: bold !important;
+  letter-spacing: 1px !important;
+  text-decoration: none !important;
+}
+body.theme-cod3 .actions-dropdown-item:hover,
+body.theme-cod3 a.actions-dropdown-item:hover,
+body.theme-cod3 button.actions-dropdown-item:hover {
   background: #ff7700 !important;
   color: #07090c !important;
   box-shadow: 0 0 15px rgba(255, 119, 0, 0.6) !important;
@@ -4670,8 +4755,7 @@ body.theme-subnautica .glass-card, body.theme-subnautica .modal-content, body.th
   100% { box-shadow: 0 0 0 0 rgba(0, 210, 255, 0); }
 }
 body.theme-subnautica .btn, 
-body.theme-subnautica button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn), 
-body.theme-subnautica .actions-dropdown-item {
+body.theme-subnautica button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
   border: 1.5px solid #00d2ff !important;
   border-radius: 20px !important;
   background: transparent !important;
@@ -4679,8 +4763,24 @@ body.theme-subnautica .actions-dropdown-item {
   animation: sonar-pulse 2s infinite;
 }
 body.theme-subnautica .btn:hover, 
-body.theme-subnautica button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover, 
-body.theme-subnautica .actions-dropdown-item:hover {
+body.theme-subnautica button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
+  background: #00d2ff !important;
+  color: #020612 !important;
+  box-shadow: 0 0 15px #00d2ff !important;
+}
+body.theme-subnautica .actions-dropdown-item,
+body.theme-subnautica a.actions-dropdown-item,
+body.theme-subnautica button.actions-dropdown-item {
+  border: 1.5px solid #00d2ff !important;
+  border-radius: 20px !important;
+  background: transparent !important;
+  color: #00d2ff !important;
+  animation: sonar-pulse 2s infinite;
+  text-decoration: none !important;
+}
+body.theme-subnautica .actions-dropdown-item:hover,
+body.theme-subnautica a.actions-dropdown-item:hover,
+body.theme-subnautica button.actions-dropdown-item:hover {
   background: #00d2ff !important;
   color: #020612 !important;
   box-shadow: 0 0 15px #00d2ff !important;
@@ -4737,8 +4837,7 @@ body.theme-cuphead .glass-card, body.theme-cuphead .modal-content, body.theme-cu
   animation: frame-wobble 0.6s step-end infinite;
 }
 body.theme-cuphead .btn, 
-body.theme-cuphead button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn), 
-body.theme-cuphead .actions-dropdown-item {
+body.theme-cuphead button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
   border: 2px solid #28221d !important;
   background: #df9c2c !important;
   color: #28221d !important;
@@ -4748,8 +4847,27 @@ body.theme-cuphead .actions-dropdown-item {
   box-shadow: 3px 3px 0 #28221d !important;
 }
 body.theme-cuphead .btn:hover, 
-body.theme-cuphead button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover, 
-body.theme-cuphead .actions-dropdown-item:hover {
+body.theme-cuphead button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
+  background: #c9362b !important;
+  color: #ffffff !important;
+  transform: translate(-2px, -2px) !important;
+  box-shadow: 5px 5px 0 #28221d !important;
+}
+body.theme-cuphead .actions-dropdown-item,
+body.theme-cuphead a.actions-dropdown-item,
+body.theme-cuphead button.actions-dropdown-item {
+  border: 2px solid #28221d !important;
+  background: #df9c2c !important;
+  color: #28221d !important;
+  border-radius: 0px !important;
+  font-family: 'Georgia', serif !important;
+  font-weight: bold !important;
+  box-shadow: 3px 3px 0 #28221d !important;
+  text-decoration: none !important;
+}
+body.theme-cuphead .actions-dropdown-item:hover,
+body.theme-cuphead a.actions-dropdown-item:hover,
+body.theme-cuphead button.actions-dropdown-item:hover {
   background: #c9362b !important;
   color: #ffffff !important;
   transform: translate(-2px, -2px) !important;
@@ -4806,8 +4924,7 @@ body.theme-ddlc .glass-card, body.theme-ddlc .modal-content, body.theme-ddlc .si
   background: #ffffff !important;
 }
 body.theme-ddlc .btn, 
-body.theme-ddlc button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn), 
-body.theme-ddlc .actions-dropdown-item {
+body.theme-ddlc button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
   border-radius: 30px !important;
   border: 2px solid #ff4d79 !important;
   background: #ffffff !important;
@@ -4818,8 +4935,28 @@ body.theme-ddlc .actions-dropdown-item {
 body.theme-ddlc .btn:hover, 
 body.theme-ddlc button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover, 
 body.theme-ddlc .nav-link:hover, 
-body.theme-ddlc .data-table tr:hover, 
-body.theme-ddlc .actions-dropdown-item:hover {
+body.theme-ddlc .data-table tr:hover {
+  animation: ddlc-jitter 0.15s infinite !important;
+  box-shadow: 3px -3px 0 #00ffff, -3px 3px 0 #ff00ff !important;
+  border-color: #8b0000 !important;
+  color: #8b0000 !important;
+  background: rgba(139, 0, 0, 0.1) !important;
+  font-family: 'Courier New', Courier, monospace !important;
+}
+body.theme-ddlc .actions-dropdown-item,
+body.theme-ddlc a.actions-dropdown-item,
+body.theme-ddlc button.actions-dropdown-item {
+  border-radius: 30px !important;
+  border: 2px solid #ff4d79 !important;
+  background: #ffffff !important;
+  color: #ff4d79 !important;
+  font-weight: bold !important;
+  transition: all 0.2s ease !important;
+  text-decoration: none !important;
+}
+body.theme-ddlc .actions-dropdown-item:hover,
+body.theme-ddlc a.actions-dropdown-item:hover,
+body.theme-ddlc button.actions-dropdown-item:hover {
   animation: ddlc-jitter 0.15s infinite !important;
   box-shadow: 3px -3px 0 #00ffff, -3px 3px 0 #ff00ff !important;
   border-color: #8b0000 !important;
@@ -4870,8 +5007,7 @@ body.theme-undertale .glass-card, body.theme-undertale .modal-content, body.them
   background: #000000 !important;
 }
 body.theme-undertale .btn, 
-body.theme-undertale button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn), 
-body.theme-undertale .actions-dropdown-item {
+body.theme-undertale button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
   border: 2px solid #ffffff !important;
   background: #000000 !important;
   color: #ffffff !important;
@@ -4880,8 +5016,24 @@ body.theme-undertale .actions-dropdown-item {
   text-transform: uppercase !important;
 }
 body.theme-undertale .btn:hover, 
-body.theme-undertale button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover, 
-body.theme-undertale .actions-dropdown-item:hover {
+body.theme-undertale button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
+  background: #ffffff !important;
+  color: #000000 !important;
+}
+body.theme-undertale .actions-dropdown-item,
+body.theme-undertale a.actions-dropdown-item,
+body.theme-undertale button.actions-dropdown-item {
+  border: 2px solid #ffffff !important;
+  background: #000000 !important;
+  color: #ffffff !important;
+  border-radius: 0px !important;
+  font-family: 'Courier New', Courier, monospace !important;
+  text-transform: uppercase !important;
+  text-decoration: none !important;
+}
+body.theme-undertale .actions-dropdown-item:hover,
+body.theme-undertale a.actions-dropdown-item:hover,
+body.theme-undertale button.actions-dropdown-item:hover {
   background: #ffffff !important;
   color: #000000 !important;
 }
@@ -4896,14 +5048,14 @@ body.theme-undertale .btn:hover::before {
 
 /* 10. Lobotomy Corporation Theme (Faithful Steampunk Clinical facility style) */
 body.theme-lobotomy {
-  --bg-dark: #07090e; /* Deep clinical void black-blue */
+  --bg-dark: #06080b; /* Deep clinical void black-blue */
   --bg-card: #0c1015; /* Containment control room panels */
   --bg-input: #11161d;
   --text-primary: #bdfcfa; /* High-tech clinical teal */
   --text-secondary: #528c9e;
   --border-color: rgba(0, 212, 255, 0.3); /* Clinical cyan */
   --glass-border: 1px solid rgba(0, 212, 255, 0.4);
-  --glass-shadow: 0 0 15px rgba(0, 212, 255, 0.15);
+  --glass-shadow: 0 0 15px rgba(0, 212, 255, 0.25);
   --bg-hover: rgba(0, 212, 255, 0.08);
   --bg-th: rgba(0, 212, 255, 0.15);
   --header-bg: rgba(12, 16, 21, 0.95);
@@ -4926,13 +5078,17 @@ body.theme-lobotomy {
   --danger-hover: #cc2222;
   --success-color: #00ffcc;
   
+  background-color: #06080b !important;
   background-image: 
-    radial-gradient(circle at 20% 30%, rgba(0, 212, 255, 0.08) 0%, transparent 50%),
-    radial-gradient(circle at 80% 70%, rgba(230, 40, 40, 0.05) 0%, transparent 50%) !important;
-  font-family: 'Courier New', Courier, monospace !important;
+    radial-gradient(circle at 50% 50%, #0c121a, #05070a),
+    linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px) !important;
+  background-size: 100% 100%, 20px 20px, 20px 20px !important;
+  background-attachment: fixed !important;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
 }
 body.theme-lobotomy h1, body.theme-lobotomy h2, body.theme-lobotomy h3, body.theme-lobotomy .logo-text, body.theme-lobotomy .kpi-value {
-  font-family: 'Courier New', Courier, monospace !important;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
   color: #00d4ff !important;
   font-weight: bold !important;
   text-shadow: 0 0 10px rgba(0, 212, 255, 0.6) !important;
@@ -4963,29 +5119,29 @@ body.theme-lobotomy .badge {
 }
 /* Meltdown / Breach Flashing warning animation */
 @keyframes lobotomy-breach {
-  0% { border-color: #ff3333 !important; box-shadow: 0 0 5px #ff3333 !important; }
-  50% { border-color: #ff3333 !important; box-shadow: 0 0 20px #ff3333, inset 0 0 10px rgba(255, 51, 51, 0.2) !important; }
-  100% { border-color: #ff3333 !important; box-shadow: 0 0 5px #ff3333 !important; }
+  0% { border-color: #ff3333 !important; box-shadow: 0 0 5px #ff3333 !important; background: rgba(255, 51, 51, 0.05) !important; }
+  50% { border-color: #ff3333 !important; box-shadow: 0 0 20px #ff3333, inset 0 0 10px rgba(255, 51, 51, 0.2) !important; background: rgba(255, 51, 51, 0.15) !important; }
+  100% { border-color: #ff3333 !important; box-shadow: 0 0 5px #ff3333 !important; background: rgba(255, 51, 51, 0.05) !important; }
 }
 /* Qliphoth Threat Levels: ZAYIN, TETH, HE, WAW, ALEPH representation */
 body.theme-lobotomy .badge-success {
-  background: rgba(0, 255, 204, 0.2) !important;
+  background: rgba(0, 255, 204, 0.15) !important;
   color: #00ffcc !important;
   border: 1px solid #00ffcc !important;
 }
 body.theme-lobotomy .badge-info {
-  background: rgba(0, 212, 255, 0.2) !important;
+  background: rgba(0, 212, 255, 0.15) !important;
   color: #00d4ff !important;
   border: 1px solid #00d4ff !important;
 }
 body.theme-lobotomy .badge-warning {
-  background: repeating-linear-gradient(45deg, #ffd700, #ffd700 6px, #000 6px, #000 12px) !important;
+  background: repeating-linear-gradient(45deg, #ffd700, #ffd700 8px, #000 8px, #000 16px) !important;
   color: #ffffff !important;
   border: 1px solid #ffd700 !important;
   text-shadow: 1px 1px 2px #000 !important;
 }
 body.theme-lobotomy .badge-partial {
-  background: rgba(155, 81, 224, 0.25) !important;
+  background: rgba(155, 81, 224, 0.15) !important;
   color: #b388ff !important;
   border: 1px solid #9b51e0 !important;
 }
@@ -5004,13 +5160,12 @@ body.theme-lobotomy .badge-desc-bg, body.theme-lobotomy .badge-desc {
   border-radius: 0px !important;
 }
 body.theme-lobotomy .btn, 
-body.theme-lobotomy button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn), 
-body.theme-lobotomy .actions-dropdown-item {
+body.theme-lobotomy button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
   border-radius: 0px !important;
   border: 1px solid #00d4ff !important;
   background: #0c1015 !important;
   color: #00d4ff !important;
-  font-family: 'Courier New', Courier, monospace !important;
+  font-family: 'Inter', -apple-system, sans-serif !important;
   font-weight: bold !important;
   text-transform: uppercase !important;
   letter-spacing: 1px !important;
@@ -5018,8 +5173,29 @@ body.theme-lobotomy .actions-dropdown-item {
   transition: all 0.2s ease !important;
 }
 body.theme-lobotomy .btn:hover, 
-body.theme-lobotomy button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover, 
-body.theme-lobotomy .actions-dropdown-item:hover {
+body.theme-lobotomy button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
+  background: #00d4ff !important;
+  color: #07090e !important;
+  box-shadow: 0 0 15px #00d4ff, inset 0 0 5px rgba(255, 255, 255, 0.5) !important;
+}
+body.theme-lobotomy .actions-dropdown-item,
+body.theme-lobotomy a.actions-dropdown-item,
+body.theme-lobotomy button.actions-dropdown-item {
+  border-radius: 0px !important;
+  border: 1px solid #00d4ff !important;
+  background: #0c1015 !important;
+  color: #00d4ff !important;
+  font-family: 'Inter', -apple-system, sans-serif !important;
+  font-weight: bold !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1px !important;
+  box-shadow: 0 0 5px rgba(0, 212, 255, 0.2) !important;
+  transition: all 0.2s ease !important;
+  text-decoration: none !important;
+}
+body.theme-lobotomy .actions-dropdown-item:hover,
+body.theme-lobotomy a.actions-dropdown-item:hover,
+body.theme-lobotomy button.actions-dropdown-item:hover {
   background: #00d4ff !important;
   color: #07090e !important;
   box-shadow: 0 0 15px #00d4ff, inset 0 0 5px rgba(255, 255, 255, 0.5) !important;
@@ -5066,8 +5242,7 @@ body.theme-papers .glass-card, body.theme-papers .modal-content, body.theme-pape
   background: #2f3230 !important;
 }
 body.theme-papers .btn, 
-body.theme-papers button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn), 
-body.theme-papers .actions-dropdown-item {
+body.theme-papers button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
   border: 2px solid #434744 !important;
   background: #1d1e1d !important;
   color: #c5c9c6 !important;
@@ -5076,8 +5251,24 @@ body.theme-papers .actions-dropdown-item {
   text-transform: uppercase !important;
 }
 body.theme-papers .btn:hover, 
-body.theme-papers button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover, 
-body.theme-papers .actions-dropdown-item:hover {
+body.theme-papers button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
+  background: #8f805a !important;
+  color: #1d1e1d !important;
+}
+body.theme-papers .actions-dropdown-item,
+body.theme-papers a.actions-dropdown-item,
+body.theme-papers button.actions-dropdown-item {
+  border: 2px solid #434744 !important;
+  background: #1d1e1d !important;
+  color: #c5c9c6 !important;
+  border-radius: 0px !important;
+  font-family: 'Courier New', Courier, monospace !important;
+  text-transform: uppercase !important;
+  text-decoration: none !important;
+}
+body.theme-papers .actions-dropdown-item:hover,
+body.theme-papers a.actions-dropdown-item:hover,
+body.theme-papers button.actions-dropdown-item:hover {
   background: #8f805a !important;
   color: #1d1e1d !important;
 }
@@ -5124,16 +5315,31 @@ body.theme-plague .glass-card, body.theme-plague .modal-content, body.theme-plag
   100% { box-shadow: 0 0 0 0 rgba(230, 0, 0, 0); }
 }
 body.theme-plague .btn, 
-body.theme-plague button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn), 
-body.theme-plague .actions-dropdown-item {
+body.theme-plague button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
   border: 1px solid #471c1c !important;
   background: #121014 !important;
   color: #e2e9e3 !important;
   border-radius: 4px !important;
 }
 body.theme-plague .btn:hover, 
-body.theme-plague button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover, 
-body.theme-plague .actions-dropdown-item:hover {
+body.theme-plague button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
+  border-color: #e60000 !important;
+  color: #ffffff !important;
+  background: #e60000 !important;
+  animation: plague-pulse 1.5s infinite;
+}
+body.theme-plague .actions-dropdown-item,
+body.theme-plague a.actions-dropdown-item,
+body.theme-plague button.actions-dropdown-item {
+  border: 1px solid #471c1c !important;
+  background: #121014 !important;
+  color: #e2e9e3 !important;
+  border-radius: 4px !important;
+  text-decoration: none !important;
+}
+body.theme-plague .actions-dropdown-item:hover,
+body.theme-plague a.actions-dropdown-item:hover,
+body.theme-plague button.actions-dropdown-item:hover {
   border-color: #e60000 !important;
   color: #ffffff !important;
   background: #e60000 !important;
@@ -5181,8 +5387,7 @@ body.theme-pvz .glass-card, body.theme-pvz .modal-content, body.theme-pvz .sideb
   background: #182419 !important;
 }
 body.theme-pvz .btn, 
-body.theme-pvz button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn), 
-body.theme-pvz .actions-dropdown-item {
+body.theme-pvz button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
   border-radius: 20px 20px 4px 4px !important;
   border: 3px solid #554433 !important;
   background: #6d7973 !important;
@@ -5192,8 +5397,26 @@ body.theme-pvz .actions-dropdown-item {
   text-transform: uppercase !important;
 }
 body.theme-pvz .btn:hover, 
-body.theme-pvz button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover, 
-body.theme-pvz .actions-dropdown-item:hover {
+body.theme-pvz button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
+  background: #4caf50 !important;
+  border-color: #ffc107 !important;
+  color: #ffffff !important;
+}
+body.theme-pvz .actions-dropdown-item,
+body.theme-pvz a.actions-dropdown-item,
+body.theme-pvz button.actions-dropdown-item {
+  border-radius: 20px 20px 4px 4px !important;
+  border: 3px solid #554433 !important;
+  background: #6d7973 !important;
+  color: #ffffff !important;
+  font-family: 'Comic Sans MS', sans-serif !important;
+  font-weight: bold !important;
+  text-transform: uppercase !important;
+  text-decoration: none !important;
+}
+body.theme-pvz .actions-dropdown-item:hover,
+body.theme-pvz a.actions-dropdown-item:hover,
+body.theme-pvz button.actions-dropdown-item:hover {
   background: #4caf50 !important;
   border-color: #ffc107 !important;
   color: #ffffff !important;
@@ -5416,7 +5639,7 @@ body.theme-lobotomy .launcher-app-item:hover .launcher-app-icon {
   transform: scale(1.05) !important;
 }
 body.theme-lobotomy .launcher-app-name {
-  font-family: 'Courier New', Courier, monospace !important;
+  font-family: 'Inter', -apple-system, sans-serif !important;
   color: #00d4ff !important;
   text-shadow: 0 0 3px rgba(0, 212, 255, 0.4) !important;
 }
