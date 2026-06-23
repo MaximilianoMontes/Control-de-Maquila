@@ -3799,4 +3799,10 @@ body.theme-cyberpunk .launcher-app-item:hover .launcher-app-name {
   text-shadow: 2px 2px 0px #ff0055, -2px -2px 0px #00f0ff !important;
 }
 
+/* 9. Launcher Page Container Background Transparency Override for all Custom Themes */
+body[class*="theme-"] .launcher-container {
+  background: transparent !important;
+  background-image: none !important;
+}
+
 
