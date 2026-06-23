@@ -682,31 +682,25 @@ export default function Extras() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div className="form-group">
                   <label className="form-label">{t('prod.startDateLabel')}</label>
-                  <div className="input-group-with-prefix">
-                    <span className="input-prefix-icon"><Calendar size={18} /></span>
-                    <input 
-                      type="date" 
-                      required 
-                      className="form-input" 
-                      value={formData.fecha_inicio} 
-                      onChange={e => setFormData({...formData, fecha_inicio: e.target.value})}
-                      disabled={!canEdit && isEditModalOpen}
-                    />
-                  </div>
+                  <input 
+                    type="date" 
+                    required 
+                    className="form-input" 
+                    value={formData.fecha_inicio} 
+                    onChange={e => setFormData({...formData, fecha_inicio: e.target.value})}
+                    disabled={!canEdit && isEditModalOpen}
+                  />
                 </div>
                 <div className="form-group">
                   <label className="form-label">{t('prod.endDateLabel')}</label>
-                  <div className="input-group-with-prefix">
-                    <span className="input-prefix-icon"><Calendar size={18} /></span>
-                    <input 
-                      type="date" 
-                      required 
-                      className="form-input" 
-                      value={formData.fecha_fin} 
-                      onChange={e => setFormData({...formData, fecha_fin: e.target.value})}
-                      disabled={!canEdit && isEditModalOpen}
-                    />
-                  </div>
+                  <input 
+                    type="date" 
+                    required 
+                    className="form-input" 
+                    value={formData.fecha_fin} 
+                    onChange={e => setFormData({...formData, fecha_fin: e.target.value})}
+                    disabled={!canEdit && isEditModalOpen}
+                  />
                 </div>
               </div>
 
