@@ -212,8 +212,24 @@ export default function Calendario() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%', boxSizing: 'border-box', fontFamily: 'Inter, sans-serif' }}>
+    <div className="calendar-standalone-container">
       <style>{`
+        .calendar-standalone-container {
+          min-height: 100vh;
+          width: 100%;
+          box-sizing: border-box;
+          display: flex;
+          flex-direction: column;
+          gap: 1.5rem;
+          padding: 2rem 3rem;
+          font-family: 'Inter', sans-serif;
+        }
+        @media (max-width: 768px) {
+          .calendar-standalone-container {
+            padding: 1rem;
+            gap: 1rem;
+          }
+        }
         .calendar-container {
           background: var(--bg-card);
           border: 1px solid var(--border-color);
@@ -427,8 +443,18 @@ export default function Calendario() {
         }
       `}</style>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-        <h1 className="gradient-text" style={{ fontSize: isMobile ? '1.5rem' : '2rem', margin: 0 }}>{isEn ? 'Calendar & Alerts' : 'Calendario y Alertas'}</h1>
+      <div className="calendar-top-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+          <button 
+            className="btn btn-secondary calendar-back-btn" 
+            onClick={() => navigate('/')}
+            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: isMobile ? '0.5rem 0.8rem' : '0.6rem 1.2rem', fontSize: isMobile ? '0.85rem' : '0.95rem' }}
+          >
+            <Home size={18} />
+            <span>{isEn ? 'Home' : 'Inicio'}</span>
+          </button>
+          <h1 className="gradient-text" style={{ fontSize: isMobile ? '1.5rem' : '2rem', margin: 0 }}>{isEn ? 'Calendar & Alerts' : 'Calendario y Alertas'}</h1>
+        </div>
         <button className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: isMobile ? '0.6rem 1rem' : '0.75rem 1.5rem', fontSize: isMobile ? '0.9rem' : '1rem' }} onClick={() => openModal()}>
           <Plus size={18} />
           {isEn ? 'New Event' : 'Nuevo Evento'}
