@@ -67,20 +67,21 @@ export default function KillFeed() {
 
     toast(
       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', fontWeight: 'bold' }}>
-          <span style={{ color: '#3b82f6' }}>{log.username}</span>
-          <span style={{ color: '#94a3b8' }}>➔</span>
+        <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px', fontSize: '0.85rem', fontWeight: 'bold' }}>
+          <span style={{ color: '#3b82f6', whiteSpace: 'nowrap' }}>{log.username}</span>
+          <span style={{ color: '#94a3b8', whiteSpace: 'nowrap' }}>➔</span>
           <span style={{ 
             color: normAction === 'ALTA' ? '#10b981' : normAction === 'BAJA' ? '#ef4444' : '#fbbf24',
             background: normAction === 'ALTA' ? 'rgba(16, 185, 129, 0.15)' : normAction === 'BAJA' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(251, 191, 36, 0.15)',
             padding: '2px 6px',
             borderRadius: '4px',
-            fontSize: '0.75rem'
+            fontSize: '0.75rem',
+            whiteSpace: 'nowrap'
           }}>
             {translatedAction}
           </span>
-          <span style={{ color: '#94a3b8' }}>➔</span>
-          <span style={{ color: '#e2e8f0' }}>{translatedTarget}</span>
+          <span style={{ color: '#94a3b8', whiteSpace: 'nowrap' }}>➔</span>
+          <span style={{ color: '#e2e8f0', whiteSpace: 'nowrap' }}>{translatedTarget}</span>
         </div>
         <div style={{ fontSize: '0.85rem', color: '#94a3b8', marginTop: '2px' }}>
           {description}
