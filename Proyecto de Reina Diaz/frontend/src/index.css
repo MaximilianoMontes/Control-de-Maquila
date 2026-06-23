@@ -2660,6 +2660,20 @@ body.dark-mode .search-clear-btn:hover {
     padding: 1.5rem;
     height: calc(100vh - 65px);
   }
+
+  /* Plancha Layout Responsive Stacking */
+  div[style*="grid-template-columns"][style*="320px"] {
+    grid-template-columns: 1fr !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 1.5rem !important;
+  }
+
+  div[style*="height"][style*="calc(100vh - 250px)"] {
+    height: auto !important;
+    max-height: none !important;
+    position: static !important;
+  }
 }
 
 /* --------------------------------------------------------------------------
@@ -2777,6 +2791,12 @@ body.dark-mode .search-clear-btn:hover {
   .actions-dropdown-btn {
     padding: 6px 10px !important;
     font-size: 0.8rem !important;
+  }
+
+  /* Auto-fit small 3-column sub-grids (like sizes, colors, metrics) on mobile */
+  div[style*="grid-template-columns: repeat(3, 1fr)"],
+  div[style*="gridTemplateColumns: 'repeat(3, 1fr)'"] {
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)) !important;
   }
 }
 
