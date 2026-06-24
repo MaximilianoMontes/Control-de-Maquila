@@ -77,6 +77,7 @@ export default function Produccion() {
   };
   const [verArchivados, setVerArchivados] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [activeTab, setActiveTab] = useState('proceso'); // 'proceso' o 'terminado'
   
   const [formData, setFormData] = useState({ maquilero_id: '', inventario_id: '', fecha_inicio: '', fecha_fin: '' });
   const [editingOrder, setEditingOrder] = useState(null);
@@ -360,9 +361,15 @@ export default function Produccion() {
   };
 
   const filteredOrders = orders.filter(o => {
-    // Ocultar permanentemente de la pantalla de producción si ya están terminadas (su flujo sigue en el camión)
-    if (o.estado === 'Terminado' || o.estado === 'Terminado Parcial') {
-      return false;
+    // Filtrar por pestaña activa
+    if (activeTab === 'proceso') {
+      if (o.estado === 'Terminado' || o.estado === 'Terminado Parcial') {
+        return false;
+      }
+    } else if (activeTab === 'terminado') {
+      if (o.estado !== 'Terminado' && o.estado !== 'Terminado Parcial') {
+        return false;
+      }
     }
     return (
       (o.maquilero_nombre || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -382,6 +389,42 @@ export default function Produccion() {
             </button>
           )}
         </div>
+      </div>
+
+      {/* Pestañas de Trabajo */}
+      <div style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '0.5rem', marginBottom: '0.25rem' }}>
+        <button 
+          onClick={() => setActiveTab('proceso')}
+          style={{
+            padding: '10px 20px',
+            background: activeTab === 'proceso' ? 'rgba(59, 130, 246, 0.12)' : 'transparent',
+            border: 'none',
+            borderBottom: activeTab === 'proceso' ? '2px solid var(--primary-color)' : 'none',
+            color: activeTab === 'proceso' ? '#fff' : 'var(--text-secondary)',
+            fontWeight: 600,
+            borderRadius: '8px 8px 0 0',
+            cursor: 'pointer',
+            transition: 'all 0.2s'
+          }}
+        >
+          {isEn ? 'In Process' : 'En Proceso'}
+        </button>
+        <button 
+          onClick={() => setActiveTab('terminado')}
+          style={{
+            padding: '10px 20px',
+            background: activeTab === 'terminado' ? 'rgba(59, 130, 246, 0.12)' : 'transparent',
+            border: 'none',
+            borderBottom: activeTab === 'terminado' ? '2px solid var(--primary-color)' : 'none',
+            color: activeTab === 'terminado' ? '#fff' : 'var(--text-secondary)',
+            fontWeight: 600,
+            borderRadius: '8px 8px 0 0',
+            cursor: 'pointer',
+            transition: 'all 0.2s'
+          }}
+        >
+          {isEn ? 'Finished' : 'Terminadas'}
+        </button>
       </div>
 
       <div className="glass-card interactive-search-card" style={{ padding: '0.75rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
