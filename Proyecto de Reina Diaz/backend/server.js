@@ -28,8 +28,7 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 const SECRET_KEY = process.env.SECRET_KEY || 'minierp_secret_key_super_secure';
 
-// TEMPORARY DB CLEANUP FOR FALTAS SYSTEM
-db.query("DELETE FROM planchador_asistencias WHERE monto > 0").then(() => console.log('Cleaned up old positive asistencias')).catch(e => console.error('Error cleaning db', e));
+
 
 app.use(cors());
 app.use(express.json());
