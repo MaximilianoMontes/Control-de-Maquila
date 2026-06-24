@@ -13,8 +13,7 @@ import {
 import { useSettings } from '../../context/SettingsContext';
 import API_URL from '../../config';
 import ImageZoom from '../ImageZoom';
-import Swal from 'sweetalert2';
-import { toast } from 'react-toastify';
+import { toast, Swal } from '../../utils/themeNotifications';
 
 export default function PlanchaPlanchadores({ planchadores, fetchPlanchadores }) {
   const { settings, formatCurrency } = useSettings();

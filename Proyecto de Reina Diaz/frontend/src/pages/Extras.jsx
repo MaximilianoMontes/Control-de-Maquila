@@ -9,8 +9,7 @@ import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import axios from 'axios';
 import API_URL from '../config';
-import Swal from 'sweetalert2';
-import { toast } from 'react-toastify';
+import { toast, Swal } from '../utils/themeNotifications';
 import SearchableSelect from '../components/SearchableSelect';
 
 const API = API_URL;
