@@ -360,10 +360,6 @@ export default function Produccion() {
     });
   };
 
-  // Ordenar todos los órdenes por ID ascendente para calcular folios estables
-  const ordersAsc = [...orders].sort((a, b) => a.id - b.id);
-  const getFolio = (o) => ordersAsc.findIndex(item => item.id === o.id) + 1;
-
   const filteredOrders = orders.filter(o => {
     // Filtrar por pestaña activa
     if (activeTab === 'proceso') {
@@ -380,6 +376,11 @@ export default function Produccion() {
       (o.producto_modelo || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
   });
+
+  // Folio = posición dentro de la lista visible, ordenada del más antiguo al más nuevo
+  // Así siempre arranca en #1 independientemente de lo que esté oculto en la otra pestaña
+  const filteredAsc = [...filteredOrders].sort((a, b) => a.id - b.id);
+  const getFolio = (o) => filteredAsc.findIndex(item => item.id === o.id) + 1;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>

@@ -347,14 +347,14 @@ export default function Extras() {
     });
   };
 
-  // Folios estables: posición en la lista completa ordenada por ID ascendente
-  const ordersAsc = [...orders].sort((a, b) => a.id - b.id);
-  const getFolio = (o) => ordersAsc.findIndex(item => item.id === o.id) + 1;
-
   const filteredOrders = orders.filter(o => 
     (o.maquilero_nombre || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     (o.producto_modelo || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Folio = posición dentro de la lista visible, ordenada del más antiguo al más nuevo
+  const filteredAsc = [...filteredOrders].sort((a, b) => a.id - b.id);
+  const getFolio = (o) => filteredAsc.findIndex(item => item.id === o.id) + 1;
 
   const cantValue = parseFloat(formData.cantidad) || 0;
   const priceValue = parseFloat(formData.precio_extra) || 0;
