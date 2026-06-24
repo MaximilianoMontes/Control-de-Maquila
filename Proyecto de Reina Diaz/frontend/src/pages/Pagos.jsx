@@ -266,8 +266,10 @@ export default function Pagos() {
     });
   };
 
+  const ordersAsc = [...orders].sort((a, b) => a.id - b.id);
   const getFolioNumber = (o) => {
-    return o.id;
+    const idx = ordersAsc.findIndex(item => item.id === o.id);
+    return idx !== -1 ? idx + 1 : o.id;
   };
 
   const activeProds = orders.filter(o => !o.es_extra && !o.archivado).sort((a, b) => b.id - a.id);

@@ -145,10 +145,13 @@ export default function Dashboard() {
                       </td>
                     </tr>
                   ) : (
-                    recentOrders.map((o, index) => (
-                      <tr key={o.id}>
-                        {/* El folio es el ID estable de la base de datos */}
-                        <td style={{ fontWeight: 'bold' }}>#{o.id}</td>
+                    recentOrders.map((o) => {
+                      const ordersAsc = [...recentOrders].sort((a, b) => a.id - b.id);
+                      const folio = ordersAsc.findIndex(item => item.id === o.id) + 1;
+                      return (
+                       <tr key={o.id}>
+                        {/* El folio es la posición en el listado completo ordenado por fecha de creación */}
+                        <td style={{ fontWeight: 'bold' }}>#{folio}</td>
                         <td style={{ fontWeight: 600 }}>{o.maquilero_nombre}</td>
                         <td>{new Date(o.fecha_inicio).toLocaleDateString()}</td>
                         <td>
@@ -156,8 +159,9 @@ export default function Dashboard() {
                             {o.estado === 'Terminado' ? t('prod.statusFinished') : o.estado === 'Cancelado' ? t('prod.statusCanceled') : t('prod.statusInProgress')}
                           </span>
                         </td>
-                      </tr>
-                    ))
+                       </tr>
+                      );
+                    })
                   )}
                 </tbody>
               </table>
