@@ -2863,6 +2863,22 @@ app.get('/api/temp-rollback-payment', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+
+// TEMPORARY PENDING CHECK ENDPOINT
+app.get('/api/temp-check-pending', async (req, res) => {
+  try {
+    const [rows] = await db.query(`
+      SELECT pt.id, pt.planchador_id, p.nombre, pt.color, pt.talla, pt.piezas, pt.total, pt.pago_id, pt.estado, pt.fecha_terminado
+      FROM plancha_trabajos pt
+      JOIN planchadores p ON pt.planchador_id = p.id
+      WHERE pt.estado = 'terminado' AND pt.pago_id IS NULL AND DATE(pt.fecha_terminado) >= '2026-06-19'
+    `);
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 // 5. OBTENER MODELOS DE LOS CAMIONES
 app.get('/api/plancha/modelos', authenticateToken, async (req, res) => {
   try {
