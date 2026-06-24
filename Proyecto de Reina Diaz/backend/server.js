@@ -2798,57 +2798,6 @@ app.delete('/api/planchadores/:id', authenticateToken, async (req, res) => {
   }
 });
 
-// TEMPORARY ROUTE TO UNDO TODAY'S ACCIDENTAL VALERIA PAYMENT REGISTRATION
-app.get('/api/temp-rollback-payment', async (req, res) => {
-  try {
-    const [planchadores] = await db.query("SELECT id FROM planchadores WHERE nombre LIKE '%Valeria%'");
-    if (planchadores.length === 0) {
-      return res.status(404).json({ error: "Valeria not found" });
-    }
-    const valeriaId = planchadores[0].id;
-
-    // 1. Find all payments registered today (June 24, 2026) for Valeria
-    const [payments] = await db.query(
-      "SELECT id, monto FROM planchador_pagos WHERE planchador_id = ? AND DATE(fecha) = '2026-06-24'",
-      [valeriaId]
-    );
-
-    if (payments.length === 0) {
-      return res.json({ success: false, message: "No payments found for Valeria registered today (June 24, 2026)." });
-    }
-
-    const paymentIds = payments.map(p => p.id);
-
-    // 2. Set pago_id = NULL for all jobs linked to these payments
-    const [jobsResult] = await db.query(
-      "UPDATE plancha_trabajos SET pago_id = NULL WHERE planchador_id = ? AND pago_id IN (?)",
-      [valeriaId, paymentIds]
-    );
-
-    // 3. Set pago_id = NULL for all absences linked to these payments
-    const [asistenciasResult] = await db.query(
-      "UPDATE planchador_asistencias SET pago_id = NULL WHERE planchador_id = ? AND pago_id IN (?)",
-      [valeriaId, paymentIds]
-    );
-
-    // 4. Delete these payments from planchador_pagos
-    const [deleteResult] = await db.query(
-      "DELETE FROM planchador_pagos WHERE id IN (?)",
-      [paymentIds]
-    );
-
-    res.json({
-      success: true,
-      message: `Successfully rolled back today's payments.`,
-      deletedPayments: payments,
-      restoredJobsCount: jobsResult.affectedRows,
-      restoredAsistenciasCount: asistenciasResult.affectedRows
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
 // 5. OBTENER MODELOS DE LOS CAMIONES
 app.get('/api/plancha/modelos', authenticateToken, async (req, res) => {
   try {
