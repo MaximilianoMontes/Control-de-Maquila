@@ -4078,7 +4078,7 @@ app.get('/api/reportes/plancha/resumen', async (req, res) => {
         }
       }
 
-      // 2. Get asistencias
+      // 2. Get asistencias (Including the base $500 quincenal attendance bonus)
       let astQuery = `
         SELECT monto FROM planchador_asistencias WHERE planchador_id = ?
       `;
@@ -4095,22 +4095,80 @@ app.get('/api/reportes/plancha/resumen', async (req, res) => {
       }
       
       const [asistencias] = await db.query(astQuery, astParams);
-      const asistenciasTotal = asistencias.reduce((sum, a) => sum + (Number(a.monto) || 0), 0);
+      // The base attendance bonus is $500. Absences (faltas) are stored as negative values (e.g., -50.00), which will correctly reduce it.
+      const asistenciasTotal = 500 + asistencias.reduce((sum, a) => sum + (Number(a.monto) || 0), 0);
 
-      // 3. Get payments
+      // 3. Get payments (covering payments registered in the range, or linked to works/asistencias in the range)
       let payQuery = `
-        SELECT monto FROM planchador_pagos WHERE planchador_id = ?
+        SELECT DISTINCT pp.id, pp.monto 
+        FROM planchador_pagos pp
+        WHERE pp.planchador_id = ?
       `;
       let payParams = [planchador.id];
+      
       if (start && end) {
-        payQuery += ` AND DATE(fecha) BETWEEN ? AND ?`;
-        payParams.push(start, end);
+        payQuery += `
+          AND (
+            DATE(pp.fecha) BETWEEN ? AND ?
+            OR pp.id IN (
+              SELECT DISTINCT pago_id 
+              FROM plancha_trabajos 
+              WHERE planchador_id = ? 
+                AND pago_id IS NOT NULL 
+                AND DATE(fecha_terminado) BETWEEN ? AND ?
+            )
+            OR pp.id IN (
+              SELECT DISTINCT pago_id 
+              FROM planchador_asistencias 
+              WHERE planchador_id = ? 
+                AND pago_id IS NOT NULL 
+                AND DATE(fecha) BETWEEN ? AND ?
+            )
+          )
+        `;
+        payParams.push(start, end, planchador.id, start, end, planchador.id, start, end);
       } else if (start) {
-        payQuery += ` AND DATE(fecha) >= ?`;
-        payParams.push(start);
+        payQuery += `
+          AND (
+            DATE(pp.fecha) >= ?
+            OR pp.id IN (
+              SELECT DISTINCT pago_id 
+              FROM plancha_trabajos 
+              WHERE planchador_id = ? 
+                AND pago_id IS NOT NULL 
+                AND DATE(fecha_terminado) >= ?
+            )
+            OR pp.id IN (
+              SELECT DISTINCT pago_id 
+              FROM planchador_asistencias 
+              WHERE planchador_id = ? 
+                AND pago_id IS NOT NULL 
+                AND DATE(fecha) >= ?
+            )
+          )
+        `;
+        payParams.push(start, planchador.id, start, planchador.id, start);
       } else if (end) {
-        payQuery += ` AND DATE(fecha) <= ?`;
-        payParams.push(end);
+        payQuery += `
+          AND (
+            DATE(pp.fecha) <= ?
+            OR pp.id IN (
+              SELECT DISTINCT pago_id 
+              FROM plancha_trabajos 
+              WHERE planchador_id = ? 
+                AND pago_id IS NOT NULL 
+                AND DATE(fecha_terminado) <= ?
+            )
+            OR pp.id IN (
+              SELECT DISTINCT pago_id 
+              FROM planchador_asistencias 
+              WHERE planchador_id = ? 
+                AND pago_id IS NOT NULL 
+                AND DATE(fecha) <= ?
+            )
+          )
+        `;
+        payParams.push(end, planchador.id, end, planchador.id, end);
       }
       
       const [payments] = await db.query(payQuery, payParams);
