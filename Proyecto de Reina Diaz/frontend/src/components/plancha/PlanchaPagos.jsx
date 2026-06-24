@@ -160,7 +160,7 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
       
       const pendingWorksSum = filteredTrabajos.reduce((sum, pt) => sum + parseFloat(pt.total || 0), 0);
       const pendingAsistenciasSum = filteredAsistencias.reduce((sum, pa) => sum + parseFloat(pa.monto || 0), 0);
-      const bonoBase = (fechaInicioFiltro && fechaFinFiltro) ? 0 : planchadorPagoDetalle.bonoBase;
+      const bonoBase = planchadorPagoDetalle.bonoBase || 0;
       const totalPendiente = pendingWorksSum + pendingAsistenciasSum + bonoBase;
       
       setMontoPago(totalPendiente.toFixed(2));
@@ -535,7 +535,7 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
               const cuadreItems = trabajos.filter(pt => pt.talla === 'AJUSTE' && (pt.color?.includes('Cuadre') || pt.color?.includes('Diferencia')));
               const pagoFijoItems = trabajos.filter(pt => pt.talla === 'AJUSTE' && !(pt.color?.includes('Cuadre') || pt.color?.includes('Diferencia')));
               
-              const bonoBase = (fechaInicioFiltro && fechaFinFiltro) ? 0 : planchadorPagoDetalle.bonoBase;
+              const bonoBase = planchadorPagoDetalle.bonoBase || 0;
               const pendiente = regularWork + cuadreDif + pagoFijoVal + asistenciasVal + bonoBase;
               const ganado = planchadorPagoDetalle.pagado + pendiente;
 
