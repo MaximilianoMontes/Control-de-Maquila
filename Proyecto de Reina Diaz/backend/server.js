@@ -1492,7 +1492,7 @@ app.put('/api/produccion/:id/observaciones', authenticateToken, async (req, res)
 });
 
 app.post('/api/produccion/:id/dividir', authenticateToken, async (req, res) => {
-  const { cantidad_entregada, nuevo_maquilero_id } = req.body;
+  const { cantidad_entregada, nuevo_maquilero_id, estado_original } = req.body;
   try {
     const [olds] = await db.query(`
       SELECT p.*, i.precio as unit_price, i.modelo as inv_m, m.nombre as maq_n
@@ -1520,17 +1520,33 @@ app.post('/api/produccion/:id/dividir', authenticateToken, async (req, res) => {
     if (old.ajuste_tipo === 'bono') finalPrecioOriginal += subtotalOriginal * (old.ajuste_porcentaje / 100);
     else if (old.ajuste_tipo === 'descuento') finalPrecioOriginal -= subtotalOriginal * (old.ajuste_porcentaje / 100);
     
+    const targetEstado = estado_original || 'Terminado';
+    let targetCantidadRecibida = qtyEntregada;
+    let targetFechaTerminado = null;
+    
+    if (targetEstado === 'En proceso') {
+      targetCantidadRecibida = null;
+      targetFechaTerminado = null;
+    } else if (targetEstado === 'Terminado Parcial') {
+      targetCantidadRecibida = qtyEntregada;
+      targetFechaTerminado = null;
+    } else {
+      // Terminado
+      targetCantidadRecibida = qtyEntregada;
+      targetFechaTerminado = new Date();
+    }
+    
     await db.query(`
       UPDATE produccion SET 
       cantidad = ?, 
       cantidad_recibida = ?,
       precio_total = ?,
-      estado = 'Terminado',
-      fecha_terminado = CURRENT_TIMESTAMP
+      estado = ?,
+      fecha_terminado = ?
       WHERE id = ?
-    `, [qtyEntregada, qtyEntregada, finalPrecioOriginal, req.params.id]);
+    `, [qtyEntregada, targetCantidadRecibida, finalPrecioOriginal, targetEstado, targetFechaTerminado, req.params.id]);
 
-    await logActivity(req.user.id, 'EDIT', 'PRODUCCION', `Dividió orden ${old.inv_m} (${old.maq_n}): Entregó ${qtyEntregada} pzas, reasignando ${remainingQty}`);
+    await logActivity(req.user.id, 'EDIT', 'PRODUCCION', `Dividió orden ${old.inv_m} (${old.maq_n}): Entregó ${qtyEntregada} pzas (estado: ${targetEstado}), reasignando ${remainingQty}`);
 
     // 2. Create new order if nuevo_maquilero_id is provided
     if (nuevo_maquilero_id) {
