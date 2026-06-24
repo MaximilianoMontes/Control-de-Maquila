@@ -50,6 +50,8 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
   const [montoPago, setMontoPago] = useState('');
   const [tipoPago, setTipoPago] = useState('completo');
   const [pagoSubmitting, setPagoSubmitting] = useState(false);
+  const [fechaInicioFiltro, setFechaInicioFiltro] = useState('');
+  const [fechaFinFiltro, setFechaFinFiltro] = useState('');
 
   // Manual Attendance State
   const [fechaManualAsistencia, setFechaManualAsistencia] = useState('');
@@ -112,6 +114,8 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
 
   const handleCargarPagosPlanchador = async (id) => {
     setPagoPlanchadorId(id);
+    setFechaInicioFiltro('');
+    setFechaFinFiltro('');
     if (!id) {
       setPlanchadorPagoDetalle(null);
       setMontoPago('');
@@ -136,6 +140,32 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
       console.error(e);
     }
   };
+
+  useEffect(() => {
+    if (planchadorPagoDetalle) {
+      const trabajos = planchadorPagoDetalle.trabajosPendientes || [];
+      const asistenciasList = planchadorPagoDetalle.asistenciasPendientes || [];
+      
+      const filteredTrabajos = trabajos.filter(pt => {
+        if (!fechaInicioFiltro || !fechaFinFiltro) return true;
+        const dateStr = pt.fecha_creacion ? pt.fecha_creacion.split('T')[0] : '';
+        return dateStr >= fechaInicioFiltro && dateStr <= fechaFinFiltro;
+      });
+
+      const filteredAsistencias = asistenciasList.filter(pa => {
+        if (!fechaInicioFiltro || !fechaFinFiltro) return true;
+        const dateStr = pa.fecha ? pa.fecha.split('T')[0] : '';
+        return dateStr >= fechaInicioFiltro && dateStr <= fechaFinFiltro;
+      });
+      
+      const pendingWorksSum = filteredTrabajos.reduce((sum, pt) => sum + parseFloat(pt.total || 0), 0);
+      const pendingAsistenciasSum = filteredAsistencias.reduce((sum, pa) => sum + parseFloat(pa.monto || 0), 0);
+      const bonoBase = (fechaInicioFiltro && fechaFinFiltro) ? 0 : planchadorPagoDetalle.bonoBase;
+      const totalPendiente = pendingWorksSum + pendingAsistenciasSum + bonoBase;
+      
+      setMontoPago(totalPendiente.toFixed(2));
+    }
+  }, [fechaInicioFiltro, fechaFinFiltro, planchadorPagoDetalle]);
 
   const handleRegistrarPago = async (e) => {
     e.preventDefault();
@@ -165,7 +195,9 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
           await axios.post(`${API_URL}/api/plancha/pagos`, {
             planchador_id: pagoPlanchadorId,
             monto: parseFloat(montoPago),
-            tipo_pago: 'completo'
+            tipo_pago: 'completo',
+            fecha_inicio: fechaInicioFiltro || undefined,
+            fecha_fin: fechaFinFiltro || undefined
           }, { headers: { Authorization: `Bearer ${token}` } });
 
           setMontoPago('');
@@ -448,9 +480,43 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
               />
             </div>
 
+            {pagoPlanchadorId && (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginTop: '0.5rem', marginBottom: '0.5rem' }}>
+                <div className="form-group">
+                  <label className="form-label" style={{ fontSize: '0.8rem' }}>{isEn ? 'From Date' : 'Desde la Fecha'}</label>
+                  <input 
+                    type="date" 
+                    className="form-input" 
+                    value={fechaInicioFiltro} 
+                    onChange={e => setFechaInicioFiltro(e.target.value)} 
+                    style={{ padding: '0.4rem 0.6rem', fontSize: '0.85rem' }}
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label" style={{ fontSize: '0.8rem' }}>{isEn ? 'To Date' : 'Hasta la Fecha'}</label>
+                  <input 
+                    type="date" 
+                    className="form-input" 
+                    value={fechaFinFiltro} 
+                    onChange={e => setFechaFinFiltro(e.target.value)} 
+                    style={{ padding: '0.4rem 0.6rem', fontSize: '0.85rem' }}
+                  />
+                </div>
+              </div>
+            )}
+
             {planchadorPagoDetalle && (() => {
-              const trabajos = planchadorPagoDetalle.trabajosPendientes || [];
-              const asistenciasList = planchadorPagoDetalle.asistenciasPendientes || [];
+              const trabajos = (planchadorPagoDetalle.trabajosPendientes || []).filter(pt => {
+                if (!fechaInicioFiltro || !fechaFinFiltro) return true;
+                const dateStr = pt.fecha_creacion ? pt.fecha_creacion.split('T')[0] : '';
+                return dateStr >= fechaInicioFiltro && dateStr <= fechaFinFiltro;
+              });
+              
+              const asistenciasList = (planchadorPagoDetalle.asistenciasPendientes || []).filter(pa => {
+                if (!fechaInicioFiltro || !fechaFinFiltro) return true;
+                const dateStr = pa.fecha ? pa.fecha.split('T')[0] : '';
+                return dateStr >= fechaInicioFiltro && dateStr <= fechaFinFiltro;
+              });
               
               const regularWork = trabajos
                 .filter(pt => pt.talla !== 'AJUSTE')
@@ -468,14 +534,18 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
 
               const cuadreItems = trabajos.filter(pt => pt.talla === 'AJUSTE' && (pt.color?.includes('Cuadre') || pt.color?.includes('Diferencia')));
               const pagoFijoItems = trabajos.filter(pt => pt.talla === 'AJUSTE' && !(pt.color?.includes('Cuadre') || pt.color?.includes('Diferencia')));
+              
+              const bonoBase = (fechaInicioFiltro && fechaFinFiltro) ? 0 : planchadorPagoDetalle.bonoBase;
+              const pendiente = regularWork + cuadreDif + pagoFijoVal + asistenciasVal + bonoBase;
+              const ganado = planchadorPagoDetalle.pagado + pendiente;
 
               return (
                 <div style={{ background: 'rgba(0,0,0,0.02)', padding: '1rem', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.95rem' }}>
-                  <p style={{ margin: 0 }}><strong>{isEn ? 'Total Earned' : 'Total Ganado'}:</strong> {formatCurrency(planchadorPagoDetalle.ganado)}</p>
+                  <p style={{ margin: 0 }}><strong>{isEn ? 'Total Earned' : 'Total Ganado'}:</strong> {formatCurrency(ganado)}</p>
                   
-                  {planchadorPagoDetalle.bonoBase > 0 && (
+                  {bonoBase > 0 && (
                     <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted, #94a3b8)', paddingLeft: '1rem' }}>
-                      • {isEn ? 'Base Bonus' : 'Base Quincenal'}: <span style={{ color: '#60a5fa', fontWeight: 'bold' }}>+{formatCurrency(planchadorPagoDetalle.bonoBase)}</span>
+                      • {isEn ? 'Base Bonus' : 'Base Quincenal'}: <span style={{ color: '#60a5fa', fontWeight: 'bold' }}>+{formatCurrency(bonoBase)}</span>
                     </p>
                   )}
 
@@ -574,8 +644,8 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
 
                   <p style={{ margin: 0, color: '#34d399' }}><strong>{isEn ? 'Total Paid' : 'Total Pagado'}:</strong> {formatCurrency(planchadorPagoDetalle.pagado)}</p>
                   <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,0.05)', margin: '0.4rem 0' }} />
-                  <p style={{ margin: 0, fontSize: '1.1rem', color: planchadorPagoDetalle.pendiente > 0 ? '#ef4444' : '#34d399' }}>
-                    <strong>{isEn ? 'Pending Balance' : 'Saldo Pendiente'}: {formatCurrency(planchadorPagoDetalle.pendiente)}</strong>
+                  <p style={{ margin: 0, fontSize: '1.1rem', color: pendiente > 0 ? '#ef4444' : '#34d399' }}>
+                    <strong>{isEn ? 'Pending Balance' : 'Saldo Pendiente'}: {formatCurrency(pendiente)}</strong>
                   </p>
                 </div>
               );
@@ -931,49 +1001,67 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
                     </td>
                   </tr>
                 ) : (
-                  planchadorPagoDetalle.trabajosPendientes.map(t => (
-                    <tr key={t.id}>
-                      <td>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          {t.modelo_imagen ? (
-                            <ImageZoom
-                              src={`${API_URL}${t.modelo_imagen}`}
-                              alt={t.modelo_nombre}
-                              style={{ width: '28px', height: '28px', borderRadius: '4px', objectFit: 'contain', background: 'var(--bg-card)' }}
-                            />
-                          ) : null}
-                          <strong>{t.modelo_nombre || t.color}</strong>
-                        </div>
-                      </td>
-                      <td>{formatDate(t.fecha_creacion)}</td>
-                      <td>
-                        {t.talla !== 'AJUSTE' && t.color ? (
-                          <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                            {t.color}
-                          </span>
-                        ) : '-'}
-                      </td>
-                      <td>
-                        {t.talla === 'AJUSTE' ? (
-                          <span className="badge badge-warning" style={{ background: 'rgba(245, 158, 11, 0.2)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.3)' }}>{isEn ? 'FIXED PAY' : 'PAGO FIJO'}</span>
-                        ) : (
-                          <span className="badge badge-info">{isEn ? 'S' : 'T'}{t.talla}</span>
-                        )}
-                      </td>
-                      <td>{t.piezas}</td>
-                      <td style={{ color: t.neto < 0 ? '#ef4444' : '#34d399', fontWeight: 'bold' }}>
-                        {t.neto < 0 ? '-' : ''}{formatCurrency(Math.abs(t.neto))}
-                      </td>
-                      <td>
-                        <button 
-                          onClick={() => handleDeleteTrabajo(t.id)} 
-                          style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                        >
-                          <MinusCircle size={18} />
-                        </button>
-                      </td>
-                    </tr>
-                  ))
+                  (() => {
+                    const filtered = planchadorPagoDetalle.trabajosPendientes.filter(pt => {
+                      if (!fechaInicioFiltro || !fechaFinFiltro) return true;
+                      const dateStr = pt.fecha_creacion ? pt.fecha_creacion.split('T')[0] : '';
+                      return dateStr >= fechaInicioFiltro && dateStr <= fechaFinFiltro;
+                    });
+                    
+                    if (filtered.length === 0) {
+                      return (
+                        <tr>
+                          <td colSpan="7" style={{ textAlign: 'center', color: 'var(--text-muted, #94a3b8)' }}>
+                            {isEn ? 'No jobs pending payment in this date range.' : 'No hay trabajos pendientes de pago en este rango de fechas.'}
+                          </td>
+                        </tr>
+                      );
+                    }
+                    
+                    return filtered.map(t => (
+                      <tr key={t.id}>
+                        <td>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            {t.modelo_imagen ? (
+                              <ImageZoom
+                                src={`${API_URL}${t.modelo_imagen}`}
+                                alt={t.modelo_nombre}
+                                style={{ width: '28px', height: '28px', borderRadius: '4px', objectFit: 'contain', background: 'var(--bg-card)' }}
+                              />
+                            ) : null}
+                            <strong>{t.modelo_nombre || t.color}</strong>
+                          </div>
+                        </td>
+                        <td>{formatDate(t.fecha_creacion)}</td>
+                        <td>
+                          {t.talla !== 'AJUSTE' && t.color ? (
+                            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                              {t.color}
+                            </span>
+                          ) : '-'}
+                        </td>
+                        <td>
+                          {t.talla === 'AJUSTE' ? (
+                            <span className="badge badge-warning" style={{ background: 'rgba(245, 158, 11, 0.2)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.3)' }}>{isEn ? 'FIXED PAY' : 'PAGO FIJO'}</span>
+                          ) : (
+                            <span className="badge badge-info">{isEn ? 'S' : 'T'}{t.talla}</span>
+                          )}
+                        </td>
+                        <td>{t.piezas}</td>
+                        <td style={{ color: t.neto < 0 ? '#ef4444' : '#34d399', fontWeight: 'bold' }}>
+                          {t.neto < 0 ? '-' : ''}{formatCurrency(Math.abs(t.neto))}
+                        </td>
+                        <td>
+                          <button 
+                            onClick={() => handleDeleteTrabajo(t.id)} 
+                            style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                          >
+                            <MinusCircle size={18} />
+                          </button>
+                        </td>
+                      </tr>
+                    ));
+                  })()
                 )}
               </tbody>
             </table>
