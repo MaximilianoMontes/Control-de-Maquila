@@ -1,13 +1,14 @@
+
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { 
-  Wallet, 
-  Plus, 
-  Calculator, 
-  History, 
-  Download, 
-  FileText, 
-  Search, 
+import {
+  Wallet,
+  Plus,
+  Calculator,
+  History,
+  Download,
+  FileText,
+  Search,
   X,
   MinusCircle,
   Clock,
@@ -145,7 +146,7 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
     if (planchadorPagoDetalle) {
       const trabajos = planchadorPagoDetalle.trabajosPendientes || [];
       const asistenciasList = planchadorPagoDetalle.asistenciasPendientes || [];
-      
+
       const filteredTrabajos = trabajos.filter(pt => {
         if (!fechaInicioFiltro || !fechaFinFiltro) return true;
         const dateStr = pt.fecha_creacion ? pt.fecha_creacion.split('T')[0] : '';
@@ -157,12 +158,12 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
         const dateStr = pa.fecha ? pa.fecha.split('T')[0] : '';
         return dateStr >= fechaInicioFiltro && dateStr <= fechaFinFiltro;
       });
-      
+
       const pendingWorksSum = filteredTrabajos.reduce((sum, pt) => sum + parseFloat(pt.total || 0), 0);
       const pendingAsistenciasSum = filteredAsistencias.reduce((sum, pa) => sum + parseFloat(pa.monto || 0), 0);
       const bonoBase = planchadorPagoDetalle.bonoBase || 0;
       const totalPendiente = pendingWorksSum + pendingAsistenciasSum + bonoBase;
-      
+
       setMontoPago(totalPendiente.toFixed(2));
     }
   }, [fechaInicioFiltro, fechaFinFiltro, planchadorPagoDetalle]);
@@ -176,7 +177,7 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
 
     Swal.fire({
       title: isEn ? 'Register Payment?' : '¿Registrar Pago?',
-      text: isEn 
+      text: isEn
         ? `Are you sure you want to register a payment of ${formatCurrency(montoPago)} for ${nombrePlanchador}?`
         : `¿Estás seguro de registrar un pago de ${formatCurrency(montoPago)} para ${nombrePlanchador}?`,
       icon: 'question',
@@ -326,12 +327,12 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
       toast.warning(isEn ? 'Select an ironer' : 'Selecciona un planchador', { theme: 'dark' });
       return;
     }
-    
+
     const dias = parseFloat(ajusteParamDias) || 1;
     const tarifa = 400;
     const finalMonto = dias * tarifa;
     let descFormula = '';
-    
+
     if (ajusteRazon === 'Dia adelantado' || ajusteRazon === 'Vacaciones') {
       descFormula = `${dias} días × $${tarifa}/día`;
     } else if (ajusteRazon === 'Festivo') {
@@ -347,7 +348,7 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
 
     try {
       const token = localStorage.getItem('token');
-      const razonFinal = ajusteRazon === 'Apoyo en calidad' 
+      const razonFinal = ajusteRazon === 'Apoyo en calidad'
         ? `Apoyo en calidad (${ajusteApoyoDetalle}) [${descFormula}]`
         : `${ajusteRazon} [${descFormula}]`;
 
@@ -417,9 +418,9 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
         fecha: cuadreEnd
       }, { headers: { Authorization: `Bearer ${token}` } });
 
-      toast.success(isEn 
+      toast.success(isEn
         ? `Adjustment applied correctly: Difference of ${formatCurrency(finalMonto)}`
-        : `Cuadre aplicado correctamente: Diferencia de ${formatCurrency(finalMonto)}`, 
+        : `Cuadre aplicado correctamente: Diferencia de ${formatCurrency(finalMonto)}`,
         { theme: 'dark' }
       );
       setShowCuadreModal(false);
@@ -459,7 +460,7 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '2rem', alignItems: 'start' }}>
-      
+
       <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
         {/* Formulario de Pagos */}
         <div className="glass-card">
@@ -484,21 +485,21 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginTop: '0.5rem', marginBottom: '0.5rem' }}>
                 <div className="form-group">
                   <label className="form-label" style={{ fontSize: '0.8rem' }}>{isEn ? 'From Date' : 'Desde la Fecha'}</label>
-                  <input 
-                    type="date" 
-                    className="form-input" 
-                    value={fechaInicioFiltro} 
-                    onChange={e => setFechaInicioFiltro(e.target.value)} 
+                  <input
+                    type="date"
+                    className="form-input"
+                    value={fechaInicioFiltro}
+                    onChange={e => setFechaInicioFiltro(e.target.value)}
                     style={{ padding: '0.4rem 0.6rem', fontSize: '0.85rem' }}
                   />
                 </div>
                 <div className="form-group">
                   <label className="form-label" style={{ fontSize: '0.8rem' }}>{isEn ? 'To Date' : 'Hasta la Fecha'}</label>
-                  <input 
-                    type="date" 
-                    className="form-input" 
-                    value={fechaFinFiltro} 
-                    onChange={e => setFechaFinFiltro(e.target.value)} 
+                  <input
+                    type="date"
+                    className="form-input"
+                    value={fechaFinFiltro}
+                    onChange={e => setFechaFinFiltro(e.target.value)}
                     style={{ padding: '0.4rem 0.6rem', fontSize: '0.85rem' }}
                   />
                 </div>
@@ -511,30 +512,30 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
                 const dateStr = pt.fecha_creacion ? pt.fecha_creacion.split('T')[0] : '';
                 return dateStr >= fechaInicioFiltro && dateStr <= fechaFinFiltro;
               });
-              
+
               const asistenciasList = (planchadorPagoDetalle.asistenciasPendientes || []).filter(pa => {
                 if (!fechaInicioFiltro || !fechaFinFiltro) return true;
                 const dateStr = pa.fecha ? pa.fecha.split('T')[0] : '';
                 return dateStr >= fechaInicioFiltro && dateStr <= fechaFinFiltro;
               });
-              
+
               const regularWork = trabajos
                 .filter(pt => pt.talla !== 'AJUSTE')
                 .reduce((sum, pt) => sum + parseFloat(pt.total || 0), 0);
-                
+
               const cuadreDif = trabajos
                 .filter(pt => pt.talla === 'AJUSTE' && (pt.color?.includes('Cuadre') || pt.color?.includes('Diferencia')))
                 .reduce((sum, pt) => sum + parseFloat(pt.total || 0), 0);
-                
+
               const pagoFijoVal = trabajos
                 .filter(pt => pt.talla === 'AJUSTE' && !(pt.color?.includes('Cuadre') || pt.color?.includes('Diferencia')))
                 .reduce((sum, pt) => sum + parseFloat(pt.total || 0), 0);
-                
+
               const asistenciasVal = asistenciasList.reduce((sum, pa) => sum + parseFloat(pa.monto || 0), 0);
 
               const cuadreItems = trabajos.filter(pt => pt.talla === 'AJUSTE' && (pt.color?.includes('Cuadre') || pt.color?.includes('Diferencia')));
               const pagoFijoItems = trabajos.filter(pt => pt.talla === 'AJUSTE' && !(pt.color?.includes('Cuadre') || pt.color?.includes('Diferencia')));
-              
+
               const bonoBase = planchadorPagoDetalle.bonoBase || 0;
               const pendiente = regularWork + cuadreDif + pagoFijoVal + asistenciasVal + bonoBase;
               const ganado = pendiente;
@@ -542,7 +543,7 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
               return (
                 <div style={{ background: 'rgba(0,0,0,0.02)', padding: '1rem', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.95rem' }}>
                   <p style={{ margin: 0 }}><strong>{isEn ? 'Total Earned' : 'Total Ganado'}:</strong> {formatCurrency(ganado)}</p>
-                  
+
                   {bonoBase > 0 && (
                     <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted, #94a3b8)', paddingLeft: '1rem' }}>
                       • {isEn ? 'Base Bonus' : 'Base Quincenal'}: <span style={{ color: '#60a5fa', fontWeight: 'bold' }}>+{formatCurrency(bonoBase)}</span>
@@ -554,7 +555,7 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
                       • {isEn ? 'Regular Ironing' : 'Plancha Regular'}: <span style={{ color: '#34d399', fontWeight: 'bold' }}>+{formatCurrency(regularWork)}</span>
                     </p>
                   )}
-                  
+
                   {cuadreDif !== 0 && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', paddingLeft: '1rem' }}>
                       <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted, #94a3b8)' }}>
@@ -571,10 +572,10 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
                             <span style={{ fontWeight: 600, color: item.total > 0 ? '#34d399' : '#ef4444' }}>
                               {item.total > 0 ? '+' : ''}{formatCurrency(item.total)}
                             </span>
-                            <MinusCircle 
-                              size={14} 
-                              color="#ef4444" 
-                              style={{ cursor: 'pointer' }} 
+                            <MinusCircle
+                              size={14}
+                              color="#ef4444"
+                              style={{ cursor: 'pointer' }}
                               title={isEn ? 'Remove adjustment' : 'Eliminar ajuste'}
                               onClick={() => handleEliminarAjuste(item.id)}
                             />
@@ -583,7 +584,7 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
                       ))}
                     </div>
                   )}
-                  
+
                   {pagoFijoVal !== 0 && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', paddingLeft: '1rem' }}>
                       <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted, #94a3b8)' }}>
@@ -600,10 +601,10 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
                             <span style={{ fontWeight: 600, color: '#60a5fa' }}>
                               {item.total > 0 ? '+' : ''}{formatCurrency(item.total)}
                             </span>
-                            <MinusCircle 
-                              size={14} 
-                              color="#ef4444" 
-                              style={{ cursor: 'pointer' }} 
+                            <MinusCircle
+                              size={14}
+                              color="#ef4444"
+                              style={{ cursor: 'pointer' }}
                               title={isEn ? 'Remove fixed pay' : 'Eliminar pago fijo'}
                               onClick={() => handleEliminarAjuste(item.id)}
                             />
@@ -612,7 +613,7 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
                       ))}
                     </div>
                   )}
-                  
+
                   {asistenciasVal < 0 && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', paddingLeft: '1rem' }}>
                       <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted, #94a3b8)' }}>
@@ -629,10 +630,10 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
                             <span style={{ fontWeight: 600, color: '#ef4444' }}>
                               {formatCurrency(item.monto)}
                             </span>
-                            <MinusCircle 
-                              size={14} 
-                              color="#ef4444" 
-                              style={{ cursor: 'pointer' }} 
+                            <MinusCircle
+                              size={14}
+                              color="#ef4444"
+                              style={{ cursor: 'pointer' }}
                               title={isEn ? 'Remove absence' : 'Eliminar falta'}
                               onClick={() => handleEliminarAsistencia(item.id)}
                             />
@@ -660,21 +661,21 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
 
             <div className="form-group">
               <label className="form-label">{isEn ? 'Payment Amount' : 'Monto del Pago'}</label>
-              <input 
-                type="number" 
-                step="0.01" 
-                required 
+              <input
+                type="number"
+                step="0.01"
+                required
                 className="form-input"
-                placeholder={planchadorPagoDetalle ? (isEn ? `Suggested: ${formatCurrency(planchadorPagoDetalle.pendiente)}` : `Sugerido: ${formatCurrency(planchadorPagoDetalle.pendiente)}`) : (isEn ? 'e.g. 500' : 'Ej: 500')} 
-                value={montoPago} 
-                onChange={e => setMontoPago(e.target.value)} 
+                placeholder={planchadorPagoDetalle ? (isEn ? `Suggested: ${formatCurrency(planchadorPagoDetalle.pendiente)}` : `Sugerido: ${formatCurrency(planchadorPagoDetalle.pendiente)}`) : (isEn ? 'e.g. 500' : 'Ej: 500')}
+                value={montoPago}
+                onChange={e => setMontoPago(e.target.value)}
                 disabled={!pagoPlanchadorId}
               />
             </div>
 
-            <button 
-              type="submit" 
-              className="btn btn-primary" 
+            <button
+              type="submit"
+              className="btn btn-primary"
               style={{ width: '100%' }}
               disabled={pagoSubmitting || !pagoPlanchadorId || parseFloat(montoPago || 0) <= 0}
             >
@@ -689,17 +690,17 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
 
               return (
                 <div style={{ display: 'flex', gap: '0.8rem', marginTop: '0.5rem' }}>
-                  <button 
-                    type="button" 
-                    className="btn btn-secondary" 
-                    style={{ 
-                      flex: 1, 
-                      borderColor: restrictAjusteCuadre ? 'rgba(255,255,255,0.05)' : 'rgba(14, 165, 233, 0.4)', 
-                      color: restrictAjusteCuadre ? '#64748b' : '#0ea5e9', 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'center', 
-                      gap: '4px', 
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    style={{
+                      flex: 1,
+                      borderColor: restrictAjusteCuadre ? 'rgba(255,255,255,0.05)' : 'rgba(14, 165, 233, 0.4)',
+                      color: restrictAjusteCuadre ? '#64748b' : '#0ea5e9',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '4px',
                       padding: '10px',
                       cursor: restrictAjusteCuadre ? 'not-allowed' : 'pointer',
                       opacity: restrictAjusteCuadre ? 0.5 : 1
@@ -713,17 +714,17 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
                   >
                     <Plus size={16} /> {isEn ? 'Fixed Pay' : 'Pago Fijo'}
                   </button>
-                  <button 
-                    type="button" 
-                    className="btn btn-secondary" 
-                    style={{ 
-                      flex: 1, 
-                      borderColor: restrictAjusteCuadre ? 'rgba(255,255,255,0.05)' : 'rgba(16, 185, 129, 0.4)', 
-                      color: restrictAjusteCuadre ? '#64748b' : '#10b981', 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'center', 
-                      gap: '4px', 
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    style={{
+                      flex: 1,
+                      borderColor: restrictAjusteCuadre ? 'rgba(255,255,255,0.05)' : 'rgba(16, 185, 129, 0.4)',
+                      color: restrictAjusteCuadre ? '#64748b' : '#10b981',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '4px',
                       padding: '10px',
                       cursor: restrictAjusteCuadre ? 'not-allowed' : 'pointer',
                       opacity: restrictAjusteCuadre ? 0.5 : 1
@@ -747,7 +748,7 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
         {pagoPlanchadorId && (
           <div className="glass-card" style={{ padding: '1.5rem', marginTop: '1.5rem' }}>
             <h3 style={{ margin: '0 0 1.2rem 0', fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-               Gestión de Faltas
+              Gestión de Faltas
             </h3>
             <form onSubmit={handleAddAsistenciaManual} style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', alignItems: 'flex-end' }}>
               <div className="form-group" style={{ flex: 1 }}>
@@ -756,7 +757,7 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
               </div>
               <button type="submit" className="btn btn-primary" style={{ padding: '0.6rem 1.2rem', background: '#ef4444', borderColor: '#ef4444' }}>Registrar Falta</button>
             </form>
-            
+
             {historialAsistencias.length > 0 ? (
               <div className="table-wrapper">
                 <table className="data-table" style={{ fontSize: '0.85rem' }}>
@@ -798,24 +799,24 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
             <History size={18} color="#0ea5e9" /> {isEn ? 'Payroll PDF Report' : 'Reporte de Nómina PDF'}
           </h3>
           <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '-0.5rem 0 1.2rem 0' }}>{isEn ? 'Download a consolidated PDF report of ironers earnings and payroll' : 'Descarga un reporte consolidado en PDF de las ganancias y nómina de los planchadores'}</p>
-          
+
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div className="form-group">
               <label className="form-label">{isEn ? 'Start Date' : 'Fecha de Inicio'}</label>
-              <input 
-                type="date" 
-                className="form-input" 
-                value={reportStart} 
-                onChange={e => setReportStart(e.target.value)} 
+              <input
+                type="date"
+                className="form-input"
+                value={reportStart}
+                onChange={e => setReportStart(e.target.value)}
               />
             </div>
             <div className="form-group">
               <label className="form-label">{isEn ? 'End Date' : 'Fecha Fin'}</label>
-              <input 
-                type="date" 
-                className="form-input" 
-                value={reportEnd} 
-                onChange={e => setReportEnd(e.target.value)} 
+              <input
+                type="date"
+                className="form-input"
+                value={reportEnd}
+                onChange={e => setReportEnd(e.target.value)}
               />
             </div>
             <div className="form-group">
@@ -832,17 +833,17 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
                 valueKey="id"
               />
             </div>
-            <button 
-              type="button" 
-              className="btn btn-primary" 
+            <button
+              type="button"
+              className="btn btn-primary"
               style={{ width: '100%', marginTop: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
               onClick={handleDownloadReporte}
             >
               <Download size={16} /> {isEn ? 'Download Report (PDF)' : 'Descargar Reporte (PDF)'}
             </button>
-            <button 
-              type="button" 
-              className="btn btn-secondary" 
+            <button
+              type="button"
+              className="btn btn-secondary"
               style={{ width: '100%', marginTop: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', borderColor: 'rgba(14, 165, 233, 0.4)', color: '#0ea5e9' }}
               onClick={handleDownloadResumen}
             >
@@ -854,17 +855,17 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
 
       {/* Historial de Pagos y Trabajos pendientes */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-        
+
         {/* Buscador Analítico */}
         <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <h3 style={{ margin: 0, fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Search size={18} color="#0ea5e9" /> {isEn ? 'Model Analytics Search' : 'Buscador Analítico de Modelo'}
           </h3>
-          
+
           <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-            <input 
-              type="text" 
-              className="form-input" 
+            <input
+              type="text"
+              className="form-input"
               placeholder={isEn ? "Scan or type code (e.g. 725539 or V725539VER09)" : "Escanea o ingresa código (ej. 725539 o V725539VER09)"}
               value={analisisSearchCode}
               onChange={e => setAnalisisSearchCode(e.target.value)}
@@ -874,7 +875,7 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
                   if (!code) return;
                   setAnalisisLoading(true);
                   setAnalisisError('');
-                  
+
                   let searchParams = `modelo=${code}`;
                   if (code.length > 6) {
                     const match = code.match(/(\d{6})/);
@@ -883,7 +884,7 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
                       const suffix = code.substring(code.indexOf(modeloParsed) + 6);
                       const colorMatch = suffix.match(/[A-Z]+/i);
                       const tallaMatch = suffix.match(/\d+$/);
-                      
+
                       if (colorMatch && tallaMatch) {
                         searchParams = `modelo=${modeloParsed}&color=${colorMatch[0].toUpperCase()}&talla=${tallaMatch[0]}`;
                       } else {
@@ -891,30 +892,30 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
                       }
                     }
                   }
-                  
+
                   const token = localStorage.getItem('token');
                   fetch(`${API_URL}/api/plancha/analisis?${searchParams}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                   })
-                  .then(res => res.json())
-                  .then(data => {
-                    setAnalisisLoading(false);
-                    if (data.error) setAnalisisError(data.error);
-                    else setAnalisisData(data);
-                  })
-                  .catch(err => {
-                    setAnalisisLoading(false);
-                    setAnalisisError(err.message);
-                  });
+                    .then(res => res.json())
+                    .then(data => {
+                      setAnalisisLoading(false);
+                      if (data.error) setAnalisisError(data.error);
+                      else setAnalisisData(data);
+                    })
+                    .catch(err => {
+                      setAnalisisLoading(false);
+                      setAnalisisError(err.message);
+                    });
                 }
               }}
               style={{ flex: 1, fontSize: '1.1rem', padding: '0.8rem' }}
             />
           </div>
-          
+
           {analisisLoading && <div style={{ color: 'var(--text-secondary)' }}>Cargando análisis...</div>}
           {analisisError && <div style={{ color: '#ef4444' }}>{analisisError}</div>}
-          
+
           {analisisData && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginTop: '0.5rem' }}>
               <div style={{ display: 'flex', gap: '1rem', alignItems: 'stretch' }}>
@@ -942,7 +943,7 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
                   </div>
                 </div>
               </div>
-              
+
               {analisisData.historial.length > 0 ? (
                 <div className="table-wrapper" style={{ maxHeight: '300px', overflowY: 'auto' }}>
                   <table className="data-table">
@@ -976,7 +977,7 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
             </div>
           )}
         </div>
-        
+
         {/* Trabajos por liquidar */}
         <div className="glass-card">
           <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.2rem' }}>{isEn ? 'Completed jobs pending payment' : 'Trabajos terminados pendientes de pago'}</h3>
@@ -1007,7 +1008,7 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
                       const dateStr = pt.fecha_creacion ? pt.fecha_creacion.split('T')[0] : '';
                       return dateStr >= fechaInicioFiltro && dateStr <= fechaFinFiltro;
                     });
-                    
+
                     if (filtered.length === 0) {
                       return (
                         <tr>
@@ -1017,7 +1018,7 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
                         </tr>
                       );
                     }
-                    
+
                     return filtered.map(t => (
                       <tr key={t.id}>
                         <td>
@@ -1052,8 +1053,8 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
                           {t.neto < 0 ? '-' : ''}{formatCurrency(Math.abs(t.neto))}
                         </td>
                         <td>
-                          <button 
-                            onClick={() => handleDeleteTrabajo(t.id)} 
+                          <button
+                            onClick={() => handleDeleteTrabajo(t.id)}
                             style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                           >
                             <MinusCircle size={18} />
@@ -1071,42 +1072,42 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
 
       {/* MODAL 3: PAGO FIJO */}
       {showAjusteModal && (
-        <div 
-          style={{ 
-            position: 'fixed', 
-            top: 0, 
-            left: 0, 
-            right: 0, 
-            bottom: 0, 
-            background: 'rgba(0,0,0,0.6)', 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center', 
-            zIndex: 1000, 
-            backdropFilter: 'blur(8px)' 
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.6)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            backdropFilter: 'blur(8px)'
           }}
         >
           <div className="glass-card" style={{ width: '95%', maxWidth: '500px', padding: '2rem', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.1)' }}>
-            
+
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
               <h2 style={{ margin: 0, fontSize: '1.5rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Wallet color="#0ea5e9" /> {isEn ? 'Register Fixed Pay' : 'Registrar Pago Fijo'}
               </h2>
-              <button 
+              <button
                 onClick={() => {
                   setShowAjusteModal(false);
                   setAjustePlanchadorId('');
                   setAjusteFecha(new Date().toISOString().split('T')[0]);
-                }} 
-                className="btn-icon" 
+                }}
+                className="btn-icon"
                 style={{ background: 'rgba(255,255,255,0.05)', color: '#fff', border: 'none', padding: '8px', borderRadius: '50%', cursor: 'pointer' }}
               >
                 <X size={20} />
               </button>
             </div>
- 
+
             <form onSubmit={handleRegistrarAjuste} style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
-              
+
               <div className="form-group">
                 <label className="form-label">{isEn ? 'Ironer' : 'Planchador'}</label>
                 <SearchableSelect
@@ -1119,12 +1120,12 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
                   required
                 />
               </div>
- 
+
               <div className="form-group">
                 <label className="form-label">{isEn ? 'Reason for Fixed Pay' : 'Razón del Pago Fijo'}</label>
-                <select 
-                  className="form-input" 
-                  value={ajusteRazon} 
+                <select
+                  className="form-input"
+                  value={ajusteRazon}
                   onChange={e => {
                     setAjusteRazon(e.target.value);
                     setAjusteParamDias('1');
@@ -1136,14 +1137,14 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
                   <option value="Apoyo en calidad">{isEn ? 'Quality support (Cutting, Packing, Cleaning, etc)' : 'Apoyo en calidad (Corte, Empaque, Limpieza, etc)'}</option>
                 </select>
               </div>
- 
+
               {/* Selector de Área de Apoyo solo para Apoyo en calidad */}
               {ajusteRazon === 'Apoyo en calidad' && (
                 <div className="form-group">
                   <label className="form-label">{isEn ? 'Support Area' : 'Área de Apoyo'}</label>
-                  <select 
-                    className="form-input" 
-                    value={ajusteApoyoDetalle} 
+                  <select
+                    className="form-input"
+                    value={ajusteApoyoDetalle}
                     onChange={e => setAjusteApoyoDetalle(e.target.value)}
                   >
                     <option value="Corte">{isEn ? 'Cutting' : 'Corte'}</option>
@@ -1155,53 +1156,53 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
                   </select>
                 </div>
               )}
- 
+
               {/* Campos comunes para todos los tipos de ajuste */}
               <div className="form-group">
                 <label className="form-label">{isEn ? 'Date' : 'Fecha'}</label>
-                <input 
-                  type="date" 
-                  className="form-input" 
-                  value={ajusteFecha} 
-                  onChange={e => setAjusteFecha(e.target.value)} 
+                <input
+                  type="date"
+                  className="form-input"
+                  value={ajusteFecha}
+                  onChange={e => setAjusteFecha(e.target.value)}
                   required
                 />
               </div>
- 
+
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div className="form-group">
                   <label className="form-label">
                     {ajusteRazon === 'Festivo' ? (isEn ? 'Holidays' : 'Días Festivos') : (isEn ? 'Days' : 'Días')}
                   </label>
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     step="0.5"
                     min="0.5"
                     required
-                    className="form-input" 
-                    value={ajusteParamDias} 
-                    onChange={e => setAjusteParamDias(e.target.value)} 
+                    className="form-input"
+                    value={ajusteParamDias}
+                    onChange={e => setAjusteParamDias(e.target.value)}
                   />
                 </div>
                 <div className="form-group">
                   <label className="form-label">{isEn ? 'Daily Rate ($)' : 'Tarifa por Día ($)'}</label>
-                  <input 
-                    type="text" 
-                    className="form-input" 
-                    value="400" 
-                    disabled 
-                    style={{ background: 'rgba(255,255,255,0.05)', cursor: 'not-allowed', fontWeight: 'bold' }} 
+                  <input
+                    type="text"
+                    className="form-input"
+                    value="400"
+                    disabled
+                    style={{ background: 'rgba(255,255,255,0.05)', cursor: 'not-allowed', fontWeight: 'bold' }}
                   />
                 </div>
               </div>
- 
+
               {/* Mostrar Monto Resultante y Fórmula */}
               {(() => {
                 const dias = parseFloat(ajusteParamDias) || 0;
                 const tarifa = 400;
                 const val = dias * tarifa;
                 let formulaText = '';
- 
+
                 if (ajusteRazon === 'Dia adelantado' || ajusteRazon === 'Vacaciones') {
                   formulaText = isEn ? `${dias} days × $${tarifa}/day` : `${dias} días × $${tarifa}/día`;
                 } else if (ajusteRazon === 'Festivo') {
@@ -1209,13 +1210,13 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
                 } else if (ajusteRazon === 'Apoyo en calidad') {
                   formulaText = isEn ? `${dias} days × $${tarifa}/day in Quality Support` : `${dias} días × $${tarifa}/día en Apoyo calidad`;
                 }
- 
+
                 return (
-                  <div 
-                    style={{ 
-                      padding: '1rem', 
-                      background: 'rgba(14, 165, 233, 0.1)', 
-                      border: '1px solid rgba(14, 165, 233, 0.2)', 
+                  <div
+                    style={{
+                      padding: '1rem',
+                      background: 'rgba(14, 165, 233, 0.1)',
+                      border: '1px solid rgba(14, 165, 233, 0.2)',
                       borderRadius: '10px',
                       display: 'flex',
                       flexDirection: 'column',
@@ -1230,11 +1231,11 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
                   </div>
                 );
               })()}
- 
+
               <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
-                <button 
-                  type="button" 
-                  className="btn btn-secondary" 
+                <button
+                  type="button"
+                  className="btn btn-secondary"
                   style={{ flex: 1 }}
                   onClick={() => {
                     setShowAjusteModal(false);
@@ -1255,42 +1256,42 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
 
       {/* MODAL 4: CALCULAR Y APLICAR CUADRE SEMANAL */}
       {showCuadreModal && (
-        <div 
-          style={{ 
-            position: 'fixed', 
-            top: 0, 
-            left: 0, 
-            right: 0, 
-            bottom: 0, 
-            background: 'rgba(0,0,0,0.6)', 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center', 
-            zIndex: 1000, 
-            backdropFilter: 'blur(8px)' 
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.6)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            backdropFilter: 'blur(8px)'
           }}
         >
           <div className="glass-card" style={{ width: '95%', maxWidth: '550px', padding: '2rem', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.1)' }}>
-            
+
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
               <h2 style={{ margin: 0, fontSize: '1.5rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Calculator color="#10b981" /> {isEn ? 'Weekly Ironing Adjustment' : 'Cuadre Semanal de Plancha'}
               </h2>
-              <button 
+              <button
                 onClick={() => {
                   setShowCuadreModal(false);
                   setCuadrePlanchadorId('');
                   setCuadrePlanchaReal(0);
-                }} 
-                className="btn-icon" 
+                }}
+                className="btn-icon"
                 style={{ background: 'rgba(255,255,255,0.05)', color: '#fff', border: 'none', padding: '8px', borderRadius: '50%', cursor: 'pointer' }}
               >
                 <X size={20} />
               </button>
             </div>
- 
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
-              
+
               <div className="form-group">
                 <label className="form-label">{isEn ? 'Ironer' : 'Planchador'}</label>
                 <SearchableSelect
@@ -1303,61 +1304,61 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
                   required
                 />
               </div>
- 
+
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div className="form-group">
                   <label className="form-label">{isEn ? 'Day advanced' : 'Día adelantado'}</label>
-                  <input 
-                    type="date" 
+                  <input
+                    type="date"
                     required
-                    className="form-input" 
-                    value={cuadreStart} 
-                    onChange={e => setCuadreStart(e.target.value)} 
+                    className="form-input"
+                    value={cuadreStart}
+                    onChange={e => setCuadreStart(e.target.value)}
                   />
                 </div>
                 <div className="form-group">
                   <label className="form-label">{isEn ? 'Apply difference on date' : 'Aplicar diferencia el día'}</label>
-                  <input 
-                    type="date" 
+                  <input
+                    type="date"
                     required
-                    className="form-input" 
-                    value={cuadreEnd} 
-                    onChange={e => setCuadreEnd(e.target.value)} 
+                    className="form-input"
+                    value={cuadreEnd}
+                    onChange={e => setCuadreEnd(e.target.value)}
                   />
                 </div>
               </div>
- 
-              <button 
-                type="button" 
-                className="btn btn-secondary" 
+
+              <button
+                type="button"
+                className="btn btn-secondary"
                 onClick={() => handleCalcularCuadre(false)}
                 disabled={!cuadrePlanchadorId}
                 style={{ width: '100%', borderColor: 'rgba(16, 185, 129, 0.4)', color: '#10b981' }}
               >
                 {isEn ? 'Reload Real Ironing' : 'Recargar Plancha Real'}
               </button>
- 
+
               <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,0.08)', margin: '0.5rem 0' }} />
- 
+
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
                 <div className="form-group">
                   <label className="form-label">{isEn ? 'Day advanced ($)' : 'Día adelantado ($)'}</label>
-                  <input 
-                    type="text" 
-                    className="form-input" 
-                    value="400" 
-                    disabled 
-                    style={{ background: 'rgba(255,255,255,0.05)', cursor: 'not-allowed', fontWeight: 'bold' }} 
+                  <input
+                    type="text"
+                    className="form-input"
+                    value="400"
+                    disabled
+                    style={{ background: 'rgba(255,255,255,0.05)', cursor: 'not-allowed', fontWeight: 'bold' }}
                   />
                 </div>
                 <div className="form-group">
                   <label className="form-label">{isEn ? 'Real ironing ($)' : 'Plancha real ($)'}</label>
-                  <input 
-                    type="text" 
-                    className="form-input" 
-                    value={formatCurrency(cuadrePlanchaReal)} 
-                    disabled 
-                    style={{ background: 'rgba(255,255,255,0.05)', cursor: 'not-allowed', fontWeight: 'bold', color: '#10b981' }} 
+                  <input
+                    type="text"
+                    className="form-input"
+                    value={formatCurrency(cuadrePlanchaReal)}
+                    disabled
+                    style={{ background: 'rgba(255,255,255,0.05)', cursor: 'not-allowed', fontWeight: 'bold', color: '#10b981' }}
                   />
                 </div>
                 <div className="form-group">
@@ -1366,34 +1367,34 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
                     const diaAdelantadoVal = 400;
                     const diferencia = cuadrePlanchaReal - diaAdelantadoVal;
                     return (
-                      <input 
-                        type="text" 
-                        className="form-input" 
-                        value={(diferencia >= 0 ? '+' : '') + formatCurrency(diferencia)} 
-                        disabled 
-                        style={{ 
-                          background: 'rgba(255,255,255,0.05)', 
-                          cursor: 'not-allowed', 
-                          fontWeight: 'bold', 
-                          color: diferencia > 0 ? '#10b981' : diferencia < 0 ? '#ef4444' : '#fff' 
-                        }} 
+                      <input
+                        type="text"
+                        className="form-input"
+                        value={(diferencia >= 0 ? '+' : '') + formatCurrency(diferencia)}
+                        disabled
+                        style={{
+                          background: 'rgba(255,255,255,0.05)',
+                          cursor: 'not-allowed',
+                          fontWeight: 'bold',
+                          color: diferencia > 0 ? '#10b981' : diferencia < 0 ? '#ef4444' : '#fff'
+                        }}
                       />
                     );
                   })()}
                 </div>
               </div>
- 
+
               {/* Resultado del Cuadre */}
               {(() => {
                 const diaAdelantadoVal = 400;
                 const diferencia = cuadrePlanchaReal - diaAdelantadoVal;
- 
+
                 return (
-                  <div 
-                    style={{ 
-                      padding: '1.2rem', 
-                      background: diferencia > 0 ? 'rgba(16, 185, 129, 0.1)' : diferencia < 0 ? 'rgba(239, 68, 68, 0.1)' : 'rgba(255, 255, 255, 0.02)', 
-                      border: `1px solid ${diferencia > 0 ? 'rgba(16, 185, 129, 0.25)' : diferencia < 0 ? 'rgba(239, 68, 68, 0.25)' : 'rgba(255, 255, 255, 0.08)'}`, 
+                  <div
+                    style={{
+                      padding: '1.2rem',
+                      background: diferencia > 0 ? 'rgba(16, 185, 129, 0.1)' : diferencia < 0 ? 'rgba(239, 68, 68, 0.1)' : 'rgba(255, 255, 255, 0.02)',
+                      border: `1px solid ${diferencia > 0 ? 'rgba(16, 185, 129, 0.25)' : diferencia < 0 ? 'rgba(239, 68, 68, 0.25)' : 'rgba(255, 255, 255, 0.08)'}`,
                       borderRadius: '12px',
                       textAlign: 'center'
                     }}
@@ -1408,11 +1409,11 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
                   </div>
                 );
               })()}
- 
+
               <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
-                <button 
-                  type="button" 
-                  className="btn btn-secondary" 
+                <button
+                  type="button"
+                  className="btn btn-secondary"
                   style={{ flex: 1 }}
                   onClick={() => {
                     setShowCuadreModal(false);
@@ -1422,9 +1423,9 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
                 >
                   {isEn ? 'Cancel' : 'Cancelar'}
                 </button>
-                <button 
-                  type="button" 
-                  className="btn btn-primary" 
+                <button
+                  type="button"
+                  className="btn btn-primary"
                   style={{ flex: 1 }}
                   disabled={!cuadrePlanchadorId}
                   onClick={handleAplicarCuadre}
