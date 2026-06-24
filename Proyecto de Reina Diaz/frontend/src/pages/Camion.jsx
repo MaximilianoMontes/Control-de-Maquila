@@ -645,13 +645,44 @@ export default function Camion() {
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', width: '100%', flexGrow: 1 }}>
-                      {Object.entries(item.tallas_cantidades).map(([key, val]) => {
-                        if (typeof val === 'object' && val !== null) {
-                          const entries = Object.entries(val).filter(([_, qty]) => qty > 0);
-                          if (entries.length === 0) return null;
+                      {(() => {
+                        const isNested = Object.values(item.tallas_cantidades).some(v => typeof v === 'object' && v !== null);
+                        if (isNested) {
+                          return Object.entries(item.tallas_cantidades).map(([color, sizesObj]) => {
+                            if (typeof sizesObj === 'object' && sizesObj !== null) {
+                              const entries = Object.entries(sizesObj)
+                                .filter(([_, qty]) => qty > 0)
+                                .sort((a, b) => {
+                                  const numA = parseInt(a[0].replace(/[^\d]/g, ''), 10);
+                                  const numB = parseInt(b[0].replace(/[^\d]/g, ''), 10);
+                                  if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+                                  return a[0].localeCompare(b[0], undefined, { numeric: true });
+                                });
+                              if (entries.length === 0) return null;
+                              return (
+                                <div key={color} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                                  <span style={{ fontSize: '0.7rem', color: '#c084fc', fontWeight: 700 }}>{color}:</span>
+                                  {entries.map(([sz, qty]) => (
+                                    <span key={sz} style={{ fontSize: '0.7rem', padding: '1px 5px', background: 'rgba(255,255,255,0.08)', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                      T.{sz}: <strong>{qty}</strong>
+                                    </span>
+                                  ))}
+                                </div>
+                              );
+                            }
+                            return null;
+                          });
+                        } else {
+                          const entries = Object.entries(item.tallas_cantidades)
+                            .filter(([_, qty]) => parseInt(qty) > 0)
+                            .sort((a, b) => {
+                              const numA = parseInt(a[0].replace(/[^\d]/g, ''), 10);
+                              const numB = parseInt(b[0].replace(/[^\d]/g, ''), 10);
+                              if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+                              return a[0].localeCompare(b[0], undefined, { numeric: true });
+                            });
                           return (
-                            <div key={key} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
-                              <span style={{ fontSize: '0.7rem', color: '#c084fc', fontWeight: 700 }}>{key}:</span>
+                            <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
                               {entries.map(([sz, qty]) => (
                                 <span key={sz} style={{ fontSize: '0.7rem', padding: '1px 5px', background: 'rgba(255,255,255,0.08)', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.05)' }}>
                                   T.{sz}: <strong>{qty}</strong>
@@ -659,15 +690,8 @@ export default function Camion() {
                               ))}
                             </div>
                           );
-                        } else if (parseInt(val) > 0) {
-                          return (
-                            <span key={key} style={{ fontSize: '0.7rem', padding: '2px 6px', background: 'rgba(255,255,255,0.08)', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                              T.{key}: <strong>{val}</strong>
-                            </span>
-                          );
                         }
-                        return null;
-                      })}
+                      })()}
                     </div>
                     <span style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--text-primary)' }}>
                       {item.piezas} {t('settings.themeSystem') === 'System' ? 'pcs' : 'pzs'}
@@ -777,13 +801,13 @@ export default function Camion() {
                         <table className="data-table" style={{ width: '100%', fontSize: '0.85rem' }}>
                           <thead>
                             <tr>
-                              <th>{t('inv.image') || 'Imagen'}</th>
-                              <th>{t('prod.model') || 'Modelo'}</th>
-                              <th>{t('inv.orderNo') || 'No. Orden'}</th>
-                              <th>{t('cortes.color') || 'Color'}</th>
-                              <th>{t('inv.client') || 'Cliente'}</th>
-                              <th style={{ textAlign: 'center' }}>{t('camion.totalPieces') || 'Total Piezas'}</th>
-                              <th>{t('camion.sizeDistribution')}</th>
+                              <th style={{ width: '100px' }}>{t('inv.image') || 'Imagen'}</th>
+                              <th style={{ width: '90px' }}>{t('prod.model') || 'Modelo'}</th>
+                              <th style={{ width: '100px' }}>{t('inv.orderNo') || 'No. Orden'}</th>
+                              <th style={{ width: '250px' }}>{t('cortes.color') || 'Color'}</th>
+                              <th style={{ width: '180px' }}>{t('inv.client') || 'Cliente'}</th>
+                              <th style={{ width: '110px', textAlign: 'center' }}>{t('camion.totalPieces') || 'Total Piezas'}</th>
+                              <th style={{ width: 'auto' }}>{t('camion.sizeDistribution')}</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -793,10 +817,10 @@ export default function Camion() {
                                 <tr key={`truck-det-${truck.id}-${idx}`}>
                                   <td>
                                     {img ? (
-                                      <img src={img} alt="" className="img-zoom" style={{ width: 40, height: 40, borderRadius: 6, objectFit: 'contain', backgroundColor: '#ffffff', cursor: 'zoom-in' }} onClick={(e) => { e.stopPropagation(); setSelectedImage(img); }} />
+                                      <img src={img} alt="" className="img-zoom" style={{ width: 80, height: 80, borderRadius: 8, objectFit: 'contain', backgroundColor: '#ffffff', cursor: 'zoom-in' }} onClick={(e) => { e.stopPropagation(); setSelectedImage(img); }} />
                                     ) : (
-                                      <div style={{ width: 40, height: 40, background: 'rgba(255,255,255,0.05)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                        <Truck size={18} color="var(--text-secondary)" />
+                                      <div style={{ width: 80, height: 80, background: 'rgba(255,255,255,0.05)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <Truck size={28} color="var(--text-secondary)" />
                                       </div>
                                     )}
                                   </td>
@@ -805,35 +829,59 @@ export default function Camion() {
                                   <td>{formatColorsDisplay(item.color)}</td>
                                   <td>{item.cliente || 'N/A'}</td>
                                   <td style={{ textAlign: 'center', fontWeight: 700 }}>{item.piezas}</td>
-                                <td>
-                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                                    {Object.entries(item.tallas_cantidades).map(([key, val]) => {
-                                      if (typeof val === 'object' && val !== null) {
-                                        const entries = Object.entries(val).filter(([_, qty]) => qty > 0);
-                                        if (entries.length === 0) return null;
-                                        return (
-                                          <div key={key} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
-                                            <span style={{ fontSize: '0.75rem', color: '#c084fc', fontWeight: 700 }}>{key}:</span>
-                                            {entries.map(([sz, qty]) => (
-                                              <span key={sz} style={{ padding: '1px 5px', background: 'rgba(255,255,255,0.04)', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.03)', fontSize: '0.75rem' }}>
-                                                T.{sz}: <strong>{qty}</strong>
-                                              </span>
-                                            ))}
-                                          </div>
-                                        );
-                                      } else if (parseInt(val) > 0) {
-                                        return (
-                                          <span key={key} style={{ padding: '1px 5px', background: 'rgba(255,255,255,0.04)', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.03)', fontSize: '0.75rem' }}>
-                                            T.{key}: <strong>{val}</strong>
-                                          </span>
-                                        );
-                                      }
-                                      return null;
-                                    })}
-                                  </div>
-                                </td>
-                              </tr>
-                            );
+                                  <td>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                      {(() => {
+                                        const isNested = Object.values(item.tallas_cantidades).some(v => typeof v === 'object' && v !== null);
+                                        if (isNested) {
+                                          return Object.entries(item.tallas_cantidades).map(([color, sizesObj]) => {
+                                            if (typeof sizesObj === 'object' && sizesObj !== null) {
+                                              const entries = Object.entries(sizesObj)
+                                                .filter(([_, qty]) => qty > 0)
+                                                .sort((a, b) => {
+                                                  const numA = parseInt(a[0].replace(/[^\d]/g, ''), 10);
+                                                  const numB = parseInt(b[0].replace(/[^\d]/g, ''), 10);
+                                                  if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+                                                  return a[0].localeCompare(b[0], undefined, { numeric: true });
+                                                });
+                                              if (entries.length === 0) return null;
+                                              return (
+                                                <div key={color} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                                                  <span style={{ fontSize: '0.75rem', color: '#c084fc', fontWeight: 700 }}>{color}:</span>
+                                                  {entries.map(([sz, qty]) => (
+                                                    <span key={sz} style={{ padding: '1px 5px', background: 'rgba(255,255,255,0.04)', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.03)', fontSize: '0.75rem' }}>
+                                                      T.{sz}: <strong>{qty}</strong>
+                                                    </span>
+                                                  ))}
+                                                </div>
+                                              );
+                                            }
+                                            return null;
+                                          });
+                                        } else {
+                                          const entries = Object.entries(item.tallas_cantidades)
+                                            .filter(([_, qty]) => parseInt(qty) > 0)
+                                            .sort((a, b) => {
+                                              const numA = parseInt(a[0].replace(/[^\d]/g, ''), 10);
+                                              const numB = parseInt(b[0].replace(/[^\d]/g, ''), 10);
+                                              if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+                                              return a[0].localeCompare(b[0], undefined, { numeric: true });
+                                            });
+                                          return (
+                                            <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                                              {entries.map(([sz, qty]) => (
+                                                <span key={sz} style={{ padding: '1px 5px', background: 'rgba(255,255,255,0.04)', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.03)', fontSize: '0.75rem' }}>
+                                                  T.{sz}: <strong>{qty}</strong>
+                                                </span>
+                                              ))}
+                                            </div>
+                                          );
+                                        }
+                                      })()}
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
                             })}
                           </tbody>
                         </table>
@@ -901,7 +949,14 @@ export default function Camion() {
                         <td style={{ fontSize: '0.75rem' }}>
                           {isNested ? (
                             Object.entries(d.tallas_cantidades).map(([color, tallasObj]) => {
-                              const entries = Object.entries(tallasObj).filter(([_, q]) => q > 0);
+                              const entries = Object.entries(tallasObj)
+                                .filter(([_, q]) => q > 0)
+                                .sort((a, b) => {
+                                  const numA = parseInt(a[0].replace(/[^\d]/g, ''), 10);
+                                  const numB = parseInt(b[0].replace(/[^\d]/g, ''), 10);
+                                  if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+                                  return a[0].localeCompare(b[0], undefined, { numeric: true });
+                                });
                               if (entries.length === 0) return null;
                               return (
                                 <div key={color} style={{ margin: '2px 0' }}>
@@ -912,6 +967,12 @@ export default function Camion() {
                           ) : (
                             Object.entries(d.tallas_cantidades || {})
                               .filter(([_, q]) => q > 0)
+                              .sort((a, b) => {
+                                const numA = parseInt(a[0].replace(/[^\d]/g, ''), 10);
+                                const numB = parseInt(b[0].replace(/[^\d]/g, ''), 10);
+                                if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+                                return a[0].localeCompare(b[0], undefined, { numeric: true });
+                              })
                               .map(([sz, q]) => `T${sz}(${q})`)
                               .join(', ')
                           )}
