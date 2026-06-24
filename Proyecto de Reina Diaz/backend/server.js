@@ -2879,6 +2879,32 @@ app.get('/api/temp-check-pending', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+
+// TEMPORARY DATABASE DEBUGGING ENDPOINT
+app.get('/api/temp-debug-db', async (req, res) => {
+  try {
+    const planchadorId = 6; // Reyes Flores Maria Guadalupe
+    const [planchador] = await db.query("SELECT * FROM planchadores WHERE id = ?", [planchadorId]);
+    const [jobsCount] = await db.query("SELECT COUNT(*) as count FROM plancha_trabajos WHERE planchador_id = ?", [planchadorId]);
+    const [jobs] = await db.query(
+      "SELECT id, pago_id, estado, total, DATE_FORMAT(fecha_terminado, '%Y-%m-%d %H:%i:%s') as finished FROM plancha_trabajos WHERE planchador_id = ? ORDER BY id DESC LIMIT 20",
+      [planchadorId]
+    );
+    const [payments] = await db.query("SELECT * FROM planchador_pagos WHERE planchador_id = ? ORDER BY id DESC", [planchadorId]);
+    const [asistencias] = await db.query("SELECT * FROM planchador_asistencias WHERE planchador_id = ? ORDER BY id DESC", [planchadorId]);
+    
+    res.json({
+      planchador: planchador[0],
+      jobsCount: jobsCount[0].count,
+      jobs,
+      payments,
+      asistencias
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 // 5. OBTENER MODELOS DE LOS CAMIONES
 app.get('/api/plancha/modelos', authenticateToken, async (req, res) => {
   try {
