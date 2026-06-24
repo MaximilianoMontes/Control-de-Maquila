@@ -1,0 +1,703 @@
+{
+  "prods": [
+    {
+      "id": 51,
+      "maquilero_id": 39,
+      "inventario_id": 54,
+      "cantidad": 216,
+      "cantidad_recibida": null,
+      "precio_total": "10800.00",
+      "fecha_inicio": "2026-05-15T00:00:00.000Z",
+      "fecha_fin": "2026-06-03T00:00:00.000Z",
+      "estado": "En proceso",
+      "retrasos": 0,
+      "archivado": 0,
+      "ajuste_tipo": "ninguno",
+      "ajuste_porcentaje": 0,
+      "ajuste_monto": "0.00",
+      "fecha_terminado": null,
+      "es_extra": 0,
+      "precio_extra": null,
+      "observaciones": null,
+      "maquilero_nombre": "Josue Jairo Cruz Martinez",
+      "modelo": "752996",
+      "no_orden": "E04093",
+      "en_inventario": 0,
+      "piezas_en_proceso": 216
+    },
+    {
+      "id": 64,
+      "maquilero_id": 27,
+      "inventario_id": 62,
+      "cantidad": 84,
+      "cantidad_recibida": 84,
+      "precio_total": "6300.00",
+      "fecha_inicio": "2026-05-22T00:00:00.000Z",
+      "fecha_fin": "2026-06-02T00:00:00.000Z",
+      "estado": "Terminado",
+      "retrasos": 0,
+      "archivado": 0,
+      "ajuste_tipo": "ninguno",
+      "ajuste_porcentaje": 0,
+      "ajuste_monto": "0.00",
+      "fecha_terminado": "2026-06-18T16:00:26.000Z",
+      "es_extra": 0,
+      "precio_extra": null,
+      "observaciones": null,
+      "maquilero_nombre": "Rosendo Cruz Martin",
+      "modelo": "752946",
+      "no_orden": "E04106",
+      "en_inventario": 0,
+      "piezas_en_proceso": 84
+    }
+  ],
+  "inv": [
+    {
+      "id": 54,
+      "numero": "752996",
+      "temporada": null,
+      "modelo": "752996",
+      "precio": "50.00",
+      "color": "[{\"color\":\"LIM\",\"cantidad\":\"56\"},{\"color\":\"NAR\",\"cantidad\":\"60\"},{\"color\":\"LIL\",\"cantidad\":\"60\"},{\"color\":\"VER\",\"cantidad\":\"28\"},{\"color\":\"CIE\",\"cantidad\":\"12\"}]",
+      "cliente": "TIENDAS, WEB SHOP, VL ",
+      "no_orden": "E04093",
+      "piezas_en_proceso": 216,
+      "imagen": "/uploads/compressed-1778175545326.jpg",
+      "observaciones": "ENTRETIEMPO NO URGE ",
+      "es_reprogramacion": 0,
+      "en_inventario": 0,
+      "fecha_creacion": "2026-05-07T17:39:05.000Z",
+      "precio_plancha": "0.00"
+    }
+  ],
+  "invReal": [
+    {
+      "id": 48,
+      "numero": "752996",
+      "temporada": null,
+      "modelo": "752996",
+      "precio": "50.00",
+      "color": "[{\"color\":\"LIM\",\"cantidad\":\"56\"},{\"color\":\"NAR\",\"cantidad\":\"60\"},{\"color\":\"LIL\",\"cantidad\":\"60\"},{\"color\":\"VER\",\"cantidad\":\"28\"},{\"color\":\"CIE\",\"cantidad\":\"12\"}]",
+      "cliente": "TIENDAS, WEB SHOP, VL ",
+      "no_orden": "E04093",
+      "piezas": 216,
+      "imagen": "/uploads/compressed-1778175545326.jpg",
+      "observaciones": "ENTRETIEMPO NO URGE ",
+      "fecha_ingreso": "2026-05-07T17:39:05.000Z",
+      "precio_plancha": "0.00"
+    }
+  ],
+  "camion": [],
+  "historial": [
+    {
+      "id": 3306,
+      "user_id": 1,
+      "action": "EDIT",
+      "target": "PRODUCCION",
+      "description": "Restaur\u00f3 orden de Jairo a 216 pzas En Proceso y elimin\u00f3 orden de Paula para el modelo 752996",
+      "timestamp": "2026-06-23T00:11:47.000Z"
+    },
+    {
+      "id": 3304,
+      "user_id": 1,
+      "action": "EDIT",
+      "target": "PRODUCCION",
+      "description": "Restaur\u00f3 divisi\u00f3n correcta del modelo 752996: Jairo 151 pzas (Terminado) y Paula 65 pzas (En proceso)",
+      "timestamp": "2026-06-22T23:56:37.000Z"
+    },
+    {
+      "id": 3302,
+      "user_id": 1,
+      "action": "EDIT",
+      "target": "INVENTARIO",
+      "description": "Marc\u00f3 el modelo 752996 como completado (oculto en Cortes) por liquidaci\u00f3n de Orden #51",
+      "timestamp": "2026-06-22T23:43:17.000Z"
+    },
+    {
+      "id": 3301,
+      "user_id": 1,
+      "action": "EDIT",
+      "target": "PRODUCCION",
+      "description": "Deshizo divisi\u00f3n incorrecta del modelo 752996: Restaur\u00f3 orden de Jairo a 151 pzas y elimin\u00f3 orden de Paula",
+      "timestamp": "2026-06-22T23:43:14.000Z"
+    },
+    {
+      "id": 3299,
+      "user_id": 1,
+      "action": "EDIT",
+      "target": "PRODUCCION",
+      "description": "Deshizo divisi\u00f3n incorrecta del modelo 752996: Restaur\u00f3 orden de Jairo a 151 pzas y elimin\u00f3 orden de Paula",
+      "timestamp": "2026-06-22T23:35:03.000Z"
+    },
+    {
+      "id": 3288,
+      "user_id": 1,
+      "action": "EDIT",
+      "target": "INVENTARIO",
+      "description": "Marc\u00f3 el modelo 752996 como completado (oculto en Cortes) por liquidaci\u00f3n de Orden #51",
+      "timestamp": "2026-06-22T22:48:56.000Z"
+    },
+    {
+      "id": 3287,
+      "user_id": 4,
+      "action": "ALTA",
+      "target": "PRODUCCION",
+      "description": "Nueva orden generada por divisi\u00f3n para Paula Melgarejo Mena (752996): 151 pzas",
+      "timestamp": "2026-06-22T22:48:56.000Z"
+    },
+    {
+      "id": 3286,
+      "user_id": 4,
+      "action": "EDIT",
+      "target": "PRODUCCION",
+      "description": "Dividi\u00f3 orden 752996 (Josue Jairo Cruz Martinez): Entreg\u00f3 65 pzas, reasignando 151",
+      "timestamp": "2026-06-22T22:48:56.000Z"
+    },
+    {
+      "id": 3123,
+      "user_id": 4,
+      "action": "ALTA",
+      "target": "PAGO",
+      "description": "Registr\u00f3 pago de $50 para 752996 (Multas liquidadas)",
+      "timestamp": "2026-06-18T15:38:42.000Z"
+    },
+    {
+      "id": 3122,
+      "user_id": 4,
+      "action": "BAJA",
+      "target": "PAGO",
+      "description": "Elimin\u00f3 pago ID #186 de $50.00 para 752996 (Descuentos desvinculados)",
+      "timestamp": "2026-06-18T15:38:37.000Z"
+    },
+    {
+      "id": 2876,
+      "user_id": 2,
+      "action": "EDIT",
+      "target": "PLANCHA_MODELO",
+      "description": "Verific\u00f3 llegada completa y asign\u00f3 precio de plancha $4 al modelo 752996",
+      "timestamp": "2026-06-09T15:30:20.000Z"
+    },
+    {
+      "id": 2790,
+      "user_id": 4,
+      "action": "EDIT",
+      "target": "INVENTARIO_REAL",
+      "description": "Subi\u00f3 al cami\u00f3n #19 (2026-06-08) 151 piezas del modelo 752996 (Tallas: {\"LIM\":{\"11\":11,\"13\":0,\"15\":0,\"05\":9,\"07\":6,\"09\":9},\"NAR\":{\"11\":12,\"13\":0,\"15\":0,\"05\":10,\"07\":14,\"09\":10},\"LIL\":{\"11\":8,\"13\":0,\"15\":0,\"05\":13,\"07\":10,\"09\":11},\"VER\":{\"11\":6,\"13\":0,\"15\":0,\"05\":4,\"07\":5,\"09\":5},\"CIE\":{\"11\":2,\"13\":0,\"15\":0,\"05\":3,\"07\":1,\"09\":2}})",
+      "timestamp": "2026-06-09T00:12:02.000Z"
+    },
+    {
+      "id": 2705,
+      "user_id": 3,
+      "action": "ALTA",
+      "target": "PAGO",
+      "description": "Registr\u00f3 pago de $50 para 752996 (Multas liquidadas)",
+      "timestamp": "2026-06-08T17:45:30.000Z"
+    },
+    {
+      "id": 2704,
+      "user_id": 3,
+      "action": "ALTA",
+      "target": "PAGO",
+      "description": "Registr\u00f3 pago de $7500 para 752996 (Multas liquidadas)",
+      "timestamp": "2026-06-08T17:44:19.000Z"
+    },
+    {
+      "id": 2703,
+      "user_id": 3,
+      "action": "BAJA",
+      "target": "PAGO",
+      "description": "Elimin\u00f3 pago ID #184 de $7500.00 para 752996 (Descuentos desvinculados)",
+      "timestamp": "2026-06-08T17:43:42.000Z"
+    },
+    {
+      "id": 2702,
+      "user_id": 3,
+      "action": "ALTA",
+      "target": "PAGO",
+      "description": "Registr\u00f3 pago de $7500 para 752996 (Multas liquidadas)",
+      "timestamp": "2026-06-08T17:43:18.000Z"
+    },
+    {
+      "id": 2701,
+      "user_id": 3,
+      "action": "BAJA",
+      "target": "PAGO",
+      "description": "Elimin\u00f3 pago ID #109 de $7500.00 para 752996 (Descuentos desvinculados)",
+      "timestamp": "2026-06-08T17:40:03.000Z"
+    },
+    {
+      "id": 2538,
+      "user_id": 4,
+      "action": "EDIT",
+      "target": "PRODUCCION",
+      "description": "Edit\u00f3 Producci\u00f3n 752996 (Josue Jairo Cruz Martinez): Estado: En proceso -> Terminado Parcial",
+      "timestamp": "2026-06-05T18:48:21.000Z"
+    },
+    {
+      "id": 2494,
+      "user_id": 3,
+      "action": "ALTA",
+      "target": "PAGO",
+      "description": "Registr\u00f3 pago de $7500 para 752996 (Multas liquidadas)",
+      "timestamp": "2026-06-04T17:43:20.000Z"
+    },
+    {
+      "id": 453,
+      "user_id": 3,
+      "action": "ALTA",
+      "target": "PRODUCCION",
+      "description": "Nueva orden para Josue Jairo Cruz Martinez (752996)",
+      "timestamp": "2026-05-21T00:12:14.000Z"
+    },
+    {
+      "id": 335,
+      "user_id": 5,
+      "action": "ALTA",
+      "target": "INVENTARIO",
+      "description": "Agreg\u00f3 752996 (216 piezas)",
+      "timestamp": "2026-05-07T17:39:05.000Z"
+    }
+  ],
+  "maquileros": [
+    {
+      "id": 1,
+      "nombre": "Abel Marin Galindo",
+      "maquinaria": "6",
+      "personal": 3,
+      "domicilio": "Priv.Gomez Farias No.11",
+      "colonia": "Col. Centro",
+      "codigo_postal": "93730",
+      "telefono": "+52 226 158 1909/226 690 1478",
+      "imagen": "/uploads/compressed-1777935402865.jpg"
+    },
+    {
+      "id": 2,
+      "nombre": "Angelica Maria Mendez Aguilera",
+      "maquinaria": "3 MAQUINAS (2 RECTAS, 1 OVER)",
+      "personal": 1,
+      "domicilio": "C.ATOLUCA 21",
+      "colonia": "COL. LOMAS DE AYOTZINGO ",
+      "codigo_postal": "73820",
+      "telefono": "+52 231 148 2336",
+      "imagen": "/uploads/compressed-1777935984552.jpg"
+    },
+    {
+      "id": 3,
+      "nombre": "Carolina Ortu\u00f1a Huerta",
+      "maquinaria": "2",
+      "personal": 1,
+      "domicilio": "C.AV Tepeyac #195",
+      "colonia": "Colonia Barrio Xoloco",
+      "codigo_postal": "73870",
+      "telefono": "+52 231 105 7376",
+      "imagen": "/uploads/compressed-1777935991106.jpg"
+    },
+    {
+      "id": 4,
+      "nombre": "David Lopez de Jesus",
+      "maquinaria": "2 MAQUINAS SE LLEVO 1 BURRO A PRECIO DE 1500 QUE PAGARA EN 3 PARTES 29/09",
+      "personal": 1,
+      "domicilio": "C.PRIMERA EL TAJIN #7",
+      "colonia": "COLONIA SOSA",
+      "codigo_postal": "73950",
+      "telefono": "+52 231 200 1520",
+      "imagen": "/uploads/compressed-1777935996773.jpg"
+    },
+    {
+      "id": 5,
+      "nombre": "Eliazar Anacleto Romero",
+      "maquinaria": "5",
+      "personal": 2,
+      "domicilio": "C.VA CUAUHTEMOC #5",
+      "colonia": "COLINIA TEQUIMILA",
+      "codigo_postal": "73950",
+      "telefono": "+52 231 108 6726",
+      "imagen": "/uploads/compressed-1777936002857.jpg"
+    },
+    {
+      "id": 6,
+      "nombre": "Jose Enedino Rojas Aguilar",
+      "maquinaria": "6 MAQUINAS, 3 RECTAS, 2 OVER, 1 COVER",
+      "personal": 2,
+      "domicilio": "Juarez #505 D-3",
+      "colonia": "COLONIA CENTRO",
+      "codigo_postal": "73950",
+      "telefono": "+52 231 152 5457/332 710 2073",
+      "imagen": "/uploads/compressed-1777936032596.jpg"
+    },
+    {
+      "id": 7,
+      "nombre": "Jaqueline Perez Cortes",
+      "maquinaria": "5 MAQUINAS (2 RECTAS, 2 OVER, 1 COVER)",
+      "personal": 4,
+      "domicilio": "C. PINO SUAREZ 4 CARRANAUTLA GUILLERMO",
+      "colonia": "COLONIA SAN MIGUEL CAPULINES",
+      "codigo_postal": "73968",
+      "telefono": "+52 231 103 2997",
+      "imagen": "/uploads/compressed-1777936008674.jpg"
+    },
+    {
+      "id": 8,
+      "nombre": "Jeronimo Rios Martinez",
+      "maquinaria": "5",
+      "personal": 4,
+      "domicilio": "C.ZAFIRO S/N",
+      "colonia": "COLONIA SECCION 23",
+      "codigo_postal": "73968",
+      "telefono": "+52 231 117 7877",
+      "imagen": "/uploads/compressed-1777936026884.jpg"
+    },
+    {
+      "id": 9,
+      "nombre": "Jose Luis Hernandez Cantu",
+      "maquinaria": "5",
+      "personal": 2,
+      "domicilio": "C.PRIVADA LAZARO CARDENAS NO.8",
+      "colonia": "COLONIA BARRIO DE FRANCIA",
+      "codigo_postal": "73880",
+      "telefono": "+52 231 139 2531",
+      "imagen": "/uploads/compressed-1777936043848.jpg"
+    },
+    {
+      "id": 10,
+      "nombre": "Jose Horta Flores",
+      "maquinaria": "10",
+      "personal": 6,
+      "domicilio": "CALLE NEPTUNO #16",
+      "colonia": "COLONIA VALLE DEL SOL",
+      "codigo_postal": "73887",
+      "telefono": "+52 231 143 9021",
+      "imagen": "/uploads/compressed-1777936038758.jpg"
+    },
+    {
+      "id": 11,
+      "nombre": "Juan Sanchez Herrera",
+      "maquinaria": "3",
+      "personal": 1,
+      "domicilio": "CALLE CUAHUTEMOC S/N",
+      "colonia": "COLONIA HUIXTA",
+      "codigo_postal": "73930",
+      "telefono": "+52 231 206 8758",
+      "imagen": "/uploads/compressed-1777936049505.jpg"
+    },
+    {
+      "id": 12,
+      "nombre": "Julio Fernandez Mendez",
+      "maquinaria": "3",
+      "personal": 2,
+      "domicilio": "PROLONGACION MINA NO.2",
+      "colonia": "COLONIA TEZIUTLAN PUEBLA",
+      "codigo_postal": "73800",
+      "telefono": "+52 231 126 2768",
+      "imagen": "/uploads/compressed-1777936055281.jpg"
+    },
+    {
+      "id": 13,
+      "nombre": "Luz Maria Juarez Guiterrez",
+      "maquinaria": "4 MAQUINAS, 2 RECTAS, 1 OVER, 1 COVER",
+      "personal": 2,
+      "domicilio": "C.LOS PERALES NO.10",
+      "colonia": "COLONIA BARRIO EL FRESNILLO",
+      "codigo_postal": "73850",
+      "telefono": "+52 231 113 8560",
+      "imagen": "/uploads/compressed-1777936068075.jpg"
+    },
+    {
+      "id": 14,
+      "nombre": "Luisa Martinez Moreno",
+      "maquinaria": "6",
+      "personal": 3,
+      "domicilio": "C.JAVIER MINA 7/6",
+      "colonia": "COLONIA CENTRO",
+      "codigo_postal": "73280",
+      "telefono": "+52 231 141 0652",
+      "imagen": "/uploads/compressed-1777936062514.jpg"
+    },
+    {
+      "id": 15,
+      "nombre": "Marcial Gonzalez Isidro",
+      "maquinaria": "5 MAQUINAS, 3 RECTAS, 2 OVER",
+      "personal": 2,
+      "domicilio": "C. JUAN PABLO II NO.31",
+      "colonia": "COLONIA TEQUIMILA",
+      "codigo_postal": "73950",
+      "telefono": "+52 231 103 8888",
+      "imagen": "/uploads/compressed-1777936073870.jpg"
+    },
+    {
+      "id": 16,
+      "nombre": "Mauricio Hernandez Luna",
+      "maquinaria": "3 MAQUINAS RECTAS, 1 MAQUINA OVER, 1 MAQUINA COVER",
+      "personal": 3,
+      "domicilio": "CALLE CARMEN MENDOZA 20",
+      "colonia": "EL CARMEN",
+      "codigo_postal": "73820",
+      "telefono": "+52 231 149 0675",
+      "imagen": "/uploads/compressed-1777936097172.jpg"
+    },
+    {
+      "id": 17,
+      "nombre": "Maria Maricela Ortiz Iba\u00f1ez",
+      "maquinaria": "3 MAQUINAS RECTAS, 1 MAQUINA OVER, 1 MAQUINA COVER",
+      "personal": 3,
+      "domicilio": "CALLE 16 DE SEPTIEMBRE #502",
+      "colonia": "COLONIA CENTRO",
+      "codigo_postal": "73950",
+      "telefono": "+52 231 253 2569",
+      "imagen": "/uploads/compressed-1777936087918.jpg"
+    },
+    {
+      "id": 18,
+      "nombre": "Marco Antonio Garcia Ascencion",
+      "maquinaria": "6",
+      "personal": 5,
+      "domicilio": "C.20 DE NOVIEMBRE #31",
+      "colonia": "COLONIA SECCION 2DA ATOLUCA",
+      "codigo_postal": "73697",
+      "telefono": "+52 231 139 4003",
+      "imagen": "/uploads/compressed-1777936080985.jpg"
+    },
+    {
+      "id": 19,
+      "nombre": "Moises Vega Flores",
+      "maquinaria": "8",
+      "personal": 2,
+      "domicilio": "C.25 DE JULIO #13",
+      "colonia": "COLONIA CENTRO",
+      "codigo_postal": "73910",
+      "telefono": "+52 231 143 7520",
+      "imagen": "/uploads/compressed-1777936104367.jpg"
+    },
+    {
+      "id": 20,
+      "nombre": "Nemesio Valentin Dominguez",
+      "maquinaria": "3 RECTAS, 1 OVER",
+      "personal": 4,
+      "domicilio": "C. #18",
+      "colonia": "COLONIA CENTRO",
+      "codigo_postal": "73910",
+      "telefono": "+52 221 974 0138",
+      "imagen": "/uploads/compressed-1777936110460.jpg"
+    },
+    {
+      "id": 21,
+      "nombre": "Paula Melgarejo Mena",
+      "maquinaria": "3",
+      "personal": 1,
+      "domicilio": "C.MIGUEL HIDALGO #1614",
+      "colonia": "COLONIA CENTRO",
+      "codigo_postal": "73800",
+      "telefono": "+52 231 152 7237",
+      "imagen": "/uploads/compressed-1777936118198.jpg"
+    },
+    {
+      "id": 22,
+      "nombre": "Rene Sanchez Hernandez",
+      "maquinaria": "4 MAQUINAS, 2 RECTAS, 1 OVER, 1 COVER",
+      "personal": 2,
+      "domicilio": "PLAZA DEL PRISCO",
+      "colonia": "CENTRO",
+      "codigo_postal": "73887",
+      "telefono": "+52 663 157 9333",
+      "imagen": "/uploads/compressed-1777936125817.jpg"
+    },
+    {
+      "id": 23,
+      "nombre": "Roberto Reyes Ramos",
+      "maquinaria": "4",
+      "personal": 1,
+      "domicilio": "C.RAFAEL MARTINEZ DE LA TORRE #59",
+      "colonia": "COLONIA ARBOLEDAS",
+      "codigo_postal": "73895",
+      "telefono": "+52 231 110 7108",
+      "imagen": "/uploads/compressed-1777936139572.jpg"
+    },
+    {
+      "id": 24,
+      "nombre": "Roberto Mendez Diaz",
+      "maquinaria": "3 RECTAS, 1 OVER",
+      "personal": 2,
+      "domicilio": "C. TEPEYAC #195",
+      "colonia": "COLONIA BARR. XOLOCO",
+      "codigo_postal": "73870",
+      "telefono": "+52 231 140 6291",
+      "imagen": "/uploads/compressed-1777936131276.jpg"
+    },
+    {
+      "id": 25,
+      "nombre": "Roberto Romero Jimenez",
+      "maquinaria": "3 RECTAS, 1 OVER, 1 COVER",
+      "personal": 2,
+      "domicilio": "PRIV 12 DE DICIEMBRE",
+      "colonia": "COLONIA CENTRO",
+      "codigo_postal": "73880",
+      "telefono": "+52 232 153 4608",
+      "imagen": "/uploads/compressed-1777936146100.jpg"
+    },
+    {
+      "id": 26,
+      "nombre": "Rosario Pablo Guerrero",
+      "maquinaria": "4 RECTAS, 2 OVER, 1 COVER",
+      "personal": 4,
+      "domicilio": "INDEPENDENCIA 105",
+      "colonia": "",
+      "codigo_postal": "73967",
+      "telefono": "+52 231 150 7375",
+      "imagen": "/uploads/compressed-1777936156019.jpg"
+    },
+    {
+      "id": 27,
+      "nombre": "Rosendo Cruz Martin",
+      "maquinaria": "3",
+      "personal": 2,
+      "domicilio": "CARRETERA A AYOTOXCO",
+      "colonia": "CENTRO",
+      "codigo_postal": "73580",
+      "telefono": "+52 231 154 6022",
+      "imagen": "/uploads/compressed-1777936161715.jpg"
+    },
+    {
+      "id": 28,
+      "nombre": "Rogelio Perez Huerta",
+      "maquinaria": "4 MAQUINAS, 2 RECTAS, 1 COVER, 1 OVER",
+      "personal": 1,
+      "domicilio": "CARMEN MENDOZA DE TAPIA #33",
+      "colonia": "",
+      "codigo_postal": "",
+      "telefono": "+52 231 151 0474",
+      "imagen": "/uploads/compressed-1777936150922.jpg"
+    },
+    {
+      "id": 29,
+      "nombre": "Salvador Salazar Gomez",
+      "maquinaria": "4 RECTAS, 2 OVER, BLAND STICH, COVER",
+      "personal": 3,
+      "domicilio": "VICENTE LOMBARDO #9",
+      "colonia": "COLONIA CENTRO",
+      "codigo_postal": "73800",
+      "telefono": "+52 231 128 2637",
+      "imagen": "/uploads/compressed-1777936172840.jpg"
+    },
+    {
+      "id": 30,
+      "nombre": "Silvia Toral Aparcio",
+      "maquinaria": "3 MAQUINAS RECTAS, 2 MAQUINAS OVER",
+      "personal": 3,
+      "domicilio": "CALLE TONACATL NO. 106",
+      "colonia": "COLONIA CENTRO",
+      "codigo_postal": "73950",
+      "telefono": "+52 231 106 7759",
+      "imagen": "/uploads/compressed-1777936180071.jpg"
+    },
+    {
+      "id": 31,
+      "nombre": "Sergio Angel Fuentes Vazquez",
+      "maquinaria": "OVER Y RECTA",
+      "personal": 4,
+      "domicilio": "C. CUAUHTEMOC SECC. 5A #49",
+      "colonia": "CENTRO",
+      "codigo_postal": "73800",
+      "telefono": "+52 231 119 7115",
+      "imagen": null
+    },
+    {
+      "id": 32,
+      "nombre": "Vicente Hernandez Pablo",
+      "maquinaria": "1 RECTAS, 1 OVER, 1 COVER",
+      "personal": 2,
+      "domicilio": "C. 5 DE MAYO 424",
+      "colonia": "COLONIA CENTRO",
+      "codigo_postal": "73950",
+      "telefono": "+52 231 152 7241",
+      "imagen": "/uploads/compressed-1777936197043.jpg"
+    },
+    {
+      "id": 33,
+      "nombre": "Victoria Mora Flores",
+      "maquinaria": "5 MAQUINAS RECTAS, 1 MAQUINA OVER, 1 MAQUINA DOS AGUJAS",
+      "personal": 7,
+      "domicilio": "",
+      "colonia": "",
+      "codigo_postal": "",
+      "telefono": "+52 231 145 9374",
+      "imagen": "/uploads/compressed-1777936191881.jpg"
+    },
+    {
+      "id": 34,
+      "nombre": "Yazmin Anacleto Santos",
+      "maquinaria": "6 MAQUINAS RECTAS, 2 MAQUINAS OVER",
+      "personal": 3,
+      "domicilio": "PRIV. CUAUHTEMOC 6 LOC. LA AZTECA",
+      "colonia": "",
+      "codigo_postal": "73950",
+      "telefono": "+52 231 108 4583",
+      "imagen": "/uploads/compressed-1777936201411.jpg"
+    },
+    {
+      "id": 37,
+      "nombre": "Mas Procesos",
+      "maquinaria": "14 rectas, 3 over , 1 dos agujas, 2 pretinadoras, 1 presilladora",
+      "personal": 10,
+      "domicilio": "Calle las delicias n\u00famero 19",
+      "colonia": "Las delicias",
+      "codigo_postal": "738040",
+      "telefono": "+52 231 106 2003",
+      "imagen": "/uploads/compressed-1778097761182.jpg"
+    },
+    {
+      "id": 38,
+      "nombre": "Antonio Javier Gonzalez Hernandez",
+      "maquinaria": "2 RECTAS, 2 OVER, 1 COVER",
+      "personal": 2,
+      "domicilio": "C. NI\u00d1OS HEROES 1  BARRIO EL FRESNILLO ",
+      "colonia": "CENTRO",
+      "codigo_postal": "73887",
+      "telefono": "+52 231 156 4411",
+      "imagen": "/uploads/compressed-1778879297756.jpg"
+    },
+    {
+      "id": 39,
+      "nombre": "Josue Jairo Cruz Martinez",
+      "maquinaria": "10",
+      "personal": 6,
+      "domicilio": "AV. ADOLFO RUIZ CORTINEZ 33",
+      "colonia": "COL. CONTLA",
+      "codigo_postal": "73900",
+      "telefono": "+52 231 143 9021",
+      "imagen": "/uploads/compressed-1779289477069.jpg"
+    },
+    {
+      "id": 40,
+      "nombre": "Jose Adrian Aguilar Andres",
+      "maquinaria": "2 Maquina over, 2 Maquina recta",
+      "personal": 3,
+      "domicilio": "CALLE CAMINO ANTIGUO SAN JOSE 4",
+      "colonia": " TEPACTIPAN",
+      "codigo_postal": "73580",
+      "telefono": "2321493110",
+      "imagen": "/uploads/compressed-1779385844179.jpg"
+    },
+    {
+      "id": 41,
+      "nombre": "Juan Ortiz Camacho",
+      "maquinaria": "10 maquinas ( 4 rectas, 2 over, 1 maquina de codo, 1 maquina 2 agujas, 1 maquina ojalera y 1 maquina presilladora)",
+      "personal": 5,
+      "domicilio": " Calle Ignacio Allende #102",
+      "colonia": "Cruz Verde, CENTRO",
+      "codigo_postal": "73580",
+      "telefono": "+52 232 113 2872",
+      "imagen": null
+    },
+    {
+      "id": 42,
+      "nombre": "Fermin Bruno Rodriguez Hernandez ",
+      "maquinaria": "5 maquinas ",
+      "personal": 6,
+      "domicilio": "JOAQUIN DIAZ ORTEGA NUMERO 24",
+      "colonia": "HUIXTLA",
+      "codigo_postal": "73930",
+      "telefono": "222-752-3097",
+      "imagen": null
+    }
+  ]
+}
