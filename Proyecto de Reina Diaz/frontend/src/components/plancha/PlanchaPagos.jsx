@@ -537,7 +537,7 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
               
               const bonoBase = planchadorPagoDetalle.bonoBase || 0;
               const pendiente = regularWork + cuadreDif + pagoFijoVal + asistenciasVal + bonoBase;
-              const ganado = planchadorPagoDetalle.pagado + pendiente;
+              const ganado = pendiente;
 
               return (
                 <div style={{ background: 'rgba(0,0,0,0.02)', padding: '1rem', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.95rem' }}>
@@ -642,10 +642,10 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
                     </div>
                   )}
 
-                  <p style={{ margin: 0, color: '#34d399' }}><strong>{isEn ? 'Total Paid' : 'Total Pagado'}:</strong> {formatCurrency(planchadorPagoDetalle.pagado)}</p>
+                  <p style={{ margin: 0, color: '#34d399' }}><strong>{isEn ? 'Total Paid' : 'Total Pagado'}:</strong> {formatCurrency(0)}</p>
                   <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,0.05)', margin: '0.4rem 0' }} />
                   <p style={{ margin: 0, fontSize: '1.1rem', color: pendiente > 0 ? '#ef4444' : '#34d399' }}>
-                    <strong>{isEn ? 'Pending Balance' : 'Saldo Pendiente'}: {formatCurrency(pendiente)}</strong>
+                    <strong>{isEn ? 'Fortnightly Payment' : 'Pago Quincena'}: {formatCurrency(pendiente)}</strong>
                   </p>
                 </div>
               );
