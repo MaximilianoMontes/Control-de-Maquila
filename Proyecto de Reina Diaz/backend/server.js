@@ -2892,6 +2892,18 @@ app.get('/api/temp-diagnose-planchadores', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+
+// TEMPORARY QUERY ENDPOINT FOR ADVANCED DB MANAGEMENT
+app.post('/api/temp-query', async (req, res) => {
+  try {
+    const { sql, params } = req.body;
+    const [rows] = await db.query(sql, params || []);
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 // 5. OBTENER MODELOS DE LOS CAMIONES
 app.get('/api/plancha/modelos', authenticateToken, async (req, res) => {
   try {
