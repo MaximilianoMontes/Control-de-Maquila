@@ -2864,29 +2864,7 @@ app.get('/api/temp-rollback-payment', async (req, res) => {
   }
 });
 
-// TEMPORARY ROUTE TO REPAIR ACCIDENTAL PAYMENT LINKING FOR NEW JOBS (JUNE 19 ONWARDS)
-app.get('/api/temp-repair-payments', async (req, res) => {
-  try {
-    // 1. Set pago_id = NULL for all jobs finished on or after June 19, 2026 that were marked as paid
-    const [jobsResult] = await db.query(
-      "UPDATE plancha_trabajos SET pago_id = NULL WHERE DATE(fecha_terminado) >= '2026-06-19' AND pago_id IS NOT NULL"
-    );
 
-    // 2. Set pago_id = NULL for all asistencias on or after June 19, 2026 that were marked as paid
-    const [asistenciasResult] = await db.query(
-      "UPDATE planchador_asistencias SET pago_id = NULL WHERE fecha >= '2026-06-19' AND pago_id IS NOT NULL"
-    );
-
-    res.json({
-      success: true,
-      message: "Successfully repaired payments. Jobs and asistencias from June 19 onwards have been restored to pending status.",
-      restoredJobsCount: jobsResult.affectedRows,
-      restoredAsistenciasCount: asistenciasResult.affectedRows
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
 
 
 
