@@ -2798,68 +2798,6 @@ app.delete('/api/planchadores/:id', authenticateToken, async (req, res) => {
   }
 });
 
-// TEMPORARY ROUTE TO INSPECT VALERIA'S DATABASE RECORDS
-app.get('/api/temp-valeria', async (req, res) => {
-  try {
-    const [planchadores] = await db.query("SELECT * FROM planchadores WHERE nombre LIKE '%Valeria%'");
-    if (planchadores.length === 0) {
-      return res.json({ error: "Valeria not found" });
-    }
-    const valeriaId = planchadores[0].id;
-
-    // Get jobs for Valeria
-    const [jobs] = await db.query("SELECT * FROM plancha_trabajos WHERE planchador_id = ? ORDER BY id DESC LIMIT 50", [valeriaId]);
-    
-    // Get payments for Valeria
-    const [payments] = await db.query("SELECT * FROM planchador_pagos WHERE planchador_id = ? ORDER BY id DESC LIMIT 20", [valeriaId]);
-
-    // Get recent activity history related to Valeria
-    const [history] = await db.query("SELECT * FROM historial WHERE description LIKE '%Valeria%' ORDER BY id DESC LIMIT 20");
-
-    res.json({
-      planchador: planchadores[0],
-      jobs,
-      payments,
-      history
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// TEMPORARY ROUTE TO RESTORE VALERIA'S ACCIDENTAL PAID JOBS TO PENDING STATUS
-app.get('/api/temp-restore-valeria', async (req, res) => {
-  try {
-    const [planchadores] = await db.query("SELECT id FROM planchadores WHERE nombre LIKE '%Valeria%'");
-    if (planchadores.length === 0) {
-      return res.status(404).json({ error: "Valeria not found" });
-    }
-    const valeriaId = planchadores[0].id;
-
-    // We know the accidental payment ID is 7 in control-de-maquila-production, and 15 in controldemaquilareinadiaz
-    // To be completely safe and cover both possible active databases, we can select jobs that have pago_id in (7, 15)
-    // and were created on or after June 18, 2026, and set their pago_id back to NULL.
-    const [result] = await db.query(
-      "UPDATE plancha_trabajos SET pago_id = NULL WHERE planchador_id = ? AND pago_id IN (7, 15) AND fecha_creacion >= '2026-06-18 00:00:00'",
-      [valeriaId]
-    );
-
-    const [asistenciasResult] = await db.query(
-      "UPDATE planchador_asistencias SET pago_id = NULL WHERE planchador_id = ? AND pago_id IN (7, 15) AND fecha >= '2026-06-18'",
-      [valeriaId]
-    );
-
-    res.json({
-      success: true,
-      message: `Restored ${result.affectedRows} jobs and ${asistenciasResult.affectedRows} absences for Valeria to pending status.`,
-      affectedJobs: result.affectedRows,
-      affectedAsistencias: asistenciasResult.affectedRows
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
 // 5. OBTENER MODELOS DE LOS CAMIONES
 app.get('/api/plancha/modelos', authenticateToken, async (req, res) => {
   try {
