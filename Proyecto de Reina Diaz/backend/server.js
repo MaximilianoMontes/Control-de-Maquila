@@ -938,11 +938,13 @@ app.post('/api/camiones', authenticateToken, async (req, res) => {
         // Fetch precio_plancha from original production if exists
         if (prodId) {
           const [prodRows] = await connection.query(
-            "SELECT i.precio_plancha FROM produccion p LEFT JOIN inventario i ON p.inventario_id = i.id WHERE p.id = ?",
+            "SELECT i.precio_plancha, i.precio FROM produccion p LEFT JOIN inventario i ON p.inventario_id = i.id WHERE p.id = ?",
             [prodId]
           );
           if (prodRows.length > 0) {
-            precioPlancha = prodRows[0].precio_plancha || 0.00;
+            const pPlancha = parseFloat(prodRows[0].precio_plancha) || 0.00;
+            const pMaquila = parseFloat(prodRows[0].precio) || 0.00;
+            precioPlancha = pPlancha > 0 ? pPlancha : pMaquila;
           }
         }
 
@@ -954,7 +956,7 @@ app.post('/api/camiones', authenticateToken, async (req, res) => {
       } else {
         // Normal production order: check stock in production order
         const [prodRows] = await connection.query(
-          "SELECT p.cantidad, p.cantidad_recibida, i.precio_plancha FROM produccion p LEFT JOIN inventario i ON p.inventario_id = i.id WHERE p.id = ?",
+          "SELECT p.cantidad, p.cantidad_recibida, i.precio_plancha, i.precio FROM produccion p LEFT JOIN inventario i ON p.inventario_id = i.id WHERE p.id = ?",
           [prodId]
         );
         const prodRow = prodRows[0];
@@ -963,7 +965,9 @@ app.post('/api/camiones', authenticateToken, async (req, res) => {
         }
 
         const piezas_producidas = prodRow.cantidad_recibida !== null ? prodRow.cantidad_recibida : prodRow.cantidad;
-        precioPlancha = prodRow.precio_plancha || 0.00;
+        const pPlancha = parseFloat(prodRow.precio_plancha) || 0.00;
+        const pMaquila = parseFloat(prodRow.precio) || 0.00;
+        precioPlancha = pPlancha > 0 ? pPlancha : pMaquila;
         
         const [shippedRows] = await connection.query(
           "SELECT COALESCE(SUM(piezas), 0) as total FROM camion_detalles WHERE produccion_id = ?",

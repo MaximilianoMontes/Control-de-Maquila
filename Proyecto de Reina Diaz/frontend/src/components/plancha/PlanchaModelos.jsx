@@ -53,7 +53,10 @@ export default function PlanchaModelos({ modelosCamion, fetchModelosCamion, fetc
 
   const handleAbrirVerificacion = (modelo) => {
     setModeloAVerificar(modelo);
-    setPrecioPlanchaInput(modelo.precio_plancha !== undefined && modelo.precio_plancha !== null ? String(modelo.precio_plancha) : '');
+    const initialPrice = (modelo.precio_plancha && parseFloat(modelo.precio_plancha) > 0)
+      ? String(modelo.precio_plancha)
+      : (modelo.precio && parseFloat(modelo.precio) > 0 ? String(modelo.precio) : '0');
+    setPrecioPlanchaInput(initialPrice);
     setMostrarVerificarModal(true);
   };
 
