@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { 
   Truck, ArrowRight, Trash2, Calendar, Edit3, Plus, 
-  ChevronDown, ChevronUp, AlertCircle, CheckCircle, Info, Search, XCircle, X, Undo2
+  ChevronDown, ChevronUp, AlertCircle, CheckCircle, Info, Search, XCircle, X, RefreshCw
 } from 'lucide-react';
 import { useSettings } from '../context/SettingsContext';
 import { useAuth } from '../context/AuthContext';
@@ -583,7 +583,7 @@ export default function Camion() {
                         onClick={() => handleReturnToProduction(item)}
                         title={isEn ? 'Return to Production' : 'Devolver a Producción'}
                       >
-                        <Undo2 size={16} />
+                        <RefreshCw size={16} />
                       </button>
                       <button 
                         className={`btn ${isLoaded ? 'btn-secondary' : 'btn-primary'}`} 
