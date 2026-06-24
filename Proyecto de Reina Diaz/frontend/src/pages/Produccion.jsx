@@ -274,25 +274,29 @@ export default function Produccion() {
     }
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (order) => {
+    const isFinished = order.estado === 'Terminado' || order.estado === 'Terminado Parcial';
     Swal.fire({
-      title: t('prod.confirmDelete'),
+      title: isEn ? 'Delete order?' : '¿Eliminar orden?',
+      text: isFinished
+        ? (isEn
+            ? 'This order is already finished. Deleting it will hide it from the active list to keep things clean, but all your earnings and payroll history will be kept completely safe in the database.'
+            : 'Esta orden ya está terminada. Al "eliminarla", solo se ocultará de la lista activa para mantener el orden, pero todas sus ganancias e historial de pagos se conservarán intactos en la base de datos.')
+        : t('prod.confirmDelete'),
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#ef4444',
       cancelButtonColor: '#64748b',
-      confirmButtonText: 'Sí, eliminar',
-      cancelButtonText: 'Cancelar',
-      background: '#1e293b',
-      color: '#f8fafc'
+      confirmButtonText: isEn ? 'Yes, delete' : 'Sí, eliminar',
+      cancelButtonText: isEn ? 'Cancel' : 'Cancelar'
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          await axios.delete(`${API}/api/produccion/${id}`);
-          toast.success('Orden eliminada correctamente', { theme: 'dark' });
+          await axios.delete(`${API}/api/produccion/${order.id}`);
+          toast.success(isEn ? 'Deleted successfully' : 'Orden eliminada correctamente');
           fetchOrders();
         } catch (e) { 
-          toast.error(e.response?.data?.error || t('prod.alertDeleteError'), { theme: 'dark' }); 
+          toast.error(e.response?.data?.error || t('prod.alertDeleteError')); 
         }
       }
     });
@@ -591,7 +595,7 @@ export default function Produccion() {
                                   }}>
                                     <Pencil size={16} /> {isEn ? 'Edit' : 'Editar'}
                                   </button>
-                                  <button className="actions-dropdown-item danger" onClick={() => { setActiveDropdownId(null); handleDelete(o.id); }}>
+                                  <button className="actions-dropdown-item danger" onClick={() => { setActiveDropdownId(null); handleDelete(o); }}>
                                     <Trash2 size={16} /> {isEn ? 'Delete' : 'Eliminar'}
                                   </button>
                                 </div>
