@@ -2863,9 +2863,31 @@ app.get('/api/temp-rollback-payment', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-
-
-
+// TEMPORARY COMPREHENSIVE DATABASE DEBUGGING ENDPOINT
+app.get('/api/temp-debug-all', async (req, res) => {
+  try {
+    const ids = [5, 6, 8, 11];
+    const result = {};
+    for (const id of ids) {
+      const [planchador] = await db.query("SELECT nombre FROM planchadores WHERE id = ?", [id]);
+      if (planchador.length > 0) {
+        const name = planchador[0].nombre;
+        const [jobs] = await db.query(
+          "SELECT id, pago_id, estado, total, DATE_FORMAT(fecha_terminado, '%Y-%m-%d %H:%i:%s') as finished FROM plancha_trabajos WHERE planchador_id = ? ORDER BY id DESC LIMIT 10",
+          [id]
+        );
+        const [payments] = await db.query(
+          "SELECT id, monto, fecha FROM planchador_pagos WHERE planchador_id = ? ORDER BY id DESC LIMIT 5",
+          [id]
+        );
+        result[name] = { id, jobs, payments };
+      }
+    }
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 // 5. OBTENER MODELOS DE LOS CAMIONES
 app.get('/api/plancha/modelos', authenticateToken, async (req, res) => {
   try {
