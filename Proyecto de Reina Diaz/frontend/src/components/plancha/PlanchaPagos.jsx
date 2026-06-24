@@ -1003,65 +1003,63 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
                   </tr>
                 ) : (
                   (() => {
-                    const filtered = planchadorPagoDetalle.trabajosPendientes.filter(pt => {
-                      if (!fechaInicioFiltro || !fechaFinFiltro) return true;
-                      const dateStr = pt.fecha_creacion ? pt.fecha_creacion.split('T')[0] : '';
-                      return dateStr >= fechaInicioFiltro && dateStr <= fechaFinFiltro;
-                    });
+                    return planchadorPagoDetalle.trabajosPendientes.map(t => {
+                      const dateStr = t.fecha_creacion ? t.fecha_creacion.split('T')[0] : '';
+                      const isWithinRange = !fechaInicioFiltro || !fechaFinFiltro || (dateStr >= fechaInicioFiltro && dateStr <= fechaFinFiltro);
+                      const isFilterActive = !!(fechaInicioFiltro && fechaFinFiltro);
 
-                    if (filtered.length === 0) {
                       return (
-                        <tr>
-                          <td colSpan="7" style={{ textAlign: 'center', color: 'var(--text-muted, #94a3b8)' }}>
-                            {isEn ? 'No jobs pending payment in this date range.' : 'No hay trabajos pendientes de pago en este rango de fechas.'}
+                        <tr 
+                          key={t.id} 
+                          style={{ 
+                            opacity: isWithinRange ? 1 : 0.45,
+                            background: isWithinRange && isFilterActive ? 'rgba(52, 211, 153, 0.04)' : 'transparent',
+                            transition: 'all 0.2s ease'
+                          }}
+                          title={!isWithinRange ? (isEn ? 'Excluded from current payment range' : 'Excluido del rango de pago actual') : ''}
+                        >
+                          <td>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              {t.modelo_imagen ? (
+                                <ImageZoom
+                                  src={`${API_URL}${t.modelo_imagen}`}
+                                  alt={t.modelo_nombre}
+                                  style={{ width: '28px', height: '28px', borderRadius: '4px', objectFit: 'contain', background: 'var(--bg-card)' }}
+                                />
+                              ) : null}
+                              <strong>{t.modelo_nombre || t.color}</strong>
+                            </div>
+                          </td>
+                          <td>{formatDate(t.fecha_creacion)}</td>
+                          <td>
+                            {t.talla !== 'AJUSTE' && t.color ? (
+                              <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                                {t.color}
+                              </span>
+                            ) : '-'}
+                          </td>
+                          <td>
+                            {t.talla === 'AJUSTE' ? (
+                              <span className="badge badge-warning" style={{ background: 'rgba(245, 158, 11, 0.2)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.3)' }}>{isEn ? 'FIXED PAY' : 'PAGO FIJO'}</span>
+                            ) : (
+                              <span className="badge badge-info">{isEn ? 'S' : 'T'}{t.talla}</span>
+                            )}
+                          </td>
+                          <td>{t.piezas}</td>
+                          <td style={{ color: t.neto < 0 ? '#ef4444' : '#34d399', fontWeight: 'bold' }}>
+                            {t.neto < 0 ? '-' : ''}{formatCurrency(Math.abs(t.neto))}
+                          </td>
+                          <td>
+                            <button
+                              onClick={() => handleDeleteTrabajo(t.id)}
+                              style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                            >
+                              <MinusCircle size={18} />
+                            </button>
                           </td>
                         </tr>
                       );
-                    }
-
-                    return filtered.map(t => (
-                      <tr key={t.id}>
-                        <td>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            {t.modelo_imagen ? (
-                              <ImageZoom
-                                src={`${API_URL}${t.modelo_imagen}`}
-                                alt={t.modelo_nombre}
-                                style={{ width: '28px', height: '28px', borderRadius: '4px', objectFit: 'contain', background: 'var(--bg-card)' }}
-                              />
-                            ) : null}
-                            <strong>{t.modelo_nombre || t.color}</strong>
-                          </div>
-                        </td>
-                        <td>{formatDate(t.fecha_creacion)}</td>
-                        <td>
-                          {t.talla !== 'AJUSTE' && t.color ? (
-                            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                              {t.color}
-                            </span>
-                          ) : '-'}
-                        </td>
-                        <td>
-                          {t.talla === 'AJUSTE' ? (
-                            <span className="badge badge-warning" style={{ background: 'rgba(245, 158, 11, 0.2)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.3)' }}>{isEn ? 'FIXED PAY' : 'PAGO FIJO'}</span>
-                          ) : (
-                            <span className="badge badge-info">{isEn ? 'S' : 'T'}{t.talla}</span>
-                          )}
-                        </td>
-                        <td>{t.piezas}</td>
-                        <td style={{ color: t.neto < 0 ? '#ef4444' : '#34d399', fontWeight: 'bold' }}>
-                          {t.neto < 0 ? '-' : ''}{formatCurrency(Math.abs(t.neto))}
-                        </td>
-                        <td>
-                          <button
-                            onClick={() => handleDeleteTrabajo(t.id)}
-                            style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                          >
-                            <MinusCircle size={18} />
-                          </button>
-                        </td>
-                      </tr>
-                    ));
+                    });
                   })()
                 )}
               </tbody>
