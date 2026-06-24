@@ -3275,7 +3275,7 @@ app.get('/api/planchadores/:id/pagos', authenticateToken, async (req, res) => {
 
 // 10. REGISTRAR PAGO A PLANCHADOR
 app.post('/api/plancha/pagos', authenticateToken, async (req, res) => {
-  const { planchador_id, monto, tipo_pago } = req.body;
+  const { planchador_id, monto, tipo_pago, fecha_inicio, fecha_fin } = req.body;
   if (!planchador_id || !monto || monto <= 0) {
     return res.status(400).json({ error: 'Parámetros requeridos inválidos' });
   }
@@ -3294,15 +3294,21 @@ app.post('/api/plancha/pagos', authenticateToken, async (req, res) => {
     `, [planchador_id, monto, tipo_pago || 'completo']);
     const pagoId = paymentResult.insertId;
 
-    await connection.query(
-      "UPDATE plancha_trabajos SET pago_id = ? WHERE planchador_id = ? AND estado = 'terminado' AND pago_id IS NULL",
-      [pagoId, planchador_id]
-    );
+    let queryTrabajos = "UPDATE plancha_trabajos SET pago_id = ? WHERE planchador_id = ? AND estado = 'terminado' AND pago_id IS NULL";
+    let paramsTrabajos = [pagoId, planchador_id];
+    if (fecha_inicio && fecha_fin) {
+      queryTrabajos += " AND DATE(fecha_creacion) BETWEEN ? AND ?";
+      paramsTrabajos.push(fecha_inicio, fecha_fin);
+    }
+    await connection.query(queryTrabajos, paramsTrabajos);
 
-    await connection.query(
-      "UPDATE planchador_asistencias SET pago_id = ? WHERE planchador_id = ? AND pago_id IS NULL",
-      [pagoId, planchador_id]
-    );
+    let queryAsistencias = "UPDATE planchador_asistencias SET pago_id = ? WHERE planchador_id = ? AND pago_id IS NULL";
+    let paramsAsistencias = [pagoId, planchador_id];
+    if (fecha_inicio && fecha_fin) {
+      queryAsistencias += " AND fecha BETWEEN ? AND ?";
+      paramsAsistencias.push(fecha_inicio, fecha_fin);
+    }
+    await connection.query(queryAsistencias, paramsAsistencias);
 
     await connection.commit();
     await logActivity(req.user.id, 'ADD', 'PLANCHA_PAGO', `Registró pago de $${monto} al planchador ${planchador.nombre}`);
