@@ -1071,6 +1071,8 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
                     });
                   })()
                 )}
+              </tbody>
+            </table>
           </div>
         </div>
 
