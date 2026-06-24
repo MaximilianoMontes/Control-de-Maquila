@@ -2862,12 +2862,36 @@ app.get('/api/temp-rollback-payment', async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
+});// TEMPORARY DIAGNOSTICS ENDPOINT FOR PLANCHADORES
+app.get('/api/temp-diagnose-planchadores', async (req, res) => {
+  try {
+    const [planchadores] = await db.query("SELECT id, nombre FROM planchadores WHERE activo = 1");
+    const result = {};
+    for (const p of planchadores) {
+      const [payments] = await db.query(
+        "SELECT id, monto, fecha, tipo_pago FROM planchador_pagos WHERE planchador_id = ? ORDER BY id DESC",
+        [p.id]
+      );
+      const [jobs] = await db.query(
+        "SELECT id, camion_detalles_id, color, talla, piezas, estado, pago_id, fecha_creacion, fecha_terminado FROM plancha_trabajos WHERE planchador_id = ? ORDER BY id DESC LIMIT 50",
+        [p.id]
+      );
+      const [asistencias] = await db.query(
+        "SELECT id, planchador_id, monto, fecha, pago_id FROM planchador_asistencias WHERE planchador_id = ? ORDER BY id DESC LIMIT 50",
+        [p.id]
+      );
+      result[p.nombre] = {
+        id: p.id,
+        payments,
+        jobs,
+        asistencias
+      };
+    }
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
-
-
-
-
-
 // 5. OBTENER MODELOS DE LOS CAMIONES
 app.get('/api/plancha/modelos', authenticateToken, async (req, res) => {
   try {
