@@ -1071,6 +1071,39 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
                     });
                   })()
                 )}
+          </div>
+        </div>
+
+        {/* Recibos de Pagos */}
+        <div className="glass-card">
+          <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.2rem' }}>{isEn ? 'Issued payment receipts' : 'Recibos de pagos entregados'}</h3>
+          <div className="table-wrapper">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>{isEn ? 'Receipt ID' : 'ID Recibo'}</th>
+                  <th>{isEn ? 'Payment Date' : 'Fecha de Pago'}</th>
+                  <th>{isEn ? 'Type' : 'Tipo'}</th>
+                  <th>{isEn ? 'Amount' : 'Monto'}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {!planchadorPagoDetalle || !planchadorPagoDetalle.pagos || planchadorPagoDetalle.pagos.length === 0 ? (
+                  <tr>
+                    <td colSpan="4" style={{ textAlign: 'center', color: '#94a3b8' }}>
+                      {!pagoPlanchadorId ? (isEn ? 'Select an ironer to view receipts.' : 'Selecciona un planchador para ver sus recibos.') : (isEn ? 'No payments registered yet.' : 'No se han registrado pagos aún.')}
+                    </td>
+                  </tr>
+                ) : (
+                  planchadorPagoDetalle.pagos.map((p, index) => (
+                    <tr key={p.id}>
+                      <td>#{planchadorPagoDetalle.pagos.length - index}</td>
+                      <td>{formatDate(p.fecha)}</td>
+                      <td><span className="badge badge-info" style={{ textTransform: 'uppercase' }}>{p.tipo_pago === 'completo' ? (isEn ? 'full' : 'completo') : p.tipo_pago}</span></td>
+                      <td style={{ color: '#34d399', fontWeight: 'bold' }}>{formatCurrency(p.monto)}</td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
