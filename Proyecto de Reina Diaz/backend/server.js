@@ -2883,6 +2883,8 @@ app.get('/api/temp-debug-all', async (req, res) => {
         result[name] = { id, jobs, payments };
       }
     }
+    const [users] = await db.query("SELECT id, username, role FROM users");
+    result._users = users;
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
