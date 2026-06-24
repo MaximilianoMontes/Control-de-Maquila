@@ -24,6 +24,7 @@ import KillFeed from './components/KillFeed';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { motion } from 'framer-motion';
+import { useSettings } from './context/SettingsContext';
 
 function MainLayout({ children }) {
   const [searchParams] = useSearchParams();
@@ -79,8 +80,18 @@ function ProtectedRoute({ children, allowedRoles }) {
 
 function App() {
   const { user, loading } = useAuth();
+  const { settings } = useSettings();
 
   if (loading) return <div>Cargando...</div>;
+
+  const isSystemDark = settings.theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const isAnyDark = [
+    'dark', 'ocean', 'nature', 'sunset', 'lavender', 'cherry', 'midnight', 'dim', 'miku', 'teto', 'limbus', 'ruina', 'minecraft', 
+    'geometry', 'fallout', 'tf2', 'cyberpunk', 'backrooms', 'terraria', 'castle', 'starwars', 'cod3', 'subnautica', 'cuphead', 
+    'undertale', 'lobotomy', 'papers', 'plague', 'pvz'
+  ].includes(settings.theme) || isSystemDark;
+
+  const toastTheme = isAnyDark ? 'dark' : 'light';
 
   return (
     <>
@@ -102,7 +113,7 @@ function App() {
         <Route path="/ayuda" element={<ProtectedRoute><MainLayout><Ayuda /></MainLayout></ProtectedRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover theme={toastTheme} />
     </>
   );
 }

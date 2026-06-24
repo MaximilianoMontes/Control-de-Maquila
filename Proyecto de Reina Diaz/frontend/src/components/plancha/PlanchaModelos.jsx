@@ -12,8 +12,7 @@ import {
 } from 'lucide-react';
 import { useSettings } from '../../context/SettingsContext';
 import API_URL from '../../config';
-import Swal from 'sweetalert2';
-import { toast } from 'react-toastify';
+import { toast, Swal } from '../../utils/themeNotifications';
 import ImageZoom from '../ImageZoom';
 
 export default function PlanchaModelos({ modelosCamion, fetchModelosCamion, fetchModelosDisponibles, userRole }) {

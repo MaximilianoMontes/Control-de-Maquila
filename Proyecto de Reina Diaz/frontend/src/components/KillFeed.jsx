@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useSettings } from '../context/SettingsContext';
 import { useAuth } from '../context/AuthContext';
 import API_URL from '../config';
-import { toast } from 'react-toastify';
+import { toast } from '../utils/themeNotifications';
 
 const API = API_URL;
 

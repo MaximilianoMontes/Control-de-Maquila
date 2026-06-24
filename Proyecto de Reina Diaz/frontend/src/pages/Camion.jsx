@@ -7,8 +7,7 @@ import { useSettings } from '../context/SettingsContext';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import API_URL from '../config';
-import Swal from 'sweetalert2';
-import { toast } from 'react-toastify';
+import { toast, Swal } from '../utils/themeNotifications';
 
 const API = API_URL;
 

@@ -6,8 +6,7 @@ import { useSettings } from '../context/SettingsContext';
 import { ChevronLeft, ChevronRight, Plus, Trash2, X, Calendar as CalendarIcon, Clock, AlignLeft, Home } from 'lucide-react';
 import API_URL from '../config';
 
-import Swal from 'sweetalert2';
-import { toast } from 'react-toastify';
+import { toast, Swal } from '../utils/themeNotifications';
 
 export default function Calendario() {
   const { user } = useAuth();

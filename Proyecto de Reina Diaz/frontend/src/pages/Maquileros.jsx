@@ -4,8 +4,7 @@ import { Plus, X, Pencil, Trash2, User, AlertTriangle, Search, ChevronLeft, Chev
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import API_URL from '../config';
-import Swal from 'sweetalert2';
-import { toast } from 'react-toastify';
+import { toast, Swal } from '../utils/themeNotifications';
 
 const API = API_URL;
 

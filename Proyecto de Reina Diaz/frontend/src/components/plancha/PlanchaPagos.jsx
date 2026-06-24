@@ -16,14 +16,23 @@ import {
 } from 'lucide-react';
 import { useSettings } from '../../context/SettingsContext';
 import API_URL from '../../config';
-import Swal from 'sweetalert2';
-import { toast } from 'react-toastify';
+import { toast, Swal } from '../../utils/themeNotifications';
 import ImageZoom from '../ImageZoom';
 import SearchableSelect from '../SearchableSelect';
 
 export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) {
   const { settings, formatCurrency } = useSettings();
   const isEn = settings.language === 'en';
+
+  const isSystemDark = settings.theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const isAnyDark = [
+    'dark', 'ocean', 'nature', 'sunset', 'lavender', 'cherry', 'midnight', 'dim', 'miku', 'teto', 'limbus', 'ruina', 'minecraft', 
+    'geometry', 'fallout', 'tf2', 'cyberpunk', 'backrooms', 'terraria', 'castle', 'starwars', 'cod3', 'subnautica', 'cuphead', 
+    'undertale', 'lobotomy', 'papers', 'plague', 'pvz'
+  ].includes(settings.theme) || isSystemDark;
+
+  const swalBg = isAnyDark ? '#1e293b' : '#ffffff';
+  const swalColor = isAnyDark ? '#f8fafc' : '#0f172a';
 
   const normalizeTalla = (t) => {
     if (!t) return "";
@@ -186,8 +195,8 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
       cancelButtonColor: '#64748b',
       confirmButtonText: isEn ? 'Yes, register' : 'Sí, registrar',
       cancelButtonText: isEn ? 'Cancel' : 'Cancelar',
-      background: '#1e293b',
-      color: '#f8fafc'
+      background: swalBg,
+      color: swalColor
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
@@ -224,8 +233,8 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
       cancelButtonColor: '#64748b',
       confirmButtonText: isEn ? 'Yes, delete' : 'Sí, eliminar',
       cancelButtonText: isEn ? 'Cancel' : 'Cancelar',
-      background: '#1e293b',
-      color: '#f8fafc'
+      background: swalBg,
+      color: swalColor
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
@@ -256,8 +265,8 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
       cancelButtonColor: '#64748b',
       confirmButtonText: isEn ? 'Yes, delete' : 'Sí, eliminar',
       cancelButtonText: isEn ? 'Cancel' : 'Cancelar',
-      background: '#1e293b',
-      color: '#f8fafc'
+      background: swalBg,
+      color: swalColor
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
@@ -285,8 +294,8 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
       cancelButtonColor: '#64748b',
       confirmButtonText: isEn ? 'Yes, delete' : 'Sí, eliminar',
       cancelButtonText: isEn ? 'Cancel' : 'Cancelar',
-      background: '#1e293b',
-      color: '#f8fafc'
+      background: swalBg,
+      color: swalColor
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
