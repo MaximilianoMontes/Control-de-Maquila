@@ -147,8 +147,8 @@ export default function Dashboard() {
                   ) : (
                     recentOrders.map((o, index) => (
                       <tr key={o.id}>
-                        {/* El folio es el número total menos la posición en la lista (si la lista es DESC) */}
-                        <td style={{ fontWeight: 'bold' }}>#{totalOrders - index}</td>
+                        {/* El folio es el ID estable de la base de datos */}
+                        <td style={{ fontWeight: 'bold' }}>#{o.id}</td>
                         <td style={{ fontWeight: 600 }}>{o.maquilero_nombre}</td>
                         <td>{new Date(o.fecha_inicio).toLocaleDateString()}</td>
                         <td>
