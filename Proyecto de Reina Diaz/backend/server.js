@@ -2798,6 +2798,35 @@ app.delete('/api/planchadores/:id', authenticateToken, async (req, res) => {
   }
 });
 
+// TEMPORARY ROUTE TO INSPECT VALERIA'S DATABASE RECORDS
+app.get('/api/temp-valeria', async (req, res) => {
+  try {
+    const [planchadores] = await db.query("SELECT * FROM planchadores WHERE nombre LIKE '%Valeria%'");
+    if (planchadores.length === 0) {
+      return res.json({ error: "Valeria not found" });
+    }
+    const valeriaId = planchadores[0].id;
+
+    // Get jobs for Valeria
+    const [jobs] = await db.query("SELECT * FROM plancha_trabajos WHERE planchador_id = ? ORDER BY id DESC LIMIT 50", [valeriaId]);
+    
+    // Get payments for Valeria
+    const [payments] = await db.query("SELECT * FROM planchador_pagos WHERE planchador_id = ? ORDER BY id DESC LIMIT 20", [valeriaId]);
+
+    // Get recent activity history related to Valeria
+    const [history] = await db.query("SELECT * FROM historial WHERE description LIKE '%Valeria%' ORDER BY id DESC LIMIT 20");
+
+    res.json({
+      planchador: planchadores[0],
+      jobs,
+      payments,
+      history
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // 5. OBTENER MODELOS DE LOS CAMIONES
 app.get('/api/plancha/modelos', authenticateToken, async (req, res) => {
   try {
