@@ -187,7 +187,7 @@ export default function Produccion() {
 
   const openSplit = (order) => {
     setSplitOrder(order);
-    setSplitData({ cantidad_entregada: '', nuevo_maquilero_id: '' });
+    setSplitData({ cantidad_entregada: '', nuevo_maquilero_id: '', estado_original: 'Terminado' });
     setIsSplitModalOpen(true);
   };
 
@@ -746,6 +746,20 @@ export default function Produccion() {
                   value={splitData.cantidad_entregada} 
                   onChange={e => setSplitData({...splitData, cantidad_entregada: e.target.value})} 
                 />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Estado de la Orden Original *</label>
+                <select
+                  className="form-input"
+                  value={splitData.estado_original}
+                  onChange={e => setSplitData({...splitData, estado_original: e.target.value})}
+                  required
+                >
+                  <option value="Terminado">Terminado (Listo para Pago Final / Liquidación)</option>
+                  <option value="Terminado Parcial">Terminado Parcial (Con Pago Parcial / Anticipo)</option>
+                  <option value="En proceso">En proceso (Seguir trabajando piezas entregadas)</option>
+                </select>
               </div>
 
               <div className="form-group">
