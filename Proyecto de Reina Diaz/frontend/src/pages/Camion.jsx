@@ -56,8 +56,9 @@ const formatColorsDisplay = (colorStr) => {
 };
 
 export default function Camion() {
-  const { t } = useSettings();
+  const { settings, t } = useSettings();
   const { user } = useAuth();
+  const isEn = settings?.language === 'en';
   
   // Data State
   const [stock, setStock] = useState([]);
