@@ -267,13 +267,7 @@ export default function Pagos() {
   };
 
   const getFolioNumber = (o) => {
-    const isExtra = !!o.es_extra;
-    const isArchived = !!o.archivado;
-    const filteredList = orders
-      .filter(item => !!item.es_extra === isExtra && !!item.archivado === isArchived)
-      .sort((a, b) => b.id - a.id);
-    const idx = filteredList.findIndex(item => item.id === o.id);
-    return idx !== -1 ? (filteredList.length - idx) : o.id;
+    return o.id;
   };
 
   const activeProds = orders.filter(o => !o.es_extra && !o.archivado).sort((a, b) => b.id - a.id);

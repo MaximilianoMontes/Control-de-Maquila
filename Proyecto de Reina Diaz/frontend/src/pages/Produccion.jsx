@@ -363,11 +363,11 @@ export default function Produccion() {
   const filteredOrders = orders.filter(o => {
     // Filtrar por pestaña activa
     if (activeTab === 'proceso') {
-      if (o.estado === 'Terminado' || o.estado === 'Terminado Parcial') {
+      if (o.estado === 'Terminado') {
         return false;
       }
     } else if (activeTab === 'terminado') {
-      if (o.estado !== 'Terminado' && o.estado !== 'Terminado Parcial') {
+      if (o.estado !== 'Terminado') {
         return false;
       }
     }
@@ -504,7 +504,7 @@ export default function Produccion() {
                   
                   return (
                     <tr key={o.id} className={rowClass} style={{ opacity: isCancelado ? 0.6 : 1 }}>
-                      <td>#{orders.length - orders.findIndex(item => item.id === o.id)}</td>
+                      <td>#{o.id}</td>
                       <td style={{ fontWeight: 600 }}>{o.maquilero_nombre}</td>
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
