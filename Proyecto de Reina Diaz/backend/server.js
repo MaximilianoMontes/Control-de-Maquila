@@ -2798,6 +2798,50 @@ app.delete('/api/planchadores/:id', authenticateToken, async (req, res) => {
   }
 });
 
+// TEMPORARY ROUTE TO UNDO ALL ACCIDENTAL PAYMENTS REGISTERED TODAY FOR ALL PLANCHADORES
+app.get('/api/temp-rollback-all-payments', async (req, res) => {
+  try {
+    // 1. Find all payments registered today (June 24, 2026) for any planchador
+    const [payments] = await db.query(
+      "SELECT id, planchador_id, monto FROM planchador_pagos WHERE DATE(fecha) = '2026-06-24'"
+    );
+
+    if (payments.length === 0) {
+      return res.json({ success: false, message: "No payments found registered today (June 24, 2026)." });
+    }
+
+    const paymentIds = payments.map(p => p.id);
+
+    // 2. Set pago_id = NULL for all jobs linked to these payments
+    const [jobsResult] = await db.query(
+      "UPDATE plancha_trabajos SET pago_id = NULL WHERE pago_id IN (?)",
+      [paymentIds]
+    );
+
+    // 3. Set pago_id = NULL for all absences linked to these payments
+    const [asistenciasResult] = await db.query(
+      "UPDATE planchador_asistencias SET pago_id = NULL WHERE pago_id IN (?)",
+      [paymentIds]
+    );
+
+    // 4. Delete these payments from planchador_pagos
+    const [deleteResult] = await db.query(
+      "DELETE FROM planchador_pagos WHERE id IN (?)",
+      [paymentIds]
+    );
+
+    res.json({
+      success: true,
+      message: `Successfully rolled back all of today's payments.`,
+      deletedPayments: payments,
+      restoredJobsCount: jobsResult.affectedRows,
+      restoredAsistenciasCount: asistenciasResult.affectedRows
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // 5. OBTENER MODELOS DE LOS CAMIONES
 app.get('/api/plancha/modelos', authenticateToken, async (req, res) => {
   try {
