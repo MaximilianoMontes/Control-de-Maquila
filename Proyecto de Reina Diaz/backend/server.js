@@ -616,33 +616,49 @@ app.post('/api/inventario/import', upload.single('file'), async (req, res) => {
         const piezasStr = row['PIEZAS EN PROCESO'] || row['Piezas en proceso'] || row['PIEZAS'] || '0';
         const piezas_en_proceso = parseInt(String(piezasStr), 10) || 0;
         
+        let rawPrecioPlancha = String(
+          row['PRECIO PLANCHA'] || 
+          row['Precio Plancha'] || 
+          row['PRECIO DE PLANCHA'] || 
+          row['PRECIO DE PLANCHADO'] || 
+          row['precio_plancha'] || 
+          row['PLANCHA'] || 
+          row['Plancha'] || 
+          row['Precio planchado'] || 
+          row['PRECIO PLANCHADO'] || 
+          row['Precio de Plancha'] ||
+          '0'
+        ).replace(/[^0-9.-]+/g,"");
+        let precio_plancha = parseFloat(rawPrecioPlancha) || 0;
+
         if (modelo) {
           const m = String(modelo).trim();
           await connection.query(`
-            INSERT INTO inventario (numero, temporada, modelo, precio, color, cliente, no_orden, piezas_en_proceso, en_inventario) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)
+            INSERT INTO inventario (numero, temporada, modelo, precio, color, cliente, no_orden, piezas_en_proceso, en_inventario, precio_plancha) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?)
             ON DUPLICATE KEY UPDATE 
             piezas_en_proceso = piezas_en_proceso + VALUES(piezas_en_proceso),
             temporada = VALUES(temporada),
             precio = VALUES(precio),
             color = VALUES(color),
             cliente = VALUES(cliente),
-            no_orden = VALUES(no_orden)
-          `, [String(numero), temporada, m, precio, color, cliente, no_orden, piezas_en_proceso]);
+            no_orden = VALUES(no_orden),
+            precio_plancha = VALUES(precio_plancha)
+          `, [String(numero), temporada, m, precio, color, cliente, no_orden, piezas_en_proceso, precio_plancha]);
 
           // Mirror immediately to inventario_real
           const [existingReal] = await connection.query("SELECT id FROM inventario_real WHERE no_orden = ? AND modelo = ?", [no_orden, m]);
           if (existingReal.length > 0) {
             await connection.query(`
               UPDATE inventario_real 
-              SET numero=?, temporada=?, precio=?, color=?, cliente=?, piezas=piezas + ?
+              SET numero=?, temporada=?, precio=?, color=?, cliente=?, piezas=piezas + ?, precio_plancha=?
               WHERE no_orden=? AND modelo=?
-            `, [String(numero), temporada, precio, color, cliente, piezas_en_proceso, no_orden, m]);
+            `, [String(numero), temporada, precio, color, cliente, piezas_en_proceso, precio_plancha, no_orden, m]);
           } else {
             await connection.query(`
-              INSERT INTO inventario_real (numero, temporada, modelo, precio, color, cliente, no_orden, piezas, fecha_ingreso)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-            `, [String(numero), temporada, m, precio, color, cliente, no_orden, piezas_en_proceso]);
+              INSERT INTO inventario_real (numero, temporada, modelo, precio, color, cliente, no_orden, piezas, fecha_ingreso, precio_plancha)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?)
+            `, [String(numero), temporada, m, precio, color, cliente, no_orden, piezas_en_proceso, precio_plancha]);
           }
         }
       }
@@ -938,13 +954,11 @@ app.post('/api/camiones', authenticateToken, async (req, res) => {
         // Fetch precio_plancha from original production if exists
         if (prodId) {
           const [prodRows] = await connection.query(
-            "SELECT i.precio_plancha, i.precio FROM produccion p LEFT JOIN inventario i ON p.inventario_id = i.id WHERE p.id = ?",
+            "SELECT i.precio_plancha FROM produccion p LEFT JOIN inventario i ON p.inventario_id = i.id WHERE p.id = ?",
             [prodId]
           );
           if (prodRows.length > 0) {
-            const pPlancha = parseFloat(prodRows[0].precio_plancha) || 0.00;
-            const pMaquila = parseFloat(prodRows[0].precio) || 0.00;
-            precioPlancha = pPlancha > 0 ? pPlancha : pMaquila;
+            precioPlancha = prodRows[0].precio_plancha || 0.00;
           }
         }
 
@@ -956,7 +970,7 @@ app.post('/api/camiones', authenticateToken, async (req, res) => {
       } else {
         // Normal production order: check stock in production order
         const [prodRows] = await connection.query(
-          "SELECT p.cantidad, p.cantidad_recibida, i.precio_plancha, i.precio FROM produccion p LEFT JOIN inventario i ON p.inventario_id = i.id WHERE p.id = ?",
+          "SELECT p.cantidad, p.cantidad_recibida, i.precio_plancha FROM produccion p LEFT JOIN inventario i ON p.inventario_id = i.id WHERE p.id = ?",
           [prodId]
         );
         const prodRow = prodRows[0];
@@ -965,9 +979,7 @@ app.post('/api/camiones', authenticateToken, async (req, res) => {
         }
 
         const piezas_producidas = prodRow.cantidad_recibida !== null ? prodRow.cantidad_recibida : prodRow.cantidad;
-        const pPlancha = parseFloat(prodRow.precio_plancha) || 0.00;
-        const pMaquila = parseFloat(prodRow.precio) || 0.00;
-        precioPlancha = pPlancha > 0 ? pPlancha : pMaquila;
+        precioPlancha = prodRow.precio_plancha || 0.00;
         
         const [shippedRows] = await connection.query(
           "SELECT COALESCE(SUM(piezas), 0) as total FROM camion_detalles WHERE produccion_id = ?",

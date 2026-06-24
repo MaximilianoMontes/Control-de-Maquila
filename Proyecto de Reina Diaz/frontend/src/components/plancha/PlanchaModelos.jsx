@@ -53,10 +53,7 @@ export default function PlanchaModelos({ modelosCamion, fetchModelosCamion, fetc
 
   const handleAbrirVerificacion = (modelo) => {
     setModeloAVerificar(modelo);
-    const initialPrice = (modelo.precio_plancha && parseFloat(modelo.precio_plancha) > 0)
-      ? String(modelo.precio_plancha)
-      : (modelo.precio && parseFloat(modelo.precio) > 0 ? String(modelo.precio) : '0');
-    setPrecioPlanchaInput(initialPrice);
+    setPrecioPlanchaInput(modelo.precio_plancha !== undefined && modelo.precio_plancha !== null ? String(modelo.precio_plancha) : '');
     setMostrarVerificarModal(true);
   };
 
@@ -274,9 +271,6 @@ export default function PlanchaModelos({ modelosCamion, fetchModelosCamion, fetc
                           <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
                             Camión del: {formatDate(m.fecha_envio)}
                           </div>
-                          <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
-                            {isEn ? 'Maquila Price' : 'Precio de Maquila'}: <strong style={{ color: '#a78bfa' }}>{formatCurrency(m.precio)}</strong>
-                          </div>
                         </div>
                       </div>
 
@@ -379,9 +373,6 @@ export default function PlanchaModelos({ modelosCamion, fetchModelosCamion, fetc
               <div>
                 <h3 style={{ margin: 0, fontSize: '1.2rem' }}>{isEn ? 'Model' : 'Modelo'} {modeloAVerificar.modelo}</h3>
                 <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{isEn ? 'Order No' : 'No. Orden'}: {modeloAVerificar.no_orden}</p>
-                <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                  {isEn ? 'Maquila Price' : 'Precio de Maquila'}: <strong style={{ color: '#a78bfa' }}>{formatCurrency(modeloAVerificar.precio)}</strong>
-                </p>
               </div>
             </div>
 
