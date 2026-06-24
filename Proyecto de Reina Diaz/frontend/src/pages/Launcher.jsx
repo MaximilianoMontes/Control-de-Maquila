@@ -120,6 +120,7 @@ export default function Launcher() {
   };
 
   const isDark = settings.theme === 'dark';
+  const isCustomTheme = settings.theme !== 'light' && settings.theme !== 'dark' && settings.theme !== 'system';
 
   // Toggle between dark and light mode
   const toggleTheme = () => {
@@ -178,15 +179,17 @@ export default function Launcher() {
         </div>
 
         <div className="launcher-header-right">
-          {/* Theme Toggle Button */}
-          <button 
-            className="launcher-header-btn" 
-            onClick={toggleTheme} 
-            title={text.theme}
-            style={{ marginRight: '8px' }}
-          >
-            {isDark ? <Sun size={16} /> : <Moon size={16} />}
-          </button>
+          {/* Theme Toggle Button (hidden if custom theme is active) */}
+          {!isCustomTheme && (
+            <button 
+              className="launcher-header-btn" 
+              onClick={toggleTheme} 
+              title={text.theme}
+              style={{ marginRight: '8px' }}
+            >
+              {isDark ? <Sun size={16} /> : <Moon size={16} />}
+            </button>
+          )}
 
           {/* Company Title */}
           <span className="launcher-company-name">{text.company}</span>
