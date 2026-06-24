@@ -2337,19 +2337,32 @@ body.theme-miku .main-header::after {
   animation: miku-eq-sweep 5s linear infinite;
 }
 
-body.theme-miku::after {
-  content: '♪   ♫   ♩   ♬   ♪   ♫';
+body.theme-miku::before {
+  content: '♪   ♩   ♫   ♪';
   position: fixed;
   bottom: -50px;
-  left: 5%;
-  width: 90%;
-  text-align: center;
+  left: 15%;
   font-size: 24px;
   color: rgba(57, 197, 187, 0.15);
-  text-shadow: 0 0 10px rgba(57, 197, 187, 0.5), 200px -100px 12px rgba(255, 46, 122, 0.1), -150px -250px 10px rgba(57, 197, 187, 0.15);
+  text-shadow: 0 0 10px rgba(57, 197, 187, 0.5), 30vw -20vh 10px rgba(255, 46, 122, 0.1);
   pointer-events: none;
   z-index: 9999;
-  animation: miku-notes-float 8s linear infinite;
+  animation: miku-notes-float-left 10s linear infinite;
+  white-space: pre;
+}
+
+body.theme-miku::after {
+  content: '♫   ♬   ♪   ♫';
+  position: fixed;
+  bottom: -50px;
+  left: 55%;
+  font-size: 24px;
+  color: rgba(57, 197, 187, 0.15);
+  text-shadow: 0 0 10px rgba(57, 197, 187, 0.5), -25vw -15vh 10px rgba(255, 46, 122, 0.1);
+  pointer-events: none;
+  z-index: 9999;
+  animation: miku-notes-float-right 14s linear infinite;
+  animation-delay: 4s;
   white-space: pre;
 }
 
@@ -2856,14 +2869,29 @@ body.theme-ruina::before {
   content: '';
   position: fixed;
   top: 10%;
-  left: 10%;
+  left: 15%;
   width: 2px;
   height: 20px;
   background: linear-gradient(180deg, #e5c158, transparent);
   opacity: 0;
   pointer-events: none;
   z-index: 0;
-  animation: ruina-star-shoot 8s linear infinite;
+  animation: ruina-star-shoot 9s linear infinite;
+}
+
+body.theme-ruina::after {
+  content: '';
+  position: fixed;
+  top: 25%;
+  left: 65%;
+  width: 2px;
+  height: 25px;
+  background: linear-gradient(180deg, #e5c158, transparent);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 0;
+  animation: ruina-star-shoot-right 13s linear infinite;
+  animation-delay: 3s;
 }
 
 /* Library of Ruina Theme Premium Overrides */
@@ -5372,18 +5400,32 @@ body.theme-subnautica {
   background-image: radial-gradient(circle at 50% 50%, #081730 0%, #020612 100%) !important;
 }
 
-body.theme-subnautica::after {
-  content: '•  °  .  •  °  .  •';
+body.theme-subnautica::before {
+  content: '•  °  .  •';
   position: fixed;
   bottom: -40px;
-  left: 5%;
-  width: 90%;
+  left: 15%;
   font-size: 32px;
   color: rgba(0, 210, 255, 0.12);
-  text-shadow: 0 0 10px rgba(0, 210, 255, 0.3), 220px -250px 12px rgba(0, 255, 204, 0.08), -150px -150px 8px rgba(0, 210, 255, 0.1);
+  text-shadow: 0 0 10px rgba(0, 210, 255, 0.3), 30vw -20vh 12px rgba(0, 255, 204, 0.08);
   pointer-events: none;
   z-index: 9999;
-  animation: subnautica-bubbles-float 12s linear infinite;
+  animation: subnautica-float-left 14s linear infinite;
+  white-space: pre;
+}
+
+body.theme-subnautica::after {
+  content: '°  .  •  °';
+  position: fixed;
+  bottom: -40px;
+  left: 65%;
+  font-size: 32px;
+  color: rgba(0, 210, 255, 0.12);
+  text-shadow: 0 0 10px rgba(0, 210, 255, 0.3), -25vw -15vh 8px rgba(0, 210, 255, 0.1);
+  pointer-events: none;
+  z-index: 9999;
+  animation: subnautica-float-right 18s linear infinite;
+  animation-delay: 5s;
   white-space: pre;
 }
 
@@ -5401,10 +5443,7 @@ body.theme-subnautica .glass-card, body.theme-subnautica .modal-content, body.th
   70% { box-shadow: 0 0 0 10px rgba(0, 210, 255, 0); }
   100% { box-shadow: 0 0 0 0 rgba(0, 210, 255, 0); }
 }
-@keyframes subnautica-bubbles-float {
-  0% { transform: translateY(0); }
-  100% { transform: translateY(-100vh); }
-}
+
 body.theme-subnautica .btn, 
 body.theme-subnautica button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
   border: 1.5px solid #00d2ff !important;
@@ -6300,10 +6339,25 @@ body.theme-pvz::before {
   left: 15%;
   font-size: 24px;
   color: #ffc107;
-  text-shadow: 0 0 10px #ffc107, 35vw 25vh 0 #ffc107, 65vw 45vh 0 #ffc107;
+  text-shadow: 0 0 10px #ffc107, 30vw 15vh 0 #ffc107;
   pointer-events: none;
   z-index: 9999;
-  animation: pvz-sun-fall 16s linear infinite;
+  animation: pvz-sun-fall-left 15s linear infinite;
+  opacity: 0.5;
+}
+
+body.theme-pvz::after {
+  content: '☀️';
+  position: fixed;
+  top: -50px;
+  left: 55%;
+  font-size: 24px;
+  color: #ffc107;
+  text-shadow: 0 0 10px #ffc107, 25vw 20vh 0 #ffc107;
+  pointer-events: none;
+  z-index: 9999;
+  animation: pvz-sun-fall-right 20s linear infinite;
+  animation-delay: 6s;
   opacity: 0.5;
 }
 
@@ -6689,11 +6743,19 @@ body.theme-pvz .launcher-app-name {
   50% { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
 }
-@keyframes miku-notes-float {
-  0% { transform: translateY(0); opacity: 0; }
-  10% { opacity: 0.4; }
-  90% { opacity: 0.4; }
-  100% { transform: translateY(-100vh); opacity: 0; }
+@keyframes miku-notes-float-left {
+  0% { transform: translateY(100vh) translateX(0); opacity: 0; }
+  10% { opacity: 0.3; }
+  50% { transform: translateY(50vh) translateX(30px); }
+  90% { opacity: 0.3; }
+  100% { transform: translateY(-10vh) translateX(-20px); opacity: 0; }
+}
+@keyframes miku-notes-float-right {
+  0% { transform: translateY(100vh) translateX(0); opacity: 0; }
+  10% { opacity: 0.3; }
+  50% { transform: translateY(50vh) translateX(-40px); }
+  90% { opacity: 0.3; }
+  100% { transform: translateY(-10vh) translateX(10px); opacity: 0; }
 }
 @keyframes miku-eq-pulse {
   0%, 100% { transform: scale(1); filter: drop-shadow(0 0 2px #39c5bb); }
@@ -6726,6 +6788,12 @@ body.theme-pvz .launcher-app-name {
   10% { opacity: 0.8; }
   30% { transform: translate(150px, 150px) rotate(-45deg); opacity: 0; }
   100% { transform: translate(150px, 150px) rotate(-45deg); opacity: 0; }
+}
+@keyframes ruina-star-shoot-right {
+  0% { transform: translate(0, 0) rotate(-40deg); opacity: 0; }
+  10% { opacity: 0.6; }
+  25% { transform: translate(120px, 120px) rotate(-40deg); opacity: 0; }
+  100% { transform: translate(120px, 120px) rotate(-40deg); opacity: 0; }
 }
 
 /* 5. Geometry Dash Animations */
@@ -6849,13 +6917,39 @@ body.theme-pvz .launcher-app-name {
 }
 
 /* 17. Plants vs. Zombies sun fall & zombie bobbing */
-@keyframes pvz-sun-fall {
-  0% { transform: translateY(-10%) rotate(0deg); }
-  100% { transform: translateY(110vh) rotate(360deg); }
+@keyframes pvz-sun-fall-left {
+  0% { transform: translateY(-10vh) rotate(0deg) translateX(0); opacity: 0; }
+  10% { opacity: 0.5; }
+  50% { transform: translateY(50vh) rotate(180deg) translateX(20px); }
+  90% { opacity: 0.5; }
+  100% { transform: translateY(110vh) rotate(360deg) translateX(-10px); opacity: 0; }
+}
+@keyframes pvz-sun-fall-right {
+  0% { transform: translateY(-10vh) rotate(0deg) translateX(0); opacity: 0; }
+  10% { opacity: 0.4; }
+  50% { transform: translateY(50vh) rotate(180deg) translateX(-25px); }
+  90% { opacity: 0.4; }
+  100% { transform: translateY(110vh) rotate(360deg) translateX(15px); opacity: 0; }
 }
 @keyframes pvz-zombie-bob {
   0% { transform: translateY(0) rotate(-3deg); }
   100% { transform: translateY(-3px) rotate(3deg); }
+}
+
+/* 18. Subnautica bioluminescent bubbles float */
+@keyframes subnautica-float-left {
+  0% { transform: translateY(100vh) translateX(0); opacity: 0; }
+  10% { opacity: 0.25; }
+  50% { transform: translateY(50vh) translateX(25px); }
+  90% { opacity: 0.25; }
+  100% { transform: translateY(-10vh) translateX(-15px); opacity: 0; }
+}
+@keyframes subnautica-float-right {
+  0% { transform: translateY(100vh) translateX(0); opacity: 0; }
+  10% { opacity: 0.2; }
+  50% { transform: translateY(50vh) translateX(-30px); }
+  90% { opacity: 0.2; }
+  100% { transform: translateY(-10vh) translateX(20px); opacity: 0; }
 }
 
 
