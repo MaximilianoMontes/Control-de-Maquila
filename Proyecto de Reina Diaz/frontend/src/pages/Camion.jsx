@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { 
   Truck, ArrowRight, Trash2, Calendar, Edit3, Plus, 
-  ChevronDown, ChevronUp, AlertCircle, CheckCircle, Info, Search, XCircle, X
+  ChevronDown, ChevronUp, AlertCircle, CheckCircle, Info, Search, XCircle, X, Undo2
 } from 'lucide-react';
 import { useSettings } from '../context/SettingsContext';
 import { useAuth } from '../context/AuthContext';
@@ -149,6 +149,39 @@ export default function Camion() {
         } catch (e) {
           console.error(e);
           toast.error('Error al actualizar devolución.', { theme: 'dark' });
+        }
+      }
+    });
+  };
+
+  const handleReturnToProduction = async (item) => {
+    Swal.fire({
+      title: isEn ? 'Return to Production?' : '¿Devolver a Producción?',
+      text: isEn 
+        ? `Are you sure you want to return this order of ${item.modelo} (${item.maquilero_nombre}) to production? It will go back to "In Process" and disappear from this truck list.`
+        : `¿Estás seguro de devolver este trabajo de ${item.modelo} (${item.maquilero_nombre}) a producción? Volverá al estado "En proceso" y desaparecerá de esta lista del camión.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3b82f6',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: isEn ? 'Yes, return' : 'Sí, devolver',
+      cancelButtonText: isEn ? 'Cancel' : 'Cancelar'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const token = localStorage.getItem('token');
+          const headers = { Authorization: `Bearer ${token}` };
+          
+          await axios.put(`${API}/api/produccion/${item.produccion_id}`, {
+            estado: 'En proceso',
+            cantidad_recibida: null
+          }, { headers });
+          
+          toast.success(isEn ? 'Returned to production successfully' : 'Trabajo devuelto a producción con éxito');
+          fetchData();
+        } catch (e) {
+          console.error(e);
+          toast.error(isEn ? 'Error returning to production' : 'Error al devolver el trabajo a producción');
         }
       }
     });
@@ -537,6 +570,21 @@ export default function Camion() {
                         <div style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--text-primary)' }}>{item.piezas}</div>
                         <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>{t('cortes.available') || 'Disponibles'}</div>
                       </div>
+                       <button 
+                        className="btn" 
+                        style={{ 
+                          padding: '0.4rem', 
+                          borderRadius: '6px', 
+                          background: 'rgba(239, 68, 68, 0.1)', 
+                          color: '#ef4444',
+                          border: 'none',
+                          cursor: 'pointer'
+                        }}
+                        onClick={() => handleReturnToProduction(item)}
+                        title={isEn ? 'Return to Production' : 'Devolver a Producción'}
+                      >
+                        <Undo2 size={16} />
+                      </button>
                       <button 
                         className={`btn ${isLoaded ? 'btn-secondary' : 'btn-primary'}`} 
                         style={{ padding: '0.4rem', borderRadius: '6px' }}
