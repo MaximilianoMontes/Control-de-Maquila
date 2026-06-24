@@ -2887,6 +2887,12 @@ app.get('/api/temp-debug-all', async (req, res) => {
     result._users = users;
     const [history] = await db.query("SELECT * FROM historial ORDER BY id DESC LIMIT 50");
     result._history = history;
+    result._db_env = {
+      host: process.env.DB_HOST,
+      database: process.env.DB_NAME,
+      port: process.env.DB_PORT,
+      has_url: !!process.env.DATABASE_URL
+    };
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
