@@ -359,10 +359,16 @@ export default function Produccion() {
     });
   };
 
-  const filteredOrders = orders.filter(o => 
-    (o.maquilero_nombre || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (o.producto_modelo || '').toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredOrders = orders.filter(o => {
+    // Ocultar permanentemente de la pantalla de producción si ya están terminadas (su flujo sigue en el camión)
+    if (o.estado === 'Terminado' || o.estado === 'Terminado Parcial') {
+      return false;
+    }
+    return (
+      (o.maquilero_nombre || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (o.producto_modelo || '').toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  });
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
