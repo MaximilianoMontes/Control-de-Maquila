@@ -347,6 +347,10 @@ export default function Extras() {
     });
   };
 
+  // Folios estables: posición en la lista completa ordenada por ID ascendente
+  const ordersAsc = [...orders].sort((a, b) => a.id - b.id);
+  const getFolio = (o) => ordersAsc.findIndex(item => item.id === o.id) + 1;
+
   const filteredOrders = orders.filter(o => 
     (o.maquilero_nombre || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     (o.producto_modelo || '').toLowerCase().includes(searchTerm.toLowerCase())
@@ -451,7 +455,7 @@ export default function Extras() {
                   
                   return (
                     <tr key={o.id} className={rowClass} style={{ opacity: isCancelado ? 0.6 : 1 }}>
-                      <td>#{o.id}</td>
+                      <td>#{getFolio(o)}</td>
                       <td style={{ fontWeight: 600 }}>{o.maquilero_nombre}</td>
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>

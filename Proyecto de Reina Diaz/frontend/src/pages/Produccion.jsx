@@ -360,6 +360,10 @@ export default function Produccion() {
     });
   };
 
+  // Ordenar todos los órdenes por ID ascendente para calcular folios estables
+  const ordersAsc = [...orders].sort((a, b) => a.id - b.id);
+  const getFolio = (o) => ordersAsc.findIndex(item => item.id === o.id) + 1;
+
   const filteredOrders = orders.filter(o => {
     // Filtrar por pestaña activa
     if (activeTab === 'proceso') {
@@ -504,7 +508,7 @@ export default function Produccion() {
                   
                   return (
                     <tr key={o.id} className={rowClass} style={{ opacity: isCancelado ? 0.6 : 1 }}>
-                      <td>#{o.id}</td>
+                      <td>#{getFolio(o)}</td>
                       <td style={{ fontWeight: 600 }}>{o.maquilero_nombre}</td>
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
