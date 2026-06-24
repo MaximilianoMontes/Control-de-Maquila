@@ -2865,79 +2865,7 @@ app.get('/api/temp-rollback-payment', async (req, res) => {
 });
 
 
-// TEMPORARY PENDING CHECK ENDPOINT
-app.get('/api/temp-check-pending', async (req, res) => {
-  try {
-    const [rows] = await db.query(`
-      SELECT pt.id, pt.planchador_id, p.nombre, pt.color, pt.talla, pt.piezas, pt.total, pt.pago_id, pt.estado, pt.fecha_terminado
-      FROM plancha_trabajos pt
-      JOIN planchadores p ON pt.planchador_id = p.id
-      WHERE pt.estado = 'terminado' AND pt.pago_id IS NULL AND DATE(pt.fecha_terminado) >= '2026-06-19'
-    `);
-    res.json(rows);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
 
-
-// TEMPORARY DATABASE DEBUGGING ENDPOINT
-app.get('/api/temp-debug-db', async (req, res) => {
-  try {
-    const planchadorId = 6; // Reyes Flores Maria Guadalupe
-    const [planchador] = await db.query("SELECT * FROM planchadores WHERE id = ?", [planchadorId]);
-    const [jobsCount] = await db.query("SELECT COUNT(*) as count FROM plancha_trabajos WHERE planchador_id = ?", [planchadorId]);
-    const [jobs] = await db.query(
-      "SELECT id, pago_id, estado, total, DATE_FORMAT(fecha_terminado, '%Y-%m-%d %H:%i:%s') as finished FROM plancha_trabajos WHERE planchador_id = ? ORDER BY id DESC LIMIT 20",
-      [planchadorId]
-    );
-    const [payments] = await db.query("SELECT * FROM planchador_pagos WHERE planchador_id = ? ORDER BY id DESC", [planchadorId]);
-    const [asistencias] = await db.query("SELECT * FROM planchador_asistencias WHERE planchador_id = ? ORDER BY id DESC", [planchadorId]);
-    
-    res.json({
-      planchador: planchador[0],
-      jobsCount: jobsCount[0].count,
-      jobs,
-      payments,
-      asistencias
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-
-// TEMPORARY TRANSACTION-BASED REPAIR ENDPOINT
-app.get('/api/temp-repair-payments', async (req, res) => {
-  const connection = await db.getConnection();
-  try {
-    await connection.beginTransaction();
-
-    // 1. Set pago_id = NULL for all jobs finished on or after June 19, 2026 that were marked as paid
-    const [jobsResult] = await connection.query(
-      "UPDATE plancha_trabajos SET pago_id = NULL WHERE DATE(fecha_terminado) >= '2026-06-19' AND pago_id IS NOT NULL"
-    );
-
-    // 2. Set pago_id = NULL for all asistencias on or after June 19, 2026 that were marked as paid
-    const [asistenciasResult] = await connection.query(
-      "UPDATE planchador_asistencias SET pago_id = NULL WHERE fecha >= '2026-06-19' AND pago_id IS NOT NULL"
-    );
-
-    await connection.commit();
-
-    res.json({
-      success: true,
-      message: "Successfully repaired payments with explicit commit.",
-      restoredJobsCount: jobsResult.affectedRows,
-      restoredAsistenciasCount: asistenciasResult.affectedRows
-    });
-  } catch (error) {
-    await connection.rollback();
-    res.status(500).json({ error: error.message });
-  } finally {
-    connection.release();
-  }
-});
 // 5. OBTENER MODELOS DE LOS CAMIONES
 app.get('/api/plancha/modelos', authenticateToken, async (req, res) => {
   try {
