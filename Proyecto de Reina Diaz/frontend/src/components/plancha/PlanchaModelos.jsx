@@ -197,27 +197,42 @@ export default function PlanchaModelos({ modelosCamion, fetchModelosCamion, fetc
         ) : (
           (() => {
             const filtered = modelosCamion
-              .filter(m => m.modelo.toLowerCase().includes(searchModelosCamion.toLowerCase()))
-              .sort((a, b) => a.modelo.localeCompare(b.modelo));
+              .filter(m => m.modelo.toLowerCase().includes(searchModelosCamion.toLowerCase()));
             
-            const grupos = [];
-            let currentGrupo = null;
-            
+            const getMarca = (mod) => mod?.charAt(0) === '5' ? 'Reina Diaz' : (mod?.charAt(0) === '7' ? 'POET' : 'Otra Marca');
+            const getTipo = (mod) => {
+              const s = mod?.charAt(1);
+              return { '0':'Saco', '1':'Conjunto', '2':'Vestido', '3':'Pantalón', '4':'Falda', '5':'Blusa', '6':'Ensamble' }[s] || 'Otro';
+            };
+
+            // Build groups using a Map to avoid duplicates across different camión dates
+            const grupoMap = new Map();
             filtered.forEach(m => {
-              const getMarca = (mod) => mod?.charAt(0) === '5' ? 'Reina Diaz' : (mod?.charAt(0) === '7' ? 'POET' : 'Otra Marca');
-              const getTipo = (mod) => {
-                const s = mod?.charAt(1);
-                return { '0':'Saco', '1':'Conjunto', '2':'Vestido', '3':'Pantalón', '4':'Falda', '5':'Blusa', '6':'Ensamble' }[s] || 'Otro';
-              };
               const key = `${getMarca(m.modelo)} - ${getTipo(m.modelo)}`;
-              
-              if (!currentGrupo || currentGrupo.nombre !== key) {
-                currentGrupo = { nombre: key, items: [] };
-                grupos.push(currentGrupo);
+              if (!grupoMap.has(key)) {
+                grupoMap.set(key, { nombre: key, items: [], maxFecha: new Date(0) });
               }
-              currentGrupo.items.push(m);
+              const g = grupoMap.get(key);
+              g.items.push(m);
+              // Track newest fecha_envio for this group (used to sort groups)
+              const fecha = m.fecha_envio ? new Date(m.fecha_envio) : new Date(0);
+              if (fecha > g.maxFecha) g.maxFecha = fecha;
+            });
+
+            // Sort groups by newest fecha_envio DESC
+            const grupos = Array.from(grupoMap.values()).sort((a, b) => b.maxFecha - a.maxFecha);
+
+            // Within each group sort by fecha_envio DESC, then modelo ASC
+            grupos.forEach(g => {
+              g.items.sort((a, b) => {
+                const dateA = a.fecha_envio ? new Date(a.fecha_envio) : new Date(0);
+                const dateB = b.fecha_envio ? new Date(b.fecha_envio) : new Date(0);
+                if (dateB - dateA !== 0) return dateB - dateA;
+                return a.modelo.localeCompare(b.modelo);
+              });
             });
             
+
             return grupos.map((grupo) => (
               <div key={grupo.nombre} style={{ marginBottom: '1.5rem' }}>
                 <h3 style={{ fontSize: '1.2rem', margin: '0 0 1rem 0', paddingBottom: '0.5rem', borderBottom: '1px solid var(--border-color)', color: 'var(--text-primary)' }}>
