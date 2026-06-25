@@ -2866,7 +2866,8 @@ app.get('/api/temp-rollback-payment', async (req, res) => {
 // TEMPORARY COMPREHENSIVE DATABASE DEBUGGING ENDPOINT
 app.get('/api/temp-debug-all', async (req, res) => {
   try {
-    const ids = [5, 6, 8, 11];
+    const [allPls] = await db.query("SELECT id FROM planchadores WHERE activo = 1");
+    const ids = allPls.map(p => p.id);
     const result = {};
     for (const id of ids) {
       const [planchador] = await db.query("SELECT nombre FROM planchadores WHERE id = ?", [id]);
