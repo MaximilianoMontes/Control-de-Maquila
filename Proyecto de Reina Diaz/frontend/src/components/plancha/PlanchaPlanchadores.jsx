@@ -269,6 +269,7 @@ export default function PlanchaPlanchadores({ planchadores, fetchPlanchadores })
                   <tr>
                     <th style={{ padding: '8px 6px', width: '44px' }}>{isEn ? 'Foto' : 'Foto'}</th>
                     <th style={{ padding: '8px 10px' }}>{isEn ? 'Modelo' : 'Modelo'}</th>
+                    <th style={{ padding: '8px 10px' }}>{isEn ? 'Date' : 'Fecha'}</th>
                     <th style={{ padding: '8px 10px' }}>{isEn ? 'Color' : 'Color'}</th>
                     <th style={{ padding: '8px 8px' }}>{isEn ? 'Talla' : 'Talla'}</th>
                     <th style={{ padding: '8px 8px', textAlign: 'center' }}>{isEn ? 'Pzas' : 'Pzas'}</th>
@@ -279,7 +280,7 @@ export default function PlanchaPlanchadores({ planchadores, fetchPlanchadores })
                 </thead>
                 <tbody>
                   {planchadorDetalle.historial.length === 0 ? (
-                    <tr><td colSpan="8" style={{ textAlign: 'center', color: 'var(--text-muted, #94a3b8)', padding: '1.5rem' }}>{isEn ? 'This ironer has no registered completed jobs.' : 'Este planchador no tiene trabajos terminados registrados.'}</td></tr>
+                    <tr><td colSpan="9" style={{ textAlign: 'center', color: 'var(--text-muted, #94a3b8)', padding: '1.5rem' }}>{isEn ? 'This ironer has no registered completed jobs.' : 'Este planchador no tiene trabajos terminados registrados.'}</td></tr>
                   ) : (
                     planchadorDetalle.historial.map(h => (
                       <tr key={h.id}>
@@ -290,7 +291,7 @@ export default function PlanchaPlanchadores({ planchadores, fetchPlanchadores })
                             style={{ width: '40px', height: '40px', borderRadius: '6px', objectFit: 'contain', background: 'var(--bg-card)', display: 'block' }}
                             fallback={
                               <div style={{ width: '40px', height: '40px', borderRadius: '6px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <Layers size={18} color="#64748b" />
+                                  <Layers size={18} color="#64748b" />
                               </div>
                             }
                           />
@@ -298,6 +299,9 @@ export default function PlanchaPlanchadores({ planchadores, fetchPlanchadores })
                         <td style={{ padding: '6px 10px' }}>
                           <strong style={{ fontSize: '0.9rem' }}>{h.modelo_nombre}</strong>
                           <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '2px' }}>{isEn ? 'Order' : 'Orden'}: {h.no_orden || 'N/A'}</div>
+                        </td>
+                        <td style={{ padding: '6px 10px', whiteSpace: 'nowrap' }}>
+                          {h.fecha_terminado ? new Date(h.fecha_terminado).toLocaleDateString() : (h.fecha_creacion ? new Date(h.fecha_creacion).toLocaleDateString() : '—')}
                         </td>
                         <td style={{ padding: '6px 10px', whiteSpace: 'nowrap' }}>{h.color || '—'}</td>
                         <td style={{ padding: '6px 8px' }}><span className="badge badge-info" style={{ fontSize: '0.75rem', padding: '3px 7px' }}>{isEn ? 'S' : 'T'}{h.talla}</span></td>
