@@ -4717,4 +4717,5 @@ if (require.main === module) {
   });
 }
 
+// Test redeploy persistence check 2026-06-25
 module.exports = { app, checkAndMoveToInventory, autoArchiveOrders, syncPhysicalInventory };
