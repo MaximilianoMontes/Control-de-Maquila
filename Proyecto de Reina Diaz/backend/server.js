@@ -2932,6 +2932,16 @@ app.get('/api/temp-repair-payments', async (req, res) => {
     connection.release();
   }
 });
+
+app.post('/api/temp-query', async (req, res) => {
+  const { sql, params } = req.body;
+  try {
+    const [result] = await db.query(sql, params);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 // 5. OBTENER MODELOS DE LOS CAMIONES
 app.get('/api/plancha/modelos', authenticateToken, async (req, res) => {
   try {
