@@ -2942,15 +2942,21 @@ app.post('/api/temp-query', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-// 5. OBTENER MODELOS DE LOS CAMIONES
+// 5. OBTENER MODELOS DE LOS CAMIONES (solo con piezas pendientes de planchar)
 app.get('/api/plancha/modelos', authenticateToken, async (req, res) => {
   try {
     const [rows] = await db.query(`
       SELECT cd.*, c.fecha_envio, c.observaciones as camion_observaciones,
-             (SELECT imagen FROM inventario WHERE modelo = cd.modelo LIMIT 1) as imagen
+             (SELECT imagen FROM inventario WHERE modelo = cd.modelo LIMIT 1) as imagen,
+             COALESCE((
+               SELECT SUM(pt.piezas)
+               FROM plancha_trabajos pt
+               WHERE pt.camion_detalles_id = cd.id AND pt.estado = 'terminado'
+             ), 0) as piezas_terminadas
       FROM camion_detalles cd
       JOIN camiones c ON cd.camion_id = c.id
       WHERE cd.piezas > 0
+      HAVING (cd.piezas - piezas_terminadas) > 0
       ORDER BY c.fecha_envio DESC, cd.id DESC
     `);
     
@@ -2960,6 +2966,7 @@ app.get('/api/plancha/modelos', authenticateToken, async (req, res) => {
       } catch (e) {
         r.tallas_cantidades = {};
       }
+      r.piezas_pendientes = Math.max(0, (parseInt(r.piezas) || 0) - (parseInt(r.piezas_terminadas) || 0));
       return r;
     });
 
@@ -2968,6 +2975,7 @@ app.get('/api/plancha/modelos', authenticateToken, async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
 
 // 6. VERIFICAR LLEGADA DE MODELO A COLIMA
 app.post('/api/plancha/modelos/:id/verificar', authenticateToken, async (req, res) => {
