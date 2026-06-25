@@ -934,7 +934,8 @@ async function initializeDatabase() {
 
 
 
-    // Migration: Backfill pago_id for plancha_trabajos and planchador_asistencias
+    // Migration: Backfill pago_id for plancha_trabajos and planchador_asistencias (Permanently deactivated on 2026-06-25 to prevent overwriting manual database repairs on server restart)
+    /*
     try {
       console.log('--- MIGRACIÓN: Asociando trabajos y asistencias huérfanas a pagos históricos ---');
       const [payments] = await connection.query(`
@@ -1005,6 +1006,7 @@ async function initializeDatabase() {
     } catch (e) {
       console.error("Error en migración de backfill pago_id:", e);
     }
+    */
 
     // Migration: Add precio_plancha to inventario and inventario_real
     try {
