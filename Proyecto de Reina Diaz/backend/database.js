@@ -1,3 +1,4 @@
+// Redeploy test - 2026-06-25 - backfill migration permanently deactivated
 const mysql = require('mysql2/promise');
 require('dotenv').config();
 
