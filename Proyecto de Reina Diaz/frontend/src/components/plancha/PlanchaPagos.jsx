@@ -491,27 +491,36 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
             </div>
 
             {pagoPlanchadorId && (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginTop: '0.5rem', marginBottom: '0.5rem' }}>
-                <div className="form-group">
-                  <label className="form-label" style={{ fontSize: '0.8rem' }}>{isEn ? 'From Date' : 'Desde la Fecha'}</label>
-                  <input
-                    type="date"
-                    className="form-input"
-                    value={fechaInicioFiltro}
-                    onChange={e => setFechaInicioFiltro(e.target.value)}
-                    style={{ padding: '0.4rem 0.6rem', fontSize: '0.85rem' }}
-                  />
+              <div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginTop: '0.5rem', marginBottom: '0.5rem' }}>
+                  <div className="form-group">
+                    <label className="form-label" style={{ fontSize: '0.8rem' }}>{isEn ? 'From Date *' : 'Desde la Fecha *'}</label>
+                    <input
+                      type="date"
+                      className="form-input"
+                      value={fechaInicioFiltro}
+                      onChange={e => setFechaInicioFiltro(e.target.value)}
+                      style={{ padding: '0.4rem 0.6rem', fontSize: '0.85rem' }}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label" style={{ fontSize: '0.8rem' }}>{isEn ? 'To Date *' : 'Hasta la Fecha *'}</label>
+                    <input
+                      type="date"
+                      className="form-input"
+                      value={fechaFinFiltro}
+                      onChange={e => setFechaFinFiltro(e.target.value)}
+                      style={{ padding: '0.4rem 0.6rem', fontSize: '0.85rem' }}
+                      required
+                    />
+                  </div>
                 </div>
-                <div className="form-group">
-                  <label className="form-label" style={{ fontSize: '0.8rem' }}>{isEn ? 'To Date' : 'Hasta la Fecha'}</label>
-                  <input
-                    type="date"
-                    className="form-input"
-                    value={fechaFinFiltro}
-                    onChange={e => setFechaFinFiltro(e.target.value)}
-                    style={{ padding: '0.4rem 0.6rem', fontSize: '0.85rem' }}
-                  />
-                </div>
+                {!fechaInicioFiltro || !fechaFinFiltro ? (
+                  <span style={{ color: '#f59e0b', fontSize: '0.8rem', marginTop: '0.25rem', display: 'block', fontWeight: '500' }}>
+                    {isEn ? '⚠️ Select date range to calculate amount and enable payment.' : '⚠️ Selecciona el rango de fechas para calcular el monto y habilitar el pago.'}
+                  </span>
+                ) : null}
               </div>
             )}
 
@@ -686,7 +695,7 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
               type="submit"
               className="btn btn-primary"
               style={{ width: '100%' }}
-              disabled={pagoSubmitting || !pagoPlanchadorId || parseFloat(montoPago || 0) <= 0}
+              disabled={pagoSubmitting || !pagoPlanchadorId || !fechaInicioFiltro || !fechaFinFiltro || parseFloat(montoPago || 0) <= 0}
             >
               {pagoSubmitting ? (isEn ? 'Registering...' : 'Registrando...') : (isEn ? 'Register Payment' : 'Registrar Pago')}
             </button>

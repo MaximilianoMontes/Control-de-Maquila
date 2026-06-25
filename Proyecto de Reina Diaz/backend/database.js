@@ -838,6 +838,19 @@ async function initializeDatabase() {
       }
 
       // 3. Tabla planchador_pagos
+      try {
+        await connection.query("ALTER TABLE planchador_pagos ADD COLUMN fecha_desde DATE NULL");
+        console.log("Migration: fecha_desde column added to planchador_pagos");
+      } catch (e) {
+        // Ignorar si ya existe
+      }
+      try {
+        await connection.query("ALTER TABLE planchador_pagos ADD COLUMN fecha_hasta DATE NULL");
+        console.log("Migration: fecha_hasta column added to planchador_pagos");
+      } catch (e) {
+        // Ignorar si ya existe
+      }
+
       await connection.query(`
         CREATE TABLE IF NOT EXISTS planchador_pagos (
           id INT AUTO_INCREMENT PRIMARY KEY,
@@ -845,6 +858,8 @@ async function initializeDatabase() {
           monto DECIMAL(10, 2) NOT NULL,
           fecha DATE NOT NULL,
           tipo_pago VARCHAR(50) DEFAULT 'completo',
+          fecha_desde DATE NULL,
+          fecha_hasta DATE NULL,
           FOREIGN KEY(planchador_id) REFERENCES planchadores(id) ON DELETE CASCADE
         );
       `);
