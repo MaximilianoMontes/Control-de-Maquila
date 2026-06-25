@@ -3438,19 +3438,34 @@ app.post('/api/plancha/pagos', authenticateToken, async (req, res) => {
     `, [planchador_id, monto, tipo_pago || 'completo']);
     const pagoId = paymentResult.insertId;
 
+    // Robust date format parsing (supports YYYY-MM-DD, ISO, and DD/MM/YYYY)
+    const parseCleanDate = (dStr) => {
+      if (!dStr) return null;
+      const clean = String(dStr).trim();
+      if (/^\d{4}-\d{2}-\d{2}/.test(clean)) return clean.split('T')[0];
+      const match = clean.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+      if (match) {
+        return `${match[3]}-${match[2].padStart(2, '0')}-${match[1].padStart(2, '0')}`;
+      }
+      return clean;
+    };
+
+    const startClean = parseCleanDate(fecha_inicio);
+    const endClean = parseCleanDate(fecha_fin);
+
     let queryTrabajos = "UPDATE plancha_trabajos SET pago_id = ? WHERE planchador_id = ? AND estado = 'terminado' AND pago_id IS NULL";
     let paramsTrabajos = [pagoId, planchador_id];
-    if (fecha_inicio && fecha_fin) {
+    if (startClean && endClean) {
       queryTrabajos += " AND DATE(fecha_terminado) BETWEEN ? AND ?";
-      paramsTrabajos.push(fecha_inicio, fecha_fin);
+      paramsTrabajos.push(startClean, endClean);
     }
     await connection.query(queryTrabajos, paramsTrabajos);
 
     let queryAsistencias = "UPDATE planchador_asistencias SET pago_id = ? WHERE planchador_id = ? AND pago_id IS NULL";
     let paramsAsistencias = [pagoId, planchador_id];
-    if (fecha_inicio && fecha_fin) {
+    if (startClean && endClean) {
       queryAsistencias += " AND fecha BETWEEN ? AND ?";
-      paramsAsistencias.push(fecha_inicio, fecha_fin);
+      paramsAsistencias.push(startClean, endClean);
     }
     await connection.query(queryAsistencias, paramsAsistencias);
 
