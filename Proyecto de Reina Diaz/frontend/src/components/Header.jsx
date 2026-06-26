@@ -42,7 +42,7 @@ export default function Header({ onToggleSidebar }) {
   const { settings, updateSetting, t, translateLog } = useSettings();
   const navigate = useNavigate();
   const location = useLocation();
-  const isPlanchaPage = location.pathname.startsWith('/plancha');
+  const isPlanchaPage = location.pathname.startsWith('/plancha') || location.search.includes('plancha');
   const isAdmin = user?.role === 'admin' || user?.rol === 'admin';
   
   // Dropdown states
@@ -196,7 +196,7 @@ export default function Header({ onToggleSidebar }) {
     { name: 'Planchadores', desc: 'Registro y administración de planchadores', path: '/plancha?tab=planchadores', icon: <Users size={18} />, badge: 'Planchadores' },
     { name: 'Pagos a Planchadores', desc: 'Liquidación de sueldos, apoyos y cuadres', path: '/plancha?tab=pagos', icon: <Wallet size={18} />, badge: 'Pagos' },
     { name: 'Reportes e Historial', desc: 'Trabajos finalizados y exportación de reportes', path: '/plancha?tab=historial', icon: <FileText size={18} />, badge: 'Reportes' },
-    { name: t('header.helpCenter'), desc: t('header.cmdHelpDesc'), path: '/ayuda', icon: <HelpCircle size={18} />, badge: t('header.cmdHelpBadge') },
+    { name: t('header.helpCenter'), desc: t('header.cmdHelpDesc'), path: '/ayuda?tab=plancha&from=plancha', icon: <HelpCircle size={18} />, badge: t('header.cmdHelpBadge') },
   ] : [
     { name: t('nav.dashboard'), desc: t('header.cmdDashboardDesc'), path: '/', icon: <LayoutDashboard size={18} />, badge: t('header.cmdDashboardBadge') },
     { name: t('nav.maquileros'), desc: t('header.cmdMaquilerosDesc'), path: '/maquileros', icon: <Users size={18} />, badge: t('header.cmdMaquilerosBadge') },
@@ -453,7 +453,7 @@ export default function Header({ onToggleSidebar }) {
               <div style={{ padding: '4px' }}>
                 <button 
                   className="profile-dropdown-item" 
-                  onClick={() => { setShowProfile(false); navigate('/ayuda'); }}
+                  onClick={() => { setShowProfile(false); navigate(isPlanchaPage ? '/ayuda?tab=plancha&from=plancha' : '/ayuda'); }}
                 >
                   <User size={16} />
                   <span>{t('header.profileGuide')}</span>
