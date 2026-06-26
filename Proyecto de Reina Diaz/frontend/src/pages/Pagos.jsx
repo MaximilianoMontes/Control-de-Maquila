@@ -183,7 +183,8 @@ export default function Pagos() {
           await axios.post(`${API_URL}/api/pagos`, {
             produccion_id: selectedOrden,
             monto: parseFloat(monto),
-            tipo_pago: tipoPago
+            tipo_pago: tipoPago,
+            con_iva: aplicarIva ? 1 : 0
           }, {
             headers: { Authorization: `Bearer ${token}` }
           });
