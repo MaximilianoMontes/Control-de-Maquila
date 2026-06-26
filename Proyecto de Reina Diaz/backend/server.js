@@ -2293,19 +2293,26 @@ app.get('/api/reportes/pagos', async (req, res) => {
         title: tLabel("Reporte de Pagos a Maquileros", "Payments to Tailors Report"),
         subtitle: tLabel(`Pagos realizados `, `Payments made `) + subtitleDate + tLabel(" - Generado el ", " - Generated on ") + formatDateToDMY(new Date()),
         headers: [
-          { label: tLabel("FECHA", "DATE"), property: "fecha", width: 85 },
-          { label: tLabel("MAQUILERO", "TAILOR"), property: "maquilero", width: 170 },
-          { label: tLabel("MODELO", "MODEL"), property: "modelo", width: 100 },
-          { label: tLabel("TIPO", "TYPE"), property: "tipo", width: 80 },
-          { label: tLabel("MONTO", "AMOUNT"), property: "monto", width: 100 }
+          { label: tLabel("FECHA", "DATE"), property: "fecha", width: 70 },
+          { label: tLabel("MAQUILERO", "TAILOR"), property: "maquilero", width: 160 },
+          { label: tLabel("MODELO", "MODEL"), property: "modelo", width: 80 },
+          { label: tLabel("IVA (16%)", "IVA (16%)"), property: "iva", width: 70 },
+          { label: tLabel("TIPO", "TYPE"), property: "tipo", width: 75 },
+          { label: tLabel("MONTO", "AMOUNT"), property: "monto", width: 80 }
         ],
-        datas: rows.map(r => ({
-          fecha: formatDateToDMY(r.fecha),
-          maquilero: (r.maquilero_nombre || '').toUpperCase(),
-          modelo: r.producto_modelo || '-',
-          tipo: (r.tipo_pago === 'completo' ? tLabel('LIQUIDACIÓN', 'SETTLEMENT') : (r.tipo_pago === 'abono' ? tLabel('ABONO', 'DEPOSIT') : (r.tipo_pago || 'ABONO'))).toUpperCase(),
-          monto: '$' + Number(r.monto).toFixed(2)
-        })),
+        datas: rows.map(r => {
+          const hasIva = r.con_iva === 1 || r.con_iva;
+          const base = hasIva ? Number(r.monto) / 1.16 : Number(r.monto);
+          const ivaVal = hasIva ? Number(r.monto) - base : 0;
+          return {
+            fecha: formatDateToDMY(r.fecha),
+            maquilero: (r.maquilero_nombre || '').toUpperCase(),
+            modelo: r.producto_modelo || '-',
+            iva: hasIva ? '$' + ivaVal.toFixed(2) : 'N/A',
+            tipo: (r.tipo_pago === 'completo' ? tLabel('LIQUIDACIÓN', 'SETTLEMENT') : (r.tipo_pago === 'abono' ? tLabel('ABONO', 'DEPOSIT') : (r.tipo_pago || 'ABONO'))).toUpperCase(),
+            monto: '$' + base.toFixed(2)
+          };
+        }),
         options: { padding: 4 }
       };
 
@@ -2314,9 +2321,19 @@ app.get('/api/reportes/pagos', async (req, res) => {
         prepareRow: () => doc.font("Helvetica").fontSize(10)
       });
 
+      const totalBase = rows.reduce((sum, r) => sum + ((r.con_iva === 1 || r.con_iva) ? Number(r.monto) / 1.16 : Number(r.monto)), 0);
+      const totalIva = rows.reduce((sum, r) => sum + ((r.con_iva === 1 || r.con_iva) ? Number(r.monto) - (Number(r.monto) / 1.16) : 0), 0);
       const totalMonto = rows.reduce((sum, r) => sum + Number(r.monto), 0);
+
       doc.moveDown();
-      doc.fontSize(14).font("Helvetica-Bold").text(`${tLabel('TOTAL PAGADO EN EL PERIODO', 'TOTAL PAID IN THE PERIOD')}: $${totalMonto.toFixed(2)}`, { align: 'right' });
+      doc.fontSize(11).font("Helvetica-Bold");
+      if (totalIva > 0) {
+        doc.text(`${tLabel('Subtotal (Base):', 'Subtotal (Base):')} $${totalBase.toFixed(2)}`, { align: 'right' });
+        doc.text(`${tLabel('Total IVA (16%):', 'Total IVA (16%):')} $${totalIva.toFixed(2)}`, { align: 'right' });
+        doc.moveDown(0.2);
+      }
+      doc.fontSize(14).font("Helvetica-Bold").fillColor('#059669').text(`${tLabel('TOTAL PAGADO EN EL PERIODO', 'TOTAL PAID IN THE PERIOD')}: $${totalMonto.toFixed(2)}`, { align: 'right' });
+      doc.fillColor('black');
     }
 
     doc.end();
