@@ -1043,7 +1043,8 @@ const guides_en = {
 export default function Ayuda() {
   const { t, settings } = useSettings();
   const [searchParams, setSearchParams] = useSearchParams();
-  const initialTab = searchParams.get('tab') || 'general';
+  const fromPlancha = searchParams.get('from') === 'plancha';
+  const initialTab = searchParams.get('tab') || (fromPlancha ? 'plancha' : 'general');
   
   const [activeTab, setActiveTab] = useState(initialTab);
   const [searchQuery, setSearchQuery] = useState('');
@@ -1054,8 +1055,10 @@ export default function Ayuda() {
     const tab = searchParams.get('tab');
     if (tab) {
       setActiveTab(tab);
+    } else {
+      setActiveTab(fromPlancha ? 'plancha' : 'general');
     }
-  }, [searchParams]);
+  }, [searchParams, fromPlancha]);
 
   const handleTabChange = (tabId) => {
     setActiveTab(tabId);
@@ -1070,17 +1073,22 @@ export default function Ayuda() {
   };
 
   // Tabs structure
-  const tabs = [
-    { id: 'general', name: t('ayuda.tabGeneral'), icon: <BookOpen size={18} /> },
-    { id: 'maquileros', name: t('nav.maquileros'), icon: <Users size={18} /> },
-    { id: 'inventario', name: t('nav.inventario'), icon: <Package size={18} /> },
-    { id: 'cortes', name: t('header.cutsDesign'), icon: <Scissors size={18} /> },
-    { id: 'produccion', name: t('nav.produccion'), icon: <Factory size={18} /> },
-    { id: 'extras', name: t('nav.extras'), icon: <Sparkles size={18} /> },
-    { id: 'camion', name: t('nav.camion'), icon: <Truck size={18} /> },
-    { id: 'plancha', name: t('nav.plancha'), icon: <Flame size={18} /> },
-    { id: 'pagos', name: t('nav.pagos'), icon: <Wallet size={18} /> },
-  ];
+  const tabs = fromPlancha
+    ? [
+        { id: 'plancha', name: settings.language === 'en' ? 'Ironing Guide' : 'Guías de Plancha', icon: <Flame size={18} /> },
+        { id: 'general', name: settings.language === 'en' ? 'General Manual' : 'Manual General', icon: <BookOpen size={18} /> },
+      ]
+    : [
+        { id: 'general', name: t('ayuda.tabGeneral'), icon: <BookOpen size={18} /> },
+        { id: 'maquileros', name: t('nav.maquileros'), icon: <Users size={18} /> },
+        { id: 'inventario', name: t('nav.inventario'), icon: <Package size={18} /> },
+        { id: 'cortes', name: t('header.cutsDesign'), icon: <Scissors size={18} /> },
+        { id: 'produccion', name: t('nav.produccion'), icon: <Factory size={18} /> },
+        { id: 'extras', name: t('nav.extras'), icon: <Sparkles size={18} /> },
+        { id: 'camion', name: t('nav.camion'), icon: <Truck size={18} /> },
+        { id: 'plancha', name: t('nav.plancha'), icon: <Flame size={18} /> },
+        { id: 'pagos', name: t('nav.pagos'), icon: <Wallet size={18} /> },
+      ];
 
 
   // Pick language guides
