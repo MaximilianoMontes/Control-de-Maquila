@@ -1625,15 +1625,15 @@ app.get('/api/pagos/:produccion_id', async (req, res) => {
 });
 
 app.post('/api/pagos', authenticateToken, async (req, res) => {
-  const { produccion_id, monto, tipo_pago } = req.body;
+  const { produccion_id, monto, tipo_pago, con_iva } = req.body;
   const connection = await db.getConnection();
   try {
     await connection.beginTransaction();
     const fecha = new Date().toISOString().split('T')[0];
     
     // 1. Insertar el Pago
-    const [result] = await connection.query("INSERT INTO pagos (produccion_id, monto, fecha, tipo_pago) VALUES (?, ?, ?, ?)",
-      [produccion_id, monto, fecha, tipo_pago]);
+    const [result] = await connection.query("INSERT INTO pagos (produccion_id, monto, fecha, tipo_pago, con_iva) VALUES (?, ?, ?, ?, ?)",
+      [produccion_id, monto, fecha, tipo_pago, con_iva ? 1 : 0]);
     const pagoId = result.insertId;
     
     // 2. Obtener el Maquilero de la orden
@@ -1834,7 +1834,18 @@ app.get('/api/pagos/:id/comprobante', authenticateToken, async (req, res) => {
     doc.text(`${tLabel('Número de Pago', 'Payment Number')}: ${nroPago} ${tLabel('de', 'of')} ${todosLosPagos.length}`);
     doc.moveDown();
 
-    doc.fontSize(18).font('Helvetica-Bold').fillColor('#059669').text(`${tLabel('MONTO PAGADO', 'AMOUNT PAID')}: $${Number(pago.monto).toLocaleString(lang === 'en' ? 'en-US' : 'es-MX', { minimumFractionDigits: 2 })}`, { align: 'center' });
+    if (pago.con_iva === 1 || pago.con_iva) {
+      const base = Number(pago.monto) / 1.16;
+      const iva = Number(pago.monto) - base;
+      
+      doc.fontSize(12).font('Helvetica').text(`${tLabel('Monto Base', 'Base Amount')}: $${base.toLocaleString(lang === 'en' ? 'en-US' : 'es-MX', { minimumFractionDigits: 2 })}`);
+      doc.text(`${tLabel('IVA (16%)', 'IVA (16%)')}: $${iva.toLocaleString(lang === 'en' ? 'en-US' : 'es-MX', { minimumFractionDigits: 2 })}`);
+      doc.moveDown(0.5);
+      
+      doc.fontSize(18).font('Helvetica-Bold').fillColor('#059669').text(`${tLabel('MONTO TOTAL PAGADO (CON IVA)', 'TOTAL AMOUNT PAID (WITH IVA)')}: $${Number(pago.monto).toLocaleString(lang === 'en' ? 'en-US' : 'es-MX', { minimumFractionDigits: 2 })}`, { align: 'center' });
+    } else {
+      doc.fontSize(18).font('Helvetica-Bold').fillColor('#059669').text(`${tLabel('MONTO PAGADO', 'AMOUNT PAID')}: $${Number(pago.monto).toLocaleString(lang === 'en' ? 'en-US' : 'es-MX', { minimumFractionDigits: 2 })}`, { align: 'center' });
+    }
     
     // Cálculo de saldo restante
     const [totalPagadoRows] = await db.query("SELECT SUM(monto) as total FROM pagos WHERE produccion_id = ? AND id <= ?", [pago.produccion_id, pagoId]);
@@ -1842,7 +1853,10 @@ app.get('/api/pagos/:id/comprobante', authenticateToken, async (req, res) => {
     
     const totalPagadoHastaAhora = totalPagadoRows[0].total || 0;
     const precioTotalOrden = ordenRows[0].precio_total || 0;
-    const saldoRestante = Math.max(0, precioTotalOrden - totalPagadoHastaAhora);
+    
+    // Si se aplicó IVA, el saldo restante se calcula sobre el total con IVA
+    const ordenTotalCalc = (pago.con_iva === 1 || pago.con_iva) ? (precioTotalOrden * 1.16) : precioTotalOrden;
+    const saldoRestante = Math.max(0, ordenTotalCalc - totalPagadoHastaAhora);
 
     doc.moveDown(0.2);
     doc.fontSize(14).font('Helvetica-Bold').fillColor('#ef4444').text(`${tLabel('SALDO RESTANTE', 'REMAINING BALANCE')}: $${saldoRestante.toLocaleString(lang === 'en' ? 'en-US' : 'es-MX', { minimumFractionDigits: 2 })}`, { align: 'center' });

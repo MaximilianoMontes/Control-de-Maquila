@@ -129,6 +129,7 @@ async function initializeDatabase() {
         monto DECIMAL(10, 2) NOT NULL,
         fecha DATE NOT NULL,
         tipo_pago VARCHAR(50) NOT NULL,
+        con_iva TINYINT(1) DEFAULT 0,
         FOREIGN KEY(produccion_id) REFERENCES produccion(id)
       );
     `);
