@@ -191,7 +191,26 @@ const guides_es = {
       title: '¿Cómo registrar un nuevo Corte?',
       content: (
         <div>
-          <p>El módulo de <strong>Cortes</strong> sirve para dar de alta nuevos lotes de diseño y las piezas que se han cortado y están listas para coser:</p>
+          <p> El módulo de <strong>Cortes</strong> sirve para dar de alta nuevos lotes de diseño y las piezas que se han cortado y están listas para coser:</p>
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '1.5rem 0', padding: '12px', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', overflowX: 'auto', fontSize: '0.8rem' }}>
+            <div style={{ minWidth: '100px', padding: '6px', background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.3)', borderRadius: '6px', textAlign: 'center', color: '#fff' }}>
+              <strong>1. Registro</strong><br/><span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>Manual o Excel</span>
+            </div>
+            <ArrowRight size={14} color="#64748b" />
+            <div style={{ minWidth: '100px', padding: '6px', background: 'rgba(167, 139, 250, 0.1)', border: '1px solid rgba(167, 139, 250, 0.3)', borderRadius: '6px', textAlign: 'center', color: '#fff' }}>
+              <strong>2. Variantes</strong><br/><span style={{ fontSize: '0.7rem', color: '#c4b5fd' }}>Colores/Cantidades</span>
+            </div>
+            <ArrowRight size={14} color="#64748b" />
+            <div style={{ minWidth: '100px', padding: '6px', background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.3)', borderRadius: '6px', textAlign: 'center', color: '#fff' }}>
+              <strong>3. Tarifa</strong><br/><span style={{ fontSize: '0.7rem', color: '#fcd34d' }}>Precio Maquila</span>
+            </div>
+            <ArrowRight size={14} color="#64748b" />
+            <div style={{ minWidth: '100px', padding: '6px', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '6px', textAlign: 'center', color: '#fff' }}>
+              <strong>4. Estatus</strong><br/><span style={{ fontSize: '0.7rem', color: '#6ee7b7' }}>Disponible (Rojo)🔴</span>
+            </div>
+          </div>
+
           <ol>
             <li>Dirígete a la sección de <strong>Cortes</strong> en el menú lateral.</li>
             <li>Haz clic en el botón superior <strong>+ Nuevo Ingreso</strong>. También puedes hacer clic en <strong>Importar Excel</strong> para cargar lotes masivamente desde un archivo `.xlsx`.</li>
@@ -232,7 +251,26 @@ const guides_es = {
       title: 'Asignar una Orden de Producción a un Maquilero',
       content: (
         <div>
-          <p>Para enviar un lote de corte disponible a confección con un maquilero:</p>
+          <p> Para enviar un lote de corte disponible a confección con un maquilero:</p>
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '1.5rem 0', padding: '12px', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', overflowX: 'auto', fontSize: '0.8rem' }}>
+            <div style={{ minWidth: '100px', padding: '6px', background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.3)', borderRadius: '6px', textAlign: 'center', color: '#fff' }}>
+              <strong>1. Orden</strong><br/><span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>Asignar Corte 🟢</span>
+            </div>
+            <ArrowRight size={14} color="#64748b" />
+            <div style={{ minWidth: '100px', padding: '6px', background: 'rgba(167, 139, 250, 0.1)', border: '1px solid rgba(167, 139, 250, 0.3)', borderRadius: '6px', textAlign: 'center', color: '#fff' }}>
+              <strong>2. Control Inline</strong><br/><span style={{ fontSize: '0.7rem', color: '#c4b5fd' }}>Recibir Piezas</span>
+            </div>
+            <ArrowRight size={14} color="#64748b" />
+            <div style={{ minWidth: '100px', padding: '6px', background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.3)', borderRadius: '6px', textAlign: 'center', color: '#fff' }}>
+              <strong>3. Ajustes</strong><br/><span style={{ fontSize: '0.7rem', color: '#fcd34d' }}>Bono / Penaliz.</span>
+            </div>
+            <ArrowRight size={14} color="#64748b" />
+            <div style={{ minWidth: '100px', padding: '6px', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '6px', textAlign: 'center', color: '#fff' }}>
+              <strong>4. Término</strong><br/><span style={{ fontSize: '0.7rem', color: '#6ee7b7' }}>Nómina / Archivo</span>
+            </div>
+          </div>
+
           <ol>
             <li>Ingresa a la sección de <strong>Producción</strong> en el menú lateral.</li>
             <li>Haz clic en el botón superior <strong>+ Nueva Orden</strong>.</li>
@@ -418,31 +456,105 @@ const guides_es = {
       title: '¿Cómo funciona el Módulo de Plancha?',
       content: (
         <div>
-          <p>El módulo de <strong>Plancha</strong> está diseñado para controlar el trabajo de los planchadores de manera independiente:</p>
+          <p>El módulo de <strong>Plancha</strong> está diseñado para controlar el trabajo de los planchadores de manera independiente y enlazada con los envíos de Colima:</p>
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '1.5rem 0', padding: '12px', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', overflowX: 'auto', fontSize: '0.8rem' }}>
+            <div style={{ minWidth: '90px', padding: '6px', background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.3)', borderRadius: '6px', textAlign: 'center', color: '#fff' }}>
+              <strong>1. Camión</strong><br/><span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>Llegada</span>
+            </div>
+            <ArrowRight size={14} color="#64748b" />
+            <div style={{ minWidth: '90px', padding: '6px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '6px', textAlign: 'center', color: '#fff' }}>
+              <strong>2. Tránsito</strong><br/><span style={{ fontSize: '0.7rem', color: '#fca5a5' }}>Bloqueado 🔒</span>
+            </div>
+            <ArrowRight size={14} color="#64748b" />
+            <div style={{ minWidth: '90px', padding: '6px', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '6px', textAlign: 'center', color: '#fff' }}>
+              <strong>3. Verificar</strong><br/><span style={{ fontSize: '0.7rem', color: '#6ee7b7' }}>Precio / Tallas 🔓</span>
+            </div>
+            <ArrowRight size={14} color="#64748b" />
+            <div style={{ minWidth: '90px', padding: '6px', background: 'rgba(167, 139, 250, 0.1)', border: '1px solid rgba(167, 139, 250, 0.3)', borderRadius: '6px', textAlign: 'center', color: '#fff' }}>
+              <strong>4. Burros</strong><br/><span style={{ fontSize: '0.7rem', color: '#c4b5fd' }}>Asignar</span>
+            </div>
+            <ArrowRight size={14} color="#64748b" />
+            <div style={{ minWidth: '90px', padding: '6px', background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.3)', borderRadius: '6px', textAlign: 'center', color: '#fff' }}>
+              <strong>5. Nómina</strong><br/><span style={{ fontSize: '0.7rem', color: '#fcd34d' }}>Pago / Asist.</span>
+            </div>
+          </div>
+
           <ul>
-            <li><strong>Catálogo de Planchadores:</strong> Registra a tus planchadores con su nombre y teléfono para asignarles tareas de planchado.</li>
-            <li><strong>Asignación por Burros:</strong> Puedes asignar prendas del camión a diferentes "Burros" (mesas de planchado) arrastrando los modelos e ingresando la cantidad de piezas y la talla.</li>
-            <li><strong>Registro de Asistencias:</strong> Permite llevar un control de asistencia diaria para pagar bonos/apoyos de asistencia en sus nóminas.</li>
-            <li><strong>Control de Trabajos y Pagos:</strong> Consulta el balance de trabajos realizados por planchador, los pagos registrados y genera un comprobante de nómina.</li>
+            <li><strong>Enlace con Camión:</strong> Los modelos cargados en Puebla y enviados en los camiones aparecen de inmediato en Colima como <em>Modelos en Tránsito</em> de forma automática.</li>
+            <li><strong>Estatus Bloqueado (Candado):</strong> Al llegar, el modelo está bloqueado para plancha hasta que el administrador verifique las cantidades por talla y asigne el precio por prenda.</li>
+            <li><strong>Burros de Planchado:</strong> Tableros de trabajo independientes donde se distribuyen las piezas y tallas a cada planchador responsable.</li>
+            <li><strong>Nómina y Control de Asistencia:</strong> El trabajo terminado se carga directamente a la cuenta del planchador, complementándose con su asistencia diaria para calcular el pago neto de la semana.</li>
           </ul>
         </div>
       ),
       keywords: 'plancha planchadores burros asistencia pagos nómina'
     },
     {
-      title: 'Asignar Trabajo en los Burros',
+      title: 'Verificación de Modelos y Control de Camión (Modelos Tránsito)',
       content: (
         <div>
-          <p>Para asignar prendas a un planchador en un burro de planchado:</p>
+          <p>Cuando un camión sale de Puebla, los modelos y sus piezas se cargan automáticamente en el módulo de Plancha como <strong>Modelos en Tránsito / Colima</strong> en estado bloqueado (icono de candado 🔒).</p>
           <ol>
-            <li>Arrastra el modelo desde la lista de "Modelos por Planchar" hacia el burro correspondiente o haz clic para asignarlo.</li>
-            <li>En la ventana emergente, ingresa el planchador responsable, la talla de la prenda y el total de piezas a planchar.</li>
-            <li>El sistema calculará automáticamente el costo de planchado según el precio configurado para el modelo.</li>
-            <li>Una vez completado el planchado de la prenda, el trabajo se registra en el historial de nómina del planchador.</li>
+            <li><strong>Recepción Física:</strong> Al llegar el camión a Colima, el administrador debe abrir la ventana de <strong>Verificar</strong> en el modelo correspondiente.</li>
+            <li><strong>Verificar Cantidades:</strong> El sistema mostrará el desglose exacto de colores y piezas por talla que se enviaron en el camión. Se debe constatar físicamente que todo haya llegado completo.</li>
+            <li><strong>Asignar Precio de Plancha:</strong> Introduzca el precio que se pagará por el planchado de cada pieza de ese modelo (ej. $8.00).</li>
+            <li><strong>Desbloqueo Automático:</strong> Al guardar, el modelo cambia a estado <strong>Desbloqueado 🔓</strong>, permitiendo comenzar a asignar piezas a los planchadores.</li>
+            <li><strong>Seguridad (Sin Devolución):</strong> Para evitar errores históricos y duplicidades de inventario en modelos específicos (como el <em>723131</em>), el botón de devoluciones se encuentra deshabilitado de forma permanente, mostrando la etiqueta <strong>Sin Devolución</strong> para proteger el flujo del sistema.</li>
           </ol>
+
+          <div style={{ padding: '1rem', background: 'rgba(59, 130, 246, 0.05)', borderLeft: '4px solid #3b82f6', borderRadius: '4px', marginTop: '1rem' }}>
+            <h4 style={{ margin: '0 0 0.5rem 0', color: '#60a5fa' }}><strong>Caso Real: Recepción del Modelo 723131</strong></h4>
+            <p style={{ margin: 0, fontSize: '0.9rem' }}>El camión histórico llega a Colima con 80 piezas del modelo <strong>723131</strong> (32 estampadas y 48 limón) distribuidas en tallas 05, 07, 09 y 11. El administrador abre la ventana de verificación, constata el desglose físico, ingresa el precio de plancha (ej. $10.00) y da clic en verificar. El candado cambia a verde (abierto) y el modelo queda listo para planchar sin posibilidad de ser devuelto accidentalmente a Puebla.</p>
+          </div>
         </div>
       ),
-      keywords: 'burros asignar planchado arrastrar modelos piezas'
+      keywords: 'verificacion verificar camión candado bloqueo desbloqueo precio plancha devolucion seguridad'
+    },
+    {
+      title: 'Asignación por Burros y Proceso de Planchado',
+      content: (
+        <div>
+          <p>La distribución de prendas a los planchadores se realiza a través de mesas de trabajo llamadas <strong>Burros</strong>:</p>
+          <ol>
+            <li><strong>Distribución de Trabajo:</strong> El administrador arrastra un modelo desbloqueado desde la lista de "Modelos por Planchar" hacia el burro del planchador, o hace clic directo en el botón de asignación.</li>
+            <li><strong>Especificar Piezas y Tallas:</strong> En el formulario, seleccione al planchador, ingrese el color/talla de las piezas que se le entregarán físicamente y el número total de prendas a planchar.</li>
+            <li><strong>Control de Pendientes:</strong> Las piezas asignadas se restan automáticamente del saldo de "Modelos por Planchar". Cuando todas las piezas de un modelo han sido planchadas (terminadas), el modelo **desaparece automáticamente** de la vista para mantener las listas limpias, pero sus registros históricos se conservan intactos en la base de datos para auditorías y reportes analíticos.</li>
+          </ol>
+
+          <div style={{ padding: '1rem', background: 'rgba(16, 185, 129, 0.05)', borderLeft: '4px solid #10b981', borderRadius: '4px', marginTop: '1rem' }}>
+            <h4 style={{ margin: '0 0 0.5rem 0', color: '#34d399' }}><strong>Caso Real: Planchado del Modelo 723160</strong></h4>
+            <p style={{ margin: 0, fontSize: '0.9rem' }}>El modelo 723160 cuenta con 32 piezas mostaza y 12 piezas negras en tránsito. El administrador asigna 8 piezas mostaza talla 05 al planchador "Felipe" en el Burro 1. Al guardarse, Felipe tiene una tarea activa. Al terminar su turno, el administrador marca las piezas como completadas; el sistema descuenta las 8 piezas del camión, registra $64.00 (8 piezas × $8.00) en la nómina de Felipe y el modelo 723160 muestra ahora solo 24 piezas mostaza pendientes en el camión.</p>
+          </div>
+        </div>
+      ),
+      keywords: 'burros asignar planchado arrastrar modelos piezas tallas colores pendientes'
+    },
+    {
+      title: 'Asistencias, Nómina y Pagos de Planchadores',
+      content: (
+        <div>
+          <p>El sistema calcula de forma integrada los ingresos semanales de cada planchador:</p>
+          <ul>
+            <li><strong>Registro de Asistencias:</strong> El administrador marca diariamente la asistencia de los planchadores. Cada día asistido puede configurarse para sumar un apoyo/bono diario de asistencia en su liquidación.</li>
+            <li><strong>Cálculo Automático de Nómina:</strong> El saldo neto a pagar se calcula multiplicando cada pieza planchada por el precio de plancha de su respectivo modelo, más la suma de los apoyos de asistencia registrados.</li>
+            <li><strong>Liquidación y Recibo de Nómina:</strong> Al final de la semana, se registra el pago (Abono o Liquidación Completa) y el sistema permite imprimir un comprobante físico en formato PDF detallando las piezas planchadas, tallas, asistencias cobradas y firmas de conformidad.</li>
+          </ul>
+
+          <div style={{ padding: '1rem', background: 'rgba(245, 158, 11, 0.05)', borderLeft: '4px solid #f59e0b', borderRadius: '4px', marginTop: '1rem' }}>
+            <h4 style={{ margin: '0 0 0.5rem 0', color: '#fbbf24' }}><strong>Ejemplo de Cálculo: Nómina de Juan Pérez</strong></h4>
+            <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem' }}>Durante la semana, Juan realizó el siguiente trabajo:</p>
+            <ul style={{ fontSize: '0.85rem', margin: '0 0 0.5rem 0', paddingLeft: '20px' }}>
+              <li><strong>Modelo 723131:</strong> 50 piezas planchadas a $10.00 c/u = <strong>$500.00</strong></li>
+              <li><strong>Modelo 723160:</strong> 80 piezas planchadas a $8.00 c/u = <strong>$640.00</strong></li>
+              <li><strong>Asistencias:</strong> 5 días de asistencia registrada con apoyo de $50.00 diarios = <strong>$250.00</strong></li>
+              <li><strong style={{ color: '#fbbf24' }}>Total Saldo Acumulado: $500 + $640 + $250 = $1,390.00</strong></li>
+            </ul>
+            <p style={{ margin: 0, fontSize: '0.9rem' }}>El administrador registra un pago de $1,390.00 de tipo liquidación completa. La cuenta de Juan vuelve a $0.00, se imprime su comprobante PDF y el historial se archiva de forma segura.</p>
+          </div>
+        </div>
+      ),
+      keywords: 'asistencia apoyo nomina planchador liquidacion pagos recibo comprobante pdf'
     }
   ]
 };
@@ -824,31 +936,105 @@ const guides_en = {
       title: 'How does the Ironing (Plancha) Module work?',
       content: (
         <div>
-          <p>The <strong>Ironing (Plancha)</strong> module is designed to control the work of ironers independently:</p>
+          <p>The <strong>Ironing (Plancha)</strong> module is designed to control the work of ironers independently and linked to the Colima shipments:</p>
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '1.5rem 0', padding: '12px', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', overflowX: 'auto', fontSize: '0.8rem' }}>
+            <div style={{ minWidth: '90px', padding: '6px', background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.3)', borderRadius: '6px', textAlign: 'center', color: '#fff' }}>
+              <strong>1. Truck</strong><br/><span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>Arrival</span>
+            </div>
+            <ArrowRight size={14} color="#64748b" />
+            <div style={{ minWidth: '90px', padding: '6px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '6px', textAlign: 'center', color: '#fff' }}>
+              <strong>2. Transit</strong><br/><span style={{ fontSize: '0.7rem', color: '#fca5a5' }}>Locked 🔒</span>
+            </div>
+            <ArrowRight size={14} color="#64748b" />
+            <div style={{ minWidth: '90px', padding: '6px', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '6px', textAlign: 'center', color: '#fff' }}>
+              <strong>3. Verify</strong><br/><span style={{ fontSize: '0.7rem', color: '#6ee7b7' }}>Price / Sizes 🔓</span>
+            </div>
+            <ArrowRight size={14} color="#64748b" />
+            <div style={{ minWidth: '90px', padding: '6px', background: 'rgba(167, 139, 250, 0.1)', border: '1px solid rgba(167, 139, 250, 0.3)', borderRadius: '6px', textAlign: 'center', color: '#fff' }}>
+              <strong>4. Boards</strong><br/><span style={{ fontSize: '0.7rem', color: '#c4b5fd' }}>Assign</span>
+            </div>
+            <ArrowRight size={14} color="#64748b" />
+            <div style={{ minWidth: '90px', padding: '6px', background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.3)', borderRadius: '6px', textAlign: 'center', color: '#fff' }}>
+              <strong>5. Payroll</strong><br/><span style={{ fontSize: '0.7rem', color: '#fcd34d' }}>Pay / Attendance</span>
+            </div>
+          </div>
+
           <ul>
-            <li><strong>Ironers Registry:</strong> Register your ironers with their name and phone to assign them ironing tasks.</li>
-            <li><strong>Burros (Ironing Boards) Assignment:</strong> You can assign garments from the truck to different "Burros" (ironing boards) by dragging the models and entering the number of pieces and size.</li>
-            <li><strong>Attendance Registry:</strong> Allows you to keep a daily attendance log to pay attendance bonuses/allowances in their payroll.</li>
-            <li><strong>Jobs & Payments Control:</strong> Check the balance of work done by ironer, registered payments, and generate a payroll receipt.</li>
+            <li><strong>Truck Integration:</strong> Models loaded in Puebla and sent in the trucks automatically appear in Colima as <em>Models in Transit</em>.</li>
+            <li><strong>Locked Status (Padlock):</strong> Upon arrival, the model is locked for ironing until the administrator verifies the quantities per size and assigns the price per garment.</li>
+            <li><strong>Ironing Boards (Burros):</strong> Independent work tables where garments and sizes are distributed to each responsible ironer.</li>
+            <li><strong>Payroll and Attendance Control:</strong> Completed work is loaded directly to the ironer's account, complemented by their daily attendance to calculate the net pay of the week.</li>
           </ul>
         </div>
       ),
       keywords: 'ironing ironers boards attendance payments payroll'
     },
     {
+      title: 'Model Verification & Truck Control (Models in Transit)',
+      content: (
+        <div>
+          <p>When a truck leaves Puebla, the models and their pieces are automatically loaded in the Ironing module as <strong>Models in Transit / Colima</strong> in a locked state (padlock icon 🔒).</p>
+          <ol>
+            <li><strong>Physical Reception:</strong> Upon the truck's arrival in Colima, the administrator must open the <strong>Verify</strong> window of the corresponding model.</li>
+            <li><strong>Verify Quantities:</strong> The system will display the exact breakdown of colors and pieces per size sent in the truck. Check physically that everything arrived complete.</li>
+            <li><strong>Assign Ironing Price:</strong> Enter the price to be paid for ironing each piece of that model (e.g., $8.00).</li>
+            <li><strong>Automatic Unlock:</strong> Upon saving, the model changes to <strong>Unlocked 🔓</strong>, allowing you to start assigning pieces to the ironers.</li>
+            <li><strong>Safety (No Return):</strong> To prevent historical errors and inventory duplications on specific models (such as <em>723131</em>), the return button is permanently disabled, displaying the <strong>No Return</strong> label to protect the system's flow.</li>
+          </ol>
+
+          <div style={{ padding: '1rem', background: 'rgba(59, 130, 246, 0.05)', borderLeft: '4px solid #3b82f6', borderRadius: '4px', marginTop: '1rem' }}>
+            <h4 style={{ margin: '0 0 0.5rem 0', color: '#60a5fa' }}><strong>Real Case: Reception of Model 723131</strong></h4>
+            <p style={{ margin: 0, fontSize: '0.9rem' }}>The historical truck arrives in Colima with 80 pieces of model <strong>723131</strong> (32 printed and 48 lemon) distributed in sizes 05, 07, 09, and 11. The administrator opens the verification window, checks the physical breakdown, enters the ironing price (e.g., $10.00) and clicks verify. The padlock changes to green (open) and the model is ready to iron with no possibility of being accidentally returned to Puebla.</p>
+          </div>
+        </div>
+      ),
+      keywords: 'verification verify truck padlock lock unlock price ironing return safety'
+    },
+    {
       title: 'Assigning Work to the Ironing Boards',
       content: (
         <div>
-          <p>To assign garments to an ironer on an ironing board (burro):</p>
+          <p>The distribution of garments to the ironers is done through work tables called <strong>Burros</strong> (Ironing Boards):</p>
           <ol>
-            <li>Drag the model from the "Models to Iron" list to the corresponding board.</li>
-            <li>In the pop-up window, select the responsible ironer, the size of the garment, and the total pieces to iron.</li>
-            <li>The system will automatically calculate the ironing cost based on the configured price for the model.</li>
-            <li>Once ironing is completed, the job is registered in the ironer's payroll history.</li>
+            <li><strong>Work Distribution:</strong> The administrator drags an unlocked model from the "Models to Iron" list to the ironer's board, or clicks directly on the assignment button.</li>
+            <li><strong>Specify Pieces and Sizes:</strong> In the form, select the ironer, enter the color/size of the pieces to be physically delivered, and the total pieces to iron.</li>
+            <li><strong>Pending Control:</strong> Assigned pieces are automatically deducted from the "Models to Iron" balance. When all pieces of a model have been ironed (completed), the model **automatically disappears** from the view to keep lists clean, but its historical records remain intact in the database for audits and analytical reports.</li>
           </ol>
+
+          <div style={{ padding: '1rem', background: 'rgba(16, 185, 129, 0.05)', borderLeft: '4px solid #10b981', borderRadius: '4px', marginTop: '1rem' }}>
+            <h4 style={{ margin: '0 0 0.5rem 0', color: '#34d399' }}><strong>Real Case: Ironing of Model 723160</strong></h4>
+            <p style={{ margin: 0, fontSize: '0.9rem' }}>Model 723160 has 32 mustard pieces and 12 black pieces in transit. The administrator assigns 8 mustard pieces size 05 to the ironer "Felipe" on Board 1. Upon saving, Felipe has an active task. At the end of his shift, the administrator marks the pieces as completed; the system deducts the 8 pieces from the truck, registers $64.00 (8 pieces × $8.00) in Felipe's payroll, and model 723160 now shows only 24 mustard pieces pending in the truck.</p>
+          </div>
         </div>
       ),
-      keywords: 'ironing boards assign drag models pieces'
+      keywords: 'boards assign ironing drag models pieces sizes colors pending'
+    },
+    {
+      title: 'Attendance, Payroll & Payments of Ironers',
+      content: (
+        <div>
+          <p>The system calculates each ironer's weekly earnings in an integrated way:</p>
+          <ul>
+            <li><strong>Attendance Registry:</strong> The administrator marks the ironers' attendance daily. Each day attended can be configured to add a daily attendance allowance/bonus to their payroll.</li>
+            <li><strong>Automatic Payroll Calculation:</strong> The net balance to pay is calculated by multiplying each ironed piece by the ironing price of its respective model, plus the sum of the registered attendance allowances.</li>
+            <li><strong>Settlement and Payroll Receipt:</strong> At the end of the week, the payment (Deposit or Full Settlement) is registered and the system allows printing a physical receipt in PDF format detailing the ironed pieces, sizes, attendance collected, and conformity signatures.</li>
+          </ul>
+
+          <div style={{ padding: '1rem', background: 'rgba(245, 158, 11, 0.05)', borderLeft: '4px solid #f59e0b', borderRadius: '4px', marginTop: '1rem' }}>
+            <h4 style={{ margin: '0 0 0.5rem 0', color: '#fbbf24' }}><strong>Calculation Example: Juan Pérez's Payroll</strong></h4>
+            <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem' }}>During the week, Juan performed the following work:</p>
+            <ul style={{ fontSize: '0.85rem', margin: '0 0 0.5rem 0', paddingLeft: '20px' }}>
+              <li><strong>Model 723131:</strong> 50 pieces ironed at $10.00 each = <strong>$500.00</strong></li>
+              <li><strong>Model 723160:</strong> 80 pieces ironed at $8.00 each = <strong>$640.00</strong></li>
+              <li><strong>Attendance:</strong> 5 days of registered attendance with allowance of $50.00 daily = <strong>$250.00</strong></li>
+              <li><strong style={{ color: '#fbbf24' }}>Total Accumulated Balance: $500 + $640 + $250 = $1,390.00</strong></li>
+            </ul>
+            <p style={{ margin: 0, fontSize: '0.9rem' }}>The administrator registers a payment of $1,390.00 of type full settlement. Juan's account returns to $0.00, his PDF receipt is printed, and the history is archived securely.</p>
+          </div>
+        </div>
+      ),
+      keywords: 'attendance allowance payroll ironer settlement payments receipt PDF'
     }
   ]
 };
