@@ -21,6 +21,7 @@ export default function Pagos() {
   const [tipoPago, setTipoPago] = useState(initialTipoPago);
   const [pendingDiscount, setPendingDiscount] = useState(0);
   const [lastPrefilledOrden, setLastPrefilledOrden] = useState('');
+  const [aplicarIva, setAplicarIva] = useState(false);
 
   // Estados para Descuentos Personales
   const [maquileros, setMaquileros] = useState([]);
@@ -58,6 +59,7 @@ export default function Pagos() {
           setSelectedModelo(orden.inventario_id.toString()); // Pre-selecciona el producto de la orden
           
           if (selectedOrden !== lastPrefilledOrden) {
+            setAplicarIva(false);
             const totalPagado = parseFloat(orden.pagado || 0);
             const restante = orden.precio_total - totalPagado;
             const suggested = Math.max(0, restante - discount);
@@ -81,12 +83,23 @@ export default function Pagos() {
       setPendingDiscount(0);
       setMonto('');
       setLastPrefilledOrden('');
+      setAplicarIva(false);
     }
     
     return () => {
       if (interval) clearInterval(interval);
     };
   }, [selectedOrden, orders, lastPrefilledOrden, searchParams]);
+
+  // Update monto when aplicarIva toggle is switched
+  useEffect(() => {
+    if (ordenActual) {
+      const totalConIva = aplicarIva ? (ordenActual.precio_total * 1.16) : ordenActual.precio_total;
+      const restanteConIva = totalConIva - totalPagado;
+      const suggested = Math.max(0, restanteConIva - pendingDiscount);
+      setMonto(suggested > 0 ? suggested.toFixed(2) : '');
+    }
+  }, [aplicarIva]);
 
   useEffect(() => {
     if (selectedMaquilero) {
@@ -278,7 +291,8 @@ export default function Pagos() {
 
   const ordenActual = orders.find(o => o.id.toString() === selectedOrden);
   const totalPagado = ordenActual ? parseFloat(ordenActual.pagado || 0) : 0;
-  const restante = ordenActual ? (ordenActual.precio_total - totalPagado) : 0;
+  const totalConIva = aplicarIva && ordenActual ? (ordenActual.precio_total * 1.16) : (ordenActual ? ordenActual.precio_total : 0);
+  const restanteConIva = ordenActual ? (totalConIva - totalPagado) : 0;
 
   const selectOrderOptions = [
     ...activeProds.map(o => ({
@@ -325,17 +339,55 @@ export default function Pagos() {
 
               {ordenActual && (
                 <div style={{ background: 'rgba(0,0,0,0.02)', padding: '1rem', borderRadius: '8px', marginBottom: '1rem' }}>
-                  <p><strong>{t('pay.totalCost')}</strong> {formatCurrency(ordenActual.precio_total)}</p>
-                  <p style={{ color: '#34d399' }}><strong>{t('pay.alreadyPaid')}</strong> {formatCurrency(totalPagado)}</p>
+                  {/* IVA Toggle Switch */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '0 0 1rem 0', padding: '8px 12px', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                    <span style={{ fontSize: '0.85rem', color: '#94a3b8', fontWeight: '500' }}>
+                      {settings.language === 'en' ? 'Apply IVA (16%)' : 'Aplicar IVA (16%)'}
+                    </span>
+                    <label className="switch" style={{ position: 'relative', display: 'inline-block', width: '40px', height: '20px' }}>
+                      <input 
+                        type="checkbox" 
+                        checked={aplicarIva} 
+                        onChange={(e) => setAplicarIva(e.target.checked)} 
+                        style={{ opacity: 0, width: 0, height: 0 }}
+                      />
+                      <span className="slider" style={{
+                        position: 'absolute', cursor: 'pointer', top: 0, left: 0, right: 0, bottom: 0,
+                        backgroundColor: aplicarIva ? '#3b82f6' : '#475569',
+                        transition: '0.3s', borderRadius: '20px'
+                      }}>
+                        <span style={{
+                          position: 'absolute', content: '""', height: '14px', width: '14px', left: aplicarIva ? '22px' : '4px', bottom: '3px',
+                          backgroundColor: 'white', transition: '0.3s', borderRadius: '50%'
+                        }} />
+                      </span>
+                    </label>
+                  </div>
+
+                  {aplicarIva ? (
+                    <>
+                      <p style={{ margin: '0.3rem 0' }}><strong>{settings.language === 'en' ? 'Base Cost:' : 'Costo Base:'}</strong> {formatCurrency(ordenActual.precio_total)}</p>
+                      <p style={{ margin: '0.3rem 0', color: '#a78bfa' }}><strong>{settings.language === 'en' ? 'IVA (16%):' : 'IVA (16%):'}</strong> {formatCurrency(ordenActual.precio_total * 0.16)}</p>
+                      <p style={{ margin: '0.3rem 0' }}><strong>{settings.language === 'en' ? 'Total with IVA:' : 'Costo Total (con IVA):'}</strong> {formatCurrency(ordenActual.precio_total * 1.16)}</p>
+                    </>
+                  ) : (
+                    <p style={{ margin: '0.3rem 0' }}><strong>{t('pay.totalCost')}</strong> {formatCurrency(ordenActual.precio_total)}</p>
+                  )}
+                  <p style={{ color: '#34d399', margin: '0.3rem 0' }}><strong>{t('pay.alreadyPaid')}</strong> {formatCurrency(totalPagado)}</p>
                   <hr style={{ margin: '0.5rem 0', border: 'none', borderTop: '1px solid #e2e8f0' }} />
                   {pendingDiscount > 0 && (
-                    <p style={{ color: '#ef4444', fontWeight: 'bold' }}>
+                    <p style={{ color: '#ef4444', fontWeight: 'bold', margin: '0.3rem 0' }}>
                       <AlertCircle size={14} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
                       {t('pay.pendingFines')} -{formatCurrency(pendingDiscount)}
                     </p>
                   )}
-                  <p style={{ color: (restante - pendingDiscount) > 0 ? '#ef4444' : '#34d399', fontSize: '1.1rem' }}>
-                    <strong>{t('pay.netToPay')} {formatCurrency(Math.max(0, restante - pendingDiscount))}</strong>
+                  <p style={{ color: (restanteConIva - pendingDiscount) > 0 ? '#ef4444' : '#34d399', fontSize: '1.1rem', margin: '0.3rem 0' }}>
+                    <strong>
+                      {aplicarIva 
+                        ? (settings.language === 'en' ? 'Net to Pay (with IVA):' : 'A Pagar (Neto con IVA):')
+                        : t('pay.netToPay')}{' '}
+                      {formatCurrency(Math.max(0, restanteConIva - pendingDiscount))}
+                    </strong>
                   </p>
                 </div>
               )}
@@ -353,17 +405,17 @@ export default function Pagos() {
               <input 
                 type="number" 
                 step="0.01" 
-                max={restante} 
+                max={restanteConIva} 
                 required 
                 className="form-input" 
                 value={monto} 
                 onChange={e => setMonto(e.target.value)} 
                 disabled={!selectedOrden}
-                placeholder={restante > 0 ? `${t('pay.suggested')} ${formatCurrency(Math.max(0, restante - pendingDiscount))}` : ''}
+                placeholder={restanteConIva > 0 ? `${t('pay.suggested')} ${formatCurrency(Math.max(0, restanteConIva - pendingDiscount))}` : ''}
               />
             </div>
 
-              <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={!selectedOrden || restante <= 0}>
+              <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={!selectedOrden || restanteConIva <= 0}>
                 {t('pay.register')}
               </button>
             </form>
