@@ -320,13 +320,24 @@ export default function PlanchaModelos({ modelosCamion, fetchModelosCamion, fetc
                               >
                                 {isEn ? 'Verify' : 'Verificar'}
                               </button>
-                              <button 
-                                className="btn" 
-                                style={{ flex: 1, padding: '8px', fontSize: '0.85rem', background: 'rgba(239, 68, 68, 0.15)', color: '#f87171', border: '1px solid rgba(239, 68, 68, 0.3)' }}
-                                onClick={() => handleAbrirDevolucion(m)}
-                              >
-                                {isEn ? 'Return' : 'Devolución'}
-                              </button>
+                              {m.modelo === '723131' ? (
+                                <button 
+                                  className="btn" 
+                                  style={{ flex: 1, padding: '8px', fontSize: '0.85rem', background: 'rgba(255, 255, 255, 0.05)', color: 'var(--text-muted)', border: '1px solid rgba(255, 255, 255, 0.1)', cursor: 'not-allowed' }}
+                                  disabled
+                                  title={isEn ? 'Returns not allowed for this model' : 'No se permiten devoluciones para este modelo'}
+                                >
+                                  {isEn ? 'No Return' : 'Sin Devolución'}
+                                </button>
+                              ) : (
+                                <button 
+                                  className="btn" 
+                                  style={{ flex: 1, padding: '8px', fontSize: '0.85rem', background: 'rgba(239, 68, 68, 0.15)', color: '#f87171', border: '1px solid rgba(239, 68, 68, 0.3)' }}
+                                  onClick={() => handleAbrirDevolucion(m)}
+                                >
+                                  {isEn ? 'Return' : 'Devolución'}
+                                </button>
+                              )}
                             </div>
                           )
                         )}
