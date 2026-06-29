@@ -527,6 +527,18 @@ export default function TallerCorte() {
                         </div>
 
                         <div className="form-group">
+                          <label className="form-label">{isEn ? 'Actual Laid (Tendido)' : 'Piezas Tendidas Reales'}</label>
+                          <input 
+                            type="number" 
+                            required 
+                            className="form-input" 
+                            value={produccion.piezas_tendidas}
+                            disabled={isWeekClosed}
+                            onChange={e => setProduccion({...produccion, piezas_tendidas: parseInt(e.target.value) || 0})}
+                          />
+                        </div>
+
+                        <div className="form-group">
                           <label className="form-label">{isEn ? 'Actual Cut Pieces' : 'Piezas Cortadas Reales'}</label>
                           <input 
                             type="number" 
@@ -547,18 +559,6 @@ export default function TallerCorte() {
                             value={produccion.piezas_foliadas}
                             disabled={isWeekClosed}
                             onChange={e => setProduccion({...produccion, piezas_foliadas: parseInt(e.target.value) || 0})}
-                          />
-                        </div>
-
-                        <div className="form-group">
-                          <label className="form-label">{isEn ? 'Actual Laid (Tendido)' : 'Piezas Tendidas Reales'}</label>
-                          <input 
-                            type="number" 
-                            required 
-                            className="form-input" 
-                            value={produccion.piezas_tendidas}
-                            disabled={isWeekClosed}
-                            onChange={e => setProduccion({...produccion, piezas_tendidas: parseInt(e.target.value) || 0})}
                           />
                         </div>
 
@@ -740,6 +740,52 @@ export default function TallerCorte() {
                         <td style={{ padding: '10px 12px', background: 'rgba(255,255,255,0.02)' }}></td>
                       </tr>
 
+                      {/* TENDIDO REAL */}
+                      <tr style={{ background: 'rgba(245,158,11,0.05)', fontWeight: 'bold' }}>
+                        <td style={{ padding: '10px 12px' }}>{isEn ? 'ACTUAL LAID PIECES' : 'PIEZAS TENDIDAS REALES'}</td>
+                        <td style={{ padding: '10px 12px' }}></td>
+                        {reportData.dias.map(d => {
+                          const val = reportData.produccion[d.fecha]?.piezas_tendidas || 0;
+                          return (
+                            <td key={d.fecha} style={{ padding: '10px 12px', textAlign: 'center' }}>{val || '-'}</td>
+                          );
+                        })}
+                        <td style={{ padding: '10px 12px', textAlign: 'right', color: '#f59e0b' }}>
+                          {reportData.dias.reduce((sum, d) => sum + (reportData.produccion[d.fecha]?.piezas_tendidas || 0), 0)}
+                        </td>
+                      </tr>
+                      <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
+                        <td style={{ padding: '10px 12px', fontWeight: '500' }}>{isEn ? 'Actual Daily Spreading Cost / pc' : 'COSTO TENDIDO DIARIO REAL'}</td>
+                        <td style={{ padding: '10px 12px' }}></td>
+                        {reportData.dias.map(d => {
+                          const payroll = getDiaNominaTotal(d.fecha);
+                          const proj = reportData.produccion[d.fecha]?.piezas_proyectadas || 0;
+                          const real = reportData.produccion[d.fecha]?.piezas_tendidas || 0;
+                          
+                          const projCost = proj > 0 ? (payroll / proj) : 0;
+                          const realCost = real > 0 ? (payroll / real) : 0;
+
+                          let bgColor = 'transparent';
+                          let textColor = 'inherit';
+                          if (realCost > 0) {
+                            if (realCost <= projCost) {
+                              bgColor = 'rgba(16,185,129,0.15)';
+                              textColor = '#10b981';
+                            } else {
+                              bgColor = 'rgba(239,68,68,0.15)';
+                              textColor = '#ef4444';
+                            }
+                          }
+
+                          return (
+                            <td key={d.fecha} style={{ padding: '10px 12px', textAlign: 'center', backgroundColor: bgColor, color: textColor, fontWeight: realCost > 0 ? 'bold' : 'normal' }}>
+                              {realCost > 0 ? `$${realCost.toFixed(2)}` : '-'}
+                            </td>
+                          );
+                        })}
+                        <td style={{ padding: '10px 12px', background: 'rgba(255,255,255,0.02)' }}></td>
+                      </tr>
+
                       {/* CORTE REAL */}
                       <tr style={{ background: 'rgba(14,165,233,0.05)', fontWeight: 'bold' }}>
                         <td style={{ padding: '10px 12px' }}>{isEn ? 'ACTUAL CUT PIECES' : 'PIEZAS CORTADAS REALES'}</td>
@@ -807,52 +853,6 @@ export default function TallerCorte() {
                           const payroll = getDiaNominaTotal(d.fecha);
                           const proj = reportData.produccion[d.fecha]?.piezas_proyectadas || 0;
                           const real = reportData.produccion[d.fecha]?.piezas_foliadas || 0;
-                          
-                          const projCost = proj > 0 ? (payroll / proj) : 0;
-                          const realCost = real > 0 ? (payroll / real) : 0;
-
-                          let bgColor = 'transparent';
-                          let textColor = 'inherit';
-                          if (realCost > 0) {
-                            if (realCost <= projCost) {
-                              bgColor = 'rgba(16,185,129,0.15)';
-                              textColor = '#10b981';
-                            } else {
-                              bgColor = 'rgba(239,68,68,0.15)';
-                              textColor = '#ef4444';
-                            }
-                          }
-
-                          return (
-                            <td key={d.fecha} style={{ padding: '10px 12px', textAlign: 'center', backgroundColor: bgColor, color: textColor, fontWeight: realCost > 0 ? 'bold' : 'normal' }}>
-                              {realCost > 0 ? `$${realCost.toFixed(2)}` : '-'}
-                            </td>
-                          );
-                        })}
-                        <td style={{ padding: '10px 12px', background: 'rgba(255,255,255,0.02)' }}></td>
-                      </tr>
-
-                      {/* TENDIDO REAL */}
-                      <tr style={{ background: 'rgba(245,158,11,0.05)', fontWeight: 'bold' }}>
-                        <td style={{ padding: '10px 12px' }}>{isEn ? 'ACTUAL LAID PIECES' : 'PIEZAS TENDIDAS REALES'}</td>
-                        <td style={{ padding: '10px 12px' }}></td>
-                        {reportData.dias.map(d => {
-                          const val = reportData.produccion[d.fecha]?.piezas_tendidas || 0;
-                          return (
-                            <td key={d.fecha} style={{ padding: '10px 12px', textAlign: 'center' }}>{val || '-'}</td>
-                          );
-                        })}
-                        <td style={{ padding: '10px 12px', textAlign: 'right', color: '#f59e0b' }}>
-                          {reportData.dias.reduce((sum, d) => sum + (reportData.produccion[d.fecha]?.piezas_tendidas || 0), 0)}
-                        </td>
-                      </tr>
-                      <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
-                        <td style={{ padding: '10px 12px', fontWeight: '500' }}>{isEn ? 'Actual Daily Spreading Cost / pc' : 'COSTO TENDIDO DIARIO REAL'}</td>
-                        <td style={{ padding: '10px 12px' }}></td>
-                        {reportData.dias.map(d => {
-                          const payroll = getDiaNominaTotal(d.fecha);
-                          const proj = reportData.produccion[d.fecha]?.piezas_proyectadas || 0;
-                          const real = reportData.produccion[d.fecha]?.piezas_tendidas || 0;
                           
                           const projCost = proj > 0 ? (payroll / proj) : 0;
                           const realCost = real > 0 ? (payroll / real) : 0;
