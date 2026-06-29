@@ -60,6 +60,9 @@ export default function Camion() {
   const { user } = useAuth();
   const isEn = settings?.language === 'en';
   
+  const userRole = (user?.role || user?.rol || '').toString().toLowerCase().trim();
+  const isReadOnly = userRole === 'inventario1';
+  
   // Data State
   const [stock, setStock] = useState([]);
   const [history, setHistory] = useState([]);
@@ -529,8 +532,8 @@ export default function Camion() {
                 return (
                   <div 
                     key={item.id} 
-                    draggable
-                    onDragStart={(e) => handleDragStart(e, item)}
+                    draggable={!isReadOnly}
+                    onDragStart={(e) => !isReadOnly && handleDragStart(e, item)}
                     className="glass-card" 
                     style={{ 
                       padding: '0.75rem', 
@@ -540,11 +543,11 @@ export default function Camion() {
                       background: 'rgba(255, 255, 255, 0.02)', 
                       border: isLoaded ? '1px dashed var(--color-primary)' : '1px solid rgba(255,255,255,0.08)',
                       borderRadius: '8px',
-                      cursor: 'grab',
+                      cursor: isReadOnly ? 'default' : 'grab',
                       transition: 'transform 0.2s, box-shadow 0.2s',
                     }}
-                    onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-                    onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                    onMouseEnter={(e) => !isReadOnly && (e.currentTarget.style.transform = 'translateY(-2px)')}
+                    onMouseLeave={(e) => !isReadOnly && (e.currentTarget.style.transform = 'translateY(0)')}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                       {img ? (
@@ -571,29 +574,33 @@ export default function Camion() {
                         <div style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--text-primary)' }}>{item.piezas}</div>
                         <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>{t('cortes.available') || 'Disponibles'}</div>
                       </div>
-                       <button 
-                        className="btn" 
-                        style={{ 
-                          padding: '0.4rem', 
-                          borderRadius: '6px', 
-                          background: 'rgba(239, 68, 68, 0.1)', 
-                          color: '#ef4444',
-                          border: 'none',
-                          cursor: 'pointer'
-                        }}
-                        onClick={() => handleReturnToProduction(item)}
-                        title={isEn ? 'Return to Production' : 'Devolver a Producción'}
-                      >
-                        <RefreshCw size={16} />
-                      </button>
-                      <button 
-                        className={`btn ${isLoaded ? 'btn-secondary' : 'btn-primary'}`} 
-                        style={{ padding: '0.4rem', borderRadius: '6px' }}
-                        onClick={() => openCargoModal(item)}
-                        title={t('camion.loadBtn') || 'Subir al Camión'}
-                      >
-                        <Plus size={16} />
-                      </button>
+                      {!isReadOnly && (
+                        <button 
+                          className="btn" 
+                          style={{ 
+                            padding: '0.4rem', 
+                            borderRadius: '6px', 
+                            background: 'rgba(239, 68, 68, 0.1)', 
+                            color: '#ef4444',
+                            border: 'none',
+                            cursor: 'pointer'
+                          }}
+                          onClick={() => handleReturnToProduction(item)}
+                          title={isEn ? 'Return to Production' : 'Devolver a Producción'}
+                        >
+                          <RefreshCw size={16} />
+                        </button>
+                      )}
+                      {!isReadOnly && (
+                        <button 
+                          className={`btn ${isLoaded ? 'btn-secondary' : 'btn-primary'}`} 
+                          style={{ padding: '0.4rem', borderRadius: '6px' }}
+                          onClick={() => openCargoModal(item)}
+                          title={t('camion.loadBtn') || 'Subir al Camión'}
+                        >
+                          <Plus size={16} />
+                        </button>
+                      )}
                     </div>
                   </div>
                 );
@@ -604,9 +611,9 @@ export default function Camion() {
 
         {/* Right Side: Virtual Truck cargo list */}
         <div 
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
+          onDragOver={isReadOnly ? undefined : handleDragOver}
+          onDragLeave={isReadOnly ? undefined : handleDragLeave}
+          onDrop={isReadOnly ? undefined : handleDrop}
           className="glass-card" 
           style={{ 
             padding: '1.5rem', 
@@ -674,22 +681,24 @@ export default function Camion() {
                     <span style={{ fontWeight: 700, fontSize: '0.9rem', color: '#c084fc' }}>
                       {item.modelo} ({formatColorsDisplay(item.color)})
                     </span>
-                    <div style={{ display: 'flex', gap: '0.25rem' }}>
-                      <button 
-                        className="btn" 
-                        style={{ padding: '3px 6px', background: 'rgba(255,255,255,0.05)', color: '#a78bfa' }} 
-                        onClick={() => openCargoModal(item, idx)}
-                      >
-                        <Edit3 size={14} />
-                      </button>
-                      <button 
-                        className="btn btn-danger" 
-                        style={{ padding: '3px 6px' }} 
-                        onClick={() => handleRemoveCargo(idx)}
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
+                    {!isReadOnly && (
+                      <div style={{ display: 'flex', gap: '0.25rem' }}>
+                        <button 
+                          className="btn" 
+                          style={{ padding: '3px 6px', background: 'rgba(255,255,255,0.05)', color: '#a78bfa' }} 
+                          onClick={() => openCargoModal(item, idx)}
+                        >
+                          <Edit3 size={14} />
+                        </button>
+                        <button 
+                          className="btn btn-danger" 
+                          style={{ padding: '3px 6px' }} 
+                          onClick={() => handleRemoveCargo(idx)}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    )}
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', width: '100%', flexGrow: 1 }}>
@@ -760,7 +769,8 @@ export default function Camion() {
                   type="date" 
                   value={fechaEnvio} 
                   onChange={e => setFechaEnvio(e.target.value)}
-                  style={{ border: 'none', background: 'transparent', color: 'var(--text-primary)', outline: 'none', fontSize: '0.9rem', width: '100%' }}
+                  disabled={isReadOnly}
+                  style={{ border: 'none', background: 'transparent', color: 'var(--text-primary)', outline: 'none', fontSize: '0.9rem', width: '100%', opacity: isReadOnly ? 0.6 : 1 }}
                 />
               </div>
             </div>
@@ -771,20 +781,27 @@ export default function Camion() {
                 placeholder={t('camion.observations') || 'Chofer, placas...'}
                 value={observaciones} 
                 onChange={e => setObservaciones(e.target.value)}
+                disabled={isReadOnly}
                 className="form-input"
-                style={{ fontSize: '0.9rem', padding: '0.55rem' }}
+                style={{ fontSize: '0.9rem', padding: '0.55rem', opacity: isReadOnly ? 0.6 : 1 }}
               />
             </div>
           </div>
 
-          <button 
-            className="btn btn-primary" 
-            style={{ width: '100%', padding: '0.8rem', fontSize: '1rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', borderRadius: '8px' }}
-            disabled={cargo.length === 0}
-            onClick={handleShipTruck}
-          >
-            <Truck size={20} /> {t('camion.shipBtn')} <ArrowRight size={18} />
-          </button>
+          {!isReadOnly ? (
+            <button 
+              className="btn btn-primary" 
+              style={{ width: '100%', padding: '0.8rem', fontSize: '1rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', borderRadius: '8px' }}
+              disabled={cargo.length === 0}
+              onClick={handleShipTruck}
+            >
+              <Truck size={20} /> {t('camion.shipBtn')} <ArrowRight size={18} />
+            </button>
+          ) : (
+            <div style={{ textAlign: 'center', padding: '0.8rem', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+              🔒 {isEn ? 'Read-only Mode' : 'Modo de Solo Lectura'}
+            </div>
+          )}
         </div>
 
       </div>
