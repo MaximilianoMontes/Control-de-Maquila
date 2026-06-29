@@ -831,8 +831,7 @@ app.get('/api/camiones/borrador', authenticateToken, async (req, res) => {
   }
   try {
     const [rows] = await db.query(
-      "SELECT cargo, observaciones, fecha_envio FROM camion_borrador WHERE user_id = ? OR user_id IS NULL ORDER BY id DESC LIMIT 1",
-      [req.user.id]
+      "SELECT cargo, observaciones, fecha_envio FROM camion_borrador ORDER BY id DESC LIMIT 1"
     );
     if (rows.length > 0) {
       let parsedCargo = [];
@@ -864,12 +863,9 @@ app.post('/api/camiones/borrador', authenticateToken, async (req, res) => {
   const connection = await db.getConnection();
   try {
     await connection.beginTransaction();
-    // Delete any existing draft for this user
-    await connection.query(
-      "DELETE FROM camion_borrador WHERE user_id = ? OR user_id IS NULL",
-      [req.user.id]
-    );
-    // Insert new draft
+    // Delete any existing global draft
+    await connection.query("DELETE FROM camion_borrador");
+    // Insert new global draft
     await connection.query(
       "INSERT INTO camion_borrador (user_id, cargo, observaciones, fecha_envio) VALUES (?, ?, ?, ?)",
       [req.user.id, JSON.stringify(cargo || []), observaciones || '', fecha_envio || '']
@@ -1029,8 +1025,8 @@ app.post('/api/camiones', authenticateToken, async (req, res) => {
       );
     }
 
-    // Clear draft for this user upon checkout success
-    await connection.query("DELETE FROM camion_borrador WHERE user_id = ? OR user_id IS NULL", [req.user.id]);
+    // Clear global draft upon checkout success
+    await connection.query("DELETE FROM camion_borrador");
 
     await connection.commit();
     
