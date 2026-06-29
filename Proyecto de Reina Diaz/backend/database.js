@@ -1655,7 +1655,7 @@ async function initializeDatabase() {
           semana INT NOT NULL,
           cerrada_por INT NOT NULL,
           fecha_cierre TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          FOREIGN KEY(cerrada_por) REFERENCES usuarios(id),
+          FOREIGN KEY(cerrada_por) REFERENCES users(id),
           UNIQUE KEY unique_semana (anio, semana)
         )
       `);
