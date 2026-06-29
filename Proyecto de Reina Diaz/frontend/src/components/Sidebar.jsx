@@ -12,7 +12,8 @@ import {
   Sparkles,
   Truck,
   Home,
-  Calendar
+  Calendar,
+  Layers
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
@@ -35,6 +36,7 @@ export default function Sidebar({ onClose }) {
     { path: '/maquileros', name: t('nav.maquileros'),  icon: <Users size={20} /> },
     { path: '/inventario', name: t('nav.inventario'),  icon: <Package size={20} /> },
     { path: '/cortes',     name: t('nav.cortes'),      icon: <Scissors size={20} /> },
+    { path: '/taller-corte', name: isEn ? 'Cutting Room' : 'Taller de Corte', icon: <Layers size={20} /> },
     { path: '/produccion', name: t('nav.produccion'),  icon: <Factory size={20} /> },
     { path: '/extras',     name: t('nav.extras'),      icon: <Sparkles size={20} /> },
     ...(puedeVerCamion ? [{ path: '/camion', name: t('nav.camion'), icon: <Truck size={20} /> }] : []),

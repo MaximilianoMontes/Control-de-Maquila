@@ -4760,6 +4760,218 @@ app.delete('/api/calendario/:id', authenticateToken, async (req, res) => {
   }
 });
 
+// =========================================================================
+// 10.6 TALLER DE CORTE ENDPOINTS (PRODUCTIVIDAD Y COSTOS)
+// =========================================================================
+
+// 1. Catálogo de Personal de Corte
+app.get('/api/corte/personal', authenticateToken, async (req, res) => {
+  try {
+    const includeInactive = req.query.includeInactive === 'true';
+    let query = "SELECT * FROM corte_personal";
+    if (!includeInactive) {
+      query += " WHERE activo = 1";
+    }
+    query += " ORDER BY nombre ASC";
+    const [rows] = await db.query(query);
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/corte/personal', authenticateToken, async (req, res) => {
+  const { nombre, salario_diario } = req.body;
+  if (!nombre || salario_diario === undefined) {
+    return res.status(400).json({ error: 'Nombre y salario diario son requeridos' });
+  }
+  try {
+    const [result] = await db.query(
+      "INSERT INTO corte_personal (nombre, salario_diario, activo) VALUES (?, ?, 1)",
+      [nombre, salario_diario]
+    );
+    res.status(201).json({ id: result.insertId, nombre, salario_diario, activo: 1 });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.put('/api/corte/personal/:id', authenticateToken, async (req, res) => {
+  const id = req.params.id;
+  const { nombre, salario_diario, activo } = req.body;
+  try {
+    await db.query(
+      "UPDATE corte_personal SET nombre = COALESCE(?, nombre), salario_diario = COALESCE(?, salario_diario), activo = COALESCE(?, activo) WHERE id = ?",
+      [nombre, salario_diario, activo, id]
+    );
+    res.json({ message: 'Personal de corte actualizado' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Auxiliar para obtener el número de semana ISO y el año ISO a partir de una fecha
+function getISOWeekDetails(dateStr) {
+  const date = new Date(dateStr + 'T12:00:00Z');
+  const target = new Date(date.valueOf());
+  const dayNr = (date.getUTCDay() + 6) % 7;
+  target.setUTCDate(target.getUTCDate() - dayNr + 3);
+  const firstThursday = target.valueOf();
+  target.setUTCMonth(0, 1);
+  if (target.getUTCDay() !== 4) {
+    target.setUTCMonth(0, 1 + ((4 - target.getUTCDay() + 7) % 7));
+  }
+  const weekNum = 1 + Math.ceil((firstThursday - target) / 604800000);
+  return {
+    anio: date.getUTCFullYear(),
+    semana: weekNum
+  };
+}
+
+// 2. Asistencia de Personal de Corte
+app.get('/api/corte/asistencia', authenticateToken, async (req, res) => {
+  const { start, end } = req.query;
+  if (!start || !end) {
+    return res.status(400).json({ error: 'Rango de fechas (start y end) es requerido' });
+  }
+  try {
+    const [rows] = await db.query(
+      `SELECT ca.*, cp.nombre 
+       FROM corte_asistencia ca 
+       JOIN corte_personal cp ON ca.personal_id = cp.id 
+       WHERE ca.fecha BETWEEN ? AND ? 
+       ORDER BY ca.fecha ASC, cp.nombre ASC`,
+      [start, end]
+    );
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/corte/asistencia', authenticateToken, async (req, res) => {
+  const { fecha, asistencias } = req.body;
+  if (!fecha || !asistencias || !Array.isArray(asistencias)) {
+    return res.status(400).json({ error: 'Fecha y lista de asistencias son requeridas' });
+  }
+
+  const { anio, semana } = getISOWeekDetails(fecha);
+  try {
+    const [closed] = await db.query("SELECT * FROM corte_semanas_cerradas WHERE anio = ? AND semana = ?", [anio, semana]);
+    if (closed.length > 0) {
+      return res.status(403).json({ error: 'No se puede modificar la asistencia porque la semana correspondiente está cerrada' });
+    }
+
+    const [personal] = await db.query("SELECT id, salario_diario FROM corte_personal");
+    const sueldoMap = {};
+    personal.forEach(p => {
+      sueldoMap[p.id] = p.salario_diario;
+    });
+
+    await db.query("START TRANSACTION");
+    for (const item of asistencias) {
+      const sueldo = sueldoMap[item.personal_id] || 0.00;
+      await db.query(
+        `INSERT INTO corte_asistencia (fecha, personal_id, asistio, salario_guardado) 
+         VALUES (?, ?, ?, ?) 
+         ON DUPLICATE KEY UPDATE asistio = VALUES(asistio), salario_guardado = VALUES(salario_guardado)`,
+        [fecha, item.personal_id, item.asistio ? 1 : 0, sueldo]
+      );
+    }
+    await db.query("COMMIT");
+    res.json({ message: 'Asistencias guardadas exitosamente' });
+  } catch (error) {
+    await db.query("ROLLBACK");
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 3. Producción Diaria de Corte
+app.get('/api/corte/produccion', authenticateToken, async (req, res) => {
+  const { start, end } = req.query;
+  if (!start || !end) {
+    return res.status(400).json({ error: 'Rango de fechas (start y end) es requerido' });
+  }
+  try {
+    const [rows] = await db.query(
+      "SELECT * FROM corte_produccion WHERE fecha BETWEEN ? AND ?",
+      [start, end]
+    );
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/corte/produccion', authenticateToken, async (req, res) => {
+  const { fecha, piezas_proyectadas, piezas_cortadas, piezas_foliadas, piezas_tendidas, piezas_fusionadas } = req.body;
+  if (!fecha) {
+    return res.status(400).json({ error: 'Fecha es requerida' });
+  }
+
+  const { anio, semana } = getISOWeekDetails(fecha);
+  try {
+    const [closed] = await db.query("SELECT * FROM corte_semanas_cerradas WHERE anio = ? AND semana = ?", [anio, semana]);
+    if (closed.length > 0) {
+      return res.status(403).json({ error: 'No se puede modificar la producción porque la semana correspondiente está cerrada' });
+    }
+
+    await db.query(
+      `INSERT INTO corte_produccion (fecha, piezas_proyectadas, piezas_cortadas, piezas_foliadas, piezas_tendidas, piezas_fusionadas) 
+       VALUES (?, ?, ?, ?, ?, ?) 
+       ON DUPLICATE KEY UPDATE 
+         piezas_proyectadas = VALUES(piezas_proyectadas), 
+         piezas_cortadas = VALUES(piezas_cortadas), 
+         piezas_foliadas = VALUES(piezas_foliadas), 
+         piezas_tendidas = VALUES(piezas_tendidas), 
+         piezas_fusionadas = VALUES(piezas_fusionadas)`,
+      [
+        fecha, 
+        piezas_proyectadas || 0, 
+        piezas_cortadas || 0, 
+        piezas_foliadas || 0, 
+        piezas_tendidas || 0, 
+        piezas_fusionadas || 0
+      ]
+    );
+    res.json({ message: 'Producción guardada exitosamente' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 4. Control de Cierre de Semanas
+app.get('/api/corte/semanas/status', authenticateToken, async (req, res) => {
+  const { fecha } = req.query;
+  if (!fecha) {
+    return res.status(400).json({ error: 'Fecha es requerida' });
+  }
+  const { anio, semana } = getISOWeekDetails(fecha);
+  try {
+    const [rows] = await db.query("SELECT * FROM corte_semanas_cerradas WHERE anio = ? AND semana = ?", [anio, semana]);
+    res.json({ cerrada: rows.length > 0, anio, semana });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/corte/semanas/cerrar', authenticateToken, async (req, res) => {
+  const { anio, semana } = req.body;
+  const userId = req.user?.id;
+  if (!anio || !semana) {
+    return res.status(400).json({ error: 'Año y semana son requeridos' });
+  }
+  try {
+    await db.query(
+      "INSERT IGNORE INTO corte_semanas_cerradas (anio, semana, cerrada_por) VALUES (?, ?, ?)",
+      [anio, semana, userId || 1]
+    );
+    res.json({ message: `Semana ${semana} del año ${anio} cerrada con éxito` });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 if (require.main === module) {
   app.listen(PORT, '0.0.0.0', async () => {
     console.log(`Server running on http://0.0.0.0:${PORT}`);
