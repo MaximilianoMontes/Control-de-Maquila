@@ -39,6 +39,7 @@ export default function Produccion() {
   const navigate = useNavigate();
   const userRole = (user?.role || user?.rol || '').toString().toLowerCase().trim();
   const canEdit = userRole === 'admin' || userRole === 'produccion1' || userRole === 'produccion2';
+  const canEditPrice = userRole === 'admin' || userRole === 'inventario1' || userRole === 'inventario';
   const [orders, setOrders] = useState([]);
   const [activeDropdownId, setActiveDropdownId] = useState(null);
   const [maquileros, setMaquileros] = useState([]);
@@ -656,8 +657,44 @@ export default function Produccion() {
                                 </div>
                               )}
                             </div>
+                          ) : canEditPrice ? (
+                            <button 
+                              className="btn btn-secondary" 
+                              style={{ padding: '0.4rem' }} 
+                              onClick={() => { 
+                                setEditingOrder(o); 
+                                setFormData({ 
+                                  maquilero_id: o.maquilero_id, 
+                                  inventario_id: o.inventario_id, 
+                                  fecha_inicio: formatDate(o.fecha_inicio), 
+                                  fecha_fin: formatDate(o.fecha_fin),
+                                  precio_unitario: o.precio_unitario || ''
+                                }); 
+                                setIsEditModalOpen(true); 
+                              }} 
+                              title={isEn ? 'Edit Maquila Price' : 'Editar Precio de Maquila'}
+                            >
+                              <Pencil size={16} />
+                            </button>
                           ) : (
-                            <button className="btn btn-secondary" style={{ padding: '0.4rem' }} onClick={() => { setEditingOrder(o); setIsEditModalOpen(true); }} title="Ver Detalle"><Search size={16} /></button>
+                            <button 
+                              className="btn btn-secondary" 
+                              style={{ padding: '0.4rem' }} 
+                              onClick={() => { 
+                                setEditingOrder(o); 
+                                setFormData({ 
+                                  maquilero_id: o.maquilero_id, 
+                                  inventario_id: o.inventario_id, 
+                                  fecha_inicio: formatDate(o.fecha_inicio), 
+                                  fecha_fin: formatDate(o.fecha_fin),
+                                  precio_unitario: o.precio_unitario || ''
+                                }); 
+                                setIsEditModalOpen(true); 
+                              }} 
+                              title="Ver Detalle"
+                            >
+                              <Search size={16} />
+                            </button>
                           )}
                         </div>
                       </td>
@@ -756,12 +793,12 @@ export default function Produccion() {
                     className="form-input" 
                     value={formData.precio_unitario} 
                     onChange={e => setFormData({...formData, precio_unitario: e.target.value})}
-                    disabled={!canEdit}
+                    disabled={!canEditPrice}
                   />
                 </div>
               )}
 
-              {canEdit && (
+              {(canEdit || canEditPrice) && (
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1.5rem' }}>
                   <button type="button" className="btn btn-secondary" onClick={() => { setIsModalOpen(false); setIsEditModalOpen(false); }}>{t('prod.modalCancel')}</button>
                   <button type="submit" className="btn btn-primary">{isEditModalOpen ? t('prod.modalUpdate') : t('prod.modalCreate')}</button>
