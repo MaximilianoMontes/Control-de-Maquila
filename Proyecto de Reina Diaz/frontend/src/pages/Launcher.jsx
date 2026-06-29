@@ -55,13 +55,33 @@ const PlanchaIcon = () => (
   </svg>
 );
 
+const CorteIcon = () => (
+  <svg width="86" height="86" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="gradCorte" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#f97316" />
+        <stop offset="100%" stopColor="#ef4444" />
+      </linearGradient>
+      <filter id="shadowCorte" x="-10%" y="-10%" width="120%" height="120%">
+        <feDropShadow dx="0" dy="4" stdDeviation="4" floodOpacity="0.15" />
+      </filter>
+    </defs>
+    <rect width="64" height="64" rx="20" fill="url(#gradCorte)" filter="url(#shadowCorte)" />
+    <path d="M16 22H48V42H16V22Z" fill="white" fillOpacity="0.2" />
+    <path d="M22 34C24.2091 34 26 32.2091 26 30C26 27.7909 24.2091 26 22 26C19.7909 26 18 27.7909 18 30C18 32.2091 19.7909 34 22 34Z" stroke="white" strokeWidth="3" />
+    <path d="M22 42C24.2091 42 26 40.2091 26 38C26 35.7909 24.2091 34 22 34C19.7909 34 18 35.7909 18 38C18 40.2091 19.7909 42 22 42Z" stroke="white" strokeWidth="3" />
+    <path d="M25.5 32L46 22" stroke="white" strokeWidth="3" strokeLinecap="round" />
+    <path d="M25.5 36L46 42" stroke="white" strokeWidth="3" strokeLinecap="round" />
+  </svg>
+);
+
 export default function Launcher() {
   const { user, logout } = useAuth();
   const { settings, updateSetting } = useSettings();
   const navigate = useNavigate();
   
   const [upcomingEvents, setUpcomingEvents] = useState(0);
-  const [appsOrder, setAppsOrder] = useState(['maquila', 'plancha']);
+  const [appsOrder, setAppsOrder] = useState(['maquila', 'plancha', 'corte']);
   const [draggedApp, setDraggedApp] = useState(null);
   const isDraggingRef = useRef(false);
 
@@ -138,6 +158,7 @@ export default function Launcher() {
     company: "Maquila Reina Diaz (Colima)",
     maquila: "Maquila ERP",
     plancha: "Pressing Module",
+    corte: "Cutting Room",
     soon: "Coming soon",
     logout: "Log Out",
     theme: "Toggle Theme"
