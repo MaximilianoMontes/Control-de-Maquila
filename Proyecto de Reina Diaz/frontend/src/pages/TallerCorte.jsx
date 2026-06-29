@@ -28,7 +28,7 @@ export default function TallerCorte() {
   const [fechaRegistro, setFechaRegistro] = useState(new Date().toISOString().split('T')[0]);
   const [asistencias, setAsistencias] = useState({}); // { personal_id: true/false }
   const [produccion, setProduccion] = useState({
-    piezas_proyectadas: 360,
+    piezas_proyectadas: 0,
     piezas_cortadas: 0,
     piezas_foliadas: 0,
     piezas_tendidas: 0,
@@ -117,7 +117,7 @@ export default function TallerCorte() {
         setProduccion(resProd.data[0]);
       } else {
         setProduccion({
-          piezas_proyectadas: 360,
+          piezas_proyectadas: 0,
           piezas_cortadas: 0,
           piezas_foliadas: 0,
           piezas_tendidas: 0,
@@ -513,9 +513,11 @@ export default function TallerCorte() {
                         <Scissors size={18} color="#10b981" /> {isEn ? 'Daily Production (Pieces)' : 'Producción Física del Día (Piezas)'}
                       </h3>
 
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.2rem' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
                         <div className="form-group">
-                          <label className="form-label">{isEn ? 'Projected Pieces (Goal)' : 'Piezas Proyectadas (Meta)'}</label>
+                          <label className="form-label" style={{ fontWeight: 'bold', color: '#38bdf8' }}>
+                            {isEn ? 'Meta: Projected Pieces (Goal)' : 'Meta: Piezas Proyectadas'}
+                          </label>
                           <input 
                             type="number" 
                             required 
@@ -527,7 +529,9 @@ export default function TallerCorte() {
                         </div>
 
                         <div className="form-group">
-                          <label className="form-label">{isEn ? 'Actual Laid (Tendido)' : 'Piezas Tendidas Reales'}</label>
+                          <label className="form-label">
+                            {isEn ? 'Step 1: Actual Laid (Tendido)' : '1. Piezas Tendidas Reales (Tendido)'}
+                          </label>
                           <input 
                             type="number" 
                             required 
@@ -539,7 +543,9 @@ export default function TallerCorte() {
                         </div>
 
                         <div className="form-group">
-                          <label className="form-label">{isEn ? 'Actual Cut Pieces' : 'Piezas Cortadas Reales'}</label>
+                          <label className="form-label">
+                            {isEn ? 'Step 2: Actual Cut Pieces' : '2. Piezas Cortadas Reales (Corte)'}
+                          </label>
                           <input 
                             type="number" 
                             required 
@@ -551,7 +557,9 @@ export default function TallerCorte() {
                         </div>
 
                         <div className="form-group">
-                          <label className="form-label">{isEn ? 'Actual Numbered (Foliado)' : 'Piezas Foliadas Reales'}</label>
+                          <label className="form-label">
+                            {isEn ? 'Step 3: Actual Numbered (Foliado)' : '3. Piezas Foliadas Reales (Foliado)'}
+                          </label>
                           <input 
                             type="number" 
                             required 
@@ -563,7 +571,9 @@ export default function TallerCorte() {
                         </div>
 
                         <div className="form-group">
-                          <label className="form-label">{isEn ? 'Actual Fused (Fusionado)' : 'Piezas Fusionadas Reales'}</label>
+                          <label className="form-label">
+                            {isEn ? 'Step 4: Actual Fused (Fusionado)' : '4. Piezas Fusionadas Reales (Fusionado)'}
+                          </label>
                           <input 
                             type="number" 
                             required 
