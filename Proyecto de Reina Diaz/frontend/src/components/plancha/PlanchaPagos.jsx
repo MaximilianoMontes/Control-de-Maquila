@@ -837,28 +837,7 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
                 onChange={e => setReportEnd(e.target.value)}
               />
             </div>
-            <div className="form-group">
-              <label className="form-label">{isEn ? 'Ironer (Optional)' : 'Planchador (Opcional)'}</label>
-              <SearchableSelect
-                options={[
-                  { id: "", nombre: isEn ? '-- All Ironers --' : '-- Todos los Planchadores --' },
-                  ...planchadores
-                ]}
-                value={reportPlanchadorId}
-                onChange={setReportPlanchadorId}
-                placeholder={isEn ? '-- All Ironers --' : '-- Todos los Planchadores --'}
-                labelKey="nombre"
-                valueKey="id"
-              />
-            </div>
-            <button
-              type="button"
-              className="btn btn-primary"
-              style={{ width: '100%', marginTop: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-              onClick={handleDownloadReporte}
-            >
-              <Download size={16} /> {isEn ? 'Download Report (PDF)' : 'Descargar Reporte (PDF)'}
-            </button>
+
             <button
               type="button"
               className="btn btn-secondary"
