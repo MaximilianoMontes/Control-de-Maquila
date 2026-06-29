@@ -183,13 +183,13 @@ export default function TallerCorte() {
       const mondayStr = getMondayOfDate(fechaFiltro);
       const mondayDate = new Date(mondayStr + 'T12:00:00Z');
       
-      // Construir los 7 días de la semana (Lunes a Domingo)
+      // Construir los 5 días de la semana laboral (Lunes a Viernes)
       const dias = [];
       const labels = isEn 
-        ? ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-        : ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+        ? ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+        : ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
 
-      for (let i = 0; i < 7; i++) {
+      for (let i = 0; i < 5; i++) {
         const current = new Date(mondayDate.getTime());
         current.setUTCDate(mondayDate.getUTCDate() + i);
         const fStr = current.toISOString().split('T')[0];
@@ -201,7 +201,7 @@ export default function TallerCorte() {
       }
 
       const start = dias[0].fecha;
-      const end = dias[6].fecha;
+      const end = dias[dias.length - 1].fecha;
 
       // Obtener asistencias del rango
       const resAsist = await axios.get(`${API}/api/corte/asistencia?start=${start}&end=${end}`, { headers });
@@ -625,7 +625,7 @@ export default function TallerCorte() {
                   </div>
 
                   <div style={{ marginLeft: '1rem', padding: '6px 12px', background: 'rgba(255,255,255,0.05)', borderRadius: '6px', fontSize: '0.9rem' }}>
-                    <strong>{isEn ? 'Period:' : 'Período:'}</strong> {reportData.dias[0]?.fechaShort} {isEn ? 'to' : 'al'} {reportData.dias[6]?.fechaShort}
+                    <strong>{isEn ? 'Period:' : 'Período:'}</strong> {reportData.dias[0]?.fechaShort} {isEn ? 'to' : 'al'} {reportData.dias[reportData.dias.length - 1]?.fechaShort}
                   </div>
 
                   <div className="d-flex align-items-center gap-3" style={{ marginLeft: 'auto' }}>
