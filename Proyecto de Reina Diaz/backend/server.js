@@ -4202,16 +4202,19 @@ app.get('/api/reportes/plancha/pagos', async (req, res) => {
 
 // 10.5 REPORTE RESUMEN GENERAL DE PLANCHADORES EN PDF
 app.get('/api/reportes/plancha/resumen', async (req, res) => {
-  const { start, end } = req.query;
+  const { start, end, planchadorId } = req.query;
   const lang = req.query.lang || 'es';
   const tLabel = (esText, enText) => lang === 'en' ? enText : esText;
   try {
     // Obtener planchadores activos
     const [allPlanchadores] = await db.query("SELECT id, nombre FROM planchadores WHERE activo = 1 ORDER BY nombre ASC");
-    const planchadores = allPlanchadores.filter(p => 
+    let planchadores = allPlanchadores.filter(p => 
       !p.nombre.toLowerCase().includes('olga') && 
       !p.nombre.toLowerCase().includes('luis')
     );
+    if (planchadorId) {
+      planchadores = planchadores.filter(p => p.id === parseInt(planchadorId));
+    }
     
     let subtitleDate = "";
     if (start && end) {

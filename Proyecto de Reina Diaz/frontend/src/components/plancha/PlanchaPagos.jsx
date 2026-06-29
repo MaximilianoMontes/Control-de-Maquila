@@ -26,8 +26,8 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
 
   const isSystemDark = settings.theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches;
   const isAnyDark = [
-    'dark', 'ocean', 'nature', 'sunset', 'lavender', 'cherry', 'midnight', 'dim', 'miku', 'teto', 'limbus', 'ruina', 'minecraft', 
-    'geometry', 'fallout', 'tf2', 'cyberpunk', 'backrooms', 'terraria', 'castle', 'starwars', 'cod3', 'subnautica', 'cuphead', 
+    'dark', 'ocean', 'nature', 'sunset', 'lavender', 'cherry', 'midnight', 'dim', 'miku', 'teto', 'limbus', 'ruina', 'minecraft',
+    'geometry', 'fallout', 'tf2', 'cyberpunk', 'backrooms', 'terraria', 'castle', 'starwars', 'cod3', 'subnautica', 'cuphead',
     'undertale', 'lobotomy', 'papers', 'plague', 'pvz'
   ].includes(settings.theme) || isSystemDark;
 
@@ -1006,9 +1006,9 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
                       const isFilterActive = !!(fechaInicioFiltro && fechaFinFiltro);
 
                       return (
-                        <tr 
-                          key={t.id} 
-                          style={{ 
+                        <tr
+                          key={t.id}
+                          style={{
                             opacity: isWithinRange ? 1 : 0.45,
                             background: isWithinRange && isFilterActive ? 'rgba(52, 211, 153, 0.04)' : 'transparent',
                             transition: 'all 0.2s ease'
