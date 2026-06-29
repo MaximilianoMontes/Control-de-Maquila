@@ -4812,7 +4812,9 @@ app.put('/api/corte/personal/:id', authenticateToken, async (req, res) => {
 
 // Auxiliar para obtener el número de semana ISO y el año ISO a partir de una fecha
 function getISOWeekDetails(dateStr) {
-  const date = new Date(dateStr + 'T12:00:00Z');
+  if (!dateStr) return { anio: NaN, semana: NaN };
+  const cleanDateStr = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
+  const date = new Date(cleanDateStr + 'T12:00:00Z');
   const target = new Date(date.valueOf());
   const dayNr = (date.getUTCDay() + 6) % 7;
   target.setUTCDate(target.getUTCDate() - dayNr + 3);

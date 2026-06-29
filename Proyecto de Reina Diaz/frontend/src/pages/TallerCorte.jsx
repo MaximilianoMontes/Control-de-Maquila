@@ -152,7 +152,11 @@ export default function TallerCorte() {
       // 2. Guardar Producción
       await axios.post(`${API}/api/corte/produccion`, {
         fecha: fechaRegistro,
-        ...produccion
+        piezas_proyectadas: Number(produccion.piezas_proyectadas) || 0,
+        piezas_cortadas: Number(produccion.piezas_cortadas) || 0,
+        piezas_foliadas: Number(produccion.piezas_foliadas) || 0,
+        piezas_tendidas: Number(produccion.piezas_tendidas) || 0,
+        piezas_fusionadas: Number(produccion.piezas_fusionadas) || 0
       }, { headers });
 
       toast.success(isEn ? 'Daily record saved successfully' : 'Registro diario guardado con éxito', { theme: 'dark' });
@@ -203,8 +207,9 @@ export default function TallerCorte() {
       const resAsist = await axios.get(`${API}/api/corte/asistencia?start=${start}&end=${end}`, { headers });
       const asistMap = {}; // { fecha: { personal_id: { asistio, salario_guardado } } }
       resAsist.data.forEach(a => {
-        if (!asistMap[a.fecha]) asistMap[a.fecha] = {};
-        asistMap[a.fecha][a.personal_id] = {
+        const cleanFecha = typeof a.fecha === 'string' ? a.fecha.split('T')[0] : new Date(a.fecha).toISOString().split('T')[0];
+        if (!asistMap[cleanFecha]) asistMap[cleanFecha] = {};
+        asistMap[cleanFecha][a.personal_id] = {
           asistio: a.asistio === 1,
           salario_guardado: Number(a.salario_guardado)
         };
@@ -214,7 +219,8 @@ export default function TallerCorte() {
       const resProd = await axios.get(`${API}/api/corte/produccion?start=${start}&end=${end}`, { headers });
       const prodMap = {}; // { fecha: { piezas_... } }
       resProd.data.forEach(p => {
-        prodMap[p.fecha] = p;
+        const cleanFecha = typeof p.fecha === 'string' ? p.fecha.split('T')[0] : new Date(p.fecha).toISOString().split('T')[0];
+        prodMap[cleanFecha] = p;
       });
 
       // Chequear si la semana está cerrada
