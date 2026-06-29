@@ -701,7 +701,7 @@ app.delete('/api/inventario_real/:id', authenticateToken, async (req, res) => {
 
 // APIs Camiones
 app.get('/api/camiones', authenticateToken, async (req, res) => {
-  const allowedRoles = ['admin', 'produccion1', 'produccion2'];
+  const allowedRoles = ['admin', 'produccion1', 'produccion2', 'produccion', 'inventario1'];
   if (!allowedRoles.includes(req.user.role)) {
     return res.status(403).json({ error: 'No autorizado para esta sección' });
   }
@@ -745,7 +745,7 @@ app.get('/api/camiones', authenticateToken, async (req, res) => {
 });
 
 app.get('/api/camiones/disponibles', authenticateToken, async (req, res) => {
-  const allowedRoles = ['admin', 'produccion1', 'produccion2'];
+  const allowedRoles = ['admin', 'produccion1', 'produccion2', 'produccion', 'inventario1'];
   if (!allowedRoles.includes(req.user.role)) {
     return res.status(403).json({ error: 'No autorizado para esta sección' });
   }
@@ -825,7 +825,7 @@ app.get('/api/camiones/disponibles', authenticateToken, async (req, res) => {
 
 // GET TRUCK LOAD DRAFT
 app.get('/api/camiones/borrador', authenticateToken, async (req, res) => {
-  const allowedRoles = ['admin', 'produccion1', 'produccion2'];
+  const allowedRoles = ['admin', 'produccion1', 'produccion2', 'produccion', 'inventario1'];
   if (!allowedRoles.includes(req.user.role)) {
     return res.status(403).json({ error: 'No autorizado para esta sección' });
   }
