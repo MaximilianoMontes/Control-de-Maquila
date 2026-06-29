@@ -99,7 +99,14 @@ export default function Launcher() {
       try {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          setAppsOrder(parsed);
+          const allKeys = ['maquila', 'plancha', 'corte'];
+          const merged = [...parsed];
+          allKeys.forEach(k => {
+            if (!merged.includes(k)) {
+              merged.push(k);
+            }
+          });
+          setAppsOrder(merged);
         }
       } catch(e) {}
     }
