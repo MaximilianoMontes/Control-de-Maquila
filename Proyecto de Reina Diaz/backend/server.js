@@ -1255,7 +1255,7 @@ app.post('/api/produccion', authenticateToken, async (req, res) => {
 });
 
 app.put('/api/produccion/:id', authenticateToken, async (req, res) => {
-  const { maquilero_id, inventario_id, fecha_inicio, fecha_fin, estado, precio_total, cantidad, cantidad_recibida, retrasos, ajuste_tipo, ajuste_porcentaje, precio_extra, observaciones } = req.body;
+  const { maquilero_id, inventario_id, fecha_inicio, fecha_fin, estado, precio_total, cantidad, cantidad_recibida, retrasos, ajuste_tipo, ajuste_porcentaje, precio_extra, observaciones, precio_unitario } = req.body;
   try {
     const [olds] = await db.query(`
       SELECT p.*, i.precio as unit_price, i.modelo as inv_m, m.nombre as maq_n
@@ -1300,10 +1300,22 @@ app.put('/api/produccion/:id', authenticateToken, async (req, res) => {
     const currentCant = dbCantidadRecibida;
     const effectiveCant = (currentCant !== null && currentCant !== undefined) ? currentCant : (cantidad !== undefined ? cantidad : old.cantidad);
     
-    const curPrecioExtra = precio_extra !== undefined ? precio_extra : old.precio_extra;
+    let dbPrecioExtra = old.precio_extra;
+    if (old.es_extra === 1) {
+      if (precio_unitario !== undefined) {
+        dbPrecioExtra = parseFloat(precio_unitario) || 0;
+      } else if (precio_extra !== undefined) {
+        dbPrecioExtra = parseFloat(precio_extra) || 0;
+      }
+    } else {
+      if (precio_unitario !== undefined && old.inventario_id) {
+        await db.query("UPDATE inventario SET precio = ? WHERE id = ?", [parseFloat(precio_unitario) || 0, old.inventario_id]);
+      }
+    }
+
     const up = old.es_extra === 1
-      ? (curPrecioExtra !== null ? parseFloat(curPrecioExtra) : 0)
-      : (old.unit_price || (old.precio_total / old.cantidad) || 0);
+      ? (dbPrecioExtra !== null ? parseFloat(dbPrecioExtra) : 0)
+      : (precio_unitario !== undefined ? parseFloat(precio_unitario) : (old.unit_price || (old.precio_total / old.cantidad) || 0));
     
     let subtotal = effectiveCant * up;
     
@@ -1345,7 +1357,7 @@ app.put('/api/produccion/:id', authenticateToken, async (req, res) => {
       ajuste_porcentaje = ?,
       ajuste_monto = ?,
       fecha_terminado = ?,
-      precio_extra = COALESCE(?, precio_extra),
+      precio_extra = ?,
       observaciones = ?
       WHERE id = ?
     `, [
@@ -1362,7 +1374,7 @@ app.put('/api/produccion/:id', authenticateToken, async (req, res) => {
       curAjustePorc, 
       adjustmentAmount,
       finalFechaTerminado,
-      precio_extra !== undefined ? precio_extra : null,
+      dbPrecioExtra,
       observaciones !== undefined ? observaciones : old.observaciones,
       req.params.id
     ]);

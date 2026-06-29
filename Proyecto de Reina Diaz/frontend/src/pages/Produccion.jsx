@@ -79,7 +79,7 @@ export default function Produccion() {
   const [selectedImage, setSelectedImage] = useState(null);
   const [activeTab, setActiveTab] = useState('proceso'); // 'proceso' o 'terminado'
   
-  const [formData, setFormData] = useState({ maquilero_id: '', inventario_id: '', fecha_inicio: '', fecha_fin: '' });
+  const [formData, setFormData] = useState({ maquilero_id: '', inventario_id: '', fecha_inicio: '', fecha_fin: '', precio_unitario: '' });
   const [editingOrder, setEditingOrder] = useState(null);
 
   useEffect(() => {
@@ -151,7 +151,7 @@ export default function Produccion() {
     try {
       await axios.post(`${API}/api/produccion`, { ...formData, cantidad: cantidadFinal, precio_total: total });
       setIsModalOpen(false);
-      setFormData({ maquilero_id: '', inventario_id: '', fecha_inicio: '', fecha_fin: '' });
+      setFormData({ maquilero_id: '', inventario_id: '', fecha_inicio: '', fecha_fin: '', precio_unitario: '' });
       toast.success("Orden creada con éxito", { theme: 'dark' });
       fetchOrders();
     } catch (e) { 
@@ -643,7 +643,8 @@ export default function Produccion() {
                                       maquilero_id: o.maquilero_id, 
                                       inventario_id: o.inventario_id, 
                                       fecha_inicio: formatDate(o.fecha_inicio), 
-                                      fecha_fin: formatDate(o.fecha_fin) 
+                                      fecha_fin: formatDate(o.fecha_fin),
+                                      precio_unitario: o.precio_unitario || ''
                                     }); 
                                     setIsEditModalOpen(true); 
                                   }}>
@@ -743,6 +744,22 @@ export default function Produccion() {
                   />
                 </div>
               </div>
+
+              {isEditModalOpen && (
+                <div className="form-group">
+                  <label className="form-label">{isEn ? 'Maquila Price per Piece ($)' : 'Precio de Maquila por Prenda ($)'}</label>
+                  <input 
+                    type="number" 
+                    step="0.01"
+                    min="0"
+                    required 
+                    className="form-input" 
+                    value={formData.precio_unitario} 
+                    onChange={e => setFormData({...formData, precio_unitario: e.target.value})}
+                    disabled={!canEdit}
+                  />
+                </div>
+              )}
 
               {canEdit && (
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1.5rem' }}>
