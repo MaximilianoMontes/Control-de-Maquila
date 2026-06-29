@@ -173,6 +173,7 @@ export default function Launcher() {
     company: "Maquila Reina Diaz (Colima)",
     maquila: "Maquila ERP",
     plancha: "Módulo de Plancha",
+    corte: "Taller de Corte",
     soon: "Próximamente",
     logout: "Cerrar Sesión",
     theme: "Cambiar Tema"
@@ -180,7 +181,8 @@ export default function Launcher() {
 
   const availableApps = {
     maquila: { id: 'maquila', name: text.maquila, to: '/dashboard', Icon: MaquilaIcon, visible: userRole !== 'plancha' },
-    plancha: { id: 'plancha', name: text.plancha, to: '/plancha', Icon: PlanchaIcon, visible: true }
+    plancha: { id: 'plancha', name: text.plancha, to: '/plancha', Icon: PlanchaIcon, visible: true },
+    corte: { id: 'corte', name: text.corte, to: '/taller-corte', Icon: CorteIcon, visible: userRole !== 'plancha' }
   };
 
   const renderedApps = appsOrder
