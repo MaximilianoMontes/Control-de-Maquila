@@ -20,6 +20,7 @@ import Historial from './pages/Historial';
 import Ayuda from './pages/Ayuda';
 import Calendario from './pages/Calendario';
 import Camion from './pages/Camion';
+import TallerCorte from './pages/TallerCorte';
 import KillFeed from './components/KillFeed';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -102,6 +103,7 @@ function App() {
         <Route path="/maquileros" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2', 'produccion', 'inventario1']}><MainLayout><Maquileros /></MainLayout></ProtectedRoute>} />
         <Route path="/inventario" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2', 'produccion', 'inventario1']}><MainLayout><Inventario /></MainLayout></ProtectedRoute>} />
         <Route path="/cortes" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2', 'produccion', 'inventario1']}><MainLayout><Cortes /></MainLayout></ProtectedRoute>} />
+        <Route path="/taller-corte" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2', 'produccion', 'inventario1']}><MainLayout><TallerCorte /></MainLayout></ProtectedRoute>} />
         <Route path="/produccion" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2', 'produccion', 'inventario1']}><MainLayout><Produccion /></MainLayout></ProtectedRoute>} />
         <Route path="/extras" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2', 'produccion', 'inventario1']}><MainLayout><Extras /></MainLayout></ProtectedRoute>} />
         <Route path="/camion" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2', 'produccion']}><MainLayout><Camion /></MainLayout></ProtectedRoute>} />

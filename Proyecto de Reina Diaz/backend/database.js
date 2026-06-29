@@ -1601,6 +1601,70 @@ async function initializeDatabase() {
     }
 
     try {
+      await connection.query(`
+        CREATE TABLE IF NOT EXISTS corte_personal (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          nombre VARCHAR(255) NOT NULL,
+          salario_diario DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+          activo TINYINT(1) DEFAULT 1
+        )
+      `);
+      console.log('Tabla corte_personal lista.');
+    } catch (e) {
+      console.error('Error creating corte_personal:', e);
+    }
+
+    try {
+      await connection.query(`
+        CREATE TABLE IF NOT EXISTS corte_asistencia (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          fecha DATE NOT NULL,
+          personal_id INT NOT NULL,
+          asistio TINYINT(1) DEFAULT 0,
+          salario_guardado DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+          FOREIGN KEY(personal_id) REFERENCES corte_personal(id),
+          UNIQUE KEY unique_asistencia (fecha, personal_id)
+        )
+      `);
+      console.log('Tabla corte_asistencia lista.');
+    } catch (e) {
+      console.error('Error creating corte_asistencia:', e);
+    }
+
+    try {
+      await connection.query(`
+        CREATE TABLE IF NOT EXISTS corte_produccion (
+          fecha DATE PRIMARY KEY,
+          piezas_proyectadas INT NOT NULL DEFAULT 0,
+          piezas_cortadas INT NOT NULL DEFAULT 0,
+          piezas_foliadas INT NOT NULL DEFAULT 0,
+          piezas_tendidas INT NOT NULL DEFAULT 0,
+          piezas_fusionadas INT NOT NULL DEFAULT 0
+        )
+      `);
+      console.log('Tabla corte_produccion lista.');
+    } catch (e) {
+      console.error('Error creating corte_produccion:', e);
+    }
+
+    try {
+      await connection.query(`
+        CREATE TABLE IF NOT EXISTS corte_semanas_cerradas (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          anio INT NOT NULL,
+          semana INT NOT NULL,
+          cerrada_por INT NOT NULL,
+          fecha_cierre TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY(cerrada_por) REFERENCES usuarios(id),
+          UNIQUE KEY unique_semana (anio, semana)
+        )
+      `);
+      console.log('Tabla corte_semanas_cerradas lista.');
+    } catch (e) {
+      console.error('Error creating corte_semanas_cerradas:', e);
+    }
+
+    try {
       const fs = require('fs');
       const path = require('path');
       const uploadsDir = path.join(__dirname, 'uploads');
