@@ -4232,18 +4232,20 @@ app.get('/api/reportes/plancha/resumen', async (req, res) => {
 
     for (const planchador of planchadores) {
       // ── Step 1: Find payments that belong to this report range ──────────────
-      // Only use fecha_desde. Fallbacks via fecha_hasta cause old payments (with NULL
-      // fecha_desde but fecha_hasta = end-of-month) to bleed works into this period.
-      let payQuery = `SELECT id, monto FROM planchador_pagos WHERE planchador_id = ? AND fecha_desde IS NOT NULL`;
+      // We match payments by their coverage end date (fecha_hasta) falling within
+      // the report range. This ensures that any payment ending in this period
+      // (like Maria's payment which ends June 30 but started June 10 due to no prior date)
+      // is correctly matched. Old payments with NULL fecha_hasta are excluded.
+      let payQuery = `SELECT id, monto FROM planchador_pagos WHERE planchador_id = ? AND fecha_hasta IS NOT NULL`;
       let payParams = [planchador.id];
       if (start && end) {
-        payQuery += ` AND DATE(fecha_desde) >= ? AND DATE(fecha_desde) <= ?`;
+        payQuery += ` AND DATE(fecha_hasta) >= ? AND DATE(fecha_hasta) <= ?`;
         payParams.push(start, end);
       } else if (start) {
-        payQuery += ` AND DATE(fecha_desde) >= ?`;
+        payQuery += ` AND DATE(fecha_hasta) >= ?`;
         payParams.push(start);
       } else if (end) {
-        payQuery += ` AND DATE(fecha_desde) <= ?`;
+        payQuery += ` AND DATE(fecha_hasta) <= ?`;
         payParams.push(end);
       }
       const [payments] = await db.query(payQuery, payParams);
