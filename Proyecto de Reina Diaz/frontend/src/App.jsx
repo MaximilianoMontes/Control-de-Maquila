@@ -22,6 +22,7 @@ import Calendario from './pages/Calendario';
 import Camion from './pages/Camion';
 import TallerCorte from './pages/TallerCorte';
 import KillFeed from './components/KillFeed';
+import ThemeEffects from './components/ThemeEffects';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { motion } from 'framer-motion';
@@ -96,6 +97,7 @@ function App() {
 
   return (
     <>
+      <ThemeEffects />
       <Routes>
         <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
         <Route path="/" element={<ProtectedRoute><Launcher /></ProtectedRoute>} />
