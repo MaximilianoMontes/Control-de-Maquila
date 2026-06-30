@@ -981,7 +981,7 @@ export const SettingsProvider = ({ children }) => {
 
       const isSystemDark = settings.theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches;
       const isAnyDark = [
-        'dark', 'ocean', 'nature', 'sunset', 'lavender', 'cherry', 'midnight', 'dim', 'miku', 'teto', 'limbus', 'ruina', 'minecraft', 
+        'dark', 'ocean', 'nature', 'sunset', 'lavender', 'cherry', 'midnight', 'dim', 'miku', 'teto', 'ror2', 'limbus', 'ruina', 'minecraft', 
         'geometry', 'fallout', 'tf2', 'cyberpunk', 'backrooms', 'terraria', 'castle', 'starwars', 'cod3', 'subnautica', 'cuphead', 
         'undertale', 'lobotomy', 'papers', 'plague', 'pvz'
       ].includes(settings.theme) || isSystemDark;
@@ -991,7 +991,7 @@ export const SettingsProvider = ({ children }) => {
       }
       
       if ([
-        'ocean', 'nature', 'sunset', 'lavender', 'cherry', 'midnight', 'dim', 'miku', 'teto', 'limbus', 'ruina', 'minecraft', 
+        'ocean', 'nature', 'sunset', 'lavender', 'cherry', 'midnight', 'dim', 'miku', 'teto', 'ror2', 'limbus', 'ruina', 'minecraft', 
         'geometry', 'fallout', 'tf2', 'cyberpunk', 'backrooms', 'terraria', 'castle', 'starwars', 'cod3', 'subnautica', 'cuphead', 
         'ddlc', 'undertale', 'lobotomy', 'papers', 'plague', 'pvz'
       ].includes(settings.theme)) {
