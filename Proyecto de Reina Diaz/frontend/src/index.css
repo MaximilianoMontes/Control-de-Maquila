@@ -2641,6 +2641,131 @@ body.theme-teto textarea:focus {
 }
 
 
+/* Tema Risk of Rain 2 🌧️ (Estilo Planeta Alienígena / Sobreviviente / Ciencia Ficción Oscura) */
+body.theme-ror2 {
+  --bg-dark: #05060a;
+  --bg-card: #0a0e17;
+  --bg-input: #101625;
+  --text-primary: #f0f4f8;
+  --text-secondary: #ff8c00; /* Commando Orange */
+  --border-color: rgba(255, 140, 0, 0.25);
+  --glass-border: 1px solid rgba(255, 140, 0, 0.15);
+  --glass-shadow: 0 4px 25px 0 rgba(0, 0, 0, 0.6);
+  --bg-hover: rgba(255, 140, 0, 0.08);
+  --bg-th: rgba(255, 140, 0, 0.12);
+  --header-bg: rgba(10, 14, 23, 0.85);
+  --row-normal-bg: rgba(255, 140, 0, 0.06);
+  --row-normal-hover: rgba(255, 140, 0, 0.12);
+  --row-warning-bg: rgba(0, 210, 255, 0.08);
+  --row-warning-hover: rgba(0, 210, 255, 0.15);
+  --row-danger-bg: rgba(157, 0, 255, 0.12);
+  --row-danger-hover: rgba(157, 0, 255, 0.20);
+  --badge-bono-bg: rgba(255, 140, 0, 0.2);
+  --badge-bono-text: #ff8c00;
+  --badge-desc-bg: rgba(0, 210, 255, 0.2);
+  --badge-desc-text: #00d2ff;
+  
+  /* Primary and danger accents overrides */
+  --primary-color: #ff8c00; /* Commando Orange */
+  --primary-hover: #e07b00;
+  --primary-shadow: rgba(255, 140, 0, 0.4);
+  --danger-color: #ff3d5a;
+  --danger-hover: #e02442;
+  --success-color: #00d2ff; /* Teleporter Blue */
+
+  /* Background glows - alien planet style */
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(255, 140, 0, 0.15) 0px, transparent 55%),
+    radial-gradient(at 100% 0%, rgba(0, 210, 255, 0.15) 0px, transparent 55%),
+    radial-gradient(at 50% 100%, rgba(157, 0, 255, 0.1) 0px, transparent 55%) !important;
+}
+
+body.theme-ror2 h1,
+body.theme-ror2 h2,
+body.theme-ror2 h3,
+body.theme-ror2 h4,
+body.theme-ror2 h5,
+body.theme-ror2 h6,
+body.theme-ror2 .logo-text,
+body.theme-ror2 .kpi-value {
+  font-weight: 800 !important;
+  letter-spacing: 1px !important;
+  text-transform: uppercase !important;
+  text-shadow: 0 0 10px rgba(255, 140, 0, 0.5) !important;
+  color: #f0f4f8 !important;
+}
+
+body.theme-ror2 .glass-card,
+body.theme-ror2 .modal-content,
+body.theme-ror2 .card,
+body.theme-ror2 .settings-modal-card,
+body.theme-ror2 .header-dropdown,
+body.theme-ror2 .notifications-dropdown,
+body.theme-ror2 .help-dropdown,
+body.theme-ror2 .sidebar,
+body.theme-ror2 .plancha-sidebar,
+body.theme-ror2 aside {
+  border-radius: 8px !important; /* Cybernetic industrial panels */
+  border: 2px solid rgba(255, 140, 0, 0.35) !important;
+  background: rgba(10, 14, 23, 0.95) !important;
+  box-shadow: 0 0 25px rgba(0, 0, 0, 0.75), inset 0 0 15px rgba(255, 140, 0, 0.05) !important;
+}
+
+body.theme-ror2 .btn,
+body.theme-ror2 button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
+  border-radius: 4px !important; /* Sharp industrial design */
+  border: 2px solid #ff8c00 !important;
+  background: transparent !important;
+  color: #ff8c00 !important;
+  font-weight: 700 !important;
+  letter-spacing: 1px !important;
+  text-transform: uppercase !important;
+  box-shadow: 0 0 8px rgba(255, 140, 0, 0.2) !important;
+  transition: all 0.25s ease !important;
+}
+
+body.theme-ror2 .btn:hover,
+body.theme-ror2 button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
+  background: #ff8c00 !important;
+  color: #05060a !important;
+  box-shadow: 0 0 15px #ff8c00, 0 0 25px rgba(255, 140, 0, 0.3) !important;
+  transform: scale(1.02) !important;
+}
+
+body.theme-ror2 .form-input,
+body.theme-ror2 input:not([type="checkbox"]):not([type="radio"]),
+body.theme-ror2 select,
+body.theme-ror2 textarea {
+  border-radius: 4px !important;
+  border: 1px solid rgba(255, 140, 0, 0.3) !important;
+  background: rgba(16, 22, 37, 0.9) !important;
+  color: #f0f4f8 !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4) !important;
+  transition: all 0.2s ease !important;
+}
+
+body.theme-ror2 .form-input:focus,
+body.theme-ror2 input:focus,
+body.theme-ror2 select:focus,
+body.theme-ror2 textarea:focus {
+  border-color: #00d2ff !important;
+  box-shadow: 0 0 10px rgba(0, 210, 255, 0.5), inset 0 2px 4px rgba(0, 0, 0, 0.4) !important;
+  outline: none !important;
+}
+
+body.theme-ror2 .main-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, #55ff55, #ffff55, #ffaa00, #ff5555, #aa0000);
+  background-size: 200% 100%;
+  animation: ror2-difficulty-sweep 15s linear infinite;
+}
+
+
 /* Tema Limbus Company 🚂 (Estilo Gótico Industrial / Relojería / Steampunk Brass) */
 body.theme-limbus {
   --bg-dark: #0d0c0b;
