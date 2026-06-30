@@ -4231,59 +4231,73 @@ app.get('/api/reportes/plancha/resumen', async (req, res) => {
     const rowsData = [];
 
     for (const planchador of planchadores) {
-      // Step 1: Find all payment IDs that belong to this report range (by fecha_desde).
-      // A payment belongs to this report if its fecha_desde falls within the selected range.
-      // This is the core isolation: once a payment is registered, its works are "sealed"
-      // under that pago_id and only appear in reports that include that payment.
+      // ── Step 1: Find payments that belong to this report range ──────────────
+      // Primary key: fecha_desde in range.
+      // Fallback for old/NULL fecha_desde: fecha_hasta in range.
       let payQuery = `SELECT id, monto FROM planchador_pagos WHERE planchador_id = ?`;
       let payParams = [planchador.id];
       if (start && end) {
-        payQuery += ` AND DATE(fecha_desde) BETWEEN ? AND ?`;
-        payParams.push(start, end);
+        payQuery += ` AND (
+          DATE(fecha_desde) BETWEEN ? AND ?
+          OR (fecha_desde IS NULL AND DATE(fecha_hasta) BETWEEN ? AND ?)
+          OR (fecha_desde IS NULL AND fecha_hasta IS NULL AND DATE(fecha) BETWEEN ? AND ?)
+        )`;
+        payParams.push(start, end, start, end, start, end);
       } else if (start) {
-        payQuery += ` AND DATE(fecha_desde) >= ?`;
-        payParams.push(start);
+        payQuery += ` AND (
+          DATE(fecha_desde) >= ?
+          OR (fecha_desde IS NULL AND DATE(fecha_hasta) >= ?)
+          OR (fecha_desde IS NULL AND fecha_hasta IS NULL AND DATE(fecha) >= ?)
+        )`;
+        payParams.push(start, start, start);
       } else if (end) {
-        payQuery += ` AND DATE(fecha_desde) <= ?`;
-        payParams.push(end);
+        payQuery += ` AND (
+          DATE(fecha_desde) <= ?
+          OR (fecha_desde IS NULL AND DATE(fecha_hasta) <= ?)
+          OR (fecha_desde IS NULL AND fecha_hasta IS NULL AND DATE(fecha) <= ?)
+        )`;
+        payParams.push(end, end, end);
       }
       const [payments] = await db.query(payQuery, payParams);
       const pagadoTotal = payments.reduce((sum, p) => sum + (Number(p.monto) || 0), 0);
       const paymentIdsInRange = payments.map(p => p.id);
 
-      // Step 2: Get works.
-      // Include a work if:
-      //   (a) It is linked to a payment that belongs to this report (pago_id IN paymentIdsInRange), OR
-      //   (b) It has no payment yet (pago_id IS NULL) and its fecha_terminado is within the date range.
-      // This ensures works from a prior payment order are NEVER mixed into a new report.
-      let worksQuery = `
-        SELECT talla, color, total, piezas
-        FROM plancha_trabajos
-        WHERE planchador_id = ? AND estado = 'terminado' AND (burro_numero IS NULL OR burro_numero < 11)
-        AND (
-      `;
-      let worksParams = [planchador.id];
-
+      // ── Step 2: Get works ────────────────────────────────────────────────────
+      // Rule: If a payment exists for this range → show ONLY works tagged to it.
+      //        New unpaid works done after the payment are EXCLUDED (they belong to the next payment).
+      //       If NO payment exists yet → show unpaid works in range (preview mode).
+      let worksQuery, worksParams;
       if (paymentIdsInRange.length > 0) {
-        worksQuery += `pago_id IN (${paymentIdsInRange.map(() => '?').join(',')})`;
-        worksParams.push(...paymentIdsInRange);
-        worksQuery += ` OR `;
+        // Payment found: ONLY tagged works
+        worksQuery = `
+          SELECT talla, color, total, piezas
+          FROM plancha_trabajos
+          WHERE planchador_id = ? AND estado = 'terminado'
+            AND (burro_numero IS NULL OR burro_numero < 11)
+            AND pago_id IN (${paymentIdsInRange.map(() => '?').join(',')})
+        `;
+        worksParams = [planchador.id, ...paymentIdsInRange];
+      } else {
+        // No payment yet: show unpaid works within range (preview)
+        worksQuery = `
+          SELECT talla, color, total, piezas
+          FROM plancha_trabajos
+          WHERE planchador_id = ? AND estado = 'terminado'
+            AND (burro_numero IS NULL OR burro_numero < 11)
+            AND pago_id IS NULL
+        `;
+        worksParams = [planchador.id];
+        if (start && end) {
+          worksQuery += ` AND DATE(fecha_terminado) BETWEEN ? AND ?`;
+          worksParams.push(start, end);
+        } else if (start) {
+          worksQuery += ` AND DATE(fecha_terminado) >= ?`;
+          worksParams.push(start);
+        } else if (end) {
+          worksQuery += ` AND DATE(fecha_terminado) <= ?`;
+          worksParams.push(end);
+        }
       }
-
-      // Unpaid works within the date range
-      worksQuery += `(pago_id IS NULL`;
-      if (start && end) {
-        worksQuery += ` AND DATE(fecha_terminado) BETWEEN ? AND ?`;
-        worksParams.push(start, end);
-      } else if (start) {
-        worksQuery += ` AND DATE(fecha_terminado) >= ?`;
-        worksParams.push(start);
-      } else if (end) {
-        worksQuery += ` AND DATE(fecha_terminado) <= ?`;
-        worksParams.push(end);
-      }
-      worksQuery += `))`; // close pago_id IS NULL condition and the outer AND (
-
       const [works] = await db.query(worksQuery, worksParams);
 
       let regularWork = 0;
@@ -4306,40 +4320,37 @@ app.get('/api/reportes/plancha/resumen', async (req, res) => {
         }
       }
 
-      // Step 3: Get asistencias using the same pago_id isolation logic.
-      let astQuery = `
-        SELECT monto FROM planchador_asistencias WHERE planchador_id = ?
-        AND (
-      `;
-      let astParams = [planchador.id];
-
+      // ── Step 3: Get asistencias ─────────────────────────────────────────────
+      // Same rule: if payment found → only tagged asistencias; else unpaid in range.
+      let astQuery, astParams;
       if (paymentIdsInRange.length > 0) {
-        astQuery += `pago_id IN (${paymentIdsInRange.map(() => '?').join(',')})`;
-        astParams.push(...paymentIdsInRange);
-        astQuery += ` OR `;
+        astQuery = `
+          SELECT monto FROM planchador_asistencias
+          WHERE planchador_id = ?
+            AND pago_id IN (${paymentIdsInRange.map(() => '?').join(',')})
+        `;
+        astParams = [planchador.id, ...paymentIdsInRange];
+      } else {
+        astQuery = `SELECT monto FROM planchador_asistencias WHERE planchador_id = ? AND pago_id IS NULL`;
+        astParams = [planchador.id];
+        if (start && end) {
+          astQuery += ` AND DATE(fecha) BETWEEN ? AND ?`;
+          astParams.push(start, end);
+        } else if (start) {
+          astQuery += ` AND DATE(fecha) >= ?`;
+          astParams.push(start);
+        } else if (end) {
+          astQuery += ` AND DATE(fecha) <= ?`;
+          astParams.push(end);
+        }
       }
-
-      astQuery += `(pago_id IS NULL`;
-      if (start && end) {
-        astQuery += ` AND DATE(fecha) BETWEEN ? AND ?`;
-        astParams.push(start, end);
-      } else if (start) {
-        astQuery += ` AND DATE(fecha) >= ?`;
-        astParams.push(start);
-      } else if (end) {
-        astQuery += ` AND DATE(fecha) <= ?`;
-        astParams.push(end);
-      }
-      astQuery += `))`; // close pago_id IS NULL and outer AND (
-
       const [asistencias] = await db.query(astQuery, astParams);
 
-      // Step 4: Calculate the $500 quincenal attendance bonus.
-      // The bonus applies once per fortnight (1-15 or 16-end of month).
-      // If a PRIOR payment (with fecha_desde BEFORE this report's start) already covered
-      // this fortnight, do not add the $500 again.
+      // ── Step 4: $500 quincenal attendance bonus ──────────────────────────────
+      // The bonus is always included UNLESS a PRIOR payment (fecha_desde < report start)
+      // already covered this same fortnight.
       let baseBonus = 500;
-      if (end) {
+      if (end && start) {
         const endDate = new Date(end + 'T12:00:00');
         const endDay = endDate.getDate();
         const endMonth = endDate.getMonth();
@@ -4352,22 +4363,24 @@ app.get('/api/reportes/plancha/resumen', async (req, res) => {
           : new Date(endYear, endMonth + 1, 0, 23, 59, 59);
 
         const [allPaymentsForBonus] = await db.query(
-          'SELECT fecha_desde, fecha_hasta FROM planchador_pagos WHERE planchador_id = ? AND fecha_hasta IS NOT NULL',
+          'SELECT fecha_desde, fecha_hasta FROM planchador_pagos WHERE planchador_id = ? AND (fecha_hasta IS NOT NULL OR fecha_desde IS NOT NULL)',
           [planchador.id]
         );
-        // Only suppress bonus if a *prior* payment (fecha_desde < our report start) covers this fortnight
-        if (start) {
-          const priorPaidThisFortnight = allPaymentsForBonus.some(pp => {
-            const pTo = new Date(pp.fecha_hasta + 'T12:00:00');
-            const pFrom = pp.fecha_desde ? new Date(pp.fecha_desde + 'T12:00:00') : null;
-            const startDate = new Date(start + 'T12:00:00');
-            return pTo >= fnStart && pTo <= fnEnd && pFrom && pFrom < startDate;
-          });
-          if (priorPaidThisFortnight) baseBonus = 0;
-        }
+        const startDate = new Date(start + 'T12:00:00');
+        const priorPaidThisFortnight = allPaymentsForBonus.some(pp => {
+          // Use fecha_hasta as the "end of coverage" indicator
+          const pHasta = pp.fecha_hasta ? new Date(pp.fecha_hasta + 'T12:00:00') : null;
+          const pDesde = pp.fecha_desde ? new Date(pp.fecha_desde + 'T12:00:00') : null;
+          if (!pHasta) return false;
+          const coversThisFortnight = pHasta >= fnStart && pHasta <= fnEnd;
+          // A "prior" payment is one that started strictly before our report's start
+          const isPrior = pDesde ? pDesde < startDate : pHasta < startDate;
+          return coversThisFortnight && isPrior;
+        });
+        if (priorPaidThisFortnight) baseBonus = 0;
       }
 
-      // Absences (faltas) are stored as negative values (e.g., -50.00) and reduce the bonus.
+      // Faltas (absences) are negative values (e.g. -50.00) and reduce the bonus.
       const asistenciasTotal = baseBonus + asistencias.reduce((sum, a) => sum + (Number(a.monto) || 0), 0);
 
       const ganadoTotal = regularWork + asistenciasTotal + pagoFijo + cuadreDif;
