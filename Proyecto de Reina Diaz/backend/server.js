@@ -4232,35 +4232,24 @@ app.get('/api/reportes/plancha/resumen', async (req, res) => {
 
     for (const planchador of planchadores) {
       // ── Step 1: Find payments that belong to this report range ──────────────
-      // Primary key: fecha_desde in range.
-      // Fallback for old/NULL fecha_desde: fecha_hasta in range.
-      let payQuery = `SELECT id, monto FROM planchador_pagos WHERE planchador_id = ?`;
+      // Only use fecha_desde. Fallbacks via fecha_hasta cause old payments (with NULL
+      // fecha_desde but fecha_hasta = end-of-month) to bleed works into this period.
+      let payQuery = `SELECT id, monto FROM planchador_pagos WHERE planchador_id = ? AND fecha_desde IS NOT NULL`;
       let payParams = [planchador.id];
       if (start && end) {
-        payQuery += ` AND (
-          DATE(fecha_desde) BETWEEN ? AND ?
-          OR (fecha_desde IS NULL AND DATE(fecha_hasta) BETWEEN ? AND ?)
-          OR (fecha_desde IS NULL AND fecha_hasta IS NULL AND DATE(fecha) BETWEEN ? AND ?)
-        )`;
-        payParams.push(start, end, start, end, start, end);
+        payQuery += ` AND DATE(fecha_desde) >= ? AND DATE(fecha_desde) <= ?`;
+        payParams.push(start, end);
       } else if (start) {
-        payQuery += ` AND (
-          DATE(fecha_desde) >= ?
-          OR (fecha_desde IS NULL AND DATE(fecha_hasta) >= ?)
-          OR (fecha_desde IS NULL AND fecha_hasta IS NULL AND DATE(fecha) >= ?)
-        )`;
-        payParams.push(start, start, start);
+        payQuery += ` AND DATE(fecha_desde) >= ?`;
+        payParams.push(start);
       } else if (end) {
-        payQuery += ` AND (
-          DATE(fecha_desde) <= ?
-          OR (fecha_desde IS NULL AND DATE(fecha_hasta) <= ?)
-          OR (fecha_desde IS NULL AND fecha_hasta IS NULL AND DATE(fecha) <= ?)
-        )`;
-        payParams.push(end, end, end);
+        payQuery += ` AND DATE(fecha_desde) <= ?`;
+        payParams.push(end);
       }
       const [payments] = await db.query(payQuery, payParams);
       const pagadoTotal = payments.reduce((sum, p) => sum + (Number(p.monto) || 0), 0);
       const paymentIdsInRange = payments.map(p => p.id);
+
 
       // ── Step 2: Get works ────────────────────────────────────────────────────
       // Rule: If a payment exists for this range → show ONLY works tagged to it.
