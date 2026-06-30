@@ -1307,6 +1307,11 @@ app.put('/api/produccion/:id', authenticateToken, async (req, res) => {
       if (precio_unitario !== undefined && old.inventario_id) {
         await db.query("UPDATE inventario SET precio = ? WHERE id = ?", [parseFloat(precio_unitario) || 0, old.inventario_id]);
       }
+      if (cantidad !== undefined && old.inventario_id) {
+        await db.query("UPDATE inventario SET piezas_en_proceso = ? WHERE id = ?", [parseInt(cantidad) || 0, old.inventario_id]);
+        await db.query("UPDATE inventario_real SET piezas = ? WHERE no_orden = ? AND modelo = ?", [parseInt(cantidad) || 0, old.no_orden || '', old.inv_m || '']);
+        await syncPhysicalInventory();
+      }
     }
 
     const up = old.es_extra === 1

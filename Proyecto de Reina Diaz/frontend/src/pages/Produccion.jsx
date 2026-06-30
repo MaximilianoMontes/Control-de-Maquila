@@ -80,7 +80,7 @@ export default function Produccion() {
   const [selectedImage, setSelectedImage] = useState(null);
   const [activeTab, setActiveTab] = useState('proceso'); // 'proceso' o 'terminado'
   
-  const [formData, setFormData] = useState({ maquilero_id: '', inventario_id: '', fecha_inicio: '', fecha_fin: '', precio_unitario: '' });
+  const [formData, setFormData] = useState({ maquilero_id: '', inventario_id: '', fecha_inicio: '', fecha_fin: '', precio_unitario: '', cantidad: '' });
   const [editingOrder, setEditingOrder] = useState(null);
 
   useEffect(() => {
@@ -152,7 +152,7 @@ export default function Produccion() {
     try {
       await axios.post(`${API}/api/produccion`, { ...formData, cantidad: cantidadFinal, precio_total: total });
       setIsModalOpen(false);
-      setFormData({ maquilero_id: '', inventario_id: '', fecha_inicio: '', fecha_fin: '', precio_unitario: '' });
+      setFormData({ maquilero_id: '', inventario_id: '', fecha_inicio: '', fecha_fin: '', precio_unitario: '', cantidad: '' });
       toast.success("Orden creada con éxito", { theme: 'dark' });
       fetchOrders();
     } catch (e) { 
@@ -645,7 +645,8 @@ export default function Produccion() {
                                       inventario_id: o.inventario_id, 
                                       fecha_inicio: formatDate(o.fecha_inicio), 
                                       fecha_fin: formatDate(o.fecha_fin),
-                                      precio_unitario: o.precio_unitario || ''
+                                      precio_unitario: o.precio_unitario || '',
+                                      cantidad: o.cantidad || ''
                                     }); 
                                     setIsEditModalOpen(true); 
                                   }}>
@@ -668,7 +669,8 @@ export default function Produccion() {
                                   inventario_id: o.inventario_id, 
                                   fecha_inicio: formatDate(o.fecha_inicio), 
                                   fecha_fin: formatDate(o.fecha_fin),
-                                  precio_unitario: o.precio_unitario || ''
+                                  precio_unitario: o.precio_unitario || '',
+                                  cantidad: o.cantidad || ''
                                 }); 
                                 setIsEditModalOpen(true); 
                               }} 
@@ -687,7 +689,8 @@ export default function Produccion() {
                                   inventario_id: o.inventario_id, 
                                   fecha_inicio: formatDate(o.fecha_inicio), 
                                   fecha_fin: formatDate(o.fecha_fin),
-                                  precio_unitario: o.precio_unitario || ''
+                                  precio_unitario: o.precio_unitario || '',
+                                  cantidad: o.cantidad || ''
                                 }); 
                                 setIsEditModalOpen(true); 
                               }} 
@@ -793,6 +796,21 @@ export default function Produccion() {
                     className="form-input" 
                     value={formData.precio_unitario} 
                     onChange={e => setFormData({...formData, precio_unitario: e.target.value})}
+                    disabled={!canEditPrice}
+                  />
+                </div>
+              )}
+
+              {isEditModalOpen && (
+                <div className="form-group">
+                  <label className="form-label">{isEn ? 'Total Pieces' : 'Total de Piezas'}</label>
+                  <input 
+                    type="number" 
+                    min="1"
+                    required 
+                    className="form-input" 
+                    value={formData.cantidad} 
+                    onChange={e => setFormData({...formData, cantidad: e.target.value})}
                     disabled={!canEditPrice}
                   />
                 </div>
