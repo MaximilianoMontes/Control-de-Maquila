@@ -4249,16 +4249,6 @@ app.get('/api/reportes/plancha/resumen', async (req, res) => {
         worksParams.push(end);
       }
       
-      if (start) {
-        worksQuery += `
-          AND (pago_id IS NULL OR pago_id NOT IN (
-            SELECT id FROM planchador_pagos 
-            WHERE planchador_id = ? AND fecha_desde IS NOT NULL AND DATE(fecha_desde) < DATE_SUB(?, INTERVAL 5 DAY)
-          ))
-        `;
-        worksParams.push(planchador.id, start);
-      }
-      
       const [works] = await db.query(worksQuery, worksParams);
 
       let regularWork = 0;
@@ -4295,16 +4285,6 @@ app.get('/api/reportes/plancha/resumen', async (req, res) => {
       } else if (end) {
         astQuery += ` AND DATE(fecha) <= ?`;
         astParams.push(end);
-      }
-      
-      if (start) {
-        astQuery += `
-          AND (pago_id IS NULL OR pago_id NOT IN (
-            SELECT id FROM planchador_pagos 
-            WHERE planchador_id = ? AND fecha_desde IS NOT NULL AND DATE(fecha_desde) < DATE_SUB(?, INTERVAL 5 DAY)
-          ))
-        `;
-        astParams.push(planchador.id, start);
       }
       
       const [asistencias] = await db.query(astQuery, astParams);
@@ -4436,11 +4416,6 @@ app.get('/api/reportes/plancha/resumen', async (req, res) => {
           planchador.id, 
           planchador.id
         );
-      }
-      
-      if (start) {
-        payQuery += ` AND (pp.fecha_desde IS NULL OR DATE(pp.fecha_desde) >= DATE_SUB(?, INTERVAL 5 DAY))`;
-        payParams.push(start);
       }
       
       const [payments] = await db.query(payQuery, payParams);
