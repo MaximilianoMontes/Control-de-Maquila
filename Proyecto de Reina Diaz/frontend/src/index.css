@@ -6969,4 +6969,71 @@ body.theme-pvz .launcher-app-name {
   100% { transform: translateY(-10vh) translateX(20px); opacity: 0; }
 }
 
+/* 19. Vocaloid & UTAU Floating Musical Notes (Miku & Teto) */
+@keyframes fall-note {
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.85;
+  }
+  90% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: translateY(115vh);
+    opacity: 0;
+  }
+}
+
+@keyframes rotate-note {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Hatsune Miku Note Color Sweep (Teal/Cyan, Magenta/Pink, Neon Green) */
+@keyframes miku-note-color-sweep {
+  0% {
+    color: #39c5bb;
+    filter: drop-shadow(0 0 10px rgba(57, 197, 187, 0.95));
+  }
+  33% {
+    color: #ff2e7a;
+    filter: drop-shadow(0 0 10px rgba(255, 46, 122, 0.95));
+  }
+  66% {
+    color: #39ff14;
+    filter: drop-shadow(0 0 10px rgba(57, 255, 20, 0.95));
+  }
+  100% {
+    color: #39c5bb;
+    filter: drop-shadow(0 0 10px rgba(57, 197, 187, 0.95));
+  }
+}
+
+/* Kasane Teto Note Color Sweep (Red/Strawberry, Orange/Yellow, Warm Pink) */
+@keyframes teto-note-color-sweep {
+  0% {
+    color: #ff3d5a;
+    filter: drop-shadow(0 0 10px rgba(255, 61, 90, 0.95));
+  }
+  33% {
+    color: #ffb800;
+    filter: drop-shadow(0 0 10px rgba(255, 184, 0, 0.95));
+  }
+  66% {
+    color: #ff778c;
+    filter: drop-shadow(0 0 10px rgba(255, 119, 140, 0.95));
+  }
+  100% {
+    color: #ff3d5a;
+    filter: drop-shadow(0 0 10px rgba(255, 61, 90, 0.95));
+  }
+}
+
 
