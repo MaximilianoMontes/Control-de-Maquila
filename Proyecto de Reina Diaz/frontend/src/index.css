@@ -7161,4 +7161,37 @@ body.theme-pvz .launcher-app-name {
   }
 }
 
+/* 20. Risk of Rain 2 Theme Animations */
+@keyframes fall-rain {
+  0% {
+    transform: translateY(0) rotate(12deg);
+  }
+  100% {
+    transform: translateY(110vh) rotate(12deg);
+  }
+}
+
+@keyframes rise-spark {
+  0% {
+    transform: translateY(0) translateX(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.8;
+  }
+  90% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(-110vh) translateX(30px);
+    opacity: 0;
+  }
+}
+
+@keyframes ror2-difficulty-sweep {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
 
