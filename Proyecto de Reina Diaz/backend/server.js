@@ -4288,136 +4288,72 @@ app.get('/api/reportes/plancha/resumen', async (req, res) => {
       }
       
       const [asistencias] = await db.query(astQuery, astParams);
-      // The base attendance bonus is $500. Absences (faltas) are stored as negative values (e.g., -50.00), which will correctly reduce it.
-      const asistenciasTotal = 500 + asistencias.reduce((sum, a) => sum + (Number(a.monto) || 0), 0);
 
-      // 3. Get payments (covering payments linked to works/asistencias in the range, or unlinked payments registered in the range)
+      // Check if the $500 quincenal bonus was already paid in the same fortnight as this report.
+      // Fortnight A = days 1-15, Fortnight B = days 16-end of month.
+      // If a payment already has fecha_hasta within the same fortnight as the report's end date,
+      // the bonus was already paid — set base to $0 to avoid duplication.
+      let baseBonus = 500;
+      if (end) {
+        const endDate = new Date(end + 'T12:00:00');
+        const endDay = endDate.getDate();
+        const endMonth = endDate.getMonth();
+        const endYear = endDate.getFullYear();
+        // Fortnight boundaries for the end date's month
+        const fnStart = endDay <= 15
+          ? new Date(endYear, endMonth, 1)
+          : new Date(endYear, endMonth, 16);
+        const fnEnd = endDay <= 15
+          ? new Date(endYear, endMonth, 15, 23, 59, 59)
+          : new Date(endYear, endMonth + 1, 0, 23, 59, 59);
+
+        // Fetch all payments for this planchador to check the fortnight
+        const [prevPayments] = await db.query(
+          'SELECT fecha_hasta FROM planchador_pagos WHERE planchador_id = ? AND fecha_hasta IS NOT NULL',
+          [planchador.id]
+        );
+        const alreadyPaidFortnight = prevPayments.some(pp => {
+          const pTo = new Date(pp.fecha_hasta + 'T12:00:00');
+          return pTo >= fnStart && pTo <= fnEnd;
+        });
+        // If the report range itself ends inside this fortnight AND a prior payment
+        // already covers this fortnight, the bonus is already paid.
+        // But only suppress it if that payment started BEFORE our report start (i.e. it's a different payment).
+        if (alreadyPaidFortnight && start) {
+          const alreadyPaidByPriorClose = prevPayments.some(pp => {
+            const pTo = new Date(pp.fecha_hasta + 'T12:00:00');
+            const pFrom = pp.fecha_desde ? new Date(pp.fecha_desde + 'T12:00:00') : null;
+            const startDate = new Date(start + 'T12:00:00');
+            return pTo >= fnStart && pTo <= fnEnd && pFrom && pFrom < startDate;
+          });
+          if (alreadyPaidByPriorClose) baseBonus = 0;
+        }
+      }
+
+      // Absences (faltas) are stored as negative values (e.g., -50.00), which correctly reduce the bonus.
+      const asistenciasTotal = baseBonus + asistencias.reduce((sum, a) => sum + (Number(a.monto) || 0), 0);
+
+      // 3. Get payments that belong to this report period.
+      // A payment belongs to this period if its fecha_desde >= report start.
+      // This ensures payments from a prior same-day close are NOT counted in a new report.
       let payQuery = `
-        SELECT DISTINCT pp.id, pp.monto 
-        FROM planchador_pagos pp
-        WHERE pp.planchador_id = ?
+        SELECT id, monto 
+        FROM planchador_pagos
+        WHERE planchador_id = ?
       `;
       let payParams = [planchador.id];
-      
+
       if (start && end) {
-        payQuery += `
-          AND (
-            pp.id IN (
-              SELECT DISTINCT pago_id 
-              FROM plancha_trabajos 
-              WHERE planchador_id = ? 
-                AND pago_id IS NOT NULL 
-                AND DATE(fecha_terminado) BETWEEN ? AND ?
-            )
-            OR pp.id IN (
-              SELECT DISTINCT pago_id 
-              FROM planchador_asistencias 
-              WHERE planchador_id = ? 
-                AND pago_id IS NOT NULL 
-                AND DATE(fecha) BETWEEN ? AND ?
-            )
-            OR (
-              DATE(pp.fecha) BETWEEN ? AND ?
-              AND pp.id NOT IN (
-                SELECT DISTINCT pago_id 
-                FROM plancha_trabajos 
-                WHERE planchador_id = ? AND pago_id IS NOT NULL
-              )
-              AND pp.id NOT IN (
-                SELECT DISTINCT pago_id 
-                FROM planchador_asistencias 
-                WHERE planchador_id = ? AND pago_id IS NOT NULL
-              )
-            )
-          )
-        `;
-        payParams.push(
-          planchador.id, start, end, 
-          planchador.id, start, end, 
-          start, end, 
-          planchador.id, 
-          planchador.id
-        );
+        payQuery += ` AND DATE(fecha_desde) BETWEEN ? AND ?`;
+        payParams.push(start, end);
       } else if (start) {
-        payQuery += `
-          AND (
-            pp.id IN (
-              SELECT DISTINCT pago_id 
-              FROM plancha_trabajos 
-              WHERE planchador_id = ? 
-                AND pago_id IS NOT NULL 
-                AND DATE(fecha_terminado) >= ?
-            )
-            OR pp.id IN (
-              SELECT DISTINCT pago_id 
-              FROM planchador_asistencias 
-              WHERE planchador_id = ? 
-                AND pago_id IS NOT NULL 
-                AND DATE(fecha) >= ?
-            )
-            OR (
-              DATE(pp.fecha) >= ?
-              AND pp.id NOT IN (
-                SELECT DISTINCT pago_id 
-                FROM plancha_trabajos 
-                WHERE planchador_id = ? AND pago_id IS NOT NULL
-              )
-              AND pp.id NOT IN (
-                SELECT DISTINCT pago_id 
-                FROM planchador_asistencias 
-                WHERE planchador_id = ? AND pago_id IS NOT NULL
-              )
-            )
-          )
-        `;
-        payParams.push(
-          planchador.id, start, 
-          planchador.id, start, 
-          start, 
-          planchador.id, 
-          planchador.id
-        );
+        payQuery += ` AND DATE(fecha_desde) >= ?`;
+        payParams.push(start);
       } else if (end) {
-        payQuery += `
-          AND (
-            pp.id IN (
-              SELECT DISTINCT pago_id 
-              FROM plancha_trabajos 
-              WHERE planchador_id = ? 
-                AND pago_id IS NOT NULL 
-                AND DATE(fecha_terminado) <= ?
-            )
-            OR pp.id IN (
-              SELECT DISTINCT pago_id 
-              FROM planchador_asistencias 
-              WHERE planchador_id = ? 
-                AND pago_id IS NOT NULL 
-                AND DATE(fecha) <= ?
-            )
-            OR (
-              DATE(pp.fecha) <= ?
-              AND pp.id NOT IN (
-                SELECT DISTINCT pago_id 
-                FROM plancha_trabajos 
-                WHERE planchador_id = ? AND pago_id IS NOT NULL
-              )
-              AND pp.id NOT IN (
-                SELECT DISTINCT pago_id 
-                FROM planchador_asistencias 
-                WHERE planchador_id = ? AND pago_id IS NOT NULL
-              )
-            )
-          )
-        `;
-        payParams.push(
-          planchador.id, end, 
-          planchador.id, end, 
-          end, 
-          planchador.id, 
-          planchador.id
-        );
+        payQuery += ` AND DATE(fecha_desde) <= ?`;
+        payParams.push(end);
       }
-      
+
       const [payments] = await db.query(payQuery, payParams);
       const pagadoTotal = payments.reduce((sum, p) => sum + (Number(p.monto) || 0), 0);
 
