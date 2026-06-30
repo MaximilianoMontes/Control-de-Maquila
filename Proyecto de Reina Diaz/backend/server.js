@@ -4231,61 +4231,9 @@ app.get('/api/reportes/plancha/resumen', async (req, res) => {
     const rowsData = [];
 
     for (const planchador of planchadores) {
-      // 1. Get all payments for this planchador to filter and check quincenas
-      const [allPayments] = await db.query(
-        "SELECT id, monto, fecha, fecha_desde, fecha_hasta FROM planchador_pagos WHERE planchador_id = ?",
-        [planchador.id]
-      );
-
-      // Filter payments that belong to the report range
-      const paymentsInPeriod = allPayments.filter(pp => {
-        const getCleanDate = (d) => {
-          if (!d) return "";
-          if (d instanceof Date) return d.toISOString().split('T')[0];
-          return String(d).split(' ')[0].split('T')[0];
-        };
-
-        if (start && end) {
-          if (pp.fecha_desde && pp.fecha_hasta) {
-            const pFrom = getCleanDate(pp.fecha_desde);
-            const pTo = getCleanDate(pp.fecha_hasta);
-            
-            // 5-day grace period for start date
-            const startDateObj = new Date(start + 'T12:00:00');
-            startDateObj.setDate(startDateObj.getDate() - 5);
-            const startGrace = startDateObj.toISOString().split('T')[0];
-            
-            return pFrom >= startGrace && pTo <= end;
-          }
-          const pDate = getCleanDate(pp.fecha);
-          return pDate >= start && pDate <= end;
-        } else if (start) {
-          if (pp.fecha_desde) {
-            const pFrom = getCleanDate(pp.fecha_desde);
-            const startDateObj = new Date(start + 'T12:00:00');
-            startDateObj.setDate(startDateObj.getDate() - 5);
-            const startGrace = startDateObj.toISOString().split('T')[0];
-            return pFrom >= startGrace;
-          }
-          const pDate = getCleanDate(pp.fecha);
-          return pDate >= start;
-        } else if (end) {
-          if (pp.fecha_hasta) {
-            const pTo = getCleanDate(pp.fecha_hasta);
-            return pTo <= end;
-          }
-          const pDate = getCleanDate(pp.fecha);
-          return pDate <= end;
-        }
-        return true;
-      });
-
-      const pagadoTotal = paymentsInPeriod.reduce((sum, p) => sum + (Number(p.monto) || 0), 0);
-      const paymentIdsInPeriod = paymentsInPeriod.map(p => p.id);
-
-      // 2. Get works in the range (excluding special burros 11 and 12)
+      // 1. Get works (excluding special burros 11 and 12)
       let worksQuery = `
-        SELECT id, talla, color, total, piezas, pago_id
+        SELECT talla, color, total, piezas
         FROM plancha_trabajos
         WHERE planchador_id = ? AND estado = 'terminado' AND (burro_numero IS NULL OR burro_numero < 11)
       `;
@@ -4301,12 +4249,7 @@ app.get('/api/reportes/plancha/resumen', async (req, res) => {
         worksParams.push(end);
       }
       
-      const [worksRaw] = await db.query(worksQuery, worksParams);
-
-      // Filter works: unpaid OR paid by a payment that belongs to this period
-      const works = worksRaw.filter(w => {
-        return w.pago_id === null || paymentIdsInPeriod.includes(w.pago_id);
-      });
+      const [works] = await db.query(worksQuery, worksParams);
 
       let regularWork = 0;
       let cuadreDif = 0;
@@ -4328,9 +4271,9 @@ app.get('/api/reportes/plancha/resumen', async (req, res) => {
         }
       }
 
-      // 3. Get asistencias in the range
+      // 2. Get asistencias (Including the base $500 quincenal attendance bonus)
       let astQuery = `
-        SELECT id, monto, fecha, pago_id FROM planchador_asistencias WHERE planchador_id = ?
+        SELECT monto FROM planchador_asistencias WHERE planchador_id = ?
       `;
       let astParams = [planchador.id];
       if (start && end) {
@@ -4344,56 +4287,139 @@ app.get('/api/reportes/plancha/resumen', async (req, res) => {
         astParams.push(end);
       }
       
-      const [asistenciasRaw] = await db.query(astQuery, astParams);
+      const [asistencias] = await db.query(astQuery, astParams);
+      // The base attendance bonus is $500. Absences (faltas) are stored as negative values (e.g., -50.00), which will correctly reduce it.
+      const asistenciasTotal = 500 + asistencias.reduce((sum, a) => sum + (Number(a.monto) || 0), 0);
 
-      // Filter assistances: unpaid OR paid by a payment that belongs to this period
-      const asistencias = asistenciasRaw.filter(a => {
-        return a.pago_id === null || paymentIdsInPeriod.includes(a.pago_id);
-      });
-
-      // Calculate quincenal base bonus ($500)
-      let baseBonus = 0;
+      // 3. Get payments (covering payments linked to works/asistencias in the range, or unlinked payments registered in the range)
+      let payQuery = `
+        SELECT DISTINCT pp.id, pp.monto 
+        FROM planchador_pagos pp
+        WHERE pp.planchador_id = ?
+      `;
+      let payParams = [planchador.id];
+      
       if (start && end) {
-        const fortnights = [];
-        const startDate = new Date(start + 'T12:00:00');
-        const endDate = new Date(end + 'T12:00:00');
-        
-        let current = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
-        while (current <= endDate) {
-          // First half: 1 to 15
-          const f1Start = new Date(current.getFullYear(), current.getMonth(), 1);
-          const f1End = new Date(current.getFullYear(), current.getMonth(), 15);
-          if (f1End >= startDate && f1Start <= endDate) {
-            fortnights.push({ start: f1Start, end: f1End });
-          }
-          
-          // Second half: 16 to last day
-          const f2Start = new Date(current.getFullYear(), current.getMonth(), 16);
-          const f2End = new Date(current.getFullYear(), current.getMonth() + 1, 0);
-          if (f2End >= startDate && f2Start <= endDate) {
-            fortnights.push({ start: f2Start, end: f2End });
-          }
-          
-          current.setMonth(current.getMonth() + 1);
-        }
-        
-        for (const f of fortnights) {
-          const isPaid = allPayments.some(pp => {
-            if (!pp.fecha_hasta) return false;
-            const pTo = new Date(pp.fecha_hasta + 'T12:00:00');
-            return pTo >= f.start && pTo <= f.end;
-          });
-          
-          if (!isPaid) {
-            baseBonus += 500;
-          }
-        }
-      } else {
-        baseBonus = 500;
+        payQuery += `
+          AND (
+            pp.id IN (
+              SELECT DISTINCT pago_id 
+              FROM plancha_trabajos 
+              WHERE planchador_id = ? 
+                AND pago_id IS NOT NULL 
+                AND DATE(fecha_terminado) BETWEEN ? AND ?
+            )
+            OR pp.id IN (
+              SELECT DISTINCT pago_id 
+              FROM planchador_asistencias 
+              WHERE planchador_id = ? 
+                AND pago_id IS NOT NULL 
+                AND DATE(fecha) BETWEEN ? AND ?
+            )
+            OR (
+              DATE(pp.fecha) BETWEEN ? AND ?
+              AND pp.id NOT IN (
+                SELECT DISTINCT pago_id 
+                FROM plancha_trabajos 
+                WHERE planchador_id = ? AND pago_id IS NOT NULL
+              )
+              AND pp.id NOT IN (
+                SELECT DISTINCT pago_id 
+                FROM planchador_asistencias 
+                WHERE planchador_id = ? AND pago_id IS NOT NULL
+              )
+            )
+          )
+        `;
+        payParams.push(
+          planchador.id, start, end, 
+          planchador.id, start, end, 
+          start, end, 
+          planchador.id, 
+          planchador.id
+        );
+      } else if (start) {
+        payQuery += `
+          AND (
+            pp.id IN (
+              SELECT DISTINCT pago_id 
+              FROM plancha_trabajos 
+              WHERE planchador_id = ? 
+                AND pago_id IS NOT NULL 
+                AND DATE(fecha_terminado) >= ?
+            )
+            OR pp.id IN (
+              SELECT DISTINCT pago_id 
+              FROM planchador_asistencias 
+              WHERE planchador_id = ? 
+                AND pago_id IS NOT NULL 
+                AND DATE(fecha) >= ?
+            )
+            OR (
+              DATE(pp.fecha) >= ?
+              AND pp.id NOT IN (
+                SELECT DISTINCT pago_id 
+                FROM plancha_trabajos 
+                WHERE planchador_id = ? AND pago_id IS NOT NULL
+              )
+              AND pp.id NOT IN (
+                SELECT DISTINCT pago_id 
+                FROM planchador_asistencias 
+                WHERE planchador_id = ? AND pago_id IS NOT NULL
+              )
+            )
+          )
+        `;
+        payParams.push(
+          planchador.id, start, 
+          planchador.id, start, 
+          start, 
+          planchador.id, 
+          planchador.id
+        );
+      } else if (end) {
+        payQuery += `
+          AND (
+            pp.id IN (
+              SELECT DISTINCT pago_id 
+              FROM plancha_trabajos 
+              WHERE planchador_id = ? 
+                AND pago_id IS NOT NULL 
+                AND DATE(fecha_terminado) <= ?
+            )
+            OR pp.id IN (
+              SELECT DISTINCT pago_id 
+              FROM planchador_asistencias 
+              WHERE planchador_id = ? 
+                AND pago_id IS NOT NULL 
+                AND DATE(fecha) <= ?
+            )
+            OR (
+              DATE(pp.fecha) <= ?
+              AND pp.id NOT IN (
+                SELECT DISTINCT pago_id 
+                FROM plancha_trabajos 
+                WHERE planchador_id = ? AND pago_id IS NOT NULL
+              )
+              AND pp.id NOT IN (
+                SELECT DISTINCT pago_id 
+                FROM planchador_asistencias 
+                WHERE planchador_id = ? AND pago_id IS NOT NULL
+              )
+            )
+          )
+        `;
+        payParams.push(
+          planchador.id, end, 
+          planchador.id, end, 
+          end, 
+          planchador.id, 
+          planchador.id
+        );
       }
-
-      // Total assistances including base bonus and absences (absences are stored as negative values)
-      const asistenciasTotal = baseBonus + asistencias.reduce((sum, a) => sum + (Number(a.monto) || 0), 0);
+      
+      const [payments] = await db.query(payQuery, payParams);
+      const pagadoTotal = payments.reduce((sum, p) => sum + (Number(p.monto) || 0), 0);
 
       const ganadoTotal = regularWork + asistenciasTotal + pagoFijo + cuadreDif;
       const pendienteTotal = ganadoTotal - pagadoTotal;
