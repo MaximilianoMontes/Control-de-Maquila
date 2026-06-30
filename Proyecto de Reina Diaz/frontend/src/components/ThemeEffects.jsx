@@ -6,47 +6,74 @@ const NOTE_SYMBOLS = ['🎵', '🎶', '🎼', '♩', '♪', '♫', '♬'];
 export default function ThemeEffects() {
   const { settings } = useSettings();
   const theme = settings?.theme || 'light';
-  const isActive = theme === 'miku' || theme === 'teto';
+  const isActive = theme === 'miku' || theme === 'teto' || theme === 'ror2';
   
-  const [notes, setNotes] = useState([]);
+  const [elements, setElements] = useState([]);
 
   useEffect(() => {
     if (!isActive) {
-      setNotes([]);
+      setElements([]);
       return;
     }
 
-    // Generate initial notes with negative delay so they start scattered across the screen
-    const initialNotes = Array.from({ length: 15 }).map((_, i) => createNote(i, true));
-    setNotes(initialNotes);
+    if (theme === 'ror2') {
+      // Generate initial rain and sparks scattered across the screen
+      const initialElements = [
+        ...Array.from({ length: 15 }).map((_, i) => createRor2Element(i, 'rain', true)),
+        ...Array.from({ length: 15 }).map((_, i) => createRor2Element(i + 100, 'spark', true))
+      ];
+      setElements(initialElements);
 
-    const interval = setInterval(() => {
-      setNotes(prev => {
-        const now = Date.now();
-        const activeNotes = prev.filter(n => n.expiry > now);
-        
-        // Maintain a steady count of floating notes
-        while (activeNotes.length < 18) {
-          activeNotes.push(createNote(now + Math.random(), false));
-        }
-        return activeNotes;
-      });
-    }, 1000);
+      const interval = setInterval(() => {
+        setElements(prev => {
+          const now = Date.now();
+          const active = prev.filter(el => el.expiry > now);
+          
+          const rainCount = active.filter(el => el.type === 'rain').length;
+          const sparkCount = active.filter(el => el.type === 'spark').length;
 
-    return () => clearInterval(interval);
+          // Maintain density
+          if (rainCount < 20) {
+            active.push(createRor2Element(now + Math.random(), 'rain', false));
+          }
+          if (sparkCount < 20) {
+            active.push(createRor2Element(now + 100 + Math.random(), 'spark', false));
+          }
+          return active;
+        });
+      }, 400);
+
+      return () => clearInterval(interval);
+    } else {
+      // Vocaloid theme notes
+      const initialNotes = Array.from({ length: 15 }).map((_, i) => createNote(i, true));
+      setElements(initialNotes);
+
+      const interval = setInterval(() => {
+        setElements(prev => {
+          const now = Date.now();
+          const activeNotes = prev.filter(n => n.expiry > now);
+          
+          while (activeNotes.length < 18) {
+            activeNotes.push(createNote(now + Math.random(), false));
+          }
+          return activeNotes;
+        });
+      }, 1000);
+
+      return () => clearInterval(interval);
+    }
   }, [isActive, theme]);
 
   const createNote = (id, isInitial = false) => {
-    const duration = 6 + Math.random() * 6; // 6s to 12s falling speed
+    const duration = 6 + Math.random() * 6;
     const delay = isInitial ? Math.random() * -duration : 0;
-    
-    // PVZ sun size reference is ~45px. 15% larger is ~52px. We range from 46px to 58px.
     const size = 46 + Math.random() * 12;
-    const left = Math.random() * 90 + 5; // Horizontal spread (5% to 95%)
+    const left = Math.random() * 90 + 5;
     const symbol = NOTE_SYMBOLS[Math.floor(Math.random() * NOTE_SYMBOLS.length)];
     const rotationDir = Math.random() > 0.5 ? 1 : -1;
-    const rotationSpeed = 3 + Math.random() * 5; // 3s to 8s rotation speed
-    const colorSweepSpeed = 4 + Math.random() * 4; // 4s to 8s color sweep cycle
+    const rotationSpeed = 3 + Math.random() * 5;
+    const colorSweepSpeed = 4 + Math.random() * 4;
 
     const now = Date.now();
     const expiry = now + (duration + (isInitial ? 0 : delay)) * 1000;
@@ -55,6 +82,7 @@ export default function ThemeEffects() {
       id,
       symbol,
       expiry,
+      type: 'note',
       style: {
         position: 'fixed',
         left: `${left}%`,
@@ -74,13 +102,77 @@ export default function ThemeEffects() {
     };
   };
 
+  const createRor2Element = (id, type, isInitial = false) => {
+    const duration = type === 'rain' 
+      ? 0.8 + Math.random() * 0.8 // Fast falling rain
+      : 6 + Math.random() * 6;   // Slow rising sparks
+
+    const delay = isInitial ? Math.random() * -duration : 0;
+    const left = Math.random() * 100;
+
+    const now = Date.now();
+    const expiry = now + (duration + (isInitial ? 0 : delay)) * 1000;
+
+    if (type === 'rain') {
+      const height = 30 + Math.random() * 30;
+      const opacity = 0.08 + Math.random() * 0.12;
+      return {
+        id,
+        type,
+        expiry,
+        style: {
+          position: 'fixed',
+          left: `${left}%`,
+          width: '1px',
+          height: `${height}px`,
+          background: 'linear-gradient(to bottom, transparent, rgba(0, 210, 255, 0.45))',
+          transform: 'rotate(12deg)',
+          animation: `fall-rain ${duration}s linear infinite`,
+          animationDelay: `${delay}s`,
+          zIndex: 9999,
+          pointerEvents: 'none',
+          opacity,
+          top: '-60px'
+        }
+      };
+    } else {
+      const size = 3 + Math.random() * 4;
+      const color = Math.random() > 0.4 ? '#ff8c00' : '#00d2ff'; // Commando orange or teleporter blue
+      const glow = color === '#ff8c00' ? 'rgba(255, 140, 0, 0.7)' : 'rgba(0, 210, 255, 0.7)';
+      const opacity = 0.3 + Math.random() * 0.5;
+
+      return {
+        id,
+        type,
+        expiry,
+        style: {
+          position: 'fixed',
+          left: `${left}%`,
+          width: `${size}px`,
+          height: `${size}px`,
+          borderRadius: '50%',
+          backgroundColor: color,
+          boxShadow: `0 0 6px ${glow}, 0 0 10px ${color}`,
+          animation: `rise-spark ${duration}s ease-in-out infinite`,
+          animationDelay: `${delay}s`,
+          zIndex: 9999,
+          pointerEvents: 'none',
+          opacity,
+          bottom: '-60px'
+        }
+      };
+    }
+  };
+
   if (!isActive) return null;
 
   return (
     <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', pointerEvents: 'none', zIndex: 9999, overflow: 'hidden' }}>
-      {notes.map(note => (
-        <div key={note.id} style={note.style}>
-          <div style={note.innerStyle}>{note.symbol}</div>
+      {elements.map(el => (
+        <div key={el.id} style={el.style}>
+          {el.type === 'note' ? (
+            <div style={el.innerStyle}>{el.symbol}</div>
+          ) : null}
         </div>
       ))}
     </div>
