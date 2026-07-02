@@ -18,7 +18,7 @@ export default function ThemeEffects() {
 
     if (theme === 'ror2') {
       // Generate initial rain scattered across the screen
-      const initialElements = Array.from({ length: 40 }).map((_, i) => createRor2Element(i, 'rain', true));
+      const initialElements = Array.from({ length: 60 }).map((_, i) => createRor2Element(i, 'rain', true));
       setElements(initialElements);
 
       const interval = setInterval(() => {
@@ -29,12 +29,12 @@ export default function ThemeEffects() {
           const rainCount = active.filter(el => el.type === 'rain').length;
 
           // Maintain density
-          if (rainCount < 50) {
+          if (rainCount < 80) {
             active.push(createRor2Element(now + Math.random(), 'rain', false));
           }
           return active;
         });
-      }, 150);
+      }, 100);
 
       return () => clearInterval(interval);
     } else {
@@ -96,15 +96,15 @@ export default function ThemeEffects() {
   };
 
   const createRor2Element = (id, type, isInitial = false) => {
-    const duration = 0.8 + Math.random() * 0.8; // Fast falling rain
+    const duration = 0.6 + Math.random() * 0.8; // Faster falling rain for storm feel
     const delay = isInitial ? Math.random() * -duration : 0;
     const left = Math.random() * 100;
 
     const now = Date.now();
     const expiry = now + (duration + (isInitial ? 0 : delay)) * 1000;
 
-    const height = 30 + Math.random() * 30;
-    const opacity = 0.15 + Math.random() * 0.25; // Slightly more visible rain
+    const height = 45 + Math.random() * 45; // Longer rain lines (45px to 90px)
+    const opacity = 0.3 + Math.random() * 0.45; // High visibility opacity (30% to 75%)
     return {
       id,
       type: 'rain',
@@ -112,16 +112,16 @@ export default function ThemeEffects() {
       style: {
         position: 'fixed',
         left: `${left}%`,
-        width: '1.5px',
+        width: '2px', // Thicker lines (2px)
         height: `${height}px`,
-        background: 'linear-gradient(to bottom, transparent, rgba(0, 210, 255, 0.6))',
+        background: 'linear-gradient(to bottom, transparent, rgba(0, 210, 255, 0.95))', // Brighter blue
         transform: 'rotate(12deg)',
         animation: `fall-rain ${duration}s linear infinite`,
         animationDelay: `${delay}s`,
         zIndex: 9999,
         pointerEvents: 'none',
         opacity,
-        top: '-60px'
+        top: '-100px'
       }
     };
   };
