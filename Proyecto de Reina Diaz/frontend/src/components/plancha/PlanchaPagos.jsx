@@ -594,7 +594,7 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
                       {cuadreItems.map(item => (
                         <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-muted, #94a3b8)', paddingLeft: '0.5rem', background: 'rgba(255,255,255,0.02)', padding: '4px 8px', borderRadius: '6px' }}>
                           <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '180px' }} title={item.color}>
-                            - {item.color || 'Ajuste'}
+                            {item.color || 'Ajuste'}
                           </span>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <span style={{ fontWeight: 600, color: item.total > 0 ? '#34d399' : '#ef4444' }}>
@@ -623,7 +623,7 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
                       {pagoFijoItems.map(item => (
                         <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-muted, #94a3b8)', paddingLeft: '0.5rem', background: 'rgba(255,255,255,0.02)', padding: '4px 8px', borderRadius: '6px' }}>
                           <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '220px' }} title={item.color}>
-                            - {item.fecha_creacion ? `[${formatDate(item.fecha_creacion)}] ` : ''}{item.color || 'Apoyo'}
+                            {item.fecha_creacion ? `[${formatDate(item.fecha_creacion)}] ` : ''}{item.color || 'Apoyo'}
                           </span>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <span style={{ fontWeight: 600, color: '#60a5fa' }}>
@@ -652,7 +652,7 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
                       {asistenciasList.map(item => (
                         <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-muted, #94a3b8)', paddingLeft: '0.5rem', background: 'rgba(255,255,255,0.02)', padding: '4px 8px', borderRadius: '6px' }}>
                           <span>
-                            - {isEn ? 'Absence' : 'Falta'} {formatDate(item.fecha)}
+                            {isEn ? 'Absence' : 'Falta'} {formatDate(item.fecha)}
                           </span>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <span style={{ fontWeight: 600, color: '#ef4444' }}>
