@@ -122,34 +122,44 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
     return `${parseInt(day, 10)}/${parseInt(month, 10)}/${year}`;
   };
 
-  const handleCargarPagosPlanchador = async (id) => {
+  const handleCargarPagosPlanchador = (id) => {
     setPagoPlanchadorId(id);
     setFechaInicioFiltro('');
     setFechaFinFiltro('');
-    if (!id) {
-      setPlanchadorPagoDetalle(null);
-      setMontoPago('');
-      setHistorialAsistencias([]);
-      return;
-    }
-    try {
-      const token = localStorage.getItem('token');
-      const res = await axios.get(`${API_URL}/api/planchadores/${id}/pagos`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setPlanchadorPagoDetalle(res.data);
-      if (res.data && res.data.pendiente !== undefined) {
-        setMontoPago(res.data.pendiente.toString());
-      }
-
-      const resHist = await axios.get(`${API_URL}/api/planchadores/${id}/asistencias`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setHistorialAsistencias(resHist.data);
-    } catch (e) {
-      console.error(e);
-    }
   };
+
+  useEffect(() => {
+    const fetchPlanchadorPagoDetails = async () => {
+      if (!pagoPlanchadorId) {
+        setPlanchadorPagoDetalle(null);
+        setMontoPago('');
+        setHistorialAsistencias([]);
+        return;
+      }
+      try {
+        const token = localStorage.getItem('token');
+        let url = `${API_URL}/api/planchadores/${pagoPlanchadorId}/pagos`;
+        const params = [];
+        if (fechaInicioFiltro) params.push(`start=${fechaInicioFiltro}`);
+        if (fechaFinFiltro) params.push(`end=${fechaFinFiltro}`);
+        if (params.length > 0) url += `?${params.join('&')}`;
+
+        const res = await axios.get(url, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setPlanchadorPagoDetalle(res.data);
+
+        const resHist = await axios.get(`${API_URL}/api/planchadores/${pagoPlanchadorId}/asistencias`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setHistorialAsistencias(resHist.data);
+      } catch (e) {
+        console.error(e);
+      }
+    };
+
+    fetchPlanchadorPagoDetails();
+  }, [pagoPlanchadorId, fechaInicioFiltro, fechaFinFiltro]);
 
   useEffect(() => {
     if (planchadorPagoDetalle) {

@@ -3423,6 +3423,7 @@ app.post('/api/plancha/asignar', authenticateToken, async (req, res) => {
 
 // 9. HISTORIAL DE PAGOS DE UN PLANCHADOR
 app.get('/api/planchadores/:id/pagos', authenticateToken, async (req, res) => {
+  const { start, end } = req.query;
   try {
     const [pagos] = await db.query(
       "SELECT * FROM planchador_pagos WHERE planchador_id = ? ORDER BY fecha DESC, id DESC",
@@ -3435,23 +3436,61 @@ app.get('/api/planchadores/:id/pagos', authenticateToken, async (req, res) => {
     );
     const pagado = parseFloat(paymentsResult[0].pagado) || 0;
 
-    const [trabajosPendientes] = await db.query(`
+    let trabajosQuery = `
       SELECT pt.*, cd.modelo as modelo_nombre,
              (SELECT imagen FROM inventario WHERE modelo = cd.modelo LIMIT 1) as modelo_imagen
       FROM plancha_trabajos pt
       LEFT JOIN camion_detalles cd ON pt.camion_detalles_id = cd.id
       WHERE pt.planchador_id = ? AND pt.estado = 'terminado' AND pt.pago_id IS NULL
-      ORDER BY pt.fecha_creacion DESC
-    `, [req.params.id]);
+    `;
+    const trabajosParams = [req.params.id];
+    if (start && end) {
+      trabajosQuery += ` AND DATE(pt.fecha_terminado) BETWEEN ? AND ?`;
+      trabajosParams.push(start, end);
+    }
+    trabajosQuery += ` ORDER BY pt.fecha_creacion DESC`;
+    const [trabajosPendientes] = await db.query(trabajosQuery, trabajosParams);
 
-    const [asistenciasPendientes] = await db.query(
-      "SELECT * FROM planchador_asistencias WHERE planchador_id = ? AND pago_id IS NULL ORDER BY fecha DESC",
-      [req.params.id]
-    );
+    let asistenciasQuery = `SELECT * FROM planchador_asistencias WHERE planchador_id = ? AND pago_id IS NULL`;
+    const asistenciasParams = [req.params.id];
+    if (start && end) {
+      asistenciasQuery += ` AND fecha BETWEEN ? AND ?`;
+      asistenciasParams.push(start, end);
+    }
+    asistenciasQuery += ` ORDER BY fecha DESC`;
+    const [asistenciasPendientes] = await db.query(asistenciasQuery, asistenciasParams);
 
     const pendingWorksSum = trabajosPendientes.reduce((sum, pt) => sum + parseFloat(pt.total || 0), 0);
     const pendingAsistenciasSum = asistenciasPendientes.reduce((sum, pa) => sum + parseFloat(pa.monto || 0), 0);
-    const bonoBase = 500;
+
+    // Calculate dynamic quincenal attendance bonus ($500)
+    let bonoBase = 500;
+    if (start && end && start === end) {
+      // Daily payout: no quincenal bonus
+      bonoBase = 0;
+    } else {
+      const refDateStr = end || new Date().toISOString().split('T')[0];
+      const refDate = new Date(refDateStr + 'T12:00:00');
+      const day = refDate.getDate();
+      const month = refDate.getMonth();
+      const year = refDate.getFullYear();
+      
+      const fnStart = day <= 15 
+        ? new Date(year, month, 1) 
+        : new Date(year, month, 16);
+      const fnEnd = day <= 15 
+        ? new Date(year, month, 15, 23, 59, 59) 
+        : new Date(year, month + 1, 0, 23, 59, 59);
+
+      const [existingPayments] = await db.query(
+        'SELECT id FROM planchador_pagos WHERE planchador_id = ? AND fecha_hasta IS NOT NULL AND DATE(fecha_hasta) BETWEEN ? AND ?',
+        [req.params.id, fnStart.toISOString().split('T')[0], fnEnd.toISOString().split('T')[0]]
+      );
+      if (existingPayments.length > 0) {
+        bonoBase = 0;
+      }
+    }
+
     const pendiente = pendingWorksSum + pendingAsistenciasSum + bonoBase;
     const ganado = pagado + pendiente;
 
@@ -4228,6 +4267,7 @@ app.get('/api/reportes/plancha/resumen', async (req, res) => {
       subtitleDate = tLabel("de todos los tiempos", "all time");
     }
 
+    const isDailyReport = start && end && start === end;
     const rowsData = [];
 
     for (const planchador of planchadores) {
@@ -4236,19 +4276,27 @@ app.get('/api/reportes/plancha/resumen', async (req, res) => {
       // the report range. This ensures that any payment ending in this period
       // (like Maria's payment which ends June 30 but started June 10 due to no prior date)
       // is correctly matched. Old payments with NULL fecha_hasta are excluded.
-      let payQuery = `SELECT id, monto FROM planchador_pagos WHERE planchador_id = ? AND fecha_hasta IS NOT NULL`;
-      let payParams = [planchador.id];
-      if (start && end) {
-        payQuery += ` AND DATE(fecha_hasta) >= ? AND DATE(fecha_hasta) <= ?`;
-        payParams.push(start, end);
-      } else if (start) {
-        payQuery += ` AND DATE(fecha_hasta) >= ?`;
-        payParams.push(start);
-      } else if (end) {
-        payQuery += ` AND DATE(fecha_hasta) <= ?`;
-        payParams.push(end);
+      //
+      // Daily Report Rule: If it is a daily report, we ignore any registered payments
+      // because we only want to see today's new activity that has not been paid yet.
+      let payments = [];
+      if (!isDailyReport) {
+        let payQuery = `SELECT id, monto FROM planchador_pagos WHERE planchador_id = ? AND fecha_hasta IS NOT NULL`;
+        let payParams = [planchador.id];
+        if (start && end) {
+          payQuery += ` AND DATE(fecha_hasta) >= ? AND DATE(fecha_hasta) <= ?`;
+          payParams.push(start, end);
+        } else if (start) {
+          payQuery += ` AND DATE(fecha_hasta) >= ?`;
+          payParams.push(start);
+        } else if (end) {
+          payQuery += ` AND DATE(fecha_hasta) <= ?`;
+          payParams.push(end);
+        }
+        const [payRes] = await db.query(payQuery, payParams);
+        payments = payRes;
       }
-      const [payments] = await db.query(payQuery, payParams);
+      
       const pagadoTotal = payments.reduce((sum, p) => sum + (Number(p.monto) || 0), 0);
       const paymentIdsInRange = payments.map(p => p.id);
 
@@ -4300,10 +4348,13 @@ app.get('/api/reportes/plancha/resumen', async (req, res) => {
         const total = Number(w.total) || 0;
         const piezas = Number(w.piezas) || 0;
         if (w.talla === 'AJUSTE') {
-          if (w.color && (w.color.includes('Cuadre') || w.color.includes('Diferencia'))) {
-            cuadreDif += total;
-          } else {
-            pagoFijo += total;
+          // If it is a daily report, we ignore adjustments/fixed payments (they are only paid on quincenas)
+          if (!isDailyReport) {
+            if (w.color && (w.color.includes('Cuadre') || w.color.includes('Diferencia'))) {
+              cuadreDif += total;
+            } else {
+              pagoFijo += total;
+            }
           }
         } else {
           regularWork += total;
@@ -4340,8 +4391,12 @@ app.get('/api/reportes/plancha/resumen', async (req, res) => {
       // ── Step 4: $500 quincenal attendance bonus ──────────────────────────────
       // The bonus is always included UNLESS a PRIOR payment (fecha_desde < report start)
       // already covered this same fortnight.
+      //
+      // Daily Report Rule: No quincenal attendance bonus is included in a daily report.
       let baseBonus = 500;
-      if (end && start) {
+      if (isDailyReport) {
+        baseBonus = 0;
+      } else if (end && start) {
         const endDate = new Date(end + 'T12:00:00');
         const endDay = endDate.getDate();
         const endMonth = endDate.getMonth();
