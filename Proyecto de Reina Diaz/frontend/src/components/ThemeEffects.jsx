@@ -17,11 +17,8 @@ export default function ThemeEffects() {
     }
 
     if (theme === 'ror2') {
-      // Generate initial rain and sparks scattered across the screen
-      const initialElements = [
-        ...Array.from({ length: 15 }).map((_, i) => createRor2Element(i, 'rain', true)),
-        ...Array.from({ length: 15 }).map((_, i) => createRor2Element(i + 100, 'spark', true))
-      ];
+      // Generate initial rain scattered across the screen
+      const initialElements = Array.from({ length: 40 }).map((_, i) => createRor2Element(i, 'rain', true));
       setElements(initialElements);
 
       const interval = setInterval(() => {
@@ -30,18 +27,14 @@ export default function ThemeEffects() {
           const active = prev.filter(el => el.expiry > now);
           
           const rainCount = active.filter(el => el.type === 'rain').length;
-          const sparkCount = active.filter(el => el.type === 'spark').length;
 
           // Maintain density
-          if (rainCount < 20) {
+          if (rainCount < 50) {
             active.push(createRor2Element(now + Math.random(), 'rain', false));
-          }
-          if (sparkCount < 20) {
-            active.push(createRor2Element(now + 100 + Math.random(), 'spark', false));
           }
           return active;
         });
-      }, 400);
+      }, 150);
 
       return () => clearInterval(interval);
     } else {
@@ -103,65 +96,34 @@ export default function ThemeEffects() {
   };
 
   const createRor2Element = (id, type, isInitial = false) => {
-    const duration = type === 'rain' 
-      ? 0.8 + Math.random() * 0.8 // Fast falling rain
-      : 6 + Math.random() * 6;   // Slow rising sparks
-
+    const duration = 0.8 + Math.random() * 0.8; // Fast falling rain
     const delay = isInitial ? Math.random() * -duration : 0;
     const left = Math.random() * 100;
 
     const now = Date.now();
     const expiry = now + (duration + (isInitial ? 0 : delay)) * 1000;
 
-    if (type === 'rain') {
-      const height = 30 + Math.random() * 30;
-      const opacity = 0.08 + Math.random() * 0.12;
-      return {
-        id,
-        type,
-        expiry,
-        style: {
-          position: 'fixed',
-          left: `${left}%`,
-          width: '1px',
-          height: `${height}px`,
-          background: 'linear-gradient(to bottom, transparent, rgba(0, 210, 255, 0.45))',
-          transform: 'rotate(12deg)',
-          animation: `fall-rain ${duration}s linear infinite`,
-          animationDelay: `${delay}s`,
-          zIndex: 9999,
-          pointerEvents: 'none',
-          opacity,
-          top: '-60px'
-        }
-      };
-    } else {
-      const size = 3 + Math.random() * 4;
-      const color = Math.random() > 0.4 ? '#ff8c00' : '#00d2ff'; // Commando orange or teleporter blue
-      const glow = color === '#ff8c00' ? 'rgba(255, 140, 0, 0.7)' : 'rgba(0, 210, 255, 0.7)';
-      const opacity = 0.3 + Math.random() * 0.5;
-
-      return {
-        id,
-        type,
-        expiry,
-        style: {
-          position: 'fixed',
-          left: `${left}%`,
-          width: `${size}px`,
-          height: `${size}px`,
-          borderRadius: '50%',
-          backgroundColor: color,
-          boxShadow: `0 0 6px ${glow}, 0 0 10px ${color}`,
-          animation: `rise-spark ${duration}s ease-in-out infinite`,
-          animationDelay: `${delay}s`,
-          zIndex: 9999,
-          pointerEvents: 'none',
-          opacity,
-          bottom: '-60px'
-        }
-      };
-    }
+    const height = 30 + Math.random() * 30;
+    const opacity = 0.15 + Math.random() * 0.25; // Slightly more visible rain
+    return {
+      id,
+      type: 'rain',
+      expiry,
+      style: {
+        position: 'fixed',
+        left: `${left}%`,
+        width: '1.5px',
+        height: `${height}px`,
+        background: 'linear-gradient(to bottom, transparent, rgba(0, 210, 255, 0.6))',
+        transform: 'rotate(12deg)',
+        animation: `fall-rain ${duration}s linear infinite`,
+        animationDelay: `${delay}s`,
+        zIndex: 9999,
+        pointerEvents: 'none',
+        opacity,
+        top: '-60px'
+      }
+    };
   };
 
   if (!isActive) return null;
