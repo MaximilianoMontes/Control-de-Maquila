@@ -974,7 +974,7 @@ export const SettingsProvider = ({ children }) => {
     const applyTheme = () => {
       document.body.classList.remove(
         'dark-mode', 'theme-ocean', 'theme-nature', 'theme-sunset', 'theme-lavender', 'theme-cherry', 'theme-midnight', 'theme-dim', 
-        'theme-miku', 'theme-teto', 'theme-limbus', 'theme-ruina', 'theme-minecraft', 'theme-geometry', 'theme-fallout', 'theme-tf2', 'theme-cyberpunk',
+        'theme-miku', 'theme-teto', 'theme-ror2', 'theme-limbus', 'theme-ruina', 'theme-minecraft', 'theme-geometry', 'theme-fallout', 'theme-tf2', 'theme-cyberpunk',
         'theme-backrooms', 'theme-terraria', 'theme-castle', 'theme-starwars', 'theme-cod3', 'theme-subnautica', 'theme-cuphead', 'theme-ddlc', 
         'theme-undertale', 'theme-lobotomy', 'theme-papers', 'theme-plague', 'theme-pvz'
       );
