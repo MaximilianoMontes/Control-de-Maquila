@@ -6704,51 +6704,33 @@ body.theme-pvz {
 /* PvZ falling suns are now rendered as React buttons in Header.jsx */
 /* The ::before/::after pseudo-elements are removed to avoid duplicate/curved suns */
 
-/* Clickable falling sun button */
-body.theme-pvz .pvz-falling-sun {
-  position: fixed !important;
-  top: -80px !important;
-  font-size: 52px !important;
-  background: none !important;
-  background-color: transparent !important;
-  border: none !important;
-  outline: none !important;
-  box-shadow: none !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  cursor: pointer !important;
-  z-index: 9000 !important;
-  pointer-events: all !important;
-  animation: pvz-sun-fall 8s linear forwards !important;
-  filter: drop-shadow(0 0 8px #ffc107) drop-shadow(0 0 20px #ff9800) !important;
-  transition: transform 0.1s ease, filter 0.1s ease !important;
-  line-height: 1 !important;
-  user-select: none !important;
-  -webkit-appearance: none !important;
-  appearance: none !important;
-  border-radius: 0 !important;
-  color: transparent !important;
-  text-transform: none !important;
-  letter-spacing: normal !important;
+/* Clickable falling sun div */
+.pvz-falling-sun {
+  position: fixed;
+  top: -80px;
+  font-size: 52px;
+  background: transparent;
+  border: none;
+  outline: none;
+  box-shadow: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  z-index: 9000;
+  pointer-events: all;
+  animation: pvz-sun-fall 8s linear forwards;
+  filter: drop-shadow(0 0 8px #ffc107) drop-shadow(0 0 20px #ff9800);
+  transition: transform 0.15s ease, filter 0.15s ease;
+  line-height: 1;
+  user-select: none;
+  display: inline-block;
 }
-body.theme-pvz .pvz-falling-sun:hover {
-  transform: scale(1.25) !important;
-  filter: drop-shadow(0 0 14px #ffd700) drop-shadow(0 0 30px #ff9800) brightness(1.2) !important;
-  background: none !important;
-  background-color: transparent !important;
-  box-shadow: none !important;
-  color: transparent !important;
+.pvz-falling-sun:hover {
+  transform: scale(1.3);
+  filter: drop-shadow(0 0 16px #ffd700) drop-shadow(0 0 32px #ff9800);
 }
-body.theme-pvz .pvz-falling-sun:active {
-  transform: scale(0.9) !important;
-  background: none !important;
-  background-color: transparent !important;
-  box-shadow: none !important;
-}
-body.theme-pvz .pvz-falling-sun:focus {
-  outline: none !important;
-  box-shadow: none !important;
-  background: none !important;
+.pvz-falling-sun:active {
+  transform: scale(0.85);
 }
 
 /* PvZ sun counter chip next to notifications */
