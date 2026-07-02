@@ -39,7 +39,7 @@ export default function ThemeEffects() {
       return () => clearInterval(interval);
     } else if (theme === 'subnautica') {
       // Generate initial bubbles scattered across the screen
-      const initialElements = Array.from({ length: 25 }).map((_, i) => createBubble(i, true));
+      const initialElements = Array.from({ length: 45 }).map((_, i) => createBubble(i, true));
       setElements(initialElements);
 
       const interval = setInterval(() => {
@@ -50,12 +50,12 @@ export default function ThemeEffects() {
           const bubbleCount = active.filter(el => el.type === 'bubble').length;
 
           // Maintain density of bubbles
-          if (bubbleCount < 35) {
+          if (bubbleCount < 60) {
             active.push(createBubble(now + Math.random(), false));
           }
           return active;
         });
-      }, 350);
+      }, 200);
 
       return () => clearInterval(interval);
     } else {
@@ -151,7 +151,7 @@ export default function ThemeEffects() {
     const duration = 6 + Math.random() * 6; // slow rising bubbles: 6 to 12s
     const delay = isInitial ? Math.random() * -duration : 0;
     const left = Math.random() * 100;
-    const size = 6 + Math.random() * 14;   // bubble size: 6px to 20px
+    const size = 12 + Math.random() * 16;   // bubble size: 12px to 28px (larger and more noticeable)
     const animationName = Math.random() > 0.5 ? 'subnautica-float-left' : 'subnautica-float-right';
 
     const now = Date.now();
@@ -167,9 +167,9 @@ export default function ThemeEffects() {
         width: `${size}px`,
         height: `${size}px`,
         borderRadius: '50%',
-        border: '1px solid rgba(0, 210, 255, 0.4)',
-        background: 'radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.65) 0%, rgba(0, 180, 255, 0.15) 50%, rgba(0, 210, 255, 0.05) 100%)',
-        boxShadow: 'inset 0 0 5px rgba(255, 255, 255, 0.6), 0 0 8px rgba(0, 210, 255, 0.3)',
+        border: '1.5px solid rgba(255, 255, 255, 0.75)', // thicker, sharper border
+        background: 'radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.75) 0%, rgba(0, 180, 255, 0.2) 50%, rgba(0, 210, 255, 0.05) 100%)',
+        boxShadow: 'inset 0 0 6px rgba(255, 255, 255, 0.8), 0 0 12px rgba(0, 210, 255, 0.45)', // stronger glows
         animation: `${animationName} ${duration}s ease-in-out infinite`,
         animationDelay: `${delay}s`,
         zIndex: 9999,
