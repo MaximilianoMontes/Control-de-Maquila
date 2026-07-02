@@ -520,16 +520,19 @@ export default function Header({ onToggleSidebar }) {
 
       {/* PvZ Falling Suns Overlay */}
       {settings.theme === 'pvz' && pvzSuns.map(sun => (
-        <button
+        <div
           key={sun.id}
           className="pvz-falling-sun"
           style={{ left: `${sun.x}%` }}
           onClick={() => handleCollectSun(sun.id)}
+          role="button"
+          tabIndex={0}
           title="¡Click para recolectar!"
           aria-label="Recolectar sol"
+          onKeyDown={(e) => e.key === 'Enter' && handleCollectSun(sun.id)}
         >
           ☀️
-        </button>
+        </div>
       ))}
 
       {/* Command Palette Overlay Modal */}
