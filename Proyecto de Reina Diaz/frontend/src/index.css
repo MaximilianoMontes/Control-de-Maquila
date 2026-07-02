@@ -2395,7 +2395,13 @@ body.theme-miku button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-t
 
 body.theme-miku .actions-dropdown-item,
 body.theme-miku a.actions-dropdown-item,
-body.theme-miku button.actions-dropdown-item {
+body.theme-miku button.actions-dropdown-item,
+body.theme-miku .actions-dropdown-item.pink,
+body.theme-miku a.actions-dropdown-item.pink,
+body.theme-miku button.actions-dropdown-item.pink,
+body.theme-miku .actions-dropdown-item.purple,
+body.theme-miku a.actions-dropdown-item.purple,
+body.theme-miku button.actions-dropdown-item.purple {
   border-radius: 30px !important;
   border: 2px solid #39c5bb !important;
   background: #0c2022 !important;
@@ -2414,7 +2420,13 @@ body.theme-miku button.actions-dropdown-item {
 
 body.theme-miku .actions-dropdown-item:hover,
 body.theme-miku a.actions-dropdown-item:hover,
-body.theme-miku button.actions-dropdown-item:hover {
+body.theme-miku button.actions-dropdown-item:hover,
+body.theme-miku .actions-dropdown-item.pink:hover,
+body.theme-miku a.actions-dropdown-item.pink:hover,
+body.theme-miku button.actions-dropdown-item.pink:hover,
+body.theme-miku .actions-dropdown-item.purple:hover,
+body.theme-miku a.actions-dropdown-item.purple:hover,
+body.theme-miku button.actions-dropdown-item.purple:hover {
   background: #39c5bb !important;
   color: #071112 !important;
   box-shadow: 0 0 18px #39c5bb, 0 0 30px rgba(57, 197, 187, 0.4) !important;
@@ -2582,7 +2594,13 @@ body.theme-teto button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-t
 
 body.theme-teto .actions-dropdown-item,
 body.theme-teto a.actions-dropdown-item,
-body.theme-teto button.actions-dropdown-item {
+body.theme-teto button.actions-dropdown-item,
+body.theme-teto .actions-dropdown-item.pink,
+body.theme-teto a.actions-dropdown-item.pink,
+body.theme-teto button.actions-dropdown-item.pink,
+body.theme-teto .actions-dropdown-item.purple,
+body.theme-teto a.actions-dropdown-item.purple,
+body.theme-teto button.actions-dropdown-item.purple {
   border-radius: 20px !important;
   border: 2px solid #ff3d5a !important;
   background: #1d0f12 !important;
@@ -2601,7 +2619,13 @@ body.theme-teto button.actions-dropdown-item {
 
 body.theme-teto .actions-dropdown-item:hover,
 body.theme-teto a.actions-dropdown-item:hover,
-body.theme-teto button.actions-dropdown-item:hover {
+body.theme-teto button.actions-dropdown-item:hover,
+body.theme-teto .actions-dropdown-item.pink:hover,
+body.theme-teto a.actions-dropdown-item.pink:hover,
+body.theme-teto button.actions-dropdown-item.pink:hover,
+body.theme-teto .actions-dropdown-item.purple:hover,
+body.theme-teto a.actions-dropdown-item.purple:hover,
+body.theme-teto button.actions-dropdown-item.purple:hover {
   background: #ff3d5a !important;
   color: #ffebee !important;
   box-shadow: 0 0 18px #ff3d5a, 0 0 30px rgba(255, 61, 90, 0.4) !important;
@@ -2876,7 +2900,13 @@ body.theme-limbus button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu
 
 body.theme-limbus .actions-dropdown-item,
 body.theme-limbus a.actions-dropdown-item,
-body.theme-limbus button.actions-dropdown-item {
+body.theme-limbus button.actions-dropdown-item,
+body.theme-limbus .actions-dropdown-item.pink,
+body.theme-limbus a.actions-dropdown-item.pink,
+body.theme-limbus button.actions-dropdown-item.pink,
+body.theme-limbus .actions-dropdown-item.purple,
+body.theme-limbus a.actions-dropdown-item.purple,
+body.theme-limbus button.actions-dropdown-item.purple {
   border-radius: 2px !important;
   border: 2px solid #d49e2a !important;
   background: #1c1815 !important;
@@ -2896,7 +2926,13 @@ body.theme-limbus button.actions-dropdown-item {
 
 body.theme-limbus .actions-dropdown-item:hover,
 body.theme-limbus a.actions-dropdown-item:hover,
-body.theme-limbus button.actions-dropdown-item:hover {
+body.theme-limbus button.actions-dropdown-item:hover,
+body.theme-limbus .actions-dropdown-item.pink:hover,
+body.theme-limbus a.actions-dropdown-item.pink:hover,
+body.theme-limbus button.actions-dropdown-item.pink:hover,
+body.theme-limbus .actions-dropdown-item.purple:hover,
+body.theme-limbus a.actions-dropdown-item.purple:hover,
+body.theme-limbus button.actions-dropdown-item.purple:hover {
   background: #d49e2a !important;
   color: #181614 !important;
   box-shadow: 0 0 15px rgba(212, 158, 42, 0.6) !important;
@@ -3083,7 +3119,13 @@ body.theme-ruina button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-
 
 body.theme-ruina .actions-dropdown-item,
 body.theme-ruina a.actions-dropdown-item,
-body.theme-ruina button.actions-dropdown-item {
+body.theme-ruina button.actions-dropdown-item,
+body.theme-ruina .actions-dropdown-item.pink,
+body.theme-ruina a.actions-dropdown-item.pink,
+body.theme-ruina button.actions-dropdown-item.pink,
+body.theme-ruina .actions-dropdown-item.purple,
+body.theme-ruina a.actions-dropdown-item.purple,
+body.theme-ruina button.actions-dropdown-item.purple {
   border-radius: 4px !important;
   border: 1px solid #e5c158 !important;
   background: #0c1024 !important;
@@ -3102,7 +3144,13 @@ body.theme-ruina button.actions-dropdown-item {
 
 body.theme-ruina .actions-dropdown-item:hover,
 body.theme-ruina a.actions-dropdown-item:hover,
-body.theme-ruina button.actions-dropdown-item:hover {
+body.theme-ruina button.actions-dropdown-item:hover,
+body.theme-ruina .actions-dropdown-item.pink:hover,
+body.theme-ruina a.actions-dropdown-item.pink:hover,
+body.theme-ruina button.actions-dropdown-item.pink:hover,
+body.theme-ruina .actions-dropdown-item.purple:hover,
+body.theme-ruina a.actions-dropdown-item.purple:hover,
+body.theme-ruina button.actions-dropdown-item.purple:hover {
   background: #e5c158 !important;
   color: #070913 !important;
   box-shadow: 0 0 15px rgba(229, 193, 88, 0.5) !important;
@@ -3287,7 +3335,13 @@ body.theme-minecraft button:not(.close-btn):not(.search-clear-btn):not(.mobile-m
 
 body.theme-minecraft .actions-dropdown-item,
 body.theme-minecraft a.actions-dropdown-item,
-body.theme-minecraft button.actions-dropdown-item {
+body.theme-minecraft button.actions-dropdown-item,
+body.theme-minecraft .actions-dropdown-item.pink,
+body.theme-minecraft a.actions-dropdown-item.pink,
+body.theme-minecraft button.actions-dropdown-item.pink,
+body.theme-minecraft .actions-dropdown-item.purple,
+body.theme-minecraft a.actions-dropdown-item.purple,
+body.theme-minecraft button.actions-dropdown-item.purple {
   border-radius: 0px !important;
   border: 3px solid #000000 !important;
   background: #2d2d2d !important;
@@ -3310,7 +3364,13 @@ body.theme-minecraft button.actions-dropdown-item {
 
 body.theme-minecraft .actions-dropdown-item:hover,
 body.theme-minecraft a.actions-dropdown-item:hover,
-body.theme-minecraft button.actions-dropdown-item:hover {
+body.theme-minecraft button.actions-dropdown-item:hover,
+body.theme-minecraft .actions-dropdown-item.pink:hover,
+body.theme-minecraft a.actions-dropdown-item.pink:hover,
+body.theme-minecraft button.actions-dropdown-item.pink:hover,
+body.theme-minecraft .actions-dropdown-item.purple:hover,
+body.theme-minecraft a.actions-dropdown-item.purple:hover,
+body.theme-minecraft button.actions-dropdown-item.purple:hover {
   background: #5c8e32 !important; /* Grass Green */
   border-color: #000000 !important;
   box-shadow: 
@@ -3536,7 +3596,13 @@ body.theme-geometry button:not(.close-btn):not(.search-clear-btn):not(.mobile-me
 
 body.theme-geometry .actions-dropdown-item,
 body.theme-geometry a.actions-dropdown-item,
-body.theme-geometry button.actions-dropdown-item {
+body.theme-geometry button.actions-dropdown-item,
+body.theme-geometry .actions-dropdown-item.pink,
+body.theme-geometry a.actions-dropdown-item.pink,
+body.theme-geometry button.actions-dropdown-item.pink,
+body.theme-geometry .actions-dropdown-item.purple,
+body.theme-geometry a.actions-dropdown-item.purple,
+body.theme-geometry button.actions-dropdown-item.purple {
   border: 2px solid #1bf259 !important;
   background: #12151e !important;
   color: #1bf259 !important;
@@ -3551,7 +3617,13 @@ body.theme-geometry button.actions-dropdown-item {
 
 body.theme-geometry .actions-dropdown-item:hover,
 body.theme-geometry a.actions-dropdown-item:hover,
-body.theme-geometry button.actions-dropdown-item:hover {
+body.theme-geometry button.actions-dropdown-item:hover,
+body.theme-geometry .actions-dropdown-item.pink:hover,
+body.theme-geometry a.actions-dropdown-item.pink:hover,
+body.theme-geometry button.actions-dropdown-item.pink:hover,
+body.theme-geometry .actions-dropdown-item.purple:hover,
+body.theme-geometry a.actions-dropdown-item.purple:hover,
+body.theme-geometry button.actions-dropdown-item.purple:hover {
   background: #1bf259 !important;
   color: #090a0f !important;
   box-shadow: 0 0 15px #1bf259 !important;
@@ -3673,7 +3745,13 @@ body.theme-fallout button:not(.close-btn):not(.search-clear-btn):not(.mobile-men
 
 body.theme-fallout .actions-dropdown-item,
 body.theme-fallout a.actions-dropdown-item,
-body.theme-fallout button.actions-dropdown-item {
+body.theme-fallout button.actions-dropdown-item,
+body.theme-fallout .actions-dropdown-item.pink,
+body.theme-fallout a.actions-dropdown-item.pink,
+body.theme-fallout button.actions-dropdown-item.pink,
+body.theme-fallout .actions-dropdown-item.purple,
+body.theme-fallout a.actions-dropdown-item.purple,
+body.theme-fallout button.actions-dropdown-item.purple {
   border: 1px solid #33ff33 !important;
   background: #121810 !important;
   color: #33ff33 !important;
@@ -3687,7 +3765,13 @@ body.theme-fallout button.actions-dropdown-item {
 
 body.theme-fallout .actions-dropdown-item:hover,
 body.theme-fallout a.actions-dropdown-item:hover,
-body.theme-fallout button.actions-dropdown-item:hover {
+body.theme-fallout button.actions-dropdown-item:hover,
+body.theme-fallout .actions-dropdown-item.pink:hover,
+body.theme-fallout a.actions-dropdown-item.pink:hover,
+body.theme-fallout button.actions-dropdown-item.pink:hover,
+body.theme-fallout .actions-dropdown-item.purple:hover,
+body.theme-fallout a.actions-dropdown-item.purple:hover,
+body.theme-fallout button.actions-dropdown-item.purple:hover {
   background: #33ff33 !important;
   color: #121810 !important;
   text-shadow: none !important;
@@ -3824,7 +3908,13 @@ body.theme-tf2 button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-to
 
 body.theme-tf2 .actions-dropdown-item,
 body.theme-tf2 a.actions-dropdown-item,
-body.theme-tf2 button.actions-dropdown-item {
+body.theme-tf2 button.actions-dropdown-item,
+body.theme-tf2 .actions-dropdown-item.pink,
+body.theme-tf2 a.actions-dropdown-item.pink,
+body.theme-tf2 button.actions-dropdown-item.pink,
+body.theme-tf2 .actions-dropdown-item.purple,
+body.theme-tf2 a.actions-dropdown-item.purple,
+body.theme-tf2 button.actions-dropdown-item.purple {
   background: #e28532 !important;
   color: #282421 !important;
   border: 2px solid #282421 !important;
@@ -3838,7 +3928,13 @@ body.theme-tf2 button.actions-dropdown-item {
 
 body.theme-tf2 .actions-dropdown-item:hover,
 body.theme-tf2 a.actions-dropdown-item:hover,
-body.theme-tf2 button.actions-dropdown-item:hover {
+body.theme-tf2 button.actions-dropdown-item:hover,
+body.theme-tf2 .actions-dropdown-item.pink:hover,
+body.theme-tf2 a.actions-dropdown-item.pink:hover,
+body.theme-tf2 button.actions-dropdown-item.pink:hover,
+body.theme-tf2 .actions-dropdown-item.purple:hover,
+body.theme-tf2 a.actions-dropdown-item.purple:hover,
+body.theme-tf2 button.actions-dropdown-item.purple:hover {
   background: #f5e7c8 !important;
   color: #282421 !important;
 }
@@ -3974,7 +4070,13 @@ body.theme-cyberpunk button:not(.close-btn):not(.search-clear-btn):not(.mobile-m
 
 body.theme-cyberpunk .actions-dropdown-item,
 body.theme-cyberpunk a.actions-dropdown-item,
-body.theme-cyberpunk button.actions-dropdown-item {
+body.theme-cyberpunk button.actions-dropdown-item,
+body.theme-cyberpunk .actions-dropdown-item.pink,
+body.theme-cyberpunk a.actions-dropdown-item.pink,
+body.theme-cyberpunk button.actions-dropdown-item.pink,
+body.theme-cyberpunk .actions-dropdown-item.purple,
+body.theme-cyberpunk a.actions-dropdown-item.purple,
+body.theme-cyberpunk button.actions-dropdown-item.purple {
   border-radius: 0px !important;
   border: 2px solid #00f0ff !important;
   background: #0a0b10 !important;
@@ -3991,7 +4093,13 @@ body.theme-cyberpunk button.actions-dropdown-item {
 
 body.theme-cyberpunk .actions-dropdown-item:hover,
 body.theme-cyberpunk a.actions-dropdown-item:hover,
-body.theme-cyberpunk button.actions-dropdown-item:hover {
+body.theme-cyberpunk button.actions-dropdown-item:hover,
+body.theme-cyberpunk .actions-dropdown-item.pink:hover,
+body.theme-cyberpunk a.actions-dropdown-item.pink:hover,
+body.theme-cyberpunk button.actions-dropdown-item.pink:hover,
+body.theme-cyberpunk .actions-dropdown-item.purple:hover,
+body.theme-cyberpunk a.actions-dropdown-item.purple:hover,
+body.theme-cyberpunk button.actions-dropdown-item.purple:hover {
   background: #00f0ff !important;
   color: #000000 !important;
   box-shadow: 0 0 15px #00f0ff !important;
@@ -4979,7 +5087,13 @@ body.theme-backrooms button:not(.close-btn):not(.search-clear-btn):not(.mobile-m
 
 body.theme-backrooms .actions-dropdown-item,
 body.theme-backrooms a.actions-dropdown-item,
-body.theme-backrooms button.actions-dropdown-item {
+body.theme-backrooms button.actions-dropdown-item,
+body.theme-backrooms .actions-dropdown-item.pink,
+body.theme-backrooms a.actions-dropdown-item.pink,
+body.theme-backrooms button.actions-dropdown-item.pink,
+body.theme-backrooms .actions-dropdown-item.purple,
+body.theme-backrooms a.actions-dropdown-item.purple,
+body.theme-backrooms button.actions-dropdown-item.purple {
   border: 1px solid #e6df45 !important;
   background: #15170f !important;
   color: #e6df45 !important;
@@ -4993,7 +5107,13 @@ body.theme-backrooms button.actions-dropdown-item {
 
 body.theme-backrooms .actions-dropdown-item:hover,
 body.theme-backrooms a.actions-dropdown-item:hover,
-body.theme-backrooms button.actions-dropdown-item:hover {
+body.theme-backrooms button.actions-dropdown-item:hover,
+body.theme-backrooms .actions-dropdown-item.pink:hover,
+body.theme-backrooms a.actions-dropdown-item.pink:hover,
+body.theme-backrooms button.actions-dropdown-item.pink:hover,
+body.theme-backrooms .actions-dropdown-item.purple:hover,
+body.theme-backrooms a.actions-dropdown-item.purple:hover,
+body.theme-backrooms button.actions-dropdown-item.purple:hover {
   background: #e6df45 !important;
   color: #15170f !important;
   box-shadow: 0 0 12px rgba(230, 223, 69, 0.6) !important;
@@ -5082,7 +5202,13 @@ body.theme-terraria button:not(.close-btn):not(.search-clear-btn):not(.mobile-me
 
 body.theme-terraria .actions-dropdown-item,
 body.theme-terraria a.actions-dropdown-item,
-body.theme-terraria button.actions-dropdown-item {
+body.theme-terraria button.actions-dropdown-item,
+body.theme-terraria .actions-dropdown-item.pink,
+body.theme-terraria a.actions-dropdown-item.pink,
+body.theme-terraria button.actions-dropdown-item.pink,
+body.theme-terraria .actions-dropdown-item.purple,
+body.theme-terraria a.actions-dropdown-item.purple,
+body.theme-terraria button.actions-dropdown-item.purple {
   border: 2px solid #5c4b3f !important;
   background: linear-gradient(to bottom, #875d3e, #5c3b24) !important;
   color: #ffffff !important;
@@ -5098,7 +5224,13 @@ body.theme-terraria button.actions-dropdown-item {
 
 body.theme-terraria .actions-dropdown-item:hover,
 body.theme-terraria a.actions-dropdown-item:hover,
-body.theme-terraria button.actions-dropdown-item:hover {
+body.theme-terraria button.actions-dropdown-item:hover,
+body.theme-terraria .actions-dropdown-item.pink:hover,
+body.theme-terraria a.actions-dropdown-item.pink:hover,
+body.theme-terraria button.actions-dropdown-item.pink:hover,
+body.theme-terraria .actions-dropdown-item.purple:hover,
+body.theme-terraria a.actions-dropdown-item.purple:hover,
+body.theme-terraria button.actions-dropdown-item.purple:hover {
   background: linear-gradient(to bottom, #a0724f, #7c5132) !important;
   border-color: #875d3e !important;
   color: #ffffff !important;
@@ -5370,7 +5502,13 @@ body.theme-castle button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu
 /* Dropdown Menu Items */
 body.theme-castle .actions-dropdown-item,
 body.theme-castle a.actions-dropdown-item,
-body.theme-castle button.actions-dropdown-item {
+body.theme-castle button.actions-dropdown-item,
+body.theme-castle .actions-dropdown-item.pink,
+body.theme-castle a.actions-dropdown-item.pink,
+body.theme-castle button.actions-dropdown-item.pink,
+body.theme-castle .actions-dropdown-item.purple,
+body.theme-castle a.actions-dropdown-item.purple,
+body.theme-castle button.actions-dropdown-item.purple {
   border: 3.5px solid #1a1518 !important;
   background: linear-gradient(135deg, #4c86eb, #1a5ac6) !important;
   color: #ffffff !important;
@@ -5402,10 +5540,22 @@ body.theme-castle .actions-dropdown-item.warning {
   background: linear-gradient(135deg, #e28a1b, #b3650c) !important;
   animation: castle-lightning-glow 1s infinite alternate !important;
 }
+body.theme-castle .actions-dropdown-item.pink {
+  background: linear-gradient(135deg, #ff8da1, #d64d68) !important;
+}
+body.theme-castle .actions-dropdown-item.purple {
+  background: linear-gradient(135deg, #9b5de5, #6a24b3) !important;
+}
 
 body.theme-castle .actions-dropdown-item:hover,
 body.theme-castle a.actions-dropdown-item:hover,
-body.theme-castle button.actions-dropdown-item:hover {
+body.theme-castle button.actions-dropdown-item:hover,
+body.theme-castle .actions-dropdown-item.pink:hover,
+body.theme-castle a.actions-dropdown-item.pink:hover,
+body.theme-castle button.actions-dropdown-item.pink:hover,
+body.theme-castle .actions-dropdown-item.purple:hover,
+body.theme-castle a.actions-dropdown-item.purple:hover,
+body.theme-castle button.actions-dropdown-item.purple:hover {
   transform: scale(1.05) rotate(0.5deg) !important;
   filter: brightness(1.1) !important;
   color: #ffffff !important;
@@ -5608,7 +5758,13 @@ body.theme-starwars button:not(.close-btn):not(.search-clear-btn):not(.mobile-me
 
 body.theme-starwars .actions-dropdown-item,
 body.theme-starwars a.actions-dropdown-item,
-body.theme-starwars button.actions-dropdown-item {
+body.theme-starwars button.actions-dropdown-item,
+body.theme-starwars .actions-dropdown-item.pink,
+body.theme-starwars a.actions-dropdown-item.pink,
+body.theme-starwars button.actions-dropdown-item.pink,
+body.theme-starwars .actions-dropdown-item.purple,
+body.theme-starwars a.actions-dropdown-item.purple,
+body.theme-starwars button.actions-dropdown-item.purple {
   border: 1px solid #00f0ff !important;
   background: #090c15 !important;
   color: #00f0ff !important;
@@ -5626,7 +5782,13 @@ body.theme-starwars button.actions-dropdown-item {
 /* Dropdown hover lightsabers */
 body.theme-starwars .actions-dropdown-item:hover,
 body.theme-starwars a.actions-dropdown-item:hover,
-body.theme-starwars button.actions-dropdown-item:hover {
+body.theme-starwars button.actions-dropdown-item:hover,
+body.theme-starwars .actions-dropdown-item.pink:hover,
+body.theme-starwars a.actions-dropdown-item.pink:hover,
+body.theme-starwars button.actions-dropdown-item.pink:hover,
+body.theme-starwars .actions-dropdown-item.purple:hover,
+body.theme-starwars a.actions-dropdown-item.purple:hover,
+body.theme-starwars button.actions-dropdown-item.purple:hover {
   background: #00f0ff !important;
   color: #030408 !important;
   box-shadow: 0 0 25px #00f0ff, 0 0 10px rgba(0, 240, 255, 0.5) !important;
@@ -5825,7 +5987,13 @@ body.theme-cod3 button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-t
 
 body.theme-cod3 .actions-dropdown-item,
 body.theme-cod3 a.actions-dropdown-item,
-body.theme-cod3 button.actions-dropdown-item {
+body.theme-cod3 button.actions-dropdown-item,
+body.theme-cod3 .actions-dropdown-item.pink,
+body.theme-cod3 a.actions-dropdown-item.pink,
+body.theme-cod3 button.actions-dropdown-item.pink,
+body.theme-cod3 .actions-dropdown-item.purple,
+body.theme-cod3 a.actions-dropdown-item.purple,
+body.theme-cod3 button.actions-dropdown-item.purple {
   border: 1px solid #ff7700 !important;
   background: #1a1e28 !important;
   color: #ff7700 !important;
@@ -5842,7 +6010,13 @@ body.theme-cod3 button.actions-dropdown-item {
 
 body.theme-cod3 .actions-dropdown-item:hover,
 body.theme-cod3 a.actions-dropdown-item:hover,
-body.theme-cod3 button.actions-dropdown-item:hover {
+body.theme-cod3 button.actions-dropdown-item:hover,
+body.theme-cod3 .actions-dropdown-item.pink:hover,
+body.theme-cod3 a.actions-dropdown-item.pink:hover,
+body.theme-cod3 button.actions-dropdown-item.pink:hover,
+body.theme-cod3 .actions-dropdown-item.purple:hover,
+body.theme-cod3 a.actions-dropdown-item.purple:hover,
+body.theme-cod3 button.actions-dropdown-item.purple:hover {
   background: #ff7700 !important;
   color: #07090c !important;
   box-shadow: 0 0 15px rgba(255, 119, 0, 0.6) !important;
@@ -5945,7 +6119,13 @@ body.theme-subnautica button:not(.close-btn):not(.search-clear-btn):not(.mobile-
 }
 body.theme-subnautica .actions-dropdown-item,
 body.theme-subnautica a.actions-dropdown-item,
-body.theme-subnautica button.actions-dropdown-item {
+body.theme-subnautica button.actions-dropdown-item,
+body.theme-subnautica .actions-dropdown-item.pink,
+body.theme-subnautica a.actions-dropdown-item.pink,
+body.theme-subnautica button.actions-dropdown-item.pink,
+body.theme-subnautica .actions-dropdown-item.purple,
+body.theme-subnautica a.actions-dropdown-item.purple,
+body.theme-subnautica button.actions-dropdown-item.purple {
   border: 1.5px solid #00d2ff !important;
   border-radius: 20px !important;
   background: transparent !important;
@@ -5958,7 +6138,13 @@ body.theme-subnautica button.actions-dropdown-item {
 }
 body.theme-subnautica .actions-dropdown-item:hover,
 body.theme-subnautica a.actions-dropdown-item:hover,
-body.theme-subnautica button.actions-dropdown-item:hover {
+body.theme-subnautica button.actions-dropdown-item:hover,
+body.theme-subnautica .actions-dropdown-item.pink:hover,
+body.theme-subnautica a.actions-dropdown-item.pink:hover,
+body.theme-subnautica button.actions-dropdown-item.pink:hover,
+body.theme-subnautica .actions-dropdown-item.purple:hover,
+body.theme-subnautica a.actions-dropdown-item.purple:hover,
+body.theme-subnautica button.actions-dropdown-item.purple:hover {
   background: #00d2ff !important;
   color: #020612 !important;
   box-shadow: 0 0 15px #00d2ff !important;
@@ -6063,7 +6249,13 @@ body.theme-cuphead button:not(.close-btn):not(.search-clear-btn):not(.mobile-men
 }
 body.theme-cuphead .actions-dropdown-item,
 body.theme-cuphead a.actions-dropdown-item,
-body.theme-cuphead button.actions-dropdown-item {
+body.theme-cuphead button.actions-dropdown-item,
+body.theme-cuphead .actions-dropdown-item.pink,
+body.theme-cuphead a.actions-dropdown-item.pink,
+body.theme-cuphead button.actions-dropdown-item.pink,
+body.theme-cuphead .actions-dropdown-item.purple,
+body.theme-cuphead a.actions-dropdown-item.purple,
+body.theme-cuphead button.actions-dropdown-item.purple {
   border: 2px solid #28221d !important;
   background: #df9c2c !important;
   color: #28221d !important;
@@ -6078,7 +6270,13 @@ body.theme-cuphead button.actions-dropdown-item {
 }
 body.theme-cuphead .actions-dropdown-item:hover,
 body.theme-cuphead a.actions-dropdown-item:hover,
-body.theme-cuphead button.actions-dropdown-item:hover {
+body.theme-cuphead button.actions-dropdown-item:hover,
+body.theme-cuphead .actions-dropdown-item.pink:hover,
+body.theme-cuphead a.actions-dropdown-item.pink:hover,
+body.theme-cuphead button.actions-dropdown-item.pink:hover,
+body.theme-cuphead .actions-dropdown-item.purple:hover,
+body.theme-cuphead a.actions-dropdown-item.purple:hover,
+body.theme-cuphead button.actions-dropdown-item.purple:hover {
   background: #c9362b !important;
   color: #ffffff !important;
   box-shadow: 5px 5px 0 #28221d !important;
@@ -6157,7 +6355,13 @@ body.theme-ddlc .data-table tr:hover {
 }
 body.theme-ddlc .actions-dropdown-item,
 body.theme-ddlc a.actions-dropdown-item,
-body.theme-ddlc button.actions-dropdown-item {
+body.theme-ddlc button.actions-dropdown-item,
+body.theme-ddlc .actions-dropdown-item.pink,
+body.theme-ddlc a.actions-dropdown-item.pink,
+body.theme-ddlc button.actions-dropdown-item.pink,
+body.theme-ddlc .actions-dropdown-item.purple,
+body.theme-ddlc a.actions-dropdown-item.purple,
+body.theme-ddlc button.actions-dropdown-item.purple {
   border-radius: 30px !important;
   border: 2px solid #ff4d79 !important;
   background: #ffffff !important;
@@ -6171,7 +6375,13 @@ body.theme-ddlc button.actions-dropdown-item {
 }
 body.theme-ddlc .actions-dropdown-item:hover,
 body.theme-ddlc a.actions-dropdown-item:hover,
-body.theme-ddlc button.actions-dropdown-item:hover {
+body.theme-ddlc button.actions-dropdown-item:hover,
+body.theme-ddlc .actions-dropdown-item.pink:hover,
+body.theme-ddlc a.actions-dropdown-item.pink:hover,
+body.theme-ddlc button.actions-dropdown-item.pink:hover,
+body.theme-ddlc .actions-dropdown-item.purple:hover,
+body.theme-ddlc a.actions-dropdown-item.purple:hover,
+body.theme-ddlc button.actions-dropdown-item.purple:hover {
   animation: ddlc-jitter 0.15s infinite !important;
   box-shadow: 3px -3px 0 #00ffff, -3px 3px 0 #ff00ff !important;
   border-color: #8b0000 !important;
@@ -6289,7 +6499,13 @@ body.theme-undertale button:not(.close-btn):not(.search-clear-btn):not(.mobile-m
 
 body.theme-undertale .actions-dropdown-item,
 body.theme-undertale a.actions-dropdown-item,
-body.theme-undertale button.actions-dropdown-item {
+body.theme-undertale button.actions-dropdown-item,
+body.theme-undertale .actions-dropdown-item.pink,
+body.theme-undertale a.actions-dropdown-item.pink,
+body.theme-undertale button.actions-dropdown-item.pink,
+body.theme-undertale .actions-dropdown-item.purple,
+body.theme-undertale a.actions-dropdown-item.purple,
+body.theme-undertale button.actions-dropdown-item.purple {
   border: 3px solid #ffffff !important;
   background: #000000 !important;
   color: #ffffff !important;
@@ -6307,7 +6523,13 @@ body.theme-undertale button.actions-dropdown-item {
 
 body.theme-undertale .actions-dropdown-item:hover,
 body.theme-undertale a.actions-dropdown-item:hover,
-body.theme-undertale button.actions-dropdown-item:hover {
+body.theme-undertale button.actions-dropdown-item:hover,
+body.theme-undertale .actions-dropdown-item.pink:hover,
+body.theme-undertale a.actions-dropdown-item.pink:hover,
+body.theme-undertale button.actions-dropdown-item.pink:hover,
+body.theme-undertale .actions-dropdown-item.purple:hover,
+body.theme-undertale a.actions-dropdown-item.purple:hover,
+body.theme-undertale button.actions-dropdown-item.purple:hover {
   background: #000000 !important;
   color: #ffff00 !important;
   border-color: #ffff00 !important;
@@ -6518,7 +6740,13 @@ body.theme-lobotomy button:not(.close-btn):not(.search-clear-btn):not(.mobile-me
 
 body.theme-lobotomy .actions-dropdown-item,
 body.theme-lobotomy a.actions-dropdown-item,
-body.theme-lobotomy button.actions-dropdown-item {
+body.theme-lobotomy button.actions-dropdown-item,
+body.theme-lobotomy .actions-dropdown-item.pink,
+body.theme-lobotomy a.actions-dropdown-item.pink,
+body.theme-lobotomy button.actions-dropdown-item.pink,
+body.theme-lobotomy .actions-dropdown-item.purple,
+body.theme-lobotomy a.actions-dropdown-item.purple,
+body.theme-lobotomy button.actions-dropdown-item.purple {
   border-radius: 0px !important;
   border: 1px solid #ca8a04 !important;
   background: #0d0e0c !important;
@@ -6533,7 +6761,13 @@ body.theme-lobotomy button.actions-dropdown-item {
 }
 body.theme-lobotomy .actions-dropdown-item:hover,
 body.theme-lobotomy a.actions-dropdown-item:hover,
-body.theme-lobotomy button.actions-dropdown-item:hover {
+body.theme-lobotomy button.actions-dropdown-item:hover,
+body.theme-lobotomy .actions-dropdown-item.pink:hover,
+body.theme-lobotomy a.actions-dropdown-item.pink:hover,
+body.theme-lobotomy button.actions-dropdown-item.pink:hover,
+body.theme-lobotomy .actions-dropdown-item.purple:hover,
+body.theme-lobotomy a.actions-dropdown-item.purple:hover,
+body.theme-lobotomy button.actions-dropdown-item.purple:hover {
   background: #ca8a04 !important;
   color: #07090e !important;
   box-shadow: 0 0 15px #ca8a04, inset 0 0 5px rgba(255, 255, 255, 0.2) !important;
@@ -6792,7 +7026,13 @@ body.theme-papers button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu
 
 body.theme-papers .actions-dropdown-item,
 body.theme-papers a.actions-dropdown-item,
-body.theme-papers button.actions-dropdown-item {
+body.theme-papers button.actions-dropdown-item,
+body.theme-papers .actions-dropdown-item.pink,
+body.theme-papers a.actions-dropdown-item.pink,
+body.theme-papers button.actions-dropdown-item.pink,
+body.theme-papers .actions-dropdown-item.purple,
+body.theme-papers a.actions-dropdown-item.purple,
+body.theme-papers button.actions-dropdown-item.purple {
   border: 2px solid #434744 !important;
   background: #1d1e1d !important;
   color: #c5c9c6 !important;
@@ -6805,7 +7045,13 @@ body.theme-papers button.actions-dropdown-item {
 
 body.theme-papers .actions-dropdown-item:hover,
 body.theme-papers a.actions-dropdown-item:hover,
-body.theme-papers button.actions-dropdown-item:hover {
+body.theme-papers button.actions-dropdown-item:hover,
+body.theme-papers .actions-dropdown-item.pink:hover,
+body.theme-papers a.actions-dropdown-item.pink:hover,
+body.theme-papers button.actions-dropdown-item.pink:hover,
+body.theme-papers .actions-dropdown-item.purple:hover,
+body.theme-papers a.actions-dropdown-item.purple:hover,
+body.theme-papers button.actions-dropdown-item.purple:hover {
   background: #8f805a !important;
   color: #1d1e1d !important;
 }
@@ -6901,7 +7147,13 @@ body.theme-plague button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu
 
 body.theme-plague .actions-dropdown-item,
 body.theme-plague a.actions-dropdown-item,
-body.theme-plague button.actions-dropdown-item {
+body.theme-plague button.actions-dropdown-item,
+body.theme-plague .actions-dropdown-item.pink,
+body.theme-plague a.actions-dropdown-item.pink,
+body.theme-plague button.actions-dropdown-item.pink,
+body.theme-plague .actions-dropdown-item.purple,
+body.theme-plague a.actions-dropdown-item.purple,
+body.theme-plague button.actions-dropdown-item.purple {
   border: 1px solid #471c1c !important;
   background: #121014 !important;
   color: #e2e9e3 !important;
@@ -6912,7 +7164,13 @@ body.theme-plague button.actions-dropdown-item {
 
 body.theme-plague .actions-dropdown-item:hover,
 body.theme-plague a.actions-dropdown-item:hover,
-body.theme-plague button.actions-dropdown-item:hover {
+body.theme-plague button.actions-dropdown-item:hover,
+body.theme-plague .actions-dropdown-item.pink:hover,
+body.theme-plague a.actions-dropdown-item.pink:hover,
+body.theme-plague button.actions-dropdown-item.pink:hover,
+body.theme-plague .actions-dropdown-item.purple:hover,
+body.theme-plague a.actions-dropdown-item.purple:hover,
+body.theme-plague button.actions-dropdown-item.purple:hover {
   border-color: #e60000 !important;
   color: #ffffff !important;
   background: #e60000 !important;
@@ -7076,7 +7334,13 @@ body.theme-pvz button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-to
 
 body.theme-pvz .actions-dropdown-item,
 body.theme-pvz a.actions-dropdown-item,
-body.theme-pvz button.actions-dropdown-item {
+body.theme-pvz button.actions-dropdown-item,
+body.theme-pvz .actions-dropdown-item.pink,
+body.theme-pvz a.actions-dropdown-item.pink,
+body.theme-pvz button.actions-dropdown-item.pink,
+body.theme-pvz .actions-dropdown-item.purple,
+body.theme-pvz a.actions-dropdown-item.purple,
+body.theme-pvz button.actions-dropdown-item.purple {
   border-radius: 20px 20px 4px 4px !important;
   border: 3px solid #554433 !important;
   background: #6d7973 !important;
@@ -7091,7 +7355,13 @@ body.theme-pvz button.actions-dropdown-item {
 
 body.theme-pvz .actions-dropdown-item:hover,
 body.theme-pvz a.actions-dropdown-item:hover,
-body.theme-pvz button.actions-dropdown-item:hover {
+body.theme-pvz button.actions-dropdown-item:hover,
+body.theme-pvz .actions-dropdown-item.pink:hover,
+body.theme-pvz a.actions-dropdown-item.pink:hover,
+body.theme-pvz button.actions-dropdown-item.pink:hover,
+body.theme-pvz .actions-dropdown-item.purple:hover,
+body.theme-pvz a.actions-dropdown-item.purple:hover,
+body.theme-pvz button.actions-dropdown-item.purple:hover {
   background: #4caf50 !important;
   border-color: #ffc107 !important;
   color: #ffffff !important;
