@@ -6701,34 +6701,63 @@ body.theme-pvz {
     repeating-linear-gradient(90deg, #09110a, #09110a 20px, #0a130b 20px, #0a130b 40px) !important;
 }
 
-/* Falling pixelated yellow suns */
-body.theme-pvz::before {
-  content: '☀️';
+/* PvZ falling suns are now rendered as React buttons in Header.jsx */
+/* The ::before/::after pseudo-elements are removed to avoid duplicate/curved suns */
+
+/* Clickable falling sun button */
+body.theme-pvz .pvz-falling-sun {
   position: fixed;
-  top: -50px;
-  left: 15%;
-  font-size: 24px;
-  color: #ffc107;
-  text-shadow: 0 0 10px #ffc107, 30vw 15vh 0 #ffc107;
-  pointer-events: none;
-  z-index: 9999;
-  animation: pvz-sun-fall-left 15s linear infinite;
-  opacity: 0.5;
+  top: -80px;
+  font-size: 52px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  z-index: 9000;
+  pointer-events: all;
+  animation: pvz-sun-fall 8s linear forwards;
+  filter: drop-shadow(0 0 8px #ffc107) drop-shadow(0 0 20px #ff9800);
+  transition: transform 0.1s ease, filter 0.1s ease;
+  line-height: 1;
+  user-select: none;
+}
+body.theme-pvz .pvz-falling-sun:hover {
+  transform: scale(1.25);
+  filter: drop-shadow(0 0 14px #ffd700) drop-shadow(0 0 30px #ff9800) brightness(1.2);
+}
+body.theme-pvz .pvz-falling-sun:active {
+  transform: scale(0.9);
 }
 
-body.theme-pvz::after {
-  content: '☀️';
-  position: fixed;
-  top: -50px;
-  left: 55%;
-  font-size: 24px;
+/* PvZ sun counter chip next to notifications */
+.pvz-sun-counter {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(255, 193, 7, 0.15);
+  border: 1.5px solid #ffc107;
+  border-radius: 20px;
+  padding: 4px 12px;
+  cursor: default;
+  user-select: none;
+}
+.pvz-sun-icon {
+  font-size: 18px;
+  line-height: 1;
+  animation: pvz-counter-spin 4s linear infinite;
+}
+.pvz-sun-count {
+  font-size: 0.9rem;
+  font-weight: 700;
   color: #ffc107;
-  text-shadow: 0 0 10px #ffc107, 25vw 20vh 0 #ffc107;
-  pointer-events: none;
-  z-index: 9999;
-  animation: pvz-sun-fall-right 20s linear infinite;
-  animation-delay: 6s;
-  opacity: 0.5;
+  font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
+  min-width: 28px;
+  text-align: center;
+  text-shadow: 1px 1px 0px rgba(0,0,0,0.5);
+}
+@keyframes pvz-counter-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 body.theme-pvz h1, body.theme-pvz h2, body.theme-pvz h3, body.theme-pvz .logo-text, body.theme-pvz .kpi-value {
@@ -7302,24 +7331,12 @@ body.theme-pvz .launcher-app-name {
   100% { transform: rotateY(360deg); }
 }
 
-/* 17. Plants vs. Zombies sun fall & zombie bobbing */
-@keyframes pvz-sun-fall-left {
-  0% { transform: translateY(-10vh) rotate(0deg) translateX(0); opacity: 0; }
-  10% { opacity: 0.5; }
-  50% { transform: translateY(50vh) rotate(180deg) translateX(20px); }
-  90% { opacity: 0.5; }
-  100% { transform: translateY(110vh) rotate(360deg) translateX(-10px); opacity: 0; }
-}
-@keyframes pvz-sun-fall-right {
-  0% { transform: translateY(-10vh) rotate(0deg) translateX(0); opacity: 0; }
-  10% { opacity: 0.4; }
-  50% { transform: translateY(50vh) rotate(180deg) translateX(-25px); }
-  90% { opacity: 0.4; }
-  100% { transform: translateY(110vh) rotate(360deg) translateX(15px); opacity: 0; }
-}
-@keyframes pvz-zombie-bob {
-  0% { transform: translateY(0) rotate(-3deg); }
-  100% { transform: translateY(-3px) rotate(3deg); }
+/* 17. Plants vs. Zombies sun fall (straight vertical drop, no curve) */
+@keyframes pvz-sun-fall {
+  0%   { transform: translateY(0px) rotate(0deg);   opacity: 0; }
+  8%   { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
 }
 
 /* 18. Subnautica bioluminescent bubbles float */

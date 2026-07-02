@@ -49,6 +49,11 @@ export default function Header({ onToggleSidebar }) {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+
+  // PvZ Sun Collector state
+  const [pvzSuns, setPvzSuns] = useState([]);
+  const [pvzSunCount, setPvzSunCount] = useState(0);
+  const pvzSunIdRef = useRef(0);
   
   // Modal states
   const [showCommandPalette, setShowCommandPalette] = useState(false);
@@ -163,6 +168,32 @@ export default function Header({ onToggleSidebar }) {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // PvZ: spawn falling suns when theme is pvz
+  useEffect(() => {
+    if (settings.theme !== 'pvz') {
+      setPvzSuns([]);
+      return;
+    }
+    const spawnSun = () => {
+      const id = ++pvzSunIdRef.current;
+      const x = Math.random() * 90 + 2; // 2% - 92% horizontal
+      setPvzSuns(prev => [...prev, { id, x, createdAt: Date.now() }]);
+      // Auto-remove sun after 8s if not clicked
+      setTimeout(() => {
+        setPvzSuns(prev => prev.filter(s => s.id !== id));
+      }, 8000);
+    };
+    // Initial spawn burst
+    spawnSun();
+    const interval = setInterval(spawnSun, 2500);
+    return () => clearInterval(interval);
+  }, [settings.theme]);
+
+  const handleCollectSun = (id) => {
+    setPvzSuns(prev => prev.filter(s => s.id !== id));
+    setPvzSunCount(prev => prev + 25);
+  };
 
   // Keyboard shortcut Ctrl + G for Command Palette
   useEffect(() => {
@@ -289,6 +320,14 @@ export default function Header({ onToggleSidebar }) {
 
         {/* Action Controls */}
         <div className="header-actions">
+          {/* PvZ Sun Counter - only visible in pvz theme */}
+          {settings.theme === 'pvz' && (
+            <div className="pvz-sun-counter" title="Soles recolectados">
+              <span className="pvz-sun-icon">☀️</span>
+              <span className="pvz-sun-count">{pvzSunCount}</span>
+            </div>
+          )}
+
           {/* Notifications Dropdown */}
           <div className="header-help-container" ref={notificationsRef}>
             <button 
@@ -478,6 +517,20 @@ export default function Header({ onToggleSidebar }) {
           </div>
         </div>
       </header>
+
+      {/* PvZ Falling Suns Overlay */}
+      {settings.theme === 'pvz' && pvzSuns.map(sun => (
+        <button
+          key={sun.id}
+          className="pvz-falling-sun"
+          style={{ left: `${sun.x}%` }}
+          onClick={() => handleCollectSun(sun.id)}
+          title="¡Click para recolectar!"
+          aria-label="Recolectar sol"
+        >
+          ☀️
+        </button>
+      ))}
 
       {/* Command Palette Overlay Modal */}
       {showCommandPalette && (
