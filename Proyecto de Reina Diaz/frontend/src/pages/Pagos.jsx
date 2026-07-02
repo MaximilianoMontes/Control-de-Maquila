@@ -22,6 +22,7 @@ export default function Pagos() {
   const [pendingDiscount, setPendingDiscount] = useState(0);
   const [lastPrefilledOrden, setLastPrefilledOrden] = useState('');
   const [aplicarIva, setAplicarIva] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Estados para Descuentos Personales
   const [maquileros, setMaquileros] = useState([]);
@@ -157,12 +158,14 @@ export default function Pagos() {
 
   const handlePago = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
     if (!selectedOrden || !monto || parseFloat(monto) <= 0) return;
 
     const maquileroNombre = ordenActual ? ordenActual.maquilero_nombre : '';
     const folio = ordenActual ? getFolioNumber(ordenActual) : '';
     const isEn = settings.language === 'en';
 
+    setIsSubmitting(true);
     Swal.fire({
       title: isEn ? 'Confirm Payment?' : '¿Confirmar Pago?',
       text: isEn 
@@ -175,9 +178,11 @@ export default function Pagos() {
       confirmButtonText: isEn ? 'Yes, register' : 'Sí, registrar',
       cancelButtonText: isEn ? 'Cancel' : 'Cancelar',
       background: '#1e293b',
-      color: '#f8fafc'
+      color: '#f8fafc',
+      allowOutsideClick: () => !Swal.isLoading()
     }).then(async (result) => {
       if (result.isConfirmed) {
+        Swal.showLoading();
         try {
           const token = localStorage.getItem('token');
           await axios.post(`${API_URL}/api/pagos`, {
@@ -197,6 +202,7 @@ export default function Pagos() {
           toast.error(e.response?.data?.error || (isEn ? 'Error registering payment' : 'Error al registrar pago'), { theme: 'dark' });
         }
       }
+      setIsSubmitting(false);
     });
   };
 

@@ -206,9 +206,11 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
       confirmButtonText: isEn ? 'Yes, register' : 'Sí, registrar',
       cancelButtonText: isEn ? 'Cancel' : 'Cancelar',
       background: swalBg,
-      color: swalColor
+      color: swalColor,
+      allowOutsideClick: () => !Swal.isLoading()
     }).then(async (result) => {
       if (result.isConfirmed) {
+        Swal.showLoading();
         try {
           setPagoSubmitting(true);
           const token = localStorage.getItem('token');
