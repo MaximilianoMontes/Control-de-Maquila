@@ -6289,6 +6289,141 @@ body.theme-lobotomy button.actions-dropdown-item:hover {
   box-shadow: 0 0 15px #00d4ff, inset 0 0 5px rgba(255, 255, 255, 0.5) !important;
 }
 
+/* Lobotomy Corp Custom Dashboard UI Extensions */
+body.theme-lobotomy .lobotomy-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid #ca8a04;
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+body.theme-lobotomy .lobotomy-title {
+  font-size: 2rem !important;
+  color: #ca8a04 !important;
+  text-shadow: 0 0 10px rgba(202, 138, 4, 0.6) !important;
+  margin: 0;
+}
+body.theme-lobotomy .lobotomy-subtitle {
+  font-size: 0.8rem !important;
+  color: #8a6a22 !important;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin: 0;
+  margin-top: 4px;
+}
+body.theme-lobotomy .lobotomy-header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+body.theme-lobotomy .lobotomy-day-widget {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: repeating-linear-gradient(-45deg, #ca8a04, #ca8a04 10px, #000 10px, #000 20px);
+  padding: 8px 16px;
+  border: 2px solid #ca8a04;
+  box-shadow: 0 0 10px rgba(202, 138, 4, 0.4);
+}
+body.theme-lobotomy .lobotomy-day-label {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 1rem;
+  color: #fff;
+  text-shadow: 1px 1px 2px #000;
+}
+body.theme-lobotomy .lobotomy-day-number {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 1.2rem;
+  color: #fff;
+  font-weight: bold;
+  text-shadow: 1px 1px 2px #000;
+}
+body.theme-lobotomy .lobotomy-sub-right {
+  font-size: 0.7rem !important;
+  color: #8a6a22 !important;
+  margin: 0;
+  margin-top: 6px;
+  letter-spacing: 1px;
+}
+body.theme-lobotomy .lobotomy-table-title {
+  color: #ca8a04 !important;
+  text-shadow: 0 0 10px rgba(202, 138, 4, 0.5) !important;
+  font-size: 1.5rem !important;
+  margin-bottom: 1rem;
+}
+body.theme-lobotomy .lobotomy-risk-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  border-radius: 0px !important;
+  letter-spacing: 1px;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+  box-shadow: 0 0 5px rgba(255,255,255,0.1);
+  min-width: 75px;
+  text-align: center;
+}
+body.theme-lobotomy .lobotomy-status-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border-radius: 0px !important;
+  letter-spacing: 1px;
+  text-align: center;
+  min-width: 110px;
+}
+body.theme-lobotomy .lobotomy-status-stable {
+  border: 1px solid #10b981 !important;
+  color: #10b981 !important;
+  background: rgba(16, 185, 129, 0.08) !important;
+  text-shadow: 0 0 5px rgba(16, 185, 129, 0.3) !important;
+}
+body.theme-lobotomy .lobotomy-status-observation {
+  border: 1px solid #eab308 !important;
+  color: #eab308 !important;
+  background: rgba(234, 179, 8, 0.08) !important;
+  text-shadow: 0 0 5px rgba(234, 179, 8, 0.3) !important;
+}
+body.theme-lobotomy .lobotomy-status-breach {
+  border: 1px solid #ef4444 !important;
+  color: #ef4444 !important;
+  background: rgba(239, 68, 68, 0.08) !important;
+  text-shadow: 0 0 5px rgba(239, 68, 68, 0.3) !important;
+  animation: lobotomy-alert-flash 1s infinite alternate;
+}
+@keyframes lobotomy-alert-flash {
+  0% { box-shadow: 0 0 2px rgba(239, 68, 68, 0.3); }
+  100% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.8); background: rgba(239, 68, 68, 0.18) !important; }
+}
+body.theme-lobotomy .lobotomy-progress-container {
+  width: 100px;
+  height: 10px;
+  background: #11161d !important;
+  border: 1.5px solid #ca8a04 !important;
+  border-radius: 0px !important;
+  overflow: hidden;
+  display: inline-block;
+  vertical-align: middle;
+}
+body.theme-lobotomy .lobotomy-progress-bar {
+  height: 100%;
+  background: repeating-linear-gradient(90deg, #ca8a04, #ca8a04 6px, #0c1015 6px, #0c1015 8px) !important;
+  box-shadow: 0 0 8px rgba(202, 138, 4, 0.6) !important;
+  transition: width 0.3s ease;
+}
+body.theme-lobotomy .lobotomy-progress-percent {
+  font-family: 'Inter', sans-serif;
+  font-weight: bold;
+  color: #ca8a04 !important;
+  text-shadow: 0 0 5px rgba(202, 138, 4, 0.5) !important;
+  font-size: 0.85rem;
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 8px;
+}
+
 /* 11. Papers, Please Theme */
 body.theme-papers {
   --bg-dark: #232524;

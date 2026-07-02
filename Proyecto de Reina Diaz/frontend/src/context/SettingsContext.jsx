@@ -1001,6 +1001,14 @@ export const SettingsProvider = ({ children }) => {
 
     applyTheme();
 
+    if (settings.theme === 'lobotomy') {
+      if (!localStorage.getItem('lobotomyThemeStartDate')) {
+        localStorage.setItem('lobotomyThemeStartDate', new Date().toISOString().split('T')[0]);
+      }
+    } else {
+      localStorage.removeItem('lobotomyThemeStartDate');
+    }
+
     if (settings.theme === 'system') {
       const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
       const listener = () => applyTheme();
