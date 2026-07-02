@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bangers&display=swap');
 
 :root {
   --bg-dark: #ffffff;
@@ -5105,128 +5106,377 @@ body.theme-terraria button.actions-dropdown-item:hover {
 
 /* 3. Castle Crashers Theme */
 body.theme-castle {
-  --bg-dark: #12131a;
-  --bg-card: #1d1e26;
-  --bg-input: #262833;
+  --bg-dark: #2b2d35; /* Slate grey backdrop */
+  --bg-card: #20222a; /* Slate panel */
+  --bg-input: #3b3e4a; /* Slate input */
   --text-primary: #ffffff;
-  --text-secondary: #8b92a6;
-  --border-color: #0c0d12;
-  --glass-border: 3px solid #0c0d12;
-  --glass-shadow: 0 8px 0 rgba(0, 0, 0, 0.5);
-  --bg-hover: rgba(255, 255, 255, 0.05);
-  --bg-th: rgba(255, 255, 255, 0.08);
-  --header-bg: rgba(29, 30, 38, 0.95);
-  --row-normal-bg: rgba(56, 161, 105, 0.1);
-  --row-normal-hover: rgba(56, 161, 105, 0.2);
-  --row-warning-bg: rgba(214, 158, 46, 0.1);
-  --row-warning-hover: rgba(214, 158, 46, 0.2);
-  --row-danger-bg: rgba(229, 62, 62, 0.12);
-  --row-danger-hover: rgba(229, 62, 62, 0.22);
-  --badge-bono-bg: #38a169;
+  --text-secondary: #a3aabf;
+  --border-color: #1a1518; /* Thick dark outline */
+  --glass-border: 4px solid #1a1518;
+  --glass-shadow: 8px 8px 0 #1a1518;
+  --bg-hover: rgba(255, 255, 255, 0.08);
+  --bg-th: rgba(255, 255, 255, 0.12);
+  --header-bg: rgba(32, 34, 42, 0.97);
+  --row-normal-bg: rgba(80, 190, 67, 0.1);
+  --row-normal-hover: rgba(80, 190, 67, 0.18);
+  --row-warning-bg: rgba(226, 138, 27, 0.12);
+  --row-warning-hover: rgba(226, 138, 27, 0.22);
+  --row-danger-bg: rgba(216, 42, 53, 0.12);
+  --row-danger-hover: rgba(216, 42, 53, 0.22);
+  --badge-bono-bg: #50be43;
   --badge-bono-text: #ffffff;
-  --badge-desc-bg: #e53e3e;
+  --badge-desc-bg: #d82a35;
   --badge-desc-text: #ffffff;
   
-  --primary-color: #3182ce;
-  --primary-hover: #2b6cb0;
-  --primary-shadow: rgba(49, 130, 206, 0.4);
+  --primary-color: #4c86eb;
+  --primary-hover: #1a5ac6;
+  --primary-shadow: rgba(76, 134, 235, 0.4);
+  
+  background-color: #2b2d35 !important;
+  background-image: 
+    radial-gradient(circle at 50% 50%, #3e414d, #1e2025),
+    repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.04) 0px, rgba(0, 0, 0, 0.04) 2px, transparent 2px, transparent 12px) !important;
+  background-attachment: fixed !important;
+  font-family: 'Comic Sans MS', 'Chalkboard SE', cursive, sans-serif !important;
 }
 
-body.theme-castle h1, body.theme-castle h2, body.theme-castle h3, body.theme-castle .logo-text, body.theme-castle .kpi-value {
-  font-family: 'Impact', 'Arial Black', sans-serif !important;
+/* Wood frame around the entire browser window */
+body.theme-castle::before {
+  content: '' !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  border: 14px solid #8e5730 !important;
+  box-shadow: inset 0 0 0 3px #1a1518, 0 0 0 3px #1a1518 !important;
+  pointer-events: none !important;
+  z-index: 99999 !important;
+}
+
+body.theme-castle h1, 
+body.theme-castle h2, 
+body.theme-castle h3, 
+body.theme-castle .logo-text, 
+body.theme-castle .kpi-value {
+  font-family: 'Bangers', cursive, Impact, sans-serif !important;
+  letter-spacing: 1.5px !important;
+  text-transform: uppercase !important;
+  color: #ffd700 !important; /* Golden/yellow text */
+  -webkit-text-stroke: 1.5px #1a1518;
+  text-shadow: 3px 3px 0px #d82a35, 5px 5px 0px #1a1518 !important;
+}
+
+body.theme-castle .sidebar-logo span {
+  font-family: 'Bangers', cursive, Impact, sans-serif !important;
+  color: #ffd700 !important;
+  -webkit-text-stroke: 1.5px #1a1518;
+  text-shadow: 2px 2px 0px #d82a35, 4px 4px 0px #1a1518 !important;
+  font-size: 1.7rem !important;
   letter-spacing: 1px !important;
+  background: none !important;
+  -webkit-text-fill-color: initial !important;
+}
+
+/* Panels/Cards as Stone Blocks */
+body.theme-castle .glass-card, 
+body.theme-castle .modal-content, 
+body.theme-castle .sidebar, 
+body.theme-castle .plancha-sidebar, 
+body.theme-castle aside {
+  border: 4px solid #1a1518 !important;
+  border-radius: 20px !important;
+  background: #20222a !important;
+  box-shadow: 8px 8px 0 #1a1518 !important;
+  background-image: 
+    linear-gradient(rgba(0, 0, 0, 0.12) 1px, transparent 1px),
+    radial-gradient(circle at 10% 20%, rgba(255, 255, 255, 0.02) 0%, rgba(255, 255, 255, 0) 40%) !important;
+  background-size: 100% 20px, 100% 100% !important;
+}
+
+body.theme-castle .sidebar .nav-links a {
+  border: 3px solid transparent !important;
+  border-radius: 12px !important;
+  transition: all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+  font-family: 'Bangers', cursive, sans-serif !important;
+  font-size: 1.2rem !important;
+  letter-spacing: 0.5px !important;
   text-transform: uppercase !important;
   color: #ffffff !important;
-  -webkit-text-stroke: 1.5px #000;
-  text-shadow: 3px 3px 0px #3182ce !important;
+}
+body.theme-castle .sidebar .nav-links a:hover,
+body.theme-castle .sidebar .nav-links a.active {
+  background: linear-gradient(135deg, #4c86eb, #1a5ac6) !important;
+  border-color: #1a1518 !important;
+  box-shadow: 4px 4px 0px #1a1518 !important;
+  transform: translateX(4px) rotate(0.5deg) !important;
+  color: #ffffff !important;
+  text-shadow: 1px 1px 0 #1a1518 !important;
 }
 
-body.theme-castle .glass-card, body.theme-castle .modal-content, body.theme-castle .sidebar, body.theme-castle .plancha-sidebar, body.theme-castle aside {
-  border: 3px solid #0c0d12 !important;
-  border-radius: 20px !important;
-  background: #1d1e26 !important;
-  box-shadow: 6px 6px 0 #0c0d12 !important;
+/* KPI Cards styled exactly like game menu option buttons */
+body.theme-castle .kpi-grid {
+  gap: 1.5rem !important;
 }
 
+body.theme-castle .kpi-card {
+  border: 4px solid #1a1518 !important;
+  border-radius: 18px !important;
+  box-shadow: 0 8px 0 #1a1518 !important;
+  position: relative !important;
+  overflow: hidden !important;
+  transition: transform 0.12s ease, box-shadow 0.12s ease !important;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  padding: 1.2rem !important;
+}
+
+body.theme-castle .kpi-card:hover {
+  transform: translateY(-4px) scale(1.02) !important;
+  box-shadow: 0 12px 0 #1a1518 !important;
+}
+
+body.theme-castle .kpi-card::before {
+  content: '' !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  height: 50% !important;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0.05) 100%) !important;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1) !important;
+  pointer-events: none !important;
+  border-radius: 14px 14px 0 0 !important;
+}
+
+/* Local Game (Orange) */
+body.theme-castle .kpi-card:nth-child(1) {
+  background: linear-gradient(135deg, #e28a1b, #b3650c) !important; 
+}
+/* Online Multiplayer (Blue) */
+body.theme-castle .kpi-card:nth-child(2) {
+  background: linear-gradient(135deg, #4c86eb, #1a5ac6) !important; 
+}
+/* Help & Options (Green) */
+body.theme-castle .kpi-card:nth-child(3) {
+  background: linear-gradient(135deg, #50be43, #2d8c22) !important; 
+}
+/* Stats / Trophy (Red) */
+body.theme-castle .kpi-card:nth-child(4) {
+  background: linear-gradient(135deg, #d82a35, #a3151e) !important; 
+}
+
+body.theme-castle .kpi-card .kpi-icon {
+  background: rgba(0, 0, 0, 0.25) !important;
+  border: 3px solid #1a1518 !important;
+  border-radius: 12px !important;
+  color: #ffffff !important;
+  width: 50px !important;
+  height: 50px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 2px 2px 0 #1a1518 !important;
+}
+
+body.theme-castle .kpi-card .kpi-info h3 {
+  font-family: 'Bangers', cursive, Impact, sans-serif !important;
+  color: #ffffff !important;
+  font-size: 2.1rem !important;
+  margin: 0 !important;
+  -webkit-text-stroke: 1.5px #1a1518 !important;
+  text-shadow: 2px 2px 0 #1a1518 !important;
+  letter-spacing: 1.5px !important;
+}
+
+body.theme-castle .kpi-card .kpi-info p {
+  font-family: 'Bangers', cursive, Impact, sans-serif !important;
+  color: #ffffff !important;
+  font-size: 1.05rem !important;
+  margin: 0 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  -webkit-text-stroke: 0.8px #1a1518 !important;
+  text-shadow: 1px 1px 0 #1a1518 !important;
+}
+
+/* Page Control Buttons (3D Cartoon Push style) */
 body.theme-castle .btn, 
 body.theme-castle button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
-  border: 3px solid #0c0d12 !important;
-  background: #3182ce !important;
-  color: #ffffff !important;
-  border-radius: 12px !important;
-  font-family: 'Impact', 'Arial Black', sans-serif !important;
+  border: 3.5px solid #1a1518 !important;
+  border-radius: 14px !important;
+  font-family: 'Bangers', cursive, Impact, sans-serif !important;
+  font-size: 1.1rem !important;
   text-transform: uppercase !important;
-  box-shadow: 3px 3px 0 #0c0d12 !important;
-  transition: all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+  letter-spacing: 1px !important;
+  padding: 8px 20px !important;
+  box-shadow: 0 5px 0 #1a1518 !important;
+  position: relative !important;
+  overflow: hidden !important;
+  transition: transform 0.1s ease, box-shadow 0.1s ease !important;
+  text-shadow: 1px 1px 0 #1a1518 !important;
+}
+
+body.theme-castle .btn-primary,
+body.theme-castle .btn:not(.btn-success):not(.btn-danger):not(.btn-warning) {
+  background: linear-gradient(135deg, #4c86eb, #1a5ac6) !important;
+  color: #ffffff !important;
 }
 
 body.theme-castle .btn-success {
-  box-shadow: 0 0 10px rgba(56, 161, 105, 0.4), 3px 3px 0 #0c0d12 !important;
+  background: linear-gradient(135deg, #50be43, #2d8c22) !important;
+  color: #ffffff !important;
   animation: castle-poison-glow 2s infinite ease-in-out !important;
 }
+
 body.theme-castle .btn-danger {
-  box-shadow: 0 0 10px rgba(229, 62, 62, 0.4), 3px 3px 0 #0c0d12 !important;
+  background: linear-gradient(135deg, #d82a35, #a3151e) !important;
+  color: #ffffff !important;
   animation: castle-fire-glow 1.5s infinite ease-in-out !important;
 }
-body.theme-castle .btn-primary {
-  box-shadow: 0 0 10px rgba(49, 130, 206, 0.4), 3px 3px 0 #0c0d12 !important;
-  animation: castle-ice-glow 2.5s infinite ease-in-out !important;
-}
+
 body.theme-castle .btn-warning {
-  box-shadow: 0 0 10px rgba(214, 158, 46, 0.4), 3px 3px 0 #0c0d12 !important;
+  background: linear-gradient(135deg, #e28a1b, #b3650c) !important;
+  color: #ffffff !important;
   animation: castle-lightning-glow 1s infinite alternate !important;
 }
 
 body.theme-castle .btn:hover, 
 body.theme-castle button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
-  transform: scale(1.06) rotate(1deg) !important;
-  background: #4299e1 !important;
-  color: #ffffff !important;
+  transform: translateY(-2px) scale(1.03) !important;
+  box-shadow: 0 7px 0 #1a1518 !important;
+  filter: brightness(1.1) !important;
 }
 
+body.theme-castle .btn:active,
+body.theme-castle button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):active {
+  transform: translateY(4px) !important;
+  box-shadow: 0 1px 0 #1a1518 !important;
+}
+
+body.theme-castle .btn::before,
+body.theme-castle button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn)::before {
+  content: '' !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  height: 50% !important;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0) 100%) !important;
+  pointer-events: none !important;
+}
+
+/* Dropdown Menu Items */
 body.theme-castle .actions-dropdown-item,
 body.theme-castle a.actions-dropdown-item,
 body.theme-castle button.actions-dropdown-item {
-  border: 3px solid #0c0d12 !important;
-  background: #3182ce !important;
+  border: 3.5px solid #1a1518 !important;
+  background: linear-gradient(135deg, #4c86eb, #1a5ac6) !important;
   color: #ffffff !important;
   border-radius: 12px !important;
-  font-family: 'Impact', 'Arial Black', sans-serif !important;
+  font-family: 'Bangers', cursive, Impact, sans-serif !important;
   text-transform: uppercase !important;
-  box-shadow: 3px 3px 0 #0c0d12 !important;
+  box-shadow: 3px 3px 0 #1a1518 !important;
   transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
   text-decoration: none !important;
   display: flex !important;
   align-items: center !important;
   gap: 0.5rem !important;
+  text-shadow: 1px 1px 0 #1a1518 !important;
 }
 
 body.theme-castle .actions-dropdown-item.success {
+  background: linear-gradient(135deg, #50be43, #2d8c22) !important;
   animation: castle-poison-glow 2s infinite ease-in-out !important;
 }
 body.theme-castle .actions-dropdown-item.danger {
+  background: linear-gradient(135deg, #d82a35, #a3151e) !important;
   animation: castle-fire-glow 1.5s infinite ease-in-out !important;
 }
 body.theme-castle .actions-dropdown-item.blue {
+  background: linear-gradient(135deg, #4c86eb, #1a5ac6) !important;
   animation: castle-ice-glow 2.5s infinite ease-in-out !important;
 }
 body.theme-castle .actions-dropdown-item.warning {
+  background: linear-gradient(135deg, #e28a1b, #b3650c) !important;
   animation: castle-lightning-glow 1s infinite alternate !important;
 }
 
 body.theme-castle .actions-dropdown-item:hover,
 body.theme-castle a.actions-dropdown-item:hover,
 body.theme-castle button.actions-dropdown-item:hover {
-  transform: scale(1.06) rotate(1deg) !important;
-  background: #4299e1 !important;
+  transform: scale(1.05) rotate(0.5deg) !important;
+  filter: brightness(1.1) !important;
   color: #ffffff !important;
 }
 
-body.theme-castle .btn-danger {
-  background: #e53e3e !important;
+/* Inputs & Form fields */
+body.theme-castle input, 
+body.theme-castle select, 
+body.theme-castle textarea,
+body.theme-castle .searchable-select-trigger {
+  border: 3px solid #1a1518 !important;
+  background-color: #3b3e4a !important;
+  color: #ffffff !important;
+  border-radius: 10px !important;
+  font-family: 'Bangers', cursive, sans-serif !important;
+  font-size: 1.1rem !important;
+  letter-spacing: 0.5px !important;
+  padding: 8px 12px !important;
+  box-shadow: inset 2px 2px 0 rgba(0,0,0,0.3) !important;
 }
-body.theme-castle .btn-danger:hover {
-  background: #f56565 !important;
+
+body.theme-castle input:focus, 
+body.theme-castle select:focus, 
+body.theme-castle textarea:focus {
+  border-color: #4c86eb !important;
+  outline: none !important;
+}
+
+/* Tables styled as Comic Parchment */
+body.theme-castle .data-table {
+  border-collapse: separate !important;
+  border-spacing: 0 6px !important;
+  background: transparent !important;
+}
+
+body.theme-castle .data-table th {
+  background: #3b3e4a !important;
+  color: #ffd700 !important;
+  font-family: 'Bangers', cursive, sans-serif !important;
+  font-size: 1.25rem !important;
+  letter-spacing: 1px !important;
+  border: 3.5px solid #1a1518 !important;
+  text-transform: uppercase !important;
+  -webkit-text-stroke: 0.5px #1a1518 !important;
+  text-shadow: 1.5px 1.5px 0 #1a1518 !important;
+}
+
+body.theme-castle .data-table td {
+  border: 3.5px solid #1a1518 !important;
+  border-style: solid none !important;
+  background-color: #262831 !important;
+  color: #ffffff !important;
+  font-family: 'Comic Sans MS', cursive, sans-serif !important;
+  font-weight: bold !important;
+  font-size: 0.95rem !important;
+}
+
+body.theme-castle .data-table td:first-child {
+  border-left: 3.5px solid #1a1518 !important;
+  border-top-left-radius: 10px !important;
+  border-bottom-left-radius: 10px !important;
+}
+
+body.theme-castle .data-table td:last-child {
+  border-right: 3.5px solid #1a1518 !important;
+  border-top-right-radius: 10px !important;
+  border-bottom-right-radius: 10px !important;
+}
+
+body.theme-castle .data-table tr:hover td {
+  background-color: #323542 !important;
 }
 
 /* 4. Star Wars Theme */
@@ -6897,9 +7147,9 @@ body.theme-terraria .launcher-app-name {
 /* 3. Castle Crashers Launcher */
 body.theme-castle .launcher-app-icon {
   border-radius: 16px !important;
-  border: 3px solid #0c0d12 !important;
-  background: #1d1e26 !important;
-  box-shadow: 4px 4px 0px #0c0d12 !important;
+  border: 3.5px solid #1a1518 !important;
+  background: #20222a !important;
+  box-shadow: 4px 4px 0px #1a1518 !important;
 }
 body.theme-castle .launcher-app-icon svg rect {
   fill: transparent !important;
@@ -6907,13 +7157,15 @@ body.theme-castle .launcher-app-icon svg rect {
   rx: 16px !important;
 }
 body.theme-castle .launcher-app-item:hover .launcher-app-icon {
-  border-color: #ffffff !important;
-  box-shadow: 6px 6px 0px #0c0d12 !important;
+  border-color: #ffd700 !important;
+  box-shadow: 6px 6px 0px #1a1518 !important;
 }
 body.theme-castle .launcher-app-name {
-  font-family: 'Impact', 'Arial Black', sans-serif !important;
+  font-family: 'Bangers', cursive, sans-serif !important;
+  font-size: 1.15rem !important;
+  letter-spacing: 0.5px !important;
   color: #ffffff !important;
-  text-shadow: 2px 2px 0px #0c0d12 !important;
+  text-shadow: 2px 2px 0px #1a1518 !important;
 }
 
 /* 4. Star Wars Launcher */
