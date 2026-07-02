@@ -1028,12 +1028,25 @@ export const SettingsProvider = ({ children }) => {
       rose: { primary: '#f43f5e', hover: '#e11d48', shadow: 'rgba(244, 63, 94, 0.4)' }
     };
 
-    const chosen = accents[settings.accentColor] || accents.blue;
     const root = document.documentElement;
-    root.style.setProperty('--primary-color', chosen.primary);
-    root.style.setProperty('--primary-hover', chosen.hover);
-    root.style.setProperty('--primary-shadow', chosen.shadow);
-  }, [settings.accentColor]);
+
+    const brandedThemes = [
+      'miku', 'teto', 'ror2', 'limbus', 'ruina', 'minecraft', 'geometry', 'fallout', 'tf2', 
+      'cyberpunk', 'backrooms', 'terraria', 'castle', 'starwars', 'cod3', 
+      'subnautica', 'cuphead', 'ddlc', 'undertale', 'lobotomy', 'papers', 'plague', 'pvz'
+    ];
+
+    if (brandedThemes.includes(settings.theme)) {
+      root.style.removeProperty('--primary-color');
+      root.style.removeProperty('--primary-hover');
+      root.style.removeProperty('--primary-shadow');
+    } else {
+      const chosen = accents[settings.accentColor] || accents.blue;
+      root.style.setProperty('--primary-color', chosen.primary);
+      root.style.setProperty('--primary-hover', chosen.hover);
+      root.style.setProperty('--primary-shadow', chosen.shadow);
+    }
+  }, [settings.accentColor, settings.theme]);
 
   const updateSetting = (key, value) => {
     setSettings(prev => ({ ...prev, [key]: value }));
