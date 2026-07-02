@@ -6078,87 +6078,87 @@ body.theme-undertale button.actions-dropdown-item:hover::before {
   animation: undertale-soul-pulse 0.6s infinite alternate ease-in-out !important;
 }
 
-/* 10. Lobotomy Corporation Theme (Faithful Steampunk Clinical facility style) */
+/* 10. Lobotomy Corporation Theme (Golden Warning Control Room style) */
 body.theme-lobotomy {
-  --bg-dark: #06080b; /* Deep clinical void black-blue */
-  --bg-card: #0c1015; /* Containment control room panels */
-  --bg-input: #11161d;
-  --text-primary: #bdfcfa; /* High-tech clinical teal */
-  --text-secondary: #528c9e;
-  --border-color: rgba(0, 212, 255, 0.3); /* Clinical cyan */
-  --glass-border: 1px solid rgba(0, 212, 255, 0.4);
-  --glass-shadow: 0 0 15px rgba(0, 212, 255, 0.25);
-  --bg-hover: rgba(0, 212, 255, 0.08);
-  --bg-th: rgba(0, 212, 255, 0.15);
-  --header-bg: rgba(12, 16, 21, 0.95);
-  --row-normal-bg: rgba(0, 255, 204, 0.04);
-  --row-normal-hover: rgba(0, 255, 204, 0.12);
+  --bg-dark: #06080b; /* Deep void black */
+  --bg-card: #0d0e0c; /* Dark facility panel */
+  --bg-input: #13140f;
+  --text-primary: #e8dfc0; /* Pale parchment/facility cream */
+  --text-secondary: #7a6e4e; /* Muted gold-brown */
+  --border-color: rgba(202, 138, 4, 0.35); /* Gold */
+  --glass-border: 1px solid rgba(202, 138, 4, 0.45);
+  --glass-shadow: 0 0 15px rgba(202, 138, 4, 0.2);
+  --bg-hover: rgba(202, 138, 4, 0.08);
+  --bg-th: rgba(202, 138, 4, 0.15);
+  --header-bg: rgba(10, 10, 8, 0.97);
+  --row-normal-bg: rgba(202, 138, 4, 0.03);
+  --row-normal-hover: rgba(202, 138, 4, 0.09);
   --row-warning-bg: rgba(255, 215, 0, 0.06);
   --row-warning-hover: rgba(255, 215, 0, 0.15);
   --row-danger-bg: rgba(230, 40, 40, 0.08);
   --row-danger-hover: rgba(230, 40, 40, 0.18);
   
-  --badge-bono-bg: rgba(0, 255, 204, 0.2);
-  --badge-bono-text: #00ffcc;
+  --badge-bono-bg: rgba(202, 138, 4, 0.2);
+  --badge-bono-text: #ca8a04;
   --badge-desc-bg: rgba(230, 40, 40, 0.2);
   --badge-desc-text: #ff5555;
   
-  --primary-color: #00d4ff;
-  --primary-hover: #009ecb;
-  --primary-shadow: rgba(0, 212, 255, 0.4);
+  --primary-color: #ca8a04;
+  --primary-hover: #a06d02;
+  --primary-shadow: rgba(202, 138, 4, 0.4);
   --danger-color: #ff3333;
   --danger-hover: #cc2222;
-  --success-color: #00ffcc;
+  --success-color: #ca8a04;
   
   background-color: #06080b !important;
   background-image: 
-    radial-gradient(circle at 50% 50%, #0c121a, #05070a),
-    linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px) !important;
+    radial-gradient(circle at 50% 50%, #0d0e0b, #050605),
+    linear-gradient(rgba(202, 138, 4, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(202, 138, 4, 0.025) 1px, transparent 1px) !important;
   background-size: 100% 100%, 20px 20px, 20px 20px !important;
   background-attachment: fixed !important;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
 }
 
-/* Qliphoth Meltdown levels flashing screen border when meltdown is warning */
+/* Qliphoth Meltdown levels flashing screen border */
 body.theme-lobotomy::before {
   content: '';
   position: fixed;
   top: 0; left: 0; width: 100%; height: 100%;
-  box-shadow: inset 0 0 40px rgba(0, 212, 255, 0.05);
+  box-shadow: inset 0 0 40px rgba(202, 138, 4, 0.04);
   pointer-events: none;
   z-index: 9999;
 }
 
 body.theme-lobotomy h1, body.theme-lobotomy h2, body.theme-lobotomy h3, body.theme-lobotomy .logo-text, body.theme-lobotomy .kpi-value {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-  color: #00d4ff !important;
+  color: #ca8a04 !important;
   font-weight: bold !important;
-  text-shadow: 0 0 10px rgba(0, 212, 255, 0.6) !important;
+  text-shadow: 0 0 10px rgba(202, 138, 4, 0.5) !important;
   text-transform: uppercase !important;
   letter-spacing: 1px !important;
 }
 
-/* Containment unit style panels with clinical grid and double border */
+/* Containment unit style panels */
 body.theme-lobotomy .glass-card, body.theme-lobotomy .modal-content, body.theme-lobotomy .sidebar, body.theme-lobotomy .plancha-sidebar, body.theme-lobotomy aside {
-  border: 2px solid #00d4ff !important;
+  border: 2px solid #ca8a04 !important;
   border-radius: 0px !important;
-  background: #0c1015 !important;
-  box-shadow: 0 0 15px rgba(0, 212, 255, 0.15), inset 0 0 10px rgba(0, 212, 255, 0.05) !important;
-  background-image: linear-gradient(rgba(0, 212, 255, 0.01) 1px, transparent 1px) !important;
+  background: #0d0e0c !important;
+  box-shadow: 0 0 15px rgba(202, 138, 4, 0.12), inset 0 0 10px rgba(202, 138, 4, 0.04) !important;
+  background-image: linear-gradient(rgba(202, 138, 4, 0.01) 1px, transparent 1px) !important;
   background-size: 100% 12px !important;
 }
 
 body.theme-lobotomy .main-header {
-  border-bottom: 2px solid #00d4ff !important;
+  border-bottom: 2px solid #ca8a04 !important;
 }
 body.theme-lobotomy .sidebar {
-  border-right: 2px solid #00d4ff !important;
+  border-right: 2px solid #ca8a04 !important;
 }
 body.theme-lobotomy .data-table th {
-  background: #11161d !important;
-  border-bottom: 2px solid #00d4ff !important;
-  color: #00d4ff !important;
+  background: #13140f !important;
+  border-bottom: 2px solid #ca8a04 !important;
+  color: #ca8a04 !important;
   font-weight: bold !important;
 }
 body.theme-lobotomy .badge {
@@ -6173,16 +6173,16 @@ body.theme-lobotomy .badge {
   100% { border-color: #ff3333 !important; box-shadow: 0 0 5px #ff3333 !important; background: rgba(255, 51, 51, 0.05) !important; }
 }
 
-/* Qliphoth Threat Levels: ZAYIN, TETH, HE, WAW, ALEPH representation */
+/* Qliphoth Threat Levels: ZAYIN, TETH, HE, WAW, ALEPH */
 body.theme-lobotomy .badge-success {
-  background: rgba(0, 255, 204, 0.15) !important;
-  color: #00ffcc !important;
-  border: 1px solid #00ffcc !important;
+  background: rgba(202, 138, 4, 0.15) !important;
+  color: #ca8a04 !important;
+  border: 1px solid #ca8a04 !important;
 }
 body.theme-lobotomy .badge-info {
-  background: rgba(0, 212, 255, 0.15) !important;
-  color: #00d4ff !important;
-  border: 1px solid #00d4ff !important;
+  background: rgba(202, 138, 4, 0.1) !important;
+  color: #e8b000 !important;
+  border: 1px solid #ca8a04 !important;
 }
 
 /* Moving Hazard Stripes for warning badges */
@@ -6196,9 +6196,9 @@ body.theme-lobotomy .badge-warning {
 }
 
 body.theme-lobotomy .badge-partial {
-  background: rgba(155, 81, 224, 0.15) !important;
-  color: #b388ff !important;
-  border: 1px solid #9b51e0 !important;
+  background: rgba(202, 138, 4, 0.12) !important;
+  color: #e8b000 !important;
+  border: 1px solid #ca8a04 !important;
 }
 body.theme-lobotomy .badge-danger, 
 body.theme-lobotomy .btn-danger, 
@@ -6215,11 +6215,11 @@ body.theme-lobotomy .badge-desc-bg, body.theme-lobotomy .badge-desc {
   border-radius: 0px !important;
 }
 
-/* Energy Gauge style progress bar filling with green blocks (PE-Boxes) */
+/* Energy Gauge style progress bar */
 body.theme-lobotomy .progress-bar,
 body.theme-lobotomy .kpi-progress {
-  background: #11161d !important;
-  border: 2px solid #00d4ff !important;
+  background: #13140f !important;
+  border: 2px solid #ca8a04 !important;
   border-radius: 0px !important;
   position: relative;
   overflow: hidden !important;
@@ -6227,8 +6227,8 @@ body.theme-lobotomy .kpi-progress {
 body.theme-lobotomy .progress-bar-fill,
 body.theme-lobotomy .progress-fill,
 body.theme-lobotomy .kpi-progress-fill {
-  background: repeating-linear-gradient(90deg, #00ffcc, #00ffcc 12px, #0c1015 12px, #0c1015 15px) !important;
-  box-shadow: 0 0 10px rgba(0, 255, 204, 0.5) !important;
+  background: repeating-linear-gradient(90deg, #ca8a04, #ca8a04 12px, #0d0e0c 12px, #0d0e0c 15px) !important;
+  box-shadow: 0 0 10px rgba(202, 138, 4, 0.5) !important;
   border-radius: 0px !important;
   image-rendering: pixelated !important;
 }
@@ -6236,14 +6236,14 @@ body.theme-lobotomy .kpi-progress-fill {
 body.theme-lobotomy .btn, 
 body.theme-lobotomy button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
   border-radius: 0px !important;
-  border: 1px solid #00d4ff !important;
-  background: #0c1015 !important;
-  color: #00d4ff !important;
+  border: 1px solid #ca8a04 !important;
+  background: #0d0e0c !important;
+  color: #ca8a04 !important;
   font-family: 'Inter', -apple-system, sans-serif !important;
   font-weight: bold !important;
   text-transform: uppercase !important;
   letter-spacing: 1px !important;
-  box-shadow: 0 0 5px rgba(0, 212, 255, 0.2) !important;
+  box-shadow: 0 0 5px rgba(202, 138, 4, 0.2) !important;
   transition: all 0.2s ease !important;
   position: relative;
 }
@@ -6261,32 +6261,32 @@ body.theme-lobotomy button:not(.close-btn):not(.search-clear-btn):not(.mobile-me
 
 body.theme-lobotomy .btn:hover, 
 body.theme-lobotomy button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
-  background: #00d4ff !important;
+  background: #ca8a04 !important;
   color: #07090e !important;
-  box-shadow: 0 0 15px #00d4ff, inset 0 0 5px rgba(255, 255, 255, 0.5) !important;
+  box-shadow: 0 0 15px #ca8a04, inset 0 0 5px rgba(255, 255, 255, 0.2) !important;
 }
 
 body.theme-lobotomy .actions-dropdown-item,
 body.theme-lobotomy a.actions-dropdown-item,
 body.theme-lobotomy button.actions-dropdown-item {
   border-radius: 0px !important;
-  border: 1px solid #00d4ff !important;
-  background: #0c1015 !important;
-  color: #00d4ff !important;
+  border: 1px solid #ca8a04 !important;
+  background: #0d0e0c !important;
+  color: #ca8a04 !important;
   font-family: 'Inter', -apple-system, sans-serif !important;
   font-weight: bold !important;
   text-transform: uppercase !important;
   letter-spacing: 1px !important;
-  box-shadow: 0 0 5px rgba(0, 212, 255, 0.2) !important;
+  box-shadow: 0 0 5px rgba(202, 138, 4, 0.2) !important;
   transition: all 0.2s ease !important;
   text-decoration: none !important;
 }
 body.theme-lobotomy .actions-dropdown-item:hover,
 body.theme-lobotomy a.actions-dropdown-item:hover,
 body.theme-lobotomy button.actions-dropdown-item:hover {
-  background: #00d4ff !important;
+  background: #ca8a04 !important;
   color: #07090e !important;
-  box-shadow: 0 0 15px #00d4ff, inset 0 0 5px rgba(255, 255, 255, 0.5) !important;
+  box-shadow: 0 0 15px #ca8a04, inset 0 0 5px rgba(255, 255, 255, 0.2) !important;
 }
 
 /* Lobotomy Corp Custom Dashboard UI Extensions */
