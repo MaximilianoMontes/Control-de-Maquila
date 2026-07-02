@@ -6,7 +6,7 @@ const NOTE_SYMBOLS = ['🎵', '🎶', '🎼', '♩', '♪', '♫', '♬'];
 export default function ThemeEffects() {
   const { settings } = useSettings();
   const theme = settings?.theme || 'light';
-  const isActive = theme === 'miku' || theme === 'teto' || theme === 'ror2';
+  const isActive = theme === 'miku' || theme === 'teto' || theme === 'ror2' || theme === 'subnautica';
   
   const [elements, setElements] = useState([]);
 
@@ -35,6 +35,27 @@ export default function ThemeEffects() {
           return active;
         });
       }, 100);
+
+      return () => clearInterval(interval);
+    } else if (theme === 'subnautica') {
+      // Generate initial bubbles scattered across the screen
+      const initialElements = Array.from({ length: 25 }).map((_, i) => createBubble(i, true));
+      setElements(initialElements);
+
+      const interval = setInterval(() => {
+        setElements(prev => {
+          const now = Date.now();
+          const active = prev.filter(el => el.expiry > now);
+          
+          const bubbleCount = active.filter(el => el.type === 'bubble').length;
+
+          // Maintain density of bubbles
+          if (bubbleCount < 35) {
+            active.push(createBubble(now + Math.random(), false));
+          }
+          return active;
+        });
+      }, 350);
 
       return () => clearInterval(interval);
     } else {
@@ -122,6 +143,39 @@ export default function ThemeEffects() {
         pointerEvents: 'none',
         opacity,
         top: '-100px'
+      }
+    };
+  };
+
+  const createBubble = (id, isInitial = false) => {
+    const duration = 6 + Math.random() * 6; // slow rising bubbles: 6 to 12s
+    const delay = isInitial ? Math.random() * -duration : 0;
+    const left = Math.random() * 100;
+    const size = 6 + Math.random() * 14;   // bubble size: 6px to 20px
+    const animationName = Math.random() > 0.5 ? 'subnautica-float-left' : 'subnautica-float-right';
+
+    const now = Date.now();
+    const expiry = now + (duration + (isInitial ? 0 : delay)) * 1000;
+
+    return {
+      id,
+      type: 'bubble',
+      expiry,
+      style: {
+        position: 'fixed',
+        left: `${left}%`,
+        width: `${size}px`,
+        height: `${size}px`,
+        borderRadius: '50%',
+        border: '1px solid rgba(0, 210, 255, 0.4)',
+        background: 'radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.65) 0%, rgba(0, 180, 255, 0.15) 50%, rgba(0, 210, 255, 0.05) 100%)',
+        boxShadow: 'inset 0 0 5px rgba(255, 255, 255, 0.6), 0 0 8px rgba(0, 210, 255, 0.3)',
+        animation: `${animationName} ${duration}s ease-in-out infinite`,
+        animationDelay: `${delay}s`,
+        zIndex: 9999,
+        pointerEvents: 'none',
+        bottom: '-30px',
+        opacity: 0
       }
     };
   };
