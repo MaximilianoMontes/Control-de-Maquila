@@ -329,6 +329,257 @@ export default function Header({ onToggleSidebar }) {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // --- THE BINDING OF ISAAC ---
+  const [isaacHearts, setIsaacHearts] = useState([1, 1, 1]);
+  const [isaacDying, setIsaacDying] = useState(false);
+  const handleIsaacHit = (index) => {
+    if (isaacDying) return;
+    setIsaacHearts(prev => {
+      const next = [...prev];
+      if (next[index] === 1) {
+        next[index] = 0.5;
+      } else if (next[index] === 0.5) {
+        next[index] = 0;
+      } else {
+        next[index] = 1;
+      }
+      if (next.every(h => h === 0)) {
+        setIsaacDying(true);
+        setTimeout(() => {
+          setIsaacHearts([1, 1, 1]);
+          setIsaacDying(false);
+        }, 3000);
+      }
+      return next;
+    });
+  };
+
+  // --- HALO ---
+  const [haloShield, setHaloShield] = useState(100);
+  const [haloRecharging, setHaloRecharging] = useState(false);
+  const [haloFlash, setHaloFlash] = useState(false);
+  const handleHaloDamage = () => {
+    if (haloShield <= 0) return;
+    setHaloShield(0);
+    setHaloFlash(true);
+    setTimeout(() => setHaloFlash(false), 800);
+    setHaloRecharging(true);
+  };
+  useEffect(() => {
+    if (settings.theme !== 'halo') return;
+    if (!haloRecharging) return;
+    const interval = setInterval(() => {
+      setHaloShield(prev => {
+        if (prev >= 100) {
+          setHaloRecharging(false);
+          return 100;
+        }
+        return prev + 5;
+      });
+    }, 150);
+    return () => clearInterval(interval);
+  }, [haloRecharging, settings.theme]);
+
+  // --- BLUE ARCHIVE ---
+  const [bluePyroxenes, setBluePyroxenes] = useState(12000);
+  const [blueBanner, setBlueBanner] = useState(null);
+  const handleGachaRoll = () => {
+    if (bluePyroxenes < 1200) {
+      setBluePyroxenes(12000);
+      return;
+    }
+    setBluePyroxenes(prev => prev - 1200);
+    const students = ['Shiroko', 'Aris', 'Hina', 'Yuuka', 'Mika', 'Hoshino', 'Azusa', 'Aru', 'Koharu'];
+    const chosen = students[Math.floor(Math.random() * students.length)];
+    setBlueBanner(chosen);
+    setTimeout(() => setBlueBanner(null), 3000);
+  };
+
+  // --- FIVE NIGHTS AT FREDDY'S ---
+  const [fnafPower, setFnafPower] = useState(100);
+  const [fnafTime, setFnafTime] = useState(12);
+  const [fnafCamActive, setFnafCamActive] = useState(false);
+  const [fnafBlackout, setFnafBlackout] = useState(false);
+  useEffect(() => {
+    if (settings.theme !== 'fnaf') {
+      setFnafCamActive(false);
+      document.body.classList.remove('fnaf-cam-active');
+      return;
+    }
+    const interval = setInterval(() => {
+      setFnafPower(prev => {
+        if (prev <= 1) {
+          setFnafBlackout(true);
+          setTimeout(() => {
+            setFnafPower(100);
+            setFnafBlackout(false);
+          }, 4000);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 4500);
+    return () => clearInterval(interval);
+  }, [settings.theme]);
+
+  useEffect(() => {
+    if (settings.theme !== 'fnaf') return;
+    const interval = setInterval(() => {
+      setFnafTime(prev => (prev === 12 ? 1 : prev === 5 ? 6 : prev + 1));
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [settings.theme]);
+
+  const toggleFnafCamera = () => {
+    const next = !fnafCamActive;
+    setFnafCamActive(next);
+    if (next) {
+      document.body.classList.add('fnaf-cam-active');
+    } else {
+      document.body.classList.remove('fnaf-cam-active');
+    }
+  };
+
+  // --- DEAD BY DAYLIGHT ---
+  const [dbdBP, setDbdBP] = useState(50000);
+  const [dbdChecking, setDbdChecking] = useState(false);
+  const [dbdPointer, setDbdPointer] = useState(0);
+  const [dbdOutcome, setDbdOutcome] = useState(null);
+  const handleStartSkillCheck = () => {
+    if (dbdChecking) {
+      setDbdChecking(false);
+      const angle = dbdPointer;
+      if (angle >= 65 && angle <= 85) {
+        setDbdOutcome('GREAT');
+        setDbdBP(prev => prev + 5000);
+      } else if (angle >= 50 && angle <= 95) {
+        setDbdOutcome('GOOD');
+        setDbdBP(prev => prev + 1500);
+      } else {
+        setDbdOutcome('FAILED');
+        setDbdBP(prev => Math.max(0, prev - 3000));
+      }
+      setTimeout(() => setDbdOutcome(null), 2000);
+    } else {
+      setDbdChecking(true);
+      setDbdPointer(0);
+      setDbdOutcome(null);
+    }
+  };
+  useEffect(() => {
+    if (!dbdChecking) return;
+    const interval = setInterval(() => {
+      setDbdPointer(prev => {
+        if (prev >= 360) {
+          setDbdChecking(false);
+          setDbdOutcome('FAILED');
+          setDbdBP(prevBP => Math.max(0, prevBP - 3000));
+          setTimeout(() => setDbdOutcome(null), 2000);
+          return 0;
+        }
+        return prev + 12;
+      });
+    }, 30);
+    return () => clearInterval(interval);
+  }, [dbdChecking]);
+
+  // --- INCREDIBOX ---
+  const [incrediboxMode, setIncrediboxMode] = useState('mix1');
+  const [incrediboxPlaying, setIncrediboxPlaying] = useState(true);
+
+  // --- DARKEST DUNGEON ---
+  const [darkestTorch, setDarkestTorch] = useState(100);
+  const [darkestStress, setDarkestStress] = useState(20);
+  const [darkestAffliction, setDarkestAffliction] = useState(null);
+  useEffect(() => {
+    if (settings.theme !== 'darkest') return;
+    const interval = setInterval(() => {
+      setDarkestTorch(prev => {
+        const next = Math.max(0, prev - 2);
+        if (next === 0) {
+          setDarkestStress(s => {
+            const nextStress = Math.min(200, s + 8);
+            if (nextStress >= 200 && !darkestAffliction) {
+              setDarkestAffliction('HOPELESS');
+              setTimeout(() => {
+                setDarkestStress(0);
+                setDarkestTorch(100);
+                setDarkestAffliction(null);
+              }, 4000);
+            }
+            return nextStress;
+          });
+        }
+        return next;
+      });
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [settings.theme, darkestAffliction]);
+
+  const handleDarkestTorchClick = () => {
+    setDarkestTorch(100);
+    setDarkestStress(prev => Math.max(0, prev - 15));
+  };
+
+  // --- DESTINY 2 ---
+  const [destinyGlimmer, setDestinyGlimmer] = useState(250000);
+  const [ghostScanning, setGhostScanning] = useState(false);
+  const handleGhostScan = () => {
+    if (ghostScanning) return;
+    setGhostScanning(true);
+    setTimeout(() => {
+      setGhostScanning(false);
+      setDestinyGlimmer(prev => Math.min(250000, prev + 25000));
+    }, 2500);
+  };
+
+  // --- FRIDAY NIGHT FUNKIN' ---
+  const [fnfHealth, setFnfHealth] = useState(50);
+  const [fnfNote, setFnfNote] = useState(null);
+  useEffect(() => {
+    if (settings.theme !== 'fnf') return;
+    const handleKeyDown = (e) => {
+      const arrowKeys = {
+        ArrowLeft: '◀',
+        ArrowDown: '▼',
+        ArrowUp: '▲',
+        ArrowRight: '▶'
+      };
+      if (arrowKeys[e.key]) {
+        setFnfNote(arrowKeys[e.key]);
+        setFnfHealth(h => Math.min(100, h + 4));
+        setTimeout(() => setFnfNote(null), 250);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [settings.theme]);
+
+  // --- HELLTAKER ---
+  const [helltakerSteps, setHelltakerSteps] = useState(23);
+  const [helltakerDead, setHelltakerDead] = useState(false);
+  const [helltakerPancakes, setHelltakerPancakes] = useState(0);
+
+  useEffect(() => {
+    if (settings.theme !== 'helltaker') return;
+    setHelltakerSteps(prev => {
+      const next = Math.max(0, prev - 1);
+      if (next === 0) {
+        setHelltakerDead(true);
+        setTimeout(() => {
+          setHelltakerSteps(23);
+          setHelltakerDead(false);
+        }, 3500);
+      }
+      return next;
+    });
+  }, [location.pathname, settings.theme]);
+
+  const handleEatPancake = () => {
+    setHelltakerSteps(prev => Math.min(40, prev + 10));
+    setHelltakerPancakes(p => p + 1);
+  };
+
   const ROR2_DIFFICULTIES = [
     { name: settings.language === 'en' ? 'Easy' : 'Fácil', color: '#4beb65', bg: 'rgba(75, 235, 101, 0.12)' },
     { name: settings.language === 'en' ? 'Medium' : 'Medio', color: '#b4e015', bg: 'rgba(180, 224, 21, 0.12)' },
@@ -407,6 +658,195 @@ export default function Header({ onToggleSidebar }) {
                 </div>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Isaac Heart HUD */}
+        {settings.theme === 'isaac' && (
+          <div className="isaac-hearts-container">
+            <span className="isaac-label">HP:</span>
+            <div className="isaac-hearts">
+              {isaacHearts.map((heart, idx) => (
+                <span 
+                  key={idx} 
+                  className={`isaac-heart ${heart === 1 ? 'full' : heart === 0.5 ? 'half' : 'empty'} ${isaacDying ? 'shaking' : ''}`}
+                  onClick={() => handleIsaacHit(idx)}
+                  title="Click to take damage!"
+                  style={{ cursor: 'pointer', fontSize: '1.25rem', userSelect: 'none', margin: '0 2px' }}
+                >
+                  {heart === 1 ? '❤️' : heart === 0.5 ? '💔' : '🖤'}
+                </span>
+              ))}
+            </div>
+            {isaacDying && <span className="isaac-death-text">YOU DIED</span>}
+          </div>
+        )}
+
+        {/* Halo HUD */}
+        {settings.theme === 'halo' && (
+          <div className={`halo-hud-container ${haloFlash ? 'shield-broken' : ''}`}>
+            <span className="halo-hud-title">UNSC HUD [S-117]</span>
+            <div className="halo-shield-wrapper" onClick={handleHaloDamage} title="Click to test shield failure!">
+              <span className="halo-shield-label">SHIELD:</span>
+              <div className="halo-shield-bar-outer">
+                <div className={`halo-shield-bar-inner ${haloRecharging ? 'recharging' : ''}`} style={{ width: `${haloShield}%` }} />
+              </div>
+              <span className="halo-shield-percent">{haloShield}%</span>
+            </div>
+          </div>
+        )}
+
+        {/* Blue Archive Gacha */}
+        {settings.theme === 'bluearchive' && (
+          <div className="bluearchive-gacha-container">
+            <div className="bluearchive-currency" onClick={handleGachaRoll} title="Click to roll 10x Gacha (1200 pyroxenes)">
+              <span className="ba-diamond">💎</span>
+              <span className="ba-count">{bluePyroxenes}</span>
+              <button className="ba-roll-btn">ROLL 10x</button>
+            </div>
+            {blueBanner && (
+              <div className="bluearchive-banner-alert">
+                <span className="ba-banner-star">★★★</span>
+                <span className="ba-student-name">RECRUITED: {blueBanner}!</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Five Nights At Freddy's HUD */}
+        {settings.theme === 'fnaf' && (
+          <div className={`fnaf-hud-container ${fnafBlackout ? 'blackout' : ''}`}>
+            <div className="fnaf-status">
+              <span className="fnaf-power-label">POWER:</span>
+              <span className="fnaf-power-value" style={{ color: fnafPower < 30 ? '#ff0000' : '#00ff00' }}>{fnafPower}%</span>
+            </div>
+            <div className="fnaf-time-box">
+              <span className="fnaf-time-val">{fnafTime} AM</span>
+            </div>
+            <button className={`fnaf-camera-btn ${fnafCamActive ? 'active' : ''}`} onClick={toggleFnafCamera}>
+              📷 CAMERA MONITOR
+            </button>
+            {fnafBlackout && <div className="fnaf-jumpscare-overlay">🐻 IT'S ME</div>}
+          </div>
+        )}
+
+        {/* Dead By Daylight HUD */}
+        {settings.theme === 'dbd' && (
+          <div className="dbd-hud-container">
+            <div className="dbd-bp-counter" onClick={handleStartSkillCheck} title="Click to trigger Skill Check / Press again to hit!">
+              <span className="dbd-hook-icon">🪝</span>
+              <span className="dbd-bp-value">{dbdBP.toLocaleString()} BP</span>
+              <button className="dbd-check-btn">{dbdChecking ? 'TAP NOW!' : 'TRIGGER SKILL CHECK'}</button>
+            </div>
+            {dbdChecking && (
+              <div className="dbd-skill-check-circle">
+                <div className="dbd-pointer" style={{ transform: `rotate(${dbdPointer}deg)` }} />
+                <div className="dbd-target-zone" />
+              </div>
+            )}
+            {dbdOutcome && (
+              <div className={`dbd-outcome-alert ${dbdOutcome}`}>
+                {dbdOutcome === 'GREAT' ? '✨ GREAT SKILL CHECK! +5000' : dbdOutcome === 'GOOD' ? '👍 GOOD SKILL CHECK +1500' : '💥 GENERATOR EXPLODED! -3000'}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Incredibox HUD */}
+        {settings.theme === 'incredibox' && (
+          <div className="incredibox-container" onClick={() => setIncrediboxPlaying(!incrediboxPlaying)} title="Click to pause/play beats">
+            <span className="incredibox-logo-icon">🎵</span>
+            <div className="incredibox-equalizer">
+              {[1, 2, 3, 4, 5, 6].map(i => (
+                <div 
+                  key={i} 
+                  className={`ib-bar ib-bar-${i} ${incrediboxPlaying ? 'playing' : 'paused'}`}
+                  style={{ animationDelay: `${i * 0.15}s` }}
+                />
+              ))}
+            </div>
+            <select 
+              className="ib-select" 
+              value={incrediboxMode} 
+              onChange={(e) => { e.stopPropagation(); setIncrediboxMode(e.target.value); }}
+              style={{ cursor: 'pointer', padding: '2px 8px', fontSize: '0.8rem', background: '#333', color: '#fff', border: '1px solid #666', borderRadius: '4px' }}
+            >
+              <option value="mix1">v1: Sunrise</option>
+              <option value="mix2">v2: The Love</option>
+              <option value="mix3">v3: Dystopia</option>
+            </select>
+          </div>
+        )}
+
+        {/* Darkest Dungeon HUD */}
+        {settings.theme === 'darkest' && (
+          <div className="darkest-hud-container">
+            <div className="darkest-torch-box" onClick={handleDarkestTorchClick} title="Click to fuel torch (+light, -stress)">
+              <span className="darkest-torch-icon" style={{ filter: darkestTorch < 30 ? 'grayscale(80%)' : 'none', cursor: 'pointer' }}>🔥</span>
+              <span className="darkest-torch-value">TORCH: {darkestTorch}%</span>
+            </div>
+            <div className="darkest-stress-box" title="Stress level">
+              <span className="darkest-stress-crown">👑</span>
+              <span className="darkest-stress-value" style={{ color: darkestStress > 100 ? '#ff3333' : '#a3a3a3' }}>
+                STRESS: {darkestStress}/200
+              </span>
+            </div>
+            {darkestAffliction && (
+              <div className="darkest-affliction-overlay">
+                <div className="affliction-crown">👑</div>
+                <div className="affliction-title">AFFLICTION: HOPELESS</div>
+                <div className="affliction-quote">"There can be no hope in this hell... no hope at all."</div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Destiny 2 HUD */}
+        {settings.theme === 'destiny2' && (
+          <div className="destiny-hud-container">
+            <div className="destiny-ghost-wrapper" onClick={handleGhostScan} title="Click Ghost to scan for resources" style={{ cursor: 'pointer' }}>
+              <span className={`destiny-ghost ${ghostScanning ? 'scanning' : ''}`} style={{ display: 'inline-block', transition: 'transform 0.5s ease' }}>🔷</span>
+              <span className="destiny-glimmer-text">{destinyGlimmer.toLocaleString()} GLIMMER</span>
+            </div>
+            {ghostScanning && <div className="ghost-laser-line" />}
+          </div>
+        )}
+
+        {/* Friday Night Funkin' HUD */}
+        {settings.theme === 'fnf' && (
+          <div className="fnf-hud-container">
+            <span className="fnf-sing-tip">PRESS ARROWS TO SING!</span>
+            <div className="fnf-health-bar-outer">
+              <div className="fnf-health-bar-opponent" style={{ width: `${100 - fnfHealth}%` }} />
+              <div className="fnf-health-bar-bf" style={{ width: `${fnfHealth}%` }} />
+              <div className="fnf-icons-slider" style={{ left: `${fnfHealth}%` }}>
+                <span className="fnf-icon-opponent">👿</span>
+                <span className="fnf-icon-bf">🎤</span>
+              </div>
+            </div>
+            {fnfNote && <div className="fnf-note-pop">{fnfNote}</div>}
+          </div>
+        )}
+
+        {/* Helltaker HUD */}
+        {settings.theme === 'helltaker' && (
+          <div className="helltaker-hud-container">
+            <div className="helltaker-steps" title="Steps remaining. Navigating the ERP uses steps!">
+              <span className="ht-skull-icon">💀</span>
+              <span className="ht-steps-count" style={{ color: helltakerSteps < 8 ? '#ff3333' : '#ffffff' }}>
+                MOVES LEFT: {helltakerSteps}
+              </span>
+            </div>
+            <div className="helltaker-pancake-plate" onClick={handleEatPancake} title="Click to cook a pancake (+10 moves)" style={{ cursor: 'pointer' }}>
+              <span className="ht-pancake-icon">🥞</span>
+              <span className="ht-pancake-count">({helltakerPancakes})</span>
+            </div>
+            {helltakerDead && (
+              <div className="helltaker-dead-overlay">
+                <div className="ht-dead-banner">TAKER IS DEAD</div>
+                <div className="ht-dead-sub">RETRY FROM THE PANCAKE PLATE</div>
+              </div>
+            )}
           </div>
         )}
 
@@ -735,6 +1175,16 @@ export default function Header({ onToggleSidebar }) {
                     <option value="papers">{t('settings.themePapers')}</option>
                     <option value="plague">{t('settings.themePlague')}</option>
                     <option value="pvz">{t('settings.themePvz')}</option>
+                    <option value="isaac">{t('settings.themeIsaac')}</option>
+                    <option value="halo">{t('settings.themeHalo')}</option>
+                    <option value="bluearchive">{t('settings.themeBlueArchive')}</option>
+                    <option value="fnaf">{t('settings.themeFnaf')}</option>
+                    <option value="dbd">{t('settings.themeDbd')}</option>
+                    <option value="incredibox">{t('settings.themeIncredibox')}</option>
+                    <option value="darkest">{t('settings.themeDarkest')}</option>
+                    <option value="destiny2">{t('settings.themeDestiny2')}</option>
+                    <option value="fnf">{t('settings.themeFnf')}</option>
+                    <option value="helltaker">{t('settings.themeHelltaker')}</option>
                     <option value="system">{t('settings.themeSystem')}</option>
                   </select>
                 </div>
