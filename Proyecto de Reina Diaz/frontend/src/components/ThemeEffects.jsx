@@ -224,17 +224,49 @@ export default function ThemeEffects() {
       ) : (
         <>
           {/* Five Nights At Freddy's overlays */}
-          {fnafCamActive && fnafPower > 0 && (
+          {fnafPower > 0 && (
             <>
-              <div className="fnaf-camera-overlay" />
-              <div className="fnaf-camera-scanlines" />
+              {/* Static CRT filters when using camera monitor */}
+              {fnafCamActive && (
+                <>
+                  <div className="fnaf-camera-overlay" />
+                  <div className="fnaf-camera-scanlines" />
+                </>
+              )}
+
+              {/* Red threat alert pulsing border when active intruder is present in the current section */}
+              {(() => {
+                const hasIntruder = ['bonnie', 'chica', 'freddy'].some(key => 
+                  animatronics[key] && animatronics[key].room === currentRoom.code && (!stunnedUntil[key] || stunnedUntil[key] < Date.now())
+                ) || (animatronics.foxy && animatronics.foxy.stage === 3 && (!stunnedUntil.foxy || stunnedUntil.foxy < Date.now()));
+                
+                if (hasIntruder) {
+                  return (
+                    <div style={{
+                      position: 'fixed',
+                      top: 0,
+                      left: 0,
+                      width: '100vw',
+                      height: '100vh',
+                      border: '6px solid #ef4444',
+                      boxShadow: 'inset 0 0 35px rgba(239, 68, 68, 0.45)',
+                      animation: 'fnaf-blink 1s ease infinite',
+                      pointerEvents: 'none',
+                      zIndex: 9997
+                    }} />
+                  );
+                }
+                return null;
+              })()}
               
-              {/* Floating warning cards for active animatronics in the room */}
+              {/* Animatronics floating circles patrolling screen borders */}
               <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', pointerEvents: 'none', zIndex: 9999 }}>
                 {['bonnie', 'chica', 'freddy'].map(key => {
                   const anim = animatronics[key];
                   const isHere = anim && anim.room === currentRoom.code && (!stunnedUntil[key] || stunnedUntil[key] < Date.now());
                   if (!isHere) return null;
+                  
+                  const speeds = { bonnie: '13s', chica: '10s', freddy: '16s' };
                   
                   return (
                     <div 
@@ -242,65 +274,73 @@ export default function ThemeEffects() {
                       onClick={() => stunAnimatronic(key)}
                       className="fnaf-animatronic-glitch"
                       style={{
-                        position: 'absolute',
-                        top: '40%',
-                        left: '50%',
-                        transform: 'translate(-50%, -50%)',
-                        zIndex: 99999,
-                        cursor: 'pointer',
-                        background: 'rgba(0,0,0,0.92)',
+                        position: 'fixed',
+                        width: '64px',
+                        height: '64px',
+                        borderRadius: '50%',
+                        background: 'rgba(10, 10, 10, 0.95)',
                         border: `3px solid ${anim.color}`,
-                        boxShadow: `0 0 25px ${anim.color}`,
-                        borderRadius: '12px',
-                        padding: '2rem',
+                        boxShadow: `0 0 20px ${anim.color}`,
                         display: 'flex',
-                        flexDirection: 'column',
                         alignItems: 'center',
-                        gap: '0.8rem',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        fontSize: '2.4rem',
+                        zIndex: 99999,
                         pointerEvents: 'auto',
                         userSelect: 'none',
-                        minWidth: '240px'
+                        animation: `fnaf-patrol-border ${speeds[key]} linear infinite`
                       }}
+                      title={`SHOCK ${anim.name.toUpperCase()}!`}
                     >
-                      <span style={{ fontSize: '5rem', filter: 'drop-shadow(0 0 10px rgba(255,255,255,0.4))' }}>{anim.emoji}</span>
-                      <span style={{ color: '#fff', fontWeight: 'bold', fontSize: '1.4rem', fontFamily: 'monospace', letterSpacing: '0.1em' }}>
-                        {anim.name.toUpperCase()}
-                      </span>
-                      <span style={{ color: '#ef4444', fontSize: '0.85rem', fontWeight: 'bold', animation: 'fnaf-blink 0.8s steps(2, start) infinite' }}>
-                        ⚠️ INTRUDER IN {currentRoom.code}
-                      </span>
-                      <button 
-                        style={{
-                          background: '#ff0000',
-                          color: '#fff',
-                          border: 'none',
-                          padding: '0.6rem 1.2rem',
-                          fontFamily: 'monospace',
-                          fontWeight: 'bold',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                          marginTop: '0.5rem',
-                          boxShadow: '0 0 10px #ff0000'
-                        }}
-                      >
-                        ⚡ SHOCK / DEFEND
-                      </button>
+                      {anim.emoji}
                     </div>
                   );
                 })}
                 
-                {/* Pirate Cove (CAM 07) Foxy stage display */}
+                {/* Foxy Special Logic */}
                 {(() => {
                   const anim = animatronics.foxy;
                   if (!anim || (stunnedUntil.foxy && stunnedUntil.foxy >= Date.now())) return null;
                   
+                  // Running Foxy (stage 3) sprints along borders of whatever page you are currently viewing!
+                  if (anim.stage === 3) {
+                    return (
+                      <div 
+                        onClick={() => stunAnimatronic('foxy')}
+                        className="fnaf-animatronic-glitch"
+                        style={{
+                          position: 'fixed',
+                          width: '72px',
+                          height: '72px',
+                          borderRadius: '50%',
+                          background: 'rgba(25, 0, 0, 0.95)',
+                          border: `4px solid #ff0000`,
+                          boxShadow: `0 0 25px #ff0000`,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                          fontSize: '2.8rem',
+                          zIndex: 99999,
+                          pointerEvents: 'auto',
+                          userSelect: 'none',
+                          animation: `fnaf-patrol-border 3.5s linear infinite, fnaf-jumpscare-shake 0.15s infinite`
+                        }}
+                        title="SHOCK RUNNING FOXY!"
+                      >
+                        🦊
+                      </div>
+                    );
+                  }
+                  
+                  // Stationary Foxy inside Pirate Cove (CAM 07)
                   if (currentRoom.code === 'CAM 07') {
                     let foxyStatus = "";
                     let foxyEmoji = "🎪";
                     if (anim.stage === 0) { foxyStatus = "CURTAINS CLOSED"; foxyEmoji = "🎪"; }
                     else if (anim.stage === 1) { foxyStatus = "PEEKING OUT"; foxyEmoji = "🦊"; }
                     else if (anim.stage === 2) { foxyStatus = "OUT OF COVE"; foxyEmoji = "🦊⚠️"; }
-                    else if (anim.stage === 3) { foxyStatus = "COVE EMPTY!"; foxyEmoji = "🏃‍♂️"; }
                     
                     return (
                       <div 
@@ -331,95 +371,24 @@ export default function ThemeEffects() {
                         <span style={{ color: '#fff', fontWeight: 'bold', fontSize: '1.4rem', fontFamily: 'monospace' }}>
                           PIRATE COVE
                         </span>
-                        <span style={{ color: anim.stage === 3 ? '#ff0000' : '#eab308', fontSize: '0.9rem', fontWeight: 'bold', animation: anim.stage >= 2 ? 'fnaf-blink 0.5s steps(2, start) infinite' : 'none' }}>
+                        <span style={{ color: '#eab308', fontSize: '0.9rem', fontWeight: 'bold', animation: anim.stage >= 2 ? 'fnaf-blink 0.5s steps(2, start) infinite' : 'none' }}>
                           STATUS: {foxyStatus}
-                        </span>
-                        {anim.stage < 3 ? (
-                          <button 
-                            style={{
-                              background: '#eab308',
-                              color: '#000',
-                              border: 'none',
-                              padding: '0.5rem 1rem',
-                              fontFamily: 'monospace',
-                              fontWeight: 'bold',
-                              borderRadius: '4px',
-                              cursor: 'pointer',
-                              marginTop: '0.5rem',
-                              boxShadow: '0 0 10px #eab308'
-                            }}
-                          >
-                            ⚡ FLASH LIGHT
-                          </button>
-                        ) : (
-                          <button 
-                            style={{
-                              background: '#ff0000',
-                              color: '#fff',
-                              border: 'none',
-                              padding: '0.5rem 1rem',
-                              fontFamily: 'monospace',
-                              fontWeight: 'bold',
-                              borderRadius: '4px',
-                              cursor: 'pointer',
-                              marginTop: '0.5rem',
-                              boxShadow: '0 0 10px #ff0000'
-                            }}
-                          >
-                            ⚡ SOUND ALARM!
-                          </button>
-                        )}
-                      </div>
-                    );
-                  }
-                  
-                  // Hallway (CAM 10) running Foxy
-                  if (currentRoom.code === 'CAM 10' && anim.stage === 3) {
-                    return (
-                      <div 
-                        onClick={() => stunAnimatronic('foxy')}
-                        className="fnaf-animatronic-glitch"
-                        style={{
-                          position: 'absolute',
-                          top: '40%',
-                          left: '50%',
-                          transform: 'translate(-50%, -50%)',
-                          zIndex: 99999,
-                          cursor: 'pointer',
-                          background: 'rgba(0,0,0,0.95)',
-                          border: `4px solid #ff0000`,
-                          boxShadow: `0 0 35px #ff0000`,
-                          borderRadius: '12px',
-                          padding: '2.5rem',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          gap: '1rem',
-                          pointerEvents: 'auto',
-                          userSelect: 'none',
-                          minWidth: '260px'
-                        }}
-                      >
-                        <span style={{ fontSize: '6rem', animation: 'fnaf-jumpscare-shake 0.1s infinite' }}>🦊🏃‍♂️</span>
-                        <span style={{ color: '#ff0000', fontWeight: 'bold', fontSize: '1.6rem', fontFamily: 'monospace', animation: 'fnaf-blink 0.3s infinite' }}>
-                          FOXY IS RUNNING!
                         </span>
                         <button 
                           style={{
-                            background: '#ff0000',
-                            color: '#fff',
+                            background: '#eab308',
+                            color: '#000',
                             border: 'none',
-                            padding: '0.8rem 1.5rem',
+                            padding: '0.5rem 1rem',
                             fontFamily: 'monospace',
                             fontWeight: 'bold',
-                            fontSize: '1.1rem',
                             borderRadius: '4px',
                             cursor: 'pointer',
                             marginTop: '0.5rem',
-                            boxShadow: '0 0 15px #ff0000'
+                            boxShadow: '0 0 10px #eab308'
                           }}
                         >
-                          ⚡ SHOCK PIRATE!
+                          ⚡ FLASH LIGHT
                         </button>
                       </div>
                     );
@@ -439,7 +408,7 @@ export default function ThemeEffects() {
               </div>
               <div className="fnaf-jumpscare-screamer">SCREEEEECH!!!</div>
               <div className="fnaf-jumpscare-status" style={{ fontSize: '1.5rem', color: '#ff5555', fontFamily: 'monospace', marginBottom: '1.5rem' }}>
-                {animatronics[jumpscareAnimatronic]?.name.toUpperCase()} JUMPSCARED YOU!
+                {animatronics[jumpscareAnimatronic]?.name.toUpperCase() || 'ANIMATRONIC'} JUMPSCARED YOU!
               </div>
               <div className="fnaf-jumpscare-subtext" style={{ fontSize: '1.2rem', color: '#777', marginBottom: '2.5rem', fontFamily: 'monospace' }}>
                 Night {fnafNight} Failed.

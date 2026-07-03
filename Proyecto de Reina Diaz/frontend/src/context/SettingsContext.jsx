@@ -1127,12 +1127,61 @@ export const SettingsProvider = ({ children }) => {
     freddy: 0,
   });
 
+  const [enteredRoomAt, setEnteredRoomAt] = useState({
+    bonnie: 0,
+    chica: 0,
+    freddy: 0,
+    foxy: 0
+  });
+
+  const getShortestPath = (start, end) => {
+    if (start === end) return [start];
+    const queue = [[start]];
+    const visited = new Set([start]);
+    
+    const connections = {
+      'CAM 01': ['CAM 02', 'CAM 03', 'CAM 04'],
+      'CAM 02': ['CAM 01', 'CAM 08', 'CAM 11'],
+      'CAM 03': ['CAM 01', 'CAM 05', 'CAM 06'],
+      'CAM 04': ['CAM 01', 'CAM 07', 'CAM 10'],
+      'CAM 05': ['CAM 03', 'CAM 06', 'CAM 07'],
+      'CAM 06': ['CAM 03', 'CAM 05', 'CAM 09'],
+      'CAM 07': ['CAM 04', 'CAM 05', 'CAM 10'],
+      'CAM 08': ['CAM 02', 'CAM 11', 'CAM 12'],
+      'CAM 09': ['CAM 06', 'CAM 12'],
+      'CAM 10': ['CAM 04', 'CAM 07'],
+      'CAM 11': ['CAM 02', 'CAM 08'],
+      'CAM 12': ['CAM 08', 'CAM 09'],
+    };
+    
+    while (queue.length > 0) {
+      const path = queue.shift();
+      const node = path[path.length - 1];
+      const neighbors = connections[node] || [];
+      for (const neighbor of neighbors) {
+        if (!visited.has(neighbor)) {
+          visited.add(neighbor);
+          const newPath = [...path, neighbor];
+          if (neighbor === end) return newPath;
+          queue.push(newPath);
+        }
+      }
+    }
+    return [start];
+  };
+
   const resetFnafNight = (nightNum = fnafNight) => {
     setFnafTime(12);
     setFnafPower(100);
     setFnafGameState('playing');
     setJumpscareAnimatronic(null);
     setFnafCamActive(false);
+    setEnteredRoomAt({
+      bonnie: 0,
+      chica: 0,
+      freddy: 0,
+      foxy: 0
+    });
     setAnimatronics({
       bonnie: { name: 'Bonnie', room: 'CAM 02', emoji: '🐰', color: '#818cf8', path: ['CAM 02', 'CAM 08', 'CAM 11', 'OFFICE'], startRoom: 'CAM 02' },
       chica: { name: 'Chica', room: 'CAM 03', emoji: '🐤', color: '#fbbf24', path: ['CAM 03', 'CAM 05', 'CAM 06', 'OFFICE'], startRoom: 'CAM 03' },
@@ -1152,6 +1201,10 @@ export const SettingsProvider = ({ children }) => {
     setStunnedUntil(prev => ({
       ...prev,
       [key]: Date.now() + stunDuration
+    }));
+    setEnteredRoomAt(prev => ({
+      ...prev,
+      [key]: 0
     }));
     
     setAnimatronics(prev => {
@@ -1213,51 +1266,54 @@ export const SettingsProvider = ({ children }) => {
         const copy = { ...prev };
         const now = Date.now();
 
+        const connections = {
+          'CAM 01': ['CAM 02', 'CAM 03', 'CAM 04'],
+          'CAM 02': ['CAM 01', 'CAM 08', 'CAM 11'],
+          'CAM 03': ['CAM 01', 'CAM 05', 'CAM 06'],
+          'CAM 04': ['CAM 01', 'CAM 07', 'CAM 10'],
+          'CAM 05': ['CAM 03', 'CAM 06', 'CAM 07'],
+          'CAM 06': ['CAM 03', 'CAM 05', 'CAM 09'],
+          'CAM 07': ['CAM 04', 'CAM 05', 'CAM 10'],
+          'CAM 08': ['CAM 02', 'CAM 11', 'CAM 12'],
+          'CAM 09': ['CAM 06', 'CAM 12'],
+          'CAM 10': ['CAM 04', 'CAM 07'],
+          'CAM 11': ['CAM 02', 'CAM 08'],
+          'CAM 12': ['CAM 08', 'CAM 09'],
+        };
+
         // Bonnie
         if (stunnedUntil.bonnie < now) {
           const prob = 0.15 + (fnafNight * 0.08);
-          if (Math.random() < prob) {
-            const currentIdx = copy.bonnie.path.indexOf(copy.bonnie.room);
-            if (currentIdx !== -1 && currentIdx < copy.bonnie.path.length - 1) {
-              const nextRoom = copy.bonnie.path[currentIdx + 1];
-              copy.bonnie = { ...copy.bonnie, room: nextRoom };
-              if (nextRoom === 'OFFICE') {
-                setFnafGameState('lose');
-                setJumpscareAnimatronic('bonnie');
-              }
-            }
+          if (Math.random() < prob && copy.bonnie.room !== currentRoom.code) {
+            const neighbors = connections[copy.bonnie.room] || ['CAM 01'];
+            const shortest = getShortestPath(copy.bonnie.room, currentRoom.code);
+            const nextStep = shortest.length > 1 ? shortest[1] : copy.bonnie.room;
+            const chosen = Math.random() < 0.75 ? nextStep : neighbors[Math.floor(Math.random() * neighbors.length)];
+            copy.bonnie = { ...copy.bonnie, room: chosen };
           }
         }
 
         // Chica
         if (stunnedUntil.chica < now) {
           const prob = 0.12 + (fnafNight * 0.07);
-          if (Math.random() < prob) {
-            const currentIdx = copy.chica.path.indexOf(copy.chica.room);
-            if (currentIdx !== -1 && currentIdx < copy.chica.path.length - 1) {
-              const nextRoom = copy.chica.path[currentIdx + 1];
-              copy.chica = { ...copy.chica, room: nextRoom };
-              if (nextRoom === 'OFFICE') {
-                setFnafGameState('lose');
-                setJumpscareAnimatronic('chica');
-              }
-            }
+          if (Math.random() < prob && copy.chica.room !== currentRoom.code) {
+            const neighbors = connections[copy.chica.room] || ['CAM 01'];
+            const shortest = getShortestPath(copy.chica.room, currentRoom.code);
+            const nextStep = shortest.length > 1 ? shortest[1] : copy.chica.room;
+            const chosen = Math.random() < 0.75 ? nextStep : neighbors[Math.floor(Math.random() * neighbors.length)];
+            copy.chica = { ...copy.chica, room: chosen };
           }
         }
 
         // Freddy (active starting night 3)
         if (fnafNight >= 3 && stunnedUntil.freddy < now) {
           const prob = 0.08 + (fnafNight * 0.06);
-          if (Math.random() < prob) {
-            const currentIdx = copy.freddy.path.indexOf(copy.freddy.room);
-            if (currentIdx !== -1 && currentIdx < copy.freddy.path.length - 1) {
-              const nextRoom = copy.freddy.path[currentIdx + 1];
-              copy.freddy = { ...copy.freddy, room: nextRoom };
-              if (nextRoom === 'OFFICE') {
-                setFnafGameState('lose');
-                setJumpscareAnimatronic('freddy');
-              }
-            }
+          if (Math.random() < prob && copy.freddy.room !== currentRoom.code) {
+            const neighbors = connections[copy.freddy.room] || ['CAM 01'];
+            const shortest = getShortestPath(copy.freddy.room, currentRoom.code);
+            const nextStep = shortest.length > 1 ? shortest[1] : copy.freddy.room;
+            const chosen = Math.random() < 0.75 ? nextStep : neighbors[Math.floor(Math.random() * neighbors.length)];
+            copy.freddy = { ...copy.freddy, room: chosen };
           }
         }
 
@@ -1267,9 +1323,7 @@ export const SettingsProvider = ({ children }) => {
           if (Math.random() < prob) {
             const nextStage = copy.foxy.stage + 1;
             if (nextStage >= 4) {
-              setFnafGameState('lose');
-              setJumpscareAnimatronic('foxy');
-              copy.foxy = { ...copy.foxy, stage: 4 };
+              copy.foxy = { ...copy.foxy, stage: 3 };
             } else {
               copy.foxy = { ...copy.foxy, stage: nextStage };
             }
@@ -1280,11 +1334,86 @@ export const SettingsProvider = ({ children }) => {
       });
     }, Math.max(3000, 9000 - fnafNight * 1000));
 
+    // Periodic check for Jumpscare timeouts
+    const jumpscareCheck = setInterval(() => {
+      const now = Date.now();
+      const killLimit = Math.max(5000, 10000 - fnafNight * 1000); // 5 to 9 seconds to react
+
+      // Check Bonnie
+      if (
+        animatronics.bonnie.room === currentRoom.code &&
+        (!stunnedUntil.bonnie || stunnedUntil.bonnie < now)
+      ) {
+        setEnteredRoomAt(prev => {
+          if (!prev.bonnie) return { ...prev, bonnie: now };
+          if (now - prev.bonnie > killLimit) {
+            setFnafGameState('lose');
+            setJumpscareAnimatronic('bonnie');
+          }
+          return prev;
+        });
+      } else {
+        setEnteredRoomAt(prev => (prev.bonnie ? { ...prev, bonnie: 0 } : prev));
+      }
+
+      // Check Chica
+      if (
+        animatronics.chica.room === currentRoom.code &&
+        (!stunnedUntil.chica || stunnedUntil.chica < now)
+      ) {
+        setEnteredRoomAt(prev => {
+          if (!prev.chica) return { ...prev, chica: now };
+          if (now - prev.chica > killLimit) {
+            setFnafGameState('lose');
+            setJumpscareAnimatronic('chica');
+          }
+          return prev;
+        });
+      } else {
+        setEnteredRoomAt(prev => (prev.chica ? { ...prev, chica: 0 } : prev));
+      }
+
+      // Check Freddy
+      if (
+        animatronics.freddy.room === currentRoom.code &&
+        (!stunnedUntil.freddy || stunnedUntil.freddy < now)
+      ) {
+        setEnteredRoomAt(prev => {
+          if (!prev.freddy) return { ...prev, freddy: now };
+          if (now - prev.freddy > killLimit) {
+            setFnafGameState('lose');
+            setJumpscareAnimatronic('freddy');
+          }
+          return prev;
+        });
+      } else {
+        setEnteredRoomAt(prev => (prev.freddy ? { ...prev, freddy: 0 } : prev));
+      }
+
+      // Check Foxy running (always runs to user's room)
+      if (
+        animatronics.foxy.stage === 3 &&
+        (!stunnedUntil.foxy || stunnedUntil.foxy < now)
+      ) {
+        setEnteredRoomAt(prev => {
+          if (!prev.foxy) return { ...prev, foxy: now };
+          if (now - prev.foxy > 5000) {
+            setFnafGameState('lose');
+            setJumpscareAnimatronic('foxy');
+          }
+          return prev;
+        });
+      } else {
+        setEnteredRoomAt(prev => (prev.foxy ? { ...prev, foxy: 0 } : prev));
+      }
+    }, 1000);
+
     return () => {
       clearInterval(powerInterval);
       clearInterval(moveInterval);
+      clearInterval(jumpscareCheck);
     };
-  }, [fnafActive, fnafGameState, fnafCamActive, stunnedUntil, fnafNight]);
+  }, [fnafActive, fnafGameState, fnafCamActive, stunnedUntil, fnafNight, animatronics, currentRoom.code]);
 
   // Time ticks (45s per hour)
   useEffect(() => {
