@@ -352,32 +352,35 @@ export default function TallerCorte() {
         </div>
 
         <nav className="nav-links" style={{ marginBottom: '1rem' }}>
-          <button 
+          <a 
+            href="#"
             className={`nav-link ${activeTab === 'registro' ? 'active' : ''}`}
-            onClick={() => setActiveTab('registro')}
-            style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px' }}
+            onClick={(e) => { e.preventDefault(); setActiveTab('registro'); }}
+            style={{ cursor: 'pointer' }}
           >
             <Calendar size={20} />
             {isEn ? 'Daily Log' : 'Registro Diario'}
-          </button>
+          </a>
 
-          <button 
+          <a 
+            href="#"
             className={`nav-link ${activeTab === 'reporte' ? 'active' : ''}`}
-            onClick={() => setActiveTab('reporte')}
-            style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px' }}
+            onClick={(e) => { e.preventDefault(); setActiveTab('reporte'); }}
+            style={{ cursor: 'pointer' }}
           >
             <Calculator size={20} />
             {isEn ? 'Weekly Costs' : 'Reporte de Costos'}
-          </button>
+          </a>
 
-          <button 
+          <a 
+            href="#"
             className={`nav-link ${activeTab === 'personal' ? 'active' : ''}`}
-            onClick={() => setActiveTab('personal')}
-            style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px' }}
+            onClick={(e) => { e.preventDefault(); setActiveTab('personal'); }}
+            style={{ cursor: 'pointer' }}
           >
             <Users size={20} />
             {isEn ? 'Cutting Staff' : 'Personal de Corte'}
-          </button>
+          </a>
         </nav>
 
         {/* Botones al fondo */}

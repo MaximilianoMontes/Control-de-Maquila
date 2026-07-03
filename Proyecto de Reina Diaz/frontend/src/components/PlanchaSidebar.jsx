@@ -64,25 +64,16 @@ export default function PlanchaSidebar({ activeTab, setActiveTab, onClose }) {
       {/* Botones de navegación de pestañas */}
       <nav className="nav-links">
         {menuItems.map(item => (
-          <button 
+          <a 
             key={item.id} 
-            onClick={() => handleTabClick(item.id)}
+            href="#"
+            onClick={(e) => { e.preventDefault(); handleTabClick(item.id); }}
             className={`nav-link ${activeTab === item.id ? 'active' : ''}`}
-            style={{ 
-              background: activeTab === item.id ? 'rgba(14, 165, 233, 0.08)' : 'transparent',
-              color: activeTab === item.id ? '#0ea5e9' : 'var(--text-secondary)',
-              border: 'none',
-              width: '100%',
-              textAlign: 'left',
-              display: 'flex',
-              alignItems: 'center',
-              cursor: 'pointer',
-              fontWeight: activeTab === item.id ? 'bold' : 'normal'
-            }}
+            style={{ cursor: 'pointer' }}
           >
             {item.icon}
-            <span style={{ marginLeft: '12px' }}>{item.name}</span>
-          </button>
+            <span>{item.name}</span>
+          </a>
         ))}
       </nav>
 
