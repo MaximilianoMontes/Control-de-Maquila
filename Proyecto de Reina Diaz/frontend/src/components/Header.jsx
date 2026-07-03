@@ -295,6 +295,53 @@ export default function Header({ onToggleSidebar }) {
     updateSetting(key, value);
   };
 
+  // Risk of Rain 2 Theme: Difficulty Ticker State
+  const [ror2Time, setRor2Time] = useState(0);
+
+  useEffect(() => {
+    if (settings.theme !== 'ror2') return;
+
+    const saved = sessionStorage.getItem('ror2_session_time');
+    if (saved) {
+      setRor2Time(parseInt(saved, 10));
+    }
+
+    const interval = setInterval(() => {
+      setRor2Time(prev => {
+        const next = prev + 1;
+        sessionStorage.setItem('ror2_session_time', next.toString());
+        return next;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [settings.theme]);
+
+  const formatRor2Time = (sec) => {
+    const mins = Math.floor(sec / 60);
+    const secs = sec % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const ROR2_DIFFICULTIES = [
+    { name: settings.language === 'en' ? 'Easy' : 'Fácil', color: '#4beb65', bg: 'rgba(75, 235, 101, 0.12)' },
+    { name: settings.language === 'en' ? 'Medium' : 'Medio', color: '#b4e015', bg: 'rgba(180, 224, 21, 0.12)' },
+    { name: settings.language === 'en' ? 'Hard' : 'Difícil', color: '#ff8c00', bg: 'rgba(255, 140, 0, 0.12)' },
+    { name: settings.language === 'en' ? 'Very Hard' : 'Muy Difícil', color: '#ff5500', bg: 'rgba(255, 85, 0, 0.12)' },
+    { name: settings.language === 'en' ? 'Insane' : 'Demente', color: '#ff0000', bg: 'rgba(255, 0, 0, 0.12)' },
+    { name: settings.language === 'en' ? 'Impossible' : 'Imposible', color: '#aa0000', bg: 'rgba(170, 0, 0, 0.12)' },
+    { name: settings.language === 'en' ? 'I See You' : 'Te Veo', color: '#9013fe', bg: 'rgba(144, 19, 254, 0.12)' },
+    { name: settings.language === 'en' ? "I'm in Pain" : 'Tengo Dolor', color: '#c026d3', bg: 'rgba(192, 38, 211, 0.12)' },
+    { name: 'HAHAHAHAHA', color: '#ef4444', bg: 'rgba(0, 0, 0, 0.8)', flash: true }
+  ];
+
+  const activeIndex = Math.min(Math.floor(ror2Time / 60), 8);
+  const currentDifficulty = ROR2_DIFFICULTIES[activeIndex];
+  const pointerPercent = activeIndex < 8 
+    ? (activeIndex * 11.11) + (((ror2Time % 60) / 60) * 11.11)
+    : 8 * 11.11 + 5.55;
+
+
 
 
   return (
@@ -317,6 +364,45 @@ export default function Header({ onToggleSidebar }) {
           </div>
           <span className="header-search-badge">Ctrl + G</span>
         </div>
+
+        {/* Risk of Rain 2 Difficulty Bar */}
+        {settings.theme === 'ror2' && (
+          <div className="ror2-difficulty-bar-container">
+            <div className="ror2-timer">
+              {formatRor2Time(ror2Time)}
+            </div>
+            <div className="ror2-bar-wrapper">
+              <div className="ror2-difficulty-title">
+                {settings.language === 'en' ? 'DIFFICULTY:' : 'DIFICULTAD:'}{' '}
+                <span 
+                  style={{ color: currentDifficulty.color }} 
+                  className={currentDifficulty.flash ? 'ror2-flash-text' : ''}
+                >
+                  {currentDifficulty.name}
+                </span>
+              </div>
+              <div className="ror2-bar-outer">
+                <div className="ror2-bar-pointer" style={{ left: `${pointerPercent}%` }}>▼</div>
+                <div className="ror2-bar-segments">
+                  {ROR2_DIFFICULTIES.map((diff, idx) => (
+                    <div 
+                      key={diff.name} 
+                      className={`ror2-segment ${idx === activeIndex ? 'active' : ''} ${diff.flash ? 'ror2-flash-bg' : ''}`}
+                      style={{ 
+                        backgroundColor: diff.bg, 
+                        color: diff.color,
+                        width: '11.11%'
+                      }}
+                      title={diff.name}
+                    >
+                      <span>{diff.name}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Action Controls */}
         <div className="header-actions">
