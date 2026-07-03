@@ -2790,6 +2790,54 @@ body.theme-ror2 .main-header::after {
   animation: ror2-difficulty-sweep 15s linear infinite;
 }
 
+/* ROR2 Dropdown Menu Items styling */
+body.theme-ror2 .actions-dropdown-menu {
+  background: #0a0e17 !important;
+  border: 2px solid #ff8c00 !important;
+  box-shadow: 0 0 15px rgba(255, 140, 0, 0.2) !important;
+  border-radius: 6px !important;
+}
+
+body.theme-ror2 .actions-dropdown-item,
+body.theme-ror2 a.actions-dropdown-item,
+body.theme-ror2 button.actions-dropdown-item,
+body.theme-ror2 .actions-dropdown-item.pink,
+body.theme-ror2 a.actions-dropdown-item.pink,
+body.theme-ror2 button.actions-dropdown-item.pink,
+body.theme-ror2 .actions-dropdown-item.purple,
+body.theme-ror2 a.actions-dropdown-item.purple,
+body.theme-ror2 button.actions-dropdown-item.purple {
+  border-radius: 4px !important;
+  border: 2px solid #ff8c00 !important;
+  background: #0d0e14 !important;
+  color: #ff8c00 !important;
+  font-weight: 700 !important;
+  letter-spacing: 1px !important;
+  text-transform: uppercase !important;
+  box-shadow: 0 0 8px rgba(255, 140, 0, 0.2) !important;
+  transition: all 0.25s ease !important;
+  text-decoration: none !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  margin: 4px 0 !important;
+}
+
+body.theme-ror2 .actions-dropdown-item:hover,
+body.theme-ror2 a.actions-dropdown-item:hover,
+body.theme-ror2 button.actions-dropdown-item:hover,
+body.theme-ror2 .actions-dropdown-item.pink:hover,
+body.theme-ror2 a.actions-dropdown-item.pink:hover,
+body.theme-ror2 button.actions-dropdown-item.pink:hover,
+body.theme-ror2 .actions-dropdown-item.purple:hover,
+body.theme-ror2 a.actions-dropdown-item.purple:hover,
+body.theme-ror2 button.actions-dropdown-item.purple:hover {
+  background: #ff8c00 !important;
+  color: #05060a !important;
+  box-shadow: 0 0 15px #ff8c00, 0 0 25px rgba(255, 140, 0, 0.3) !important;
+  transform: scale(1.02) !important;
+}
+
 
 /* Tema Limbus Company 🚂 (Estilo Gótico Industrial / Relojería / Steampunk Brass) */
 body.theme-limbus {
