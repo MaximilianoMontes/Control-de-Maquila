@@ -1,4 +1,5 @@
 import { createContext, useState, useContext, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 
 const SettingsContext = createContext();
 
@@ -1084,6 +1085,228 @@ export const SettingsProvider = ({ children }) => {
     setSettings(prev => ({ ...prev, [key]: value }));
   };
 
+  // --- FIVE NIGHTS AT FREDDY'S MINIGAME STATE ---
+  const location = useLocation();
+  const [fnafActive, setFnafActive] = useState(false);
+  const [fnafNight, setFnafNight] = useState(1);
+  const [fnafTime, setFnafTime] = useState(12);
+  const [fnafPower, setFnafPower] = useState(100);
+  const [fnafCamActive, setFnafCamActive] = useState(false);
+  const [fnafGameState, setFnafGameState] = useState('playing'); // 'playing', 'win', 'lose'
+  const [jumpscareAnimatronic, setJumpscareAnimatronic] = useState(null);
+
+  const roomMap = {
+    '/dashboard': { code: 'CAM 01', name: 'Dashboard' },
+    '/maquileros': { code: 'CAM 02', name: 'Maquileros' },
+    '/inventario': { code: 'CAM 03', name: 'Inventario' },
+    '/cortes': { code: 'CAM 04', name: 'Cortes' },
+    '/taller-corte': { code: 'CAM 04', name: 'Cortes' },
+    '/produccion': { code: 'CAM 05', name: 'Producción' },
+    '/extras': { code: 'CAM 06', name: 'Extras' },
+    '/camion': { code: 'CAM 07', name: 'Camión' },
+    '/pagos': { code: 'CAM 08', name: 'Pagos' },
+    '/reportes': { code: 'CAM 09', name: 'Reportes' },
+    '/historial': { code: 'CAM 10', name: 'Historial' },
+    '/ayuda': { code: 'CAM 11', name: 'Ayuda' },
+    '/calendario': { code: 'CAM 12', name: 'Calendario' },
+  };
+
+  const currentRoom = roomMap[location.pathname] || { code: 'CAM 01', name: 'Dashboard' };
+
+  const [animatronics, setAnimatronics] = useState({
+    bonnie: { name: 'Bonnie', room: 'CAM 02', emoji: '🐰', color: '#818cf8', path: ['CAM 02', 'CAM 08', 'CAM 11', 'OFFICE'], startRoom: 'CAM 02' },
+    chica: { name: 'Chica', room: 'CAM 03', emoji: '🐤', color: '#fbbf24', path: ['CAM 03', 'CAM 05', 'CAM 06', 'OFFICE'], startRoom: 'CAM 03' },
+    foxy: { name: 'Foxy', room: 'CAM 07', emoji: '🦊', color: '#f87171', stage: 0, startRoom: 'CAM 07' },
+    freddy: { name: 'Freddy', room: 'CAM 01', emoji: '🐻', color: '#a16207', path: ['CAM 01', 'CAM 09', 'CAM 12', 'OFFICE'], startRoom: 'CAM 01' },
+  });
+
+  const [stunnedUntil, setStunnedUntil] = useState({
+    bonnie: 0,
+    chica: 0,
+    foxy: 0,
+    freddy: 0,
+  });
+
+  const resetFnafNight = (nightNum = fnafNight) => {
+    setFnafTime(12);
+    setFnafPower(100);
+    setFnafGameState('playing');
+    setJumpscareAnimatronic(null);
+    setFnafCamActive(false);
+    setAnimatronics({
+      bonnie: { name: 'Bonnie', room: 'CAM 02', emoji: '🐰', color: '#818cf8', path: ['CAM 02', 'CAM 08', 'CAM 11', 'OFFICE'], startRoom: 'CAM 02' },
+      chica: { name: 'Chica', room: 'CAM 03', emoji: '🐤', color: '#fbbf24', path: ['CAM 03', 'CAM 05', 'CAM 06', 'OFFICE'], startRoom: 'CAM 03' },
+      foxy: { name: 'Foxy', room: 'CAM 07', emoji: '🦊', color: '#f87171', stage: 0, startRoom: 'CAM 07' },
+      freddy: { name: 'Freddy', room: 'CAM 01', emoji: '🐻', color: '#a16207', path: ['CAM 01', 'CAM 09', 'CAM 12', 'OFFICE'], startRoom: 'CAM 01' },
+    });
+    setStunnedUntil({
+      bonnie: 0,
+      chica: 0,
+      foxy: 0,
+      freddy: 0,
+    });
+  };
+
+  const stunAnimatronic = (key) => {
+    const stunDuration = Math.max(8000, (25 - fnafNight * 3.5) * 1000);
+    setStunnedUntil(prev => ({
+      ...prev,
+      [key]: Date.now() + stunDuration
+    }));
+    
+    setAnimatronics(prev => {
+      const copy = { ...prev };
+      if (key === 'foxy') {
+        copy.foxy = { ...copy.foxy, stage: 0 };
+      } else {
+        copy[key] = { ...copy[key], room: copy[key].startRoom };
+      }
+      return copy;
+    });
+  };
+
+  const toggleFnafCamera = () => {
+    if (fnafGameState !== 'playing') return;
+    setFnafCamActive(prev => {
+      const next = !prev;
+      if (next) {
+        document.body.classList.add('fnaf-cam-active');
+      } else {
+        document.body.classList.remove('fnaf-cam-active');
+      }
+      return next;
+    });
+  };
+
+  useEffect(() => {
+    if (settings.theme === 'fnaf') {
+      setFnafActive(true);
+      resetFnafNight(fnafNight);
+    } else {
+      setFnafActive(false);
+      setFnafCamActive(false);
+      setFnafNight(1); // Reset to Night 1 if they switch theme
+      document.body.classList.remove('fnaf-cam-active');
+    }
+  }, [settings.theme]);
+
+  // Game ticks (moves animatronics and drains power)
+  useEffect(() => {
+    if (!fnafActive || fnafGameState !== 'playing') return;
+
+    const powerInterval = setInterval(() => {
+      setFnafPower(prev => {
+        const drain = fnafCamActive ? 2 : 1;
+        const next = prev - drain;
+        if (next <= 0) {
+          clearInterval(powerInterval);
+          setFnafGameState('lose');
+          setJumpscareAnimatronic('freddy');
+          return 0;
+        }
+        return next;
+      });
+    }, 4500);
+
+    const moveInterval = setInterval(() => {
+      setAnimatronics(prev => {
+        const copy = { ...prev };
+        const now = Date.now();
+
+        // Bonnie
+        if (stunnedUntil.bonnie < now) {
+          const prob = 0.15 + (fnafNight * 0.08);
+          if (Math.random() < prob) {
+            const currentIdx = copy.bonnie.path.indexOf(copy.bonnie.room);
+            if (currentIdx !== -1 && currentIdx < copy.bonnie.path.length - 1) {
+              const nextRoom = copy.bonnie.path[currentIdx + 1];
+              copy.bonnie = { ...copy.bonnie, room: nextRoom };
+              if (nextRoom === 'OFFICE') {
+                setFnafGameState('lose');
+                setJumpscareAnimatronic('bonnie');
+              }
+            }
+          }
+        }
+
+        // Chica
+        if (stunnedUntil.chica < now) {
+          const prob = 0.12 + (fnafNight * 0.07);
+          if (Math.random() < prob) {
+            const currentIdx = copy.chica.path.indexOf(copy.chica.room);
+            if (currentIdx !== -1 && currentIdx < copy.chica.path.length - 1) {
+              const nextRoom = copy.chica.path[currentIdx + 1];
+              copy.chica = { ...copy.chica, room: nextRoom };
+              if (nextRoom === 'OFFICE') {
+                setFnafGameState('lose');
+                setJumpscareAnimatronic('chica');
+              }
+            }
+          }
+        }
+
+        // Freddy (active starting night 3)
+        if (fnafNight >= 3 && stunnedUntil.freddy < now) {
+          const prob = 0.08 + (fnafNight * 0.06);
+          if (Math.random() < prob) {
+            const currentIdx = copy.freddy.path.indexOf(copy.freddy.room);
+            if (currentIdx !== -1 && currentIdx < copy.freddy.path.length - 1) {
+              const nextRoom = copy.freddy.path[currentIdx + 1];
+              copy.freddy = { ...copy.freddy, room: nextRoom };
+              if (nextRoom === 'OFFICE') {
+                setFnafGameState('lose');
+                setJumpscareAnimatronic('freddy');
+              }
+            }
+          }
+        }
+
+        // Foxy Pirate Cove stages
+        if (stunnedUntil.foxy < now) {
+          const prob = 0.1 + (fnafNight * 0.07);
+          if (Math.random() < prob) {
+            const nextStage = copy.foxy.stage + 1;
+            if (nextStage >= 4) {
+              setFnafGameState('lose');
+              setJumpscareAnimatronic('foxy');
+              copy.foxy = { ...copy.foxy, stage: 4 };
+            } else {
+              copy.foxy = { ...copy.foxy, stage: nextStage };
+            }
+          }
+        }
+
+        return copy;
+      });
+    }, Math.max(3000, 9000 - fnafNight * 1000));
+
+    return () => {
+      clearInterval(powerInterval);
+      clearInterval(moveInterval);
+    };
+  }, [fnafActive, fnafGameState, fnafCamActive, stunnedUntil, fnafNight]);
+
+  // Time ticks (45s per hour)
+  useEffect(() => {
+    if (!fnafActive || fnafGameState !== 'playing') return;
+
+    const timeInterval = setInterval(() => {
+      setFnafTime(prev => {
+        if (prev === 12) {
+          return 1;
+        } else if (prev === 5) {
+          clearInterval(timeInterval);
+          setFnafGameState('win');
+          setFnafNight(n => Math.min(6, n + 1));
+          return 6;
+        }
+        return prev + 1;
+      });
+    }, 45000);
+
+    return () => clearInterval(timeInterval);
+  }, [fnafActive, fnafGameState, fnafNight]);
+
   const t = (key, replacements = {}) => {
     const lang = settings.language || 'es';
     let text = translations[lang]?.[key] || translations['es']?.[key] || key;
@@ -1172,7 +1395,28 @@ export const SettingsProvider = ({ children }) => {
   };
 
   return (
-    <SettingsContext.Provider value={{ settings, updateSetting, t, translateLog, formatCurrency }}>
+    <SettingsContext.Provider value={{
+      settings,
+      updateSetting,
+      t,
+      translateLog,
+      formatCurrency,
+      fnafActive,
+      fnafNight,
+      setFnafNight,
+      fnafTime,
+      fnafPower,
+      fnafCamActive,
+      fnafGameState,
+      setFnafGameState,
+      jumpscareAnimatronic,
+      currentRoom,
+      animatronics,
+      stunnedUntil,
+      resetFnafNight,
+      stunAnimatronic,
+      toggleFnafCamera
+    }}>
       {children}
     </SettingsContext.Provider>
   );
