@@ -898,11 +898,21 @@ export default function Header({ onToggleSidebar }) {
         {/* Destiny 2 HUD */}
         {settings.theme === 'destiny2' && (
           <div className="destiny-hud-container">
+            {/* Scan effects */}
+            {ghostScanning && (
+              <>
+                <div className="destiny-scan-grid" />
+                <div className="destiny-scan-cone" />
+                <div className="destiny-scan-ripple" />
+                <div className="destiny-scan-ripple" style={{ animationDelay: '0.4s' }} />
+                <div className="destiny-scan-ripple" style={{ animationDelay: '0.8s' }} />
+              </>
+            )}
             <div 
               className="destiny-ghost-wrapper" 
               onClick={handleGhostScan} 
               title={settings.language === 'en' ? "Click Ghost to scan for resources" : "Haz clic en el Espectro para escanear recursos"} 
-              style={{ cursor: 'pointer' }}
+              style={{ cursor: 'pointer', position: 'relative', zIndex: 3 }}
             >
               <div className={`destiny-ghost ${ghostScanning ? 'scanning' : ''}`}>
                 <svg className="destiny-ghost-svg" viewBox="0 0 100 100" width="36" height="36" xmlns="http://www.w3.org/2000/svg">
@@ -933,7 +943,7 @@ export default function Header({ onToggleSidebar }) {
                   <circle cx="48" cy="48" r="1.5" fill="#ffffff" opacity="0.8" />
                 </svg>
               </div>
-              <span className="destiny-glimmer-text">{destinyGlimmer.toLocaleString()} GLIMMER</span>
+              <span className="destiny-glimmer-text" style={{ position: 'relative', zIndex: 3 }}>{destinyGlimmer.toLocaleString()} GLIMMER</span>
             </div>
             {ghostScanning && <div className="ghost-laser-line" />}
           </div>
