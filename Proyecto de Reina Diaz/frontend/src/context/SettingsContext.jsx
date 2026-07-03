@@ -147,6 +147,16 @@ const translations = {
     'settings.themePapers': 'Papers, Please 🛂',
     'settings.themePlague': 'Plague Inc ☣️',
     'settings.themePvz': 'Plants vs Zombies 🌻',
+    'settings.themeIsaac': 'The Binding of Isaac 🩸',
+    'settings.themeHalo': 'Halo 🛡️',
+    'settings.themeBlueArchive': 'Blue Archive 🎓',
+    'settings.themeFnaf': 'Five Nights at Freddy\'s 🐻',
+    'settings.themeDbd': 'Dead by Daylight 🪝',
+    'settings.themeIncredibox': 'Incredibox 🎵',
+    'settings.themeDarkest': 'Darkest Dungeon 💀',
+    'settings.themeDestiny2': 'Destiny 2 🔷',
+    'settings.themeFnf': 'Friday Night Funkin\' 🎤',
+    'settings.themeHelltaker': 'Helltaker 🥞',
     'settings.accentLabel': 'Color de Acento',
     'settings.accentDesc': 'Elige un color personalizado para destacar elementos de la interfaz.',
     'settings.currencyLabel': 'Formato de Moneda',
@@ -611,6 +621,16 @@ const translations = {
     'settings.themePapers': 'Papers, Please 🛂',
     'settings.themePlague': 'Plague Inc ☣️',
     'settings.themePvz': 'Plants vs Zombies 🌻',
+    'settings.themeIsaac': 'The Binding of Isaac 🩸',
+    'settings.themeHalo': 'Halo 🛡️',
+    'settings.themeBlueArchive': 'Blue Archive 🎓',
+    'settings.themeFnaf': 'Five Nights at Freddy\'s 🐻',
+    'settings.themeDbd': 'Dead by Daylight 🪝',
+    'settings.themeIncredibox': 'Incredibox 🎵',
+    'settings.themeDarkest': 'Darkest Dungeon 💀',
+    'settings.themeDestiny2': 'Destiny 2 🔷',
+    'settings.themeFnf': 'Friday Night Funkin\' 🎤',
+    'settings.themeHelltaker': 'Helltaker 🥞',
     'settings.accentLabel': 'Accent Color',
     'settings.accentDesc': 'Choose a custom color to highlight interface elements.',
     'settings.currencyLabel': 'Currency Format',
@@ -976,14 +996,16 @@ export const SettingsProvider = ({ children }) => {
         'dark-mode', 'theme-ocean', 'theme-nature', 'theme-sunset', 'theme-lavender', 'theme-cherry', 'theme-midnight', 'theme-dim', 
         'theme-miku', 'theme-teto', 'theme-ror2', 'theme-limbus', 'theme-ruina', 'theme-minecraft', 'theme-geometry', 'theme-fallout', 'theme-tf2', 'theme-cyberpunk',
         'theme-backrooms', 'theme-terraria', 'theme-castle', 'theme-starwars', 'theme-cod3', 'theme-subnautica', 'theme-cuphead', 'theme-ddlc', 
-        'theme-undertale', 'theme-lobotomy', 'theme-papers', 'theme-plague', 'theme-pvz'
+        'theme-undertale', 'theme-lobotomy', 'theme-papers', 'theme-plague', 'theme-pvz',
+        'theme-isaac', 'theme-halo', 'theme-bluearchive', 'theme-fnaf', 'theme-dbd', 'theme-incredibox', 'theme-darkest', 'theme-destiny2', 'theme-fnf', 'theme-helltaker'
       );
 
       const isSystemDark = settings.theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches;
       const isAnyDark = [
         'dark', 'ocean', 'nature', 'sunset', 'lavender', 'cherry', 'midnight', 'dim', 'miku', 'teto', 'ror2', 'limbus', 'ruina', 'minecraft', 
         'geometry', 'fallout', 'tf2', 'cyberpunk', 'backrooms', 'terraria', 'castle', 'starwars', 'cod3', 'subnautica', 'cuphead', 
-        'undertale', 'lobotomy', 'papers', 'plague', 'pvz'
+        'undertale', 'lobotomy', 'papers', 'plague', 'pvz',
+        'isaac', 'halo', 'fnaf', 'dbd', 'incredibox', 'darkest', 'destiny2', 'fnf', 'helltaker'
       ].includes(settings.theme) || isSystemDark;
 
       if (isAnyDark) {
@@ -993,7 +1015,8 @@ export const SettingsProvider = ({ children }) => {
       if ([
         'ocean', 'nature', 'sunset', 'lavender', 'cherry', 'midnight', 'dim', 'miku', 'teto', 'ror2', 'limbus', 'ruina', 'minecraft', 
         'geometry', 'fallout', 'tf2', 'cyberpunk', 'backrooms', 'terraria', 'castle', 'starwars', 'cod3', 'subnautica', 'cuphead', 
-        'ddlc', 'undertale', 'lobotomy', 'papers', 'plague', 'pvz'
+        'ddlc', 'undertale', 'lobotomy', 'papers', 'plague', 'pvz',
+        'isaac', 'halo', 'bluearchive', 'fnaf', 'dbd', 'incredibox', 'darkest', 'destiny2', 'fnf', 'helltaker'
       ].includes(settings.theme)) {
         document.body.classList.add(`theme-${settings.theme}`);
       }
@@ -1041,7 +1064,8 @@ export const SettingsProvider = ({ children }) => {
     const brandedThemes = [
       'miku', 'teto', 'ror2', 'limbus', 'ruina', 'minecraft', 'geometry', 'fallout', 'tf2', 
       'cyberpunk', 'backrooms', 'terraria', 'castle', 'starwars', 'cod3', 
-      'subnautica', 'cuphead', 'ddlc', 'undertale', 'lobotomy', 'papers', 'plague', 'pvz'
+      'subnautica', 'cuphead', 'ddlc', 'undertale', 'lobotomy', 'papers', 'plague', 'pvz',
+      'isaac', 'halo', 'bluearchive', 'fnaf', 'dbd', 'incredibox', 'darkest', 'destiny2', 'fnf', 'helltaker'
     ];
 
     if (brandedThemes.includes(settings.theme)) {
