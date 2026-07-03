@@ -10413,3 +10413,151 @@ body.theme-helltaker button.actions-dropdown-item.purple:hover {
     font-size: 0.65rem !important;
   }
 }
+
+/* FIVE NIGHTS AT FREDDY'S MINIGAME STYLES */
+@keyframes fnaf-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@keyframes fnaf-jumpscare-shake {
+  0%, 100% { transform: translate(0, 0) scale(1.1) rotate(0deg); }
+  10% { transform: translate(-8px, 12px) scale(1.15) rotate(-2deg); }
+  20% { transform: translate(12px, -8px) scale(1.1) rotate(2deg); }
+  30% { transform: translate(-12px, -12px) scale(1.2) rotate(-4deg); }
+  40% { transform: translate(8px, 8px) scale(1.1) rotate(4deg); }
+  50% { transform: translate(-8px, 12px) scale(1.15) rotate(-2deg); }
+  60% { transform: translate(12px, -8px) scale(1.2) rotate(2deg); }
+  75% { transform: translate(-12px, -12px) scale(1.1) rotate(-4deg); }
+  90% { transform: translate(8px, 8px) scale(1.25) rotate(4deg); }
+}
+
+@keyframes fnaf-glitch-border {
+  0%, 100% { border-color: #ff0000; box-shadow: 0 0 15px #ff0000; }
+  25% { border-color: #00ff00; box-shadow: 0 0 10px #00ff00; }
+  50% { border-color: #0000ff; box-shadow: 0 0 20px #0000ff; }
+  75% { border-color: #ffff00; box-shadow: 0 0 15px #ffff00; }
+}
+
+.fnaf-camera-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: radial-gradient(circle, transparent 40%, rgba(0, 0, 0, 0.5) 100%);
+  border: 12px solid #111;
+  box-sizing: border-box;
+  pointer-events: none;
+  z-index: 9998;
+}
+
+.fnaf-camera-scanlines {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.05), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.05));
+  background-size: 100% 4px, 6px 100%;
+  pointer-events: none;
+  z-index: 9998;
+  opacity: 0.8;
+}
+
+.fnaf-victory-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 100000;
+  color: #fff;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.fnaf-victory-digits {
+  font-size: 8rem;
+  font-weight: bold;
+  text-shadow: 0 0 20px #00ff00, 0 0 40px #005500;
+  letter-spacing: 0.1em;
+  margin-bottom: 2rem;
+  animation: fnaf-blink 1s steps(2, start) infinite;
+}
+
+.fnaf-victory-text {
+  font-size: 2.2rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  margin-bottom: 3rem;
+  color: #a1a1aa;
+}
+
+.fnaf-jumpscare-overlay-fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #020202;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 100000;
+  color: #ff0000;
+  font-family: 'Impact', 'Arial Black', sans-serif;
+  overflow: hidden;
+}
+
+.fnaf-jumpscare-face {
+  font-size: 13rem;
+  animation: fnaf-jumpscare-shake 0.1s linear infinite;
+  text-shadow: 0 0 40px #ff0000;
+  margin-bottom: 2rem;
+}
+
+.fnaf-jumpscare-screamer {
+  font-size: 4.5rem;
+  font-style: italic;
+  font-weight: bold;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 2rem;
+  animation: fnaf-blink 0.15s steps(2, start) infinite;
+}
+
+.fnaf-retry-btn {
+  background: #ff0000 !important;
+  color: #fff !important;
+  font-size: 1.5rem !important;
+  padding: 0.8rem 2.2rem !important;
+  border: 3px solid #ff5555 !important;
+  border-radius: 4px !important;
+  cursor: pointer !important;
+  font-weight: bold !important;
+  text-transform: uppercase !important;
+  box-shadow: 0 0 15px rgba(255, 0, 0, 0.6) !important;
+  transition: transform 0.2s ease !important;
+}
+
+.fnaf-retry-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 25px rgba(255, 0, 0, 0.9) !important;
+}
+
+.fnaf-animatronic-glitch {
+  animation: fnaf-jumpscare-shake 0.25s steps(3, start) infinite;
+}
+
+.fnaf-animatronic-glitch:hover {
+  animation: fnaf-jumpscare-shake 0.08s steps(2, start) infinite;
+  transform: translate(-50%, -50%) scale(1.08) !important;
+}
+

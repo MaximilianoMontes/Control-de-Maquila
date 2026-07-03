@@ -39,7 +39,12 @@ import {
 
 export default function Header({ onToggleSidebar }) {
   const { user, logout } = useAuth();
-  const { settings, updateSetting, t, translateLog } = useSettings();
+  const { 
+    settings, updateSetting, t, translateLog,
+    fnafActive, fnafNight, fnafTime, fnafPower, fnafCamActive,
+    fnafGameState, jumpscareAnimatronic, currentRoom, animatronics,
+    resetFnafNight, stunAnimatronic, toggleFnafCamera
+  } = useSettings();
   const navigate = useNavigate();
   const location = useLocation();
   const isPlanchaPage = location.pathname.startsWith('/plancha') || location.search.includes('plancha');
@@ -395,50 +400,8 @@ export default function Header({ onToggleSidebar }) {
     setTimeout(() => setBlueBanner(null), 3000);
   };
 
-  // --- FIVE NIGHTS AT FREDDY'S ---
-  const [fnafPower, setFnafPower] = useState(100);
-  const [fnafTime, setFnafTime] = useState(12);
-  const [fnafCamActive, setFnafCamActive] = useState(false);
-  const [fnafBlackout, setFnafBlackout] = useState(false);
-  useEffect(() => {
-    if (settings.theme !== 'fnaf') {
-      setFnafCamActive(false);
-      document.body.classList.remove('fnaf-cam-active');
-      return;
-    }
-    const interval = setInterval(() => {
-      setFnafPower(prev => {
-        if (prev <= 1) {
-          setFnafBlackout(true);
-          setTimeout(() => {
-            setFnafPower(100);
-            setFnafBlackout(false);
-          }, 4000);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 4500);
-    return () => clearInterval(interval);
-  }, [settings.theme]);
-
-  useEffect(() => {
-    if (settings.theme !== 'fnaf') return;
-    const interval = setInterval(() => {
-      setFnafTime(prev => (prev === 12 ? 1 : prev === 5 ? 6 : prev + 1));
-    }, 30000);
-    return () => clearInterval(interval);
-  }, [settings.theme]);
-
-  const toggleFnafCamera = () => {
-    const next = !fnafCamActive;
-    setFnafCamActive(next);
-    if (next) {
-      document.body.classList.add('fnaf-cam-active');
-    } else {
-      document.body.classList.remove('fnaf-cam-active');
-    }
-  };
+  // --- FIVE NIGHTS AT FREDDY'S LOCAL STATE REMOVED ---
+  // Managed globally in SettingsContext.jsx
 
   // --- DEAD BY DAYLIGHT ---
   const [dbdBP, setDbdBP] = useState(50000);
@@ -918,9 +881,10 @@ export default function Header({ onToggleSidebar }) {
 
         {/* Five Nights At Freddy's HUD */}
         {settings.theme === 'fnaf' && (
-          <div className={`fnaf-hud-container ${fnafBlackout ? 'blackout' : ''}`}>
+          <div className={`fnaf-hud-container ${fnafPower <= 0 ? 'blackout' : ''}`}>
             <div className="fnaf-status">
-              <span className="fnaf-power-label">POWER:</span>
+              <span className="fnaf-night-label" style={{ marginRight: '1rem', color: '#ef4444', fontWeight: 'bold' }}>NIGHT {fnafNight}</span>
+              <span className="fnaf-power-label">POWER: </span>
               <span className="fnaf-power-value" style={{ color: fnafPower < 30 ? '#ff0000' : '#00ff00' }}>{fnafPower}%</span>
             </div>
             <div className="fnaf-time-box">
@@ -929,7 +893,12 @@ export default function Header({ onToggleSidebar }) {
             <button className={`fnaf-camera-btn ${fnafCamActive ? 'active' : ''}`} onClick={toggleFnafCamera}>
               📷 CAMERA MONITOR
             </button>
-            {fnafBlackout && <div className="fnaf-jumpscare-overlay">🐻 IT'S ME</div>}
+            {fnafCamActive && (
+              <div className="fnaf-camera-indicator" style={{ display: 'inline-flex', alignItems: 'center', marginLeft: '1rem', fontSize: '0.8rem', color: '#ff3333', textShadow: '0 0 4px #ff0000', fontFamily: 'monospace' }}>
+                <span className="blink-dot" style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ff3333', marginRight: '6px', display: 'inline-block', animation: 'fnaf-blink 1.5s steps(2, start) infinite' }}></span>
+                REC [{currentRoom.code} - {currentRoom.name.toUpperCase()}]
+              </div>
+            )}
           </div>
         )}
 
