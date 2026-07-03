@@ -556,23 +556,41 @@ export default function Header({ onToggleSidebar }) {
   }, [settings.theme]);
 
   // --- HELLTAKER ---
-  const [helltakerSteps, setHelltakerSteps] = useState(23);
-  const [helltakerDead, setHelltakerDead] = useState(false);
-  const [helltakerPancakes, setHelltakerPancakes] = useState(0);
-  const [pancakeCooldown, setPancakeCooldown] = useState(0);
-  const helltakerLastDepletedRef = useRef(0);
+  const [helltakerSteps, setHelltakerSteps] = useState(() => {
+    const saved = localStorage.getItem('helltakerSteps');
+    return saved !== null ? parseInt(saved, 10) : 23;
+  });
+  const [helltakerDead, setHelltakerDead] = useState(() => {
+    const saved = localStorage.getItem('helltakerSteps');
+    return saved !== null ? parseInt(saved, 10) === 0 : false;
+  });
+  const [helltakerPancakes, setHelltakerPancakes] = useState(() => {
+    const saved = localStorage.getItem('helltakerPancakes');
+    return saved !== null ? parseInt(saved, 10) : 0;
+  });
+  const [pancakeCooldown, setPancakeCooldown] = useState(() => {
+    const endTimeSaved = localStorage.getItem('pancakeCooldownEndTime');
+    if (endTimeSaved) {
+      const remaining = Math.max(0, Math.ceil((parseInt(endTimeSaved, 10) - Date.now()) / 1000));
+      return remaining;
+    }
+    return 0;
+  });
 
   const depleteHelltakerStep = () => {
     const now = Date.now();
-    if (now - helltakerLastDepletedRef.current < 250) return;
-    helltakerLastDepletedRef.current = now;
+    const lastDepleted = parseInt(sessionStorage.getItem('helltakerLastDepleted') || '0', 10);
+    if (now - lastDepleted < 250) return;
+    sessionStorage.setItem('helltakerLastDepleted', now.toString());
 
     setHelltakerSteps(prev => {
       const next = Math.max(0, prev - 1);
+      localStorage.setItem('helltakerSteps', next);
       if (next === 0) {
         setHelltakerDead(true);
         setTimeout(() => {
           setHelltakerSteps(23);
+          localStorage.setItem('helltakerSteps', 23);
           setHelltakerDead(false);
         }, 3500);
       }
@@ -609,24 +627,45 @@ export default function Header({ onToggleSidebar }) {
 
   // Pancake cooldown timer effect (3-5 mins, we use 3 minutes = 180 seconds)
   useEffect(() => {
-    if (pancakeCooldown <= 0) return;
-    const interval = setInterval(() => {
-      setPancakeCooldown(prev => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
+    const endTimeSaved = localStorage.getItem('pancakeCooldownEndTime');
+    if (!endTimeSaved) {
+      setPancakeCooldown(0);
+      return;
+    }
+
+    const checkTime = () => {
+      const endTime = parseInt(endTimeSaved, 10);
+      const remaining = Math.max(0, Math.ceil((endTime - Date.now()) / 1000));
+      setPancakeCooldown(remaining);
+      if (remaining <= 0) {
+        localStorage.removeItem('pancakeCooldownEndTime');
+        clearInterval(interval);
+      }
+    };
+
+    // run checkTime immediately
+    checkTime();
+
+    const interval = setInterval(checkTime, 1000);
     return () => clearInterval(interval);
-  }, [pancakeCooldown]);
+  }, [pancakeCooldown > 0]);
 
   const handleEatPancake = () => {
     if (pancakeCooldown > 0) return;
-    setHelltakerSteps(prev => Math.min(40, prev + 10));
-    setHelltakerPancakes(p => p + 1);
-    setPancakeCooldown(180); // 3 minutes cooldown
+    setHelltakerSteps(prev => {
+      const next = Math.min(40, prev + 10);
+      localStorage.setItem('helltakerSteps', next);
+      return next;
+    });
+    setHelltakerPancakes(p => {
+      const next = p + 1;
+      localStorage.setItem('helltakerPancakes', next);
+      return next;
+    });
+    const duration = 180; // 3 minutes cooldown
+    const endTime = Date.now() + duration * 1000;
+    localStorage.setItem('pancakeCooldownEndTime', endTime);
+    setPancakeCooldown(duration);
   };
 
   const formatCooldown = (seconds) => {
