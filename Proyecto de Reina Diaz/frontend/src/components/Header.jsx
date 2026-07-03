@@ -559,9 +559,13 @@ export default function Header({ onToggleSidebar }) {
   const [helltakerSteps, setHelltakerSteps] = useState(23);
   const [helltakerDead, setHelltakerDead] = useState(false);
   const [helltakerPancakes, setHelltakerPancakes] = useState(0);
+  const helltakerLastDepletedRef = useRef(0);
 
-  useEffect(() => {
-    if (settings.theme !== 'helltaker') return;
+  const depleteHelltakerStep = () => {
+    const now = Date.now();
+    if (now - helltakerLastDepletedRef.current < 250) return;
+    helltakerLastDepletedRef.current = now;
+
     setHelltakerSteps(prev => {
       const next = Math.max(0, prev - 1);
       if (next === 0) {
@@ -573,7 +577,34 @@ export default function Header({ onToggleSidebar }) {
       }
       return next;
     });
-  }, [location.pathname, settings.theme]);
+  };
+
+  useEffect(() => {
+    if (settings.theme !== 'helltaker') return;
+    depleteHelltakerStep();
+  }, [location.pathname, location.search, settings.theme]);
+
+  useEffect(() => {
+    if (settings.theme !== 'helltaker') return;
+
+    const handleGlobalClick = (e) => {
+      const target = e.target;
+      if (!target) return;
+
+      const isButton = target.closest('button');
+      const isLink = target.closest('a') || target.closest('[role="button"]');
+      const isTab = target.closest('.nav-link') || target.closest('.tab') || target.closest('.actions-dropdown-item') || target.closest('.sidebar-item');
+      const isPancakeClick = target.closest('.helltaker-pancake-plate');
+      const isSettingsSelector = target.closest('.form-input') && target.closest('.settings-item');
+
+      if ((isButton || isLink || isTab) && !isPancakeClick && !isSettingsSelector) {
+        depleteHelltakerStep();
+      }
+    };
+
+    document.addEventListener('click', handleGlobalClick, true);
+    return () => document.removeEventListener('click', handleGlobalClick, true);
+  }, [settings.theme]);
 
   const handleEatPancake = () => {
     setHelltakerSteps(prev => Math.min(40, prev + 10));
