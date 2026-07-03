@@ -2983,40 +2983,41 @@ body.theme-ror2 button.actions-dropdown-item.purple:hover {
 
 /* Tema Limbus Company 🚂 (Estilo Gótico Industrial / Relojería / Steampunk Brass) */
 body.theme-limbus {
-  --bg-dark: #0d0c0b;
-  --bg-card: #181614;
-  --bg-input: #221e1a;
-  --text-primary: #f5ebd5;
-  --text-secondary: #d49e2a;
-  --border-color: rgba(212, 158, 42, 0.28);
-  --glass-border: 1px solid rgba(212, 158, 42, 0.15);
-  --glass-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.5);
-  --bg-hover: rgba(212, 158, 42, 0.08);
-  --bg-th: rgba(212, 158, 42, 0.12);
-  --header-bg: rgba(24, 22, 20, 0.85);
-  --row-normal-bg: rgba(212, 158, 42, 0.08);
-  --row-normal-hover: rgba(212, 158, 42, 0.15);
-  --row-warning-bg: rgba(156, 28, 28, 0.08);
-  --row-warning-hover: rgba(156, 28, 28, 0.15);
-  --row-danger-bg: rgba(156, 28, 28, 0.12);
-  --row-danger-hover: rgba(156, 28, 28, 0.2);
-  --badge-bono-bg: rgba(212, 158, 42, 0.2);
-  --badge-bono-text: #d49e2a;
-  --badge-desc-bg: rgba(156, 28, 28, 0.25);
-  --badge-desc-text: #ff4d4d;
+  --bg-dark: #070706;
+  --bg-card: #141210;
+  --bg-input: #1f1b18;
+  --text-primary: #f8f1df;
+  --text-secondary: #e2a82b;
+  --border-color: rgba(226, 168, 43, 0.22);
+  --glass-border: 1px solid rgba(226, 168, 43, 0.15);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.7);
+  --bg-hover: rgba(226, 168, 43, 0.08);
+  --bg-th: rgba(226, 168, 43, 0.12);
+  --header-bg: rgba(20, 18, 16, 0.95);
+  --row-normal-bg: rgba(226, 168, 43, 0.05);
+  --row-normal-hover: rgba(226, 168, 43, 0.12);
+  --row-warning-bg: rgba(186, 28, 28, 0.05);
+  --row-warning-hover: rgba(186, 28, 28, 0.12);
+  --row-danger-bg: rgba(186, 28, 28, 0.1);
+  --row-danger-hover: rgba(186, 28, 28, 0.18);
+  --badge-bono-bg: rgba(226, 168, 43, 0.18);
+  --badge-bono-text: #e2a82b;
+  --badge-desc-bg: rgba(186, 28, 28, 0.22);
+  --badge-desc-text: #ff5555;
   
-  /* Primary and danger accents overrides */
-  --primary-color: #d49e2a;
-  --primary-hover: #b37e1b;
-  --primary-shadow: rgba(212, 158, 42, 0.4);
-  --danger-color: #9c1c1c;
-  --danger-hover: #7a1414;
-  --success-color: #d49e2a;
+  --primary-color: #e2a82b;
+  --primary-hover: #c98e18;
+  --primary-shadow: rgba(226, 168, 43, 0.45);
+  --danger-color: #a61e1e;
+  --danger-hover: #821414;
+  --success-color: #e2a82b;
 
-  /* Custom background clockwork golden and blood red neon glow */
   background-image: 
-    radial-gradient(at 0% 0%, rgba(212, 158, 42, 0.2) 0px, transparent 55%),
-    radial-gradient(at 100% 0%, rgba(156, 28, 28, 0.15) 0px, transparent 55%) !important;
+    repeating-linear-gradient(rgba(0, 0, 0, 0.25) 0px, rgba(0, 0, 0, 0.25) 1px, transparent 1px, transparent 3px),
+    radial-gradient(circle at 10% 10%, rgba(226, 168, 43, 0.22) 0%, transparent 60%),
+    radial-gradient(circle at 90% 90%, rgba(166, 30, 30, 0.18) 0%, transparent 60%),
+    linear-gradient(135deg, #100f0d 0%, #060505 100%) !important;
+  background-attachment: fixed !important;
 }
 
 body.theme-limbus::after {
@@ -3025,13 +3026,13 @@ body.theme-limbus::after {
   bottom: -120px;
   right: -120px;
   font-size: 450px;
-  color: rgba(212, 158, 42, 0.025);
+  color: rgba(226, 168, 43, 0.015);
   pointer-events: none;
   z-index: -1;
   animation: limbus-gear-rotate 60s linear infinite;
 }
 
-/* Limbus Company Premium Overrides */
+/* Limbus Company Premium Typography & Header Overrides */
 body.theme-limbus h1,
 body.theme-limbus h2,
 body.theme-limbus h3,
@@ -3043,11 +3044,43 @@ body.theme-limbus .kpi-value {
   font-family: Georgia, 'Times New Roman', serif !important;
   font-weight: bold !important;
   text-transform: uppercase !important;
-  letter-spacing: 1px !important;
-  text-shadow: 0 0 8px rgba(212, 158, 42, 0.5) !important;
-  color: #f5ebd5 !important;
+  letter-spacing: 1.5px !important;
+  text-shadow: 0 0 10px rgba(226, 168, 43, 0.6) !important;
+  color: #f8f1df !important;
 }
 
+body.theme-limbus .main-header {
+  background: #141210 !important;
+  border-bottom: 2px solid #e2a82b !important;
+  outline: 1px solid rgba(226, 168, 43, 0.2) !important;
+  outline-offset: -3px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7) !important;
+  position: relative;
+}
+
+body.theme-limbus .main-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #a61e1e, transparent) !important;
+  box-shadow: 0 0 8px #ff4d4d !important;
+}
+
+body.theme-limbus .sidebar-logo .gradient-text {
+  background: none !important;
+  -webkit-text-fill-color: initial !important;
+  color: #e2a82b !important;
+  font-family: Georgia, serif !important;
+  font-weight: 900 !important;
+  text-shadow: 0 0 10px rgba(226, 168, 43, 0.6) !important;
+  letter-spacing: 1px !important;
+  text-transform: uppercase !important;
+}
+
+/* Limbus Company Stamped Brass Cards & Panels */
 body.theme-limbus .glass-card,
 body.theme-limbus .modal-content,
 body.theme-limbus .card,
@@ -3058,36 +3091,65 @@ body.theme-limbus .help-dropdown,
 body.theme-limbus .sidebar,
 body.theme-limbus .plancha-sidebar,
 body.theme-limbus aside {
-  border-radius: 4px !important; /* Sharp industrial corners */
-  border: 3px double #d49e2a !important; /* Steampunk double brass border */
-  background: #181614 !important;
-  animation: limbus-bough-pulse 4s infinite ease-in-out;
+  border-radius: 4px !important;
+  border: 2px solid #e2a82b !important;
+  outline: 1px solid rgba(226, 168, 43, 0.28) !important;
+  outline-offset: -4px !important;
+  background: #141210 !important;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.8), inset 0 0 12px rgba(226, 168, 43, 0.05) !important;
+  animation: limbus-bough-pulse 5s infinite ease-in-out;
   backdrop-filter: none !important;
 }
 
+/* Nav links styling for Limbus Company */
+body.theme-limbus .nav-link {
+  font-family: Georgia, serif !important;
+  color: #ebdcb9 !important;
+  border-left: 4px solid transparent !important;
+  transition: all 0.2s ease !important;
+}
+
+body.theme-limbus .nav-link:hover {
+  color: #e2a82b !important;
+  background: rgba(226, 168, 43, 0.05) !important;
+}
+
+body.theme-limbus .nav-link.active {
+  background: linear-gradient(90deg, rgba(226, 168, 43, 0.15), transparent) !important;
+  color: #e2a82b !important;
+  border-left: 4px solid #e2a82b !important;
+  text-shadow: 0 0 6px rgba(226, 168, 43, 0.4) !important;
+}
+
+/* Stamped Metal Buttons & Active Glow */
 body.theme-limbus .btn,
 body.theme-limbus button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
   border-radius: 2px !important;
-  border: 2px solid #d49e2a !important;
-  background: #1c1815 !important;
-  color: #d49e2a !important;
+  border: 1px solid #e2a82b !important;
+  outline: 1px solid rgba(226, 168, 43, 0.25) !important;
+  outline-offset: -3px !important;
+  background: #181513 !important;
+  color: #f5ebd5 !important;
   font-family: Georgia, serif !important;
   font-weight: bold !important;
   text-transform: uppercase !important;
   letter-spacing: 0.5px !important;
-  box-shadow: 0 0 6px rgba(212, 158, 42, 0.2) !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5) !important;
   transition: all 0.25s ease !important;
   cursor: pointer;
 }
 
 body.theme-limbus .btn:hover,
 body.theme-limbus button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
-  background: #d49e2a !important;
-  color: #181614 !important;
-  box-shadow: 0 0 15px rgba(212, 158, 42, 0.6) !important;
-  transform: translateY(-1px) !important;
+  background: #8c1a1a !important; /* dark blood red */
+  color: #f8f1df !important;
+  border-color: #ff5500 !important; /* bright orange-red */
+  box-shadow: 0 0 12px rgba(255, 85, 0, 0.6) !important;
+  transform: scale(1.02) !important;
+  outline-color: rgba(255, 85, 0, 0.4) !important;
 }
 
+/* Actions Dropdown items styling overrides */
 body.theme-limbus .actions-dropdown-item,
 body.theme-limbus a.actions-dropdown-item,
 body.theme-limbus button.actions-dropdown-item,
@@ -3098,14 +3160,16 @@ body.theme-limbus .actions-dropdown-item.purple,
 body.theme-limbus a.actions-dropdown-item.purple,
 body.theme-limbus button.actions-dropdown-item.purple {
   border-radius: 2px !important;
-  border: 2px solid #d49e2a !important;
-  background: #1c1815 !important;
-  color: #d49e2a !important;
+  border: 1px solid #e2a82b !important;
+  outline: 1px solid rgba(226, 168, 43, 0.2) !important;
+  outline-offset: -3px !important;
+  background: #181513 !important;
+  color: #f5ebd5 !important;
   font-family: Georgia, serif !important;
   font-weight: bold !important;
   text-transform: uppercase !important;
   letter-spacing: 0.5px !important;
-  box-shadow: 0 0 6px rgba(212, 158, 42, 0.2) !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5) !important;
   transition: all 0.25s ease !important;
   cursor: pointer;
   text-decoration: none !important;
@@ -3123,26 +3187,44 @@ body.theme-limbus button.actions-dropdown-item.pink:hover,
 body.theme-limbus .actions-dropdown-item.purple:hover,
 body.theme-limbus a.actions-dropdown-item.purple:hover,
 body.theme-limbus button.actions-dropdown-item.purple:hover {
-  background: #d49e2a !important;
-  color: #181614 !important;
-  box-shadow: 0 0 15px rgba(212, 158, 42, 0.6) !important;
+  background: #8c1a1a !important;
+  color: #f8f1df !important;
+  border-color: #ff5500 !important;
+  box-shadow: 0 0 12px rgba(255, 85, 0, 0.6) !important;
   transform: translateY(-1px) !important;
+  outline-color: rgba(255, 85, 0, 0.4) !important;
 }
 
 body.theme-limbus .btn-primary {
-  border-color: #d49e2a !important;
-  background: rgba(212, 158, 42, 0.15) !important;
+  border-color: #e2a82b !important;
+  background: rgba(226, 168, 43, 0.15) !important;
 }
 
 body.theme-limbus .btn-danger {
-  border-color: #9c1c1c !important;
-  color: #ff4d4d !important;
-  background: #1e1111 !important;
+  border-color: #a61e1e !important;
+  color: #ff5555 !important;
+  background: #201111 !important;
+  outline-color: rgba(166, 30, 30, 0.3) !important;
 }
+
 body.theme-limbus .btn-danger:hover {
-  background: #9c1c1c !important;
+  background: #a61e1e !important;
   color: #ffffff !important;
-  box-shadow: 0 0 15px rgba(156, 28, 28, 0.6) !important;
+  box-shadow: 0 0 15px rgba(166, 30, 30, 0.6) !important;
+  border-color: #ff3333 !important;
+  outline-color: rgba(255, 51, 51, 0.4) !important;
+}
+
+body.theme-limbus .logout-btn {
+  border-color: #a61e1e !important;
+  color: #ff5555 !important;
+  background: #201111 !important;
+}
+
+body.theme-limbus .logout-btn:hover {
+  background: #a61e1e !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 15px rgba(166, 30, 30, 0.6) !important;
 }
 
 body.theme-limbus .form-input,
@@ -3150,33 +3232,63 @@ body.theme-limbus input:not([type="checkbox"]):not([type="radio"]),
 body.theme-limbus select,
 body.theme-limbus textarea {
   border-radius: 2px !important;
-  border: 1px solid rgba(212, 158, 42, 0.4) !important;
-  background: #221e1a !important;
-  color: #f5ebd5 !important;
+  border: 1px solid rgba(226, 168, 43, 0.4) !important;
+  background: #1f1b18 !important;
+  color: #f8f1df !important;
   font-family: Georgia, serif !important;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5) !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6) !important;
 }
 
 body.theme-limbus .form-input:focus,
 body.theme-limbus input:focus,
 body.theme-limbus select:focus,
 body.theme-limbus textarea:focus {
-  border-color: #d49e2a !important;
-  box-shadow: 0 0 8px rgba(212, 158, 42, 0.4), inset 0 2px 4px rgba(0, 0, 0, 0.5) !important;
+  border-color: #e2a82b !important;
+  box-shadow: 0 0 8px rgba(226, 168, 43, 0.4), inset 0 2px 4px rgba(0, 0, 0, 0.6) !important;
   outline: none !important;
 }
 
-body.theme-limbus table,
-body.theme-limbus th,
-body.theme-limbus td {
-  border-radius: 0px !important;
-  border-color: rgba(212, 158, 42, 0.2) !important;
-}
-body.theme-limbus th {
-  background: #221e1a !important;
-  color: #d49e2a !important;
+/* Limbus Company Industrial Grid Table */
+body.theme-limbus table {
+  border-collapse: collapse !important;
+  background: #141210 !important;
 }
 
+body.theme-limbus th {
+  background: #1c1815 !important;
+  color: #e2a82b !important;
+  font-family: Georgia, serif !important;
+  font-weight: bold !important;
+  text-transform: uppercase !important;
+  border-bottom: 2px solid #e2a82b !important;
+  letter-spacing: 0.5px !important;
+}
+
+body.theme-limbus td {
+  border-bottom: 1px solid rgba(226, 168, 43, 0.15) !important;
+  color: #f8f1df !important;
+}
+
+body.theme-limbus tr:hover td {
+  background: rgba(226, 168, 43, 0.06) !important;
+}
+
+/* Limbus Company Custom Scrollbar */
+body.theme-limbus ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+body.theme-limbus ::-webkit-scrollbar-track {
+  background: #070706;
+}
+body.theme-limbus ::-webkit-scrollbar-thumb {
+  background: #e2a82b;
+  border: 2px solid #070706;
+  border-radius: 4px;
+}
+body.theme-limbus ::-webkit-scrollbar-thumb:hover {
+  background: #c98e18;
+}
 
 /* Tema Library of Ruina 📖 (Estilo Biblioteca Gótica / Celestial Indigo & Gold) */
 body.theme-ruina {
