@@ -11,6 +11,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import SearchableSelect from '../components/SearchableSelect';
+import Header from '../components/Header';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
@@ -413,6 +414,7 @@ export default function TallerCorte() {
 
       {/* Contenedor Principal */}
       <div className="main-container">
+        <Header />
         <main className="main-content" style={{ padding: '2rem' }}>
           
           {/* --- TAB 1: REGISTRO DIARIO --- */}
