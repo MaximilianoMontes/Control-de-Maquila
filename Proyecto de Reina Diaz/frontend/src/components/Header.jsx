@@ -559,6 +559,7 @@ export default function Header({ onToggleSidebar }) {
   const [helltakerSteps, setHelltakerSteps] = useState(23);
   const [helltakerDead, setHelltakerDead] = useState(false);
   const [helltakerPancakes, setHelltakerPancakes] = useState(0);
+  const [pancakeCooldown, setPancakeCooldown] = useState(0);
   const helltakerLastDepletedRef = useRef(0);
 
   const depleteHelltakerStep = () => {
@@ -606,9 +607,32 @@ export default function Header({ onToggleSidebar }) {
     return () => document.removeEventListener('click', handleGlobalClick, true);
   }, [settings.theme]);
 
+  // Pancake cooldown timer effect (3-5 mins, we use 3 minutes = 180 seconds)
+  useEffect(() => {
+    if (pancakeCooldown <= 0) return;
+    const interval = setInterval(() => {
+      setPancakeCooldown(prev => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [pancakeCooldown]);
+
   const handleEatPancake = () => {
+    if (pancakeCooldown > 0) return;
     setHelltakerSteps(prev => Math.min(40, prev + 10));
     setHelltakerPancakes(p => p + 1);
+    setPancakeCooldown(180); // 3 minutes cooldown
+  };
+
+  const formatCooldown = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   const ROR2_DIFFICULTIES = [
@@ -868,9 +892,20 @@ export default function Header({ onToggleSidebar }) {
                 MOVES LEFT: {helltakerSteps}
               </span>
             </div>
-            <div className="helltaker-pancake-plate" onClick={handleEatPancake} title="Click to cook a pancake (+10 moves)" style={{ cursor: 'pointer' }}>
-              <span className="ht-pancake-icon">🥞</span>
-              <span className="ht-pancake-count">({helltakerPancakes})</span>
+            <div 
+              className={`helltaker-pancake-plate ${pancakeCooldown > 0 ? 'cooldown' : ''}`} 
+              onClick={handleEatPancake} 
+              title={pancakeCooldown > 0 ? (settings.language === 'en' ? `Pancakes on cooldown! Wait ${formatCooldown(pancakeCooldown)}` : `¡Panqueques en enfriamiento! Espera ${formatCooldown(pancakeCooldown)}`) : (settings.language === 'en' ? "Click to cook a pancake (+10 moves)" : "Haz click para cocinar un panqueque (+10 movimientos)")} 
+              style={{ 
+                cursor: pancakeCooldown > 0 ? 'not-allowed' : 'pointer',
+                opacity: pancakeCooldown > 0 ? 0.65 : 1,
+                transition: 'all 0.3s ease'
+              }}
+            >
+              <span className="ht-pancake-icon" style={{ filter: pancakeCooldown > 0 ? 'grayscale(0.85) contrast(0.8)' : 'none', transition: 'filter 0.3s ease' }}>🥞</span>
+              <span className="ht-pancake-count" style={{ color: pancakeCooldown > 0 ? '#ff5555' : '#ffffff' }}>
+                {pancakeCooldown > 0 ? `(${formatCooldown(pancakeCooldown)})` : `(${helltakerPancakes})`}
+              </span>
             </div>
             {helltakerDead && (
               <div className="helltaker-dead-overlay">
