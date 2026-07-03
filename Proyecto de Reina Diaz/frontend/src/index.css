@@ -2838,6 +2838,138 @@ body.theme-ror2 button.actions-dropdown-item.purple:hover {
   transform: scale(1.02) !important;
 }
 
+/* Risk of Rain 2 Theme: Difficulty Bar UI */
+.ror2-difficulty-bar-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(10, 14, 23, 0.95);
+  border: 1px solid rgba(255, 140, 0, 0.4);
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-family: 'Courier New', Courier, monospace;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.6);
+  margin: 0 auto;
+  max-width: 420px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.ror2-timer {
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: #ff8c00;
+  text-shadow: 0 0 8px rgba(255, 140, 0, 0.5);
+  min-width: 60px;
+  text-align: center;
+  border-right: 1px solid rgba(255, 140, 0, 0.25);
+  padding-right: 10px;
+}
+
+.ror2-bar-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: visible;
+}
+
+.ror2-difficulty-title {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #a3a3a3;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.ror2-bar-outer {
+  position: relative;
+  background: #05060a;
+  border: 1px solid #ff8c00;
+  border-radius: 2px;
+  height: 16px;
+  margin-top: 6px;
+  overflow: visible;
+}
+
+.ror2-bar-pointer {
+  position: absolute;
+  top: -11px;
+  transform: translateX(-50%);
+  color: #ffffff;
+  font-size: 10px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+  pointer-events: none;
+  transition: left 0.4s linear;
+  z-index: 10;
+}
+
+.ror2-bar-segments {
+  display: flex;
+  height: 100%;
+  width: 100%;
+  border-radius: 1px;
+  overflow: hidden;
+}
+
+.ror2-segment {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.55rem;
+  font-weight: bold;
+  height: 100%;
+  border-right: 1px solid rgba(0, 0, 0, 0.4);
+  text-shadow: 1px 1px 0px #000;
+  opacity: 0.25;
+  transition: opacity 0.2s ease, background-color 0.2s ease;
+  position: relative;
+}
+
+.ror2-segment:last-child {
+  border-right: none;
+}
+
+.ror2-segment.active {
+  opacity: 1;
+  box-shadow: inset 0 0 4px rgba(255, 255, 255, 0.2);
+}
+
+.ror2-segment span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 1px;
+  transform: scale(0.95);
+}
+
+/* Flashing animations for HAHAHAHAHA */
+@keyframes ror2-text-flash {
+  0%, 100% { color: #ff0000; text-shadow: 0 0 8px #ff0000; }
+  50% { color: #440000; text-shadow: none; }
+}
+
+.ror2-flash-text {
+  animation: ror2-text-flash 0.5s infinite alternate;
+}
+
+@keyframes ror2-bg-flash {
+  0%, 100% { background-color: #7f0000; }
+  50% { background-color: #000000; }
+}
+
+.ror2-segment.ror2-flash-bg.active {
+  animation: ror2-bg-flash 0.5s infinite alternate !important;
+  opacity: 1 !important;
+}
+
+/* Responsive scaling: hide difficulty bar on small/tablet devices */
+@media (max-width: 900px) {
+  .ror2-difficulty-bar-container {
+    display: none;
+  }
+}
+
 
 /* Tema Limbus Company 🚂 (Estilo Gótico Industrial / Relojería / Steampunk Brass) */
 body.theme-limbus {
