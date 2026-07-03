@@ -2850,9 +2850,10 @@ body.theme-ror2 button.actions-dropdown-item.purple:hover {
   font-family: 'Courier New', Courier, monospace;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.6);
   margin: 0 auto;
-  max-width: 420px;
+  max-width: 460px;
   width: 100%;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .ror2-timer {
@@ -2871,6 +2872,7 @@ body.theme-ror2 button.actions-dropdown-item.purple:hover {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  min-width: 0 !important;
   overflow: visible;
 }
 
@@ -2890,6 +2892,9 @@ body.theme-ror2 button.actions-dropdown-item.purple:hover {
   height: 16px;
   margin-top: 6px;
   overflow: visible;
+  min-width: 0 !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
 }
 
 .ror2-bar-pointer {
@@ -2910,6 +2915,7 @@ body.theme-ror2 button.actions-dropdown-item.purple:hover {
   width: 100%;
   border-radius: 1px;
   overflow: hidden;
+  box-sizing: border-box !important;
 }
 
 .ror2-segment {
@@ -2924,6 +2930,10 @@ body.theme-ror2 button.actions-dropdown-item.purple:hover {
   opacity: 0.25;
   transition: opacity 0.2s ease, background-color 0.2s ease;
   position: relative;
+  flex: 1 1 0% !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
 }
 
 .ror2-segment:last-child {
