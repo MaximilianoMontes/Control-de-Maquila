@@ -372,8 +372,8 @@ app.get('/api/inventario', async (req, res) => {
   try {
     const [items] = await db.query(`
       SELECT i.*, 
-        (SELECT COUNT(id) FROM produccion WHERE inventario_id = i.id AND estado != 'Cancelado') as producciones_count,
-        (SELECT COALESCE(SUM(cantidad), 0) FROM produccion WHERE inventario_id = i.id AND estado != 'Cancelado') as total_asignado
+        (SELECT COUNT(id) FROM produccion WHERE inventario_id = i.id AND estado != 'Cancelado' AND (es_extra = 0 OR es_extra IS NULL)) as producciones_count,
+        (SELECT COALESCE(SUM(cantidad), 0) FROM produccion WHERE inventario_id = i.id AND estado != 'Cancelado' AND (es_extra = 0 OR es_extra IS NULL)) as total_asignado
       FROM inventario i
       WHERE i.en_inventario = 0 OR i.en_inventario IS NULL
       ORDER BY i.id DESC
@@ -1217,7 +1217,7 @@ app.post('/api/produccion', authenticateToken, async (req, res) => {
       const [invs] = await db.query("SELECT piezas_en_proceso FROM inventario WHERE id = ?", [inventario_id]);
       const piezasCut = invs[0]?.piezas_en_proceso || 0;
       
-      const [sums] = await db.query("SELECT COALESCE(SUM(cantidad), 0) as total_asignado FROM produccion WHERE inventario_id = ? AND estado != 'Cancelado'", [inventario_id]);
+      const [sums] = await db.query("SELECT COALESCE(SUM(cantidad), 0) as total_asignado FROM produccion WHERE inventario_id = ? AND estado != 'Cancelado' AND (es_extra = 0 OR es_extra IS NULL)", [inventario_id]);
       const asignado = sums[0].total_asignado;
       const cantidadPedida = parseInt(cantidad) || 1;
       
@@ -1267,7 +1267,7 @@ app.put('/api/produccion/:id', authenticateToken, async (req, res) => {
       const [invs] = await db.query("SELECT piezas_en_proceso FROM inventario WHERE id = ?", [inventario_id]);
       const piezasCut = invs[0]?.piezas_en_proceso || 0;
       
-      const [sums] = await db.query("SELECT COALESCE(SUM(cantidad), 0) as total_asignado FROM produccion WHERE inventario_id = ? AND estado != 'Cancelado' AND id != ?", [inventario_id, req.params.id]);
+      const [sums] = await db.query("SELECT COALESCE(SUM(cantidad), 0) as total_asignado FROM produccion WHERE inventario_id = ? AND estado != 'Cancelado' AND id != ? AND (es_extra = 0 OR es_extra IS NULL)", [inventario_id, req.params.id]);
       const asignado = sums[0].total_asignado;
       
       const cantActual = cantidad !== undefined ? cantidad : old.cantidad;

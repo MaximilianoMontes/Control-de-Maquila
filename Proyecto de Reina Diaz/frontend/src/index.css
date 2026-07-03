@@ -10235,3 +10235,181 @@ body.theme-helltaker button.actions-dropdown-item.purple:hover {
   font-size: 1.2rem;
   margin-top: 10px;
 }
+
+/* ==========================================================================
+   MOBILE AND TABLET RESPONSIVE HUD OVERRIDES (max-width: 768px)
+   ========================================================================== */
+@media (max-width: 768px) {
+  /* Prevent search container from squishing */
+  .header-search-container {
+    flex-shrink: 0 !important;
+  }
+
+  /* 1. ROR2 Difficulty Bar */
+  .ror2-difficulty-bar-container {
+    max-width: 150px !important;
+    margin-left: 5px !important;
+    margin-right: 5px !important;
+    padding: 3px 6px !important;
+    gap: 6px !important;
+  }
+  .ror2-timer {
+    font-size: 0.95rem !important;
+    min-width: 45px !important;
+    padding-right: 6px !important;
+  }
+  .ror2-difficulty-title {
+    font-size: 0.55rem !important;
+  }
+  .ror2-bar-outer {
+    display: none !important; /* Hide progress bar on mobile to save space */
+  }
+
+  /* 2. Isaac Hearts */
+  .isaac-hearts-container {
+    margin-left: 5px !important;
+    gap: 4px !important;
+    padding: 2px 6px !important;
+  }
+  .isaac-label {
+    display: none !important; /* Hide 'HP:' label */
+  }
+  .isaac-heart {
+    font-size: 0.95rem !important;
+  }
+
+  /* 3. Halo HUD */
+  .halo-hud-container {
+    margin-left: 5px !important;
+    padding: 4px 8px !important;
+  }
+  .halo-hud-title {
+    display: none !important; /* Hide 'UNSC HUD [S-117]' label */
+  }
+  .halo-shield-label {
+    font-size: 0.65rem !important;
+  }
+  .halo-shield-bar-outer {
+    width: 60px !important; /* Narrower bar */
+  }
+  .halo-shield-percent {
+    font-size: 0.65rem !important;
+  }
+
+  /* 4. Blue Archive */
+  .bluearchive-gacha-container {
+    margin-left: 5px !important;
+  }
+  .bluearchive-currency {
+    padding: 4px 8px !important;
+    gap: 4px !important;
+  }
+  .ba-roll-btn {
+    padding: 2px 6px !important;
+    font-size: 0.65rem !important;
+  }
+  .bluearchive-banner-alert {
+    display: none !important; /* Hide banner recruit toast in header on mobile */
+  }
+
+  /* 5. FNAF HUD */
+  .fnaf-hud-container {
+    margin-left: 5px !important;
+    padding: 2px 8px !important;
+    gap: 6px !important;
+  }
+  .fnaf-power-label {
+    display: none !important; /* Hide 'POWER:' label */
+  }
+  .fnaf-camera-btn {
+    padding: 2px 6px !important;
+    font-size: 0.65rem !important;
+    white-space: nowrap !important;
+  }
+
+  /* 6. Dead by Daylight */
+  .dbd-hud-container {
+    margin-left: 5px !important;
+  }
+  .dbd-bp-counter {
+    padding: 2px 8px !important;
+    gap: 4px !important;
+  }
+  .dbd-bp-value {
+    font-size: 0.75rem !important;
+  }
+  .dbd-check-btn {
+    padding: 2px 6px !important;
+    font-size: 0.65rem !important;
+  }
+
+  /* 7. Incredibox */
+  .incredibox-container {
+    margin-left: 5px !important;
+    padding: 4px 8px !important;
+    gap: 8px !important;
+  }
+  .ib-select {
+    display: none !important; /* Hide mix dropdown to save space */
+  }
+
+  /* 8. Darkest Dungeon */
+  .darkest-hud-container {
+    margin-left: 5px !important;
+    gap: 8px !important;
+    padding: 4px 8px !important;
+  }
+  .darkest-torch-value,
+  .darkest-stress-value {
+    font-size: 0.75rem !important;
+  }
+
+  /* 9. Destiny 2 */
+  .destiny-hud-container {
+    margin-left: 5px !important;
+    padding: 4px 8px !important;
+    gap: 8px !important;
+    max-width: 150px !important;
+  }
+  .destiny-ghost-wrapper {
+    gap: 6px !important;
+  }
+  .destiny-ghost-svg {
+    width: 24px !important; /* Smaller Ghost */
+    height: 24px !important;
+  }
+  .destiny-glimmer-text {
+    font-size: 0.75rem !important;
+    white-space: nowrap !important;
+  }
+  .destiny-label-text {
+    display: none !important; /* Hide the word 'GLIMMER' on mobile */
+  }
+  .destiny-glimmer-warning {
+    font-size: 0.55rem !important;
+    padding: 1px 3px !important;
+  }
+
+  /* 10. FNF HUD */
+  .fnf-hud-container {
+    margin-left: 5px !important;
+    padding: 2px 8px !important;
+  }
+  .fnf-sing-tip {
+    display: none !important; /* Hide sing tip */
+  }
+  .fnf-health-bar-outer {
+    width: 80px !important; /* Narrower bar */
+  }
+
+  /* 11. Helltaker */
+  .helltaker-hud-container {
+    margin-left: 5px !important;
+    padding: 4px 8px !important;
+    gap: 8px !important;
+  }
+  .helltaker-pancake-plate button {
+    padding: 2px 6px !important;
+    font-size: 0.65rem !important;
+  }
+}

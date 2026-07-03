@@ -1065,7 +1065,7 @@ export default function Header({ onToggleSidebar }) {
                 </div>
                 <div style={{ position: 'relative', zIndex: 3 }}>
                   <span className="destiny-glimmer-text" style={{ color: glimmerColor }}>
-                    {destinyGlimmer.toLocaleString()} GLIMMER
+                    {destinyGlimmer.toLocaleString()}<span className="destiny-label-text"> GLIMMER</span>
                   </span>
                   {glimmerPct <= 0.15 && destinyGlimmer > 0 && (
                     <div className="destiny-glimmer-warning">
