@@ -898,8 +898,41 @@ export default function Header({ onToggleSidebar }) {
         {/* Destiny 2 HUD */}
         {settings.theme === 'destiny2' && (
           <div className="destiny-hud-container">
-            <div className="destiny-ghost-wrapper" onClick={handleGhostScan} title="Click Ghost to scan for resources" style={{ cursor: 'pointer' }}>
-              <span className={`destiny-ghost ${ghostScanning ? 'scanning' : ''}`} style={{ display: 'inline-block', transition: 'transform 0.5s ease' }}>🔷</span>
+            <div 
+              className="destiny-ghost-wrapper" 
+              onClick={handleGhostScan} 
+              title={settings.language === 'en' ? "Click Ghost to scan for resources" : "Haz clic en el Espectro para escanear recursos"} 
+              style={{ cursor: 'pointer' }}
+            >
+              <div className={`destiny-ghost ${ghostScanning ? 'scanning' : ''}`}>
+                <svg className="destiny-ghost-svg" viewBox="0 0 100 100" width="36" height="36" xmlns="http://www.w3.org/2000/svg">
+                  {/* Outer shell wings (4 main diamond-like outer shells) */}
+                  {/* Top wing */}
+                  <path d="M50 15 L62 42 L50 35 L38 42 Z" fill="#e5a823" stroke="#ffc542" strokeWidth="1"/>
+                  {/* Bottom wing */}
+                  <path d="M50 85 L62 58 L50 65 L38 58 Z" fill="#e5a823" stroke="#ffc542" strokeWidth="1"/>
+                  {/* Left wing */}
+                  <path d="M15 50 L42 38 L35 50 L42 62 Z" fill="#e5a823" stroke="#ffc542" strokeWidth="1"/>
+                  {/* Right wing */}
+                  <path d="M85 50 L58 38 L65 50 L58 62 Z" fill="#e5a823" stroke="#ffc542" strokeWidth="1"/>
+
+                  {/* Inner shell core housing (dark metallic plates) */}
+                  <path d="M50 35 L58 42 L50 50 L42 42 Z" fill="#2a2e3d" stroke="#555" strokeWidth="1"/>
+                  <path d="M50 65 L58 58 L50 50 L42 58 Z" fill="#2a2e3d" stroke="#555" strokeWidth="1"/>
+                  <path d="M35 50 L42 42 L50 50 L42 58 Z" fill="#2a2e3d" stroke="#555" strokeWidth="1"/>
+                  <path d="M65 50 L58 42 L50 50 L58 58 Z" fill="#2a2e3d" stroke="#555" strokeWidth="1"/>
+
+                  {/* Center Eye */}
+                  {/* Outer eye border */}
+                  <circle cx="50" cy="50" r="10" fill="#151821" stroke="#00e5ff" strokeWidth="1.5" />
+                  {/* Inner pupil glowing blue/cyan */}
+                  <circle className="ghost-pupil" cx="50" cy="50" r="5" fill="#00e5ff">
+                    <animate attributeName="opacity" values="0.7;1;0.7" dur="2s" repeatCount="indefinite" />
+                  </circle>
+                  {/* Specular highlight on eye */}
+                  <circle cx="48" cy="48" r="1.5" fill="#ffffff" opacity="0.8" />
+                </svg>
+              </div>
               <span className="destiny-glimmer-text">{destinyGlimmer.toLocaleString()} GLIMMER</span>
             </div>
             {ghostScanning && <div className="ghost-laser-line" />}

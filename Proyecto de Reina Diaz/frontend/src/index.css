@@ -9615,26 +9615,39 @@ body.theme-destiny2 button.actions-dropdown-item.purple:hover {
   display: flex;
   align-items: center;
   gap: 15px;
-  background: rgba(0,0,0,0.6);
-  border: 1px solid rgba(229,168,35,0.2);
-  padding: 4px 14px;
+  background: rgba(0,0,0,0.65);
+  border: 1px solid rgba(229,168,35,0.3);
+  padding: 6px 16px;
   margin-left: 20px;
   position: relative;
+  border-radius: 4px;
+  box-shadow: inset 0 0 10px rgba(229,168,35,0.1), 0 4px 15px rgba(0,0,0,0.5);
 }
 .destiny-ghost-wrapper {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+}
+.destiny-ghost {
+  display: inline-block;
+  animation: destiny-ghost-float 3s ease-in-out infinite;
+  filter: drop-shadow(0 0 4px rgba(0, 229, 255, 0.3));
+  transition: all 0.3s ease;
 }
 .destiny-ghost.scanning {
-  animation: limbus-gear-rotate 2.5s linear infinite;
-  text-shadow: 0 0 10px #00e5ff;
+  animation: destiny-ghost-scan-active 0.8s ease-in-out infinite !important;
+}
+.destiny-ghost-svg {
+  display: block;
 }
 .destiny-glimmer-text {
   font-family: 'Segoe UI', sans-serif;
   font-weight: 600;
-  color: #f0f3f8;
-  font-size: 0.75rem;
+  color: #e5a823;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  text-shadow: 0 0 5px rgba(229, 168, 35, 0.3);
 }
 .ghost-laser-line {
   position: absolute;
@@ -9643,8 +9656,28 @@ body.theme-destiny2 button.actions-dropdown-item.purple:hover {
   width: 100%;
   height: 2px;
   background: #00e5ff;
-  box-shadow: 0 0 8px #00e5ff;
+  box-shadow: 0 0 8px #00e5ff, 0 0 15px #00e5ff;
   animation: ror2-text-flash 0.3s infinite;
+}
+
+@keyframes destiny-ghost-float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-4px) rotate(3deg);
+  }
+}
+
+@keyframes destiny-ghost-scan-active {
+  0%, 100% {
+    transform: scale(1.15) rotate(-6deg) translateY(-2px);
+    filter: drop-shadow(0 0 10px rgba(0, 229, 255, 0.7));
+  }
+  50% {
+    transform: scale(1.15) rotate(6deg) translateY(-5px);
+    filter: drop-shadow(0 0 18px rgba(0, 229, 255, 1));
+  }
 }
 
 /* 9. FRIDAY NIGHT FUNKIN' 🎤 */
