@@ -9757,6 +9757,160 @@ body.theme-destiny2 button.actions-dropdown-item.purple:hover {
   }
 }
 
+/* Cooldown badge on Ghost */
+.destiny-ghost-cd-badge {
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255, 34, 34, 0.9);
+  color: #fff;
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 0.55rem;
+  font-weight: 700;
+  padding: 1px 4px;
+  border-radius: 3px;
+  white-space: nowrap;
+  letter-spacing: 0.5px;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Glimmer gained floating popup */
+.destiny-glimmer-gained {
+  position: absolute;
+  top: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #00e5ff;
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-shadow: 0 0 8px rgba(0, 229, 255, 0.8);
+  letter-spacing: 1px;
+  pointer-events: none;
+  animation: destiny-gained-float 3s ease-out forwards;
+  z-index: 10;
+  white-space: nowrap;
+}
+
+@keyframes destiny-gained-float {
+  0%   { opacity: 0; transform: translateX(-50%) translateY(0px); }
+  15%  { opacity: 1; transform: translateX(-50%) translateY(-6px); }
+  70%  { opacity: 1; transform: translateX(-50%) translateY(-14px); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+}
+
+/* Low Glimmer warning text */
+.destiny-glimmer-warning {
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: #ff2222;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  animation: destiny-warning-pulse 0.6s ease-in-out infinite alternate;
+}
+
+@keyframes destiny-warning-pulse {
+  from { opacity: 0.6; }
+  to   { opacity: 1; text-shadow: 0 0 6px #ff2222; }
+}
+
+/* Ghost dimmed when on cooldown */
+.destiny-ghost.ghost-cooldown {
+  animation: destiny-ghost-float 3s ease-in-out infinite;
+  filter: grayscale(0.7) brightness(0.5) !important;
+}
+
+/* ============================================================
+   GLIMMER DEPLETED - Full screen overlay
+   ============================================================ */
+.destiny-depleted-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.92);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: destiny-depleted-in 0.4s ease;
+  backdrop-filter: blur(6px);
+}
+
+@keyframes destiny-depleted-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.destiny-depleted-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 48px 56px;
+  background: linear-gradient(135deg, #0b0c10 0%, #13151e 100%);
+  border: 1px solid rgba(255, 34, 34, 0.4);
+  border-radius: 8px;
+  box-shadow: 0 0 60px rgba(255, 34, 34, 0.25), inset 0 0 30px rgba(0, 0, 0, 0.5);
+  max-width: 480px;
+  text-align: center;
+}
+
+.destiny-depleted-ghost {
+  opacity: 0.6;
+  animation: destiny-ghost-float 3s ease-in-out infinite;
+  filter: drop-shadow(0 0 8px rgba(255, 34, 34, 0.5));
+}
+
+.destiny-depleted-title {
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 2rem;
+  font-weight: 800;
+  color: #ff2222;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  text-shadow: 0 0 20px rgba(255, 34, 34, 0.7);
+  animation: destiny-warning-pulse 0.8s ease-in-out infinite alternate;
+}
+
+.destiny-depleted-sub {
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 0.85rem;
+  color: #6a7080;
+  letter-spacing: 1px;
+  line-height: 1.5;
+}
+
+.destiny-depleted-btn {
+  margin-top: 8px;
+  padding: 12px 32px;
+  background: transparent;
+  border: 2px solid #e5a823;
+  color: #e5a823;
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.destiny-depleted-btn:hover:not(:disabled) {
+  background: #e5a823;
+  color: #0b0c10;
+  box-shadow: 0 0 20px rgba(229, 168, 35, 0.5);
+}
+
+.destiny-depleted-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  border-color: #555;
+  color: #555;
+}
+
 /* 9. FRIDAY NIGHT FUNKIN' 🎤 */
 body.theme-fnf {
   --bg-dark: #120024;

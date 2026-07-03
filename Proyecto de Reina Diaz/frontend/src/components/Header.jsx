@@ -522,16 +522,125 @@ export default function Header({ onToggleSidebar }) {
   };
 
   // --- DESTINY 2 ---
-  const [destinyGlimmer, setDestinyGlimmer] = useState(250000);
+  const [destinyGlimmer, setDestinyGlimmer] = useState(() => {
+    const saved = localStorage.getItem('destinyGlimmer');
+    return saved !== null ? Math.max(0, parseInt(saved, 10)) : 250000;
+  });
   const [ghostScanning, setGhostScanning] = useState(false);
+  const [ghostScanCooldown, setGhostScanCooldown] = useState(() => {
+    const endTime = localStorage.getItem('ghostScanCooldownEnd');
+    if (endTime) return Math.max(0, Math.ceil((parseInt(endTime, 10) - Date.now()) / 1000));
+    return 0;
+  });
+  const [scannedRoutes, setScannedRoutes] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('destinyScannedRoutes') || '{}'); }
+    catch { return {}; }
+  });
+  const [lastGlimmerGained, setLastGlimmerGained] = useState(null);
+  const mouseMovingRef = useRef(false);
+  const mouseStopTimerRef = useRef(null);
+
+  // Ghost scan cooldown timer
+  useEffect(() => {
+    const endTime = localStorage.getItem('ghostScanCooldownEnd');
+    if (!endTime) { setGhostScanCooldown(0); return; }
+    const checkTime = () => {
+      const remaining = Math.max(0, Math.ceil((parseInt(endTime, 10) - Date.now()) / 1000));
+      setGhostScanCooldown(remaining);
+      if (remaining <= 0) { localStorage.removeItem('ghostScanCooldownEnd'); clearInterval(interval); }
+    };
+    checkTime();
+    const interval = setInterval(checkTime, 1000);
+    return () => clearInterval(interval);
+  }, [ghostScanCooldown > 0]);
+
+  // Mouse movement -> drain Glimmer 2000/s
+  useEffect(() => {
+    if (settings.theme !== 'destiny2') return;
+    const handleMouseMove = () => {
+      mouseMovingRef.current = true;
+      clearTimeout(mouseStopTimerRef.current);
+      mouseStopTimerRef.current = setTimeout(() => { mouseMovingRef.current = false; }, 200);
+    };
+    document.addEventListener('mousemove', handleMouseMove, { passive: true });
+    const drainInterval = setInterval(() => {
+      if (mouseMovingRef.current) {
+        setDestinyGlimmer(prev => {
+          const next = Math.max(0, prev - 2000);
+          localStorage.setItem('destinyGlimmer', next);
+          return next;
+        });
+      }
+    }, 1000);
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      clearTimeout(mouseStopTimerRef.current);
+      clearInterval(drainInterval);
+    };
+  }, [settings.theme]);
+
+  // Disable cursor when Glimmer is depleted
+  useEffect(() => {
+    if (settings.theme !== 'destiny2') { document.body.style.cursor = ''; return; }
+    document.body.style.cursor = destinyGlimmer <= 0 ? 'none' : '';
+    return () => { document.body.style.cursor = ''; };
+  }, [destinyGlimmer, settings.theme]);
+
+  // Clean up expired route cooldowns every 10s
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = Date.now();
+      setScannedRoutes(prev => {
+        const updated = Object.fromEntries(Object.entries(prev).filter(([, t]) => t > now));
+        if (Object.keys(updated).length !== Object.keys(prev).length) {
+          localStorage.setItem('destinyScannedRoutes', JSON.stringify(updated));
+          return updated;
+        }
+        return prev;
+      });
+    }, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const getRouteScanCooldownSecs = () => {
+    const t = scannedRoutes[location.pathname];
+    return t ? Math.max(0, Math.ceil((t - Date.now()) / 1000)) : 0;
+  };
+
   const handleGhostScan = () => {
-    if (ghostScanning) return;
+    if (ghostScanning || ghostScanCooldown > 0 || getRouteScanCooldownSecs() > 0) return;
     setGhostScanning(true);
     setTimeout(() => {
       setGhostScanning(false);
-      setDestinyGlimmer(prev => Math.min(250000, prev + 25000));
+      // Count visible text characters on the page (50 Glimmer each)
+      let charCount = 0;
+      try {
+        const content = document.querySelector('main') || document.querySelector('.content-area') || document.body;
+        charCount = (content.innerText || '').replace(/\s+/g, '').length;
+      } catch { charCount = 100; }
+      const gained = Math.min(Math.max(charCount * 50, 1000), 120000);
+      setDestinyGlimmer(prev => {
+        const next = Math.min(250000, prev + gained);
+        localStorage.setItem('destinyGlimmer', next);
+        return next;
+      });
+      setLastGlimmerGained(gained);
+      setTimeout(() => setLastGlimmerGained(null), 3000);
+      // Ghost cooldown: 30 seconds
+      const ghostEnd = Date.now() + 30000;
+      localStorage.setItem('ghostScanCooldownEnd', ghostEnd);
+      setGhostScanCooldown(30);
+      // Route cooldown: 2 minutes
+      const routeEnd = Date.now() + 120000;
+      setScannedRoutes(prev => {
+        const updated = { ...prev, [location.pathname]: routeEnd };
+        localStorage.setItem('destinyScannedRoutes', JSON.stringify(updated));
+        return updated;
+      });
     }, 2500);
   };
+
+  const fmtGSecs = (s) => s > 60 ? `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}` : `${s}s`;
 
   // --- FRIDAY NIGHT FUNKIN' ---
   const [fnfHealth, setFnfHealth] = useState(50);
@@ -896,58 +1005,79 @@ export default function Header({ onToggleSidebar }) {
         )}
 
         {/* Destiny 2 HUD */}
-        {settings.theme === 'destiny2' && (
-          <div className="destiny-hud-container">
-            {/* Scan effects */}
-            {ghostScanning && (
-              <>
-                <div className="destiny-scan-grid" />
-                <div className="destiny-scan-cone" />
-                <div className="destiny-scan-ripple" />
-                <div className="destiny-scan-ripple" style={{ animationDelay: '0.4s' }} />
-                <div className="destiny-scan-ripple" style={{ animationDelay: '0.8s' }} />
-              </>
-            )}
-            <div 
-              className="destiny-ghost-wrapper" 
-              onClick={handleGhostScan} 
-              title={settings.language === 'en' ? "Click Ghost to scan for resources" : "Haz clic en el Espectro para escanear recursos"} 
-              style={{ cursor: 'pointer', position: 'relative', zIndex: 3 }}
-            >
-              <div className={`destiny-ghost ${ghostScanning ? 'scanning' : ''}`}>
-                <svg className="destiny-ghost-svg" viewBox="0 0 100 100" width="36" height="36" xmlns="http://www.w3.org/2000/svg">
-                  {/* Outer shell wings (4 main diamond-like outer shells) */}
-                  {/* Top wing */}
-                  <path d="M50 15 L62 42 L50 35 L38 42 Z" fill="#e5a823" stroke="#ffc542" strokeWidth="1"/>
-                  {/* Bottom wing */}
-                  <path d="M50 85 L62 58 L50 65 L38 58 Z" fill="#e5a823" stroke="#ffc542" strokeWidth="1"/>
-                  {/* Left wing */}
-                  <path d="M15 50 L42 38 L35 50 L42 62 Z" fill="#e5a823" stroke="#ffc542" strokeWidth="1"/>
-                  {/* Right wing */}
-                  <path d="M85 50 L58 38 L65 50 L58 62 Z" fill="#e5a823" stroke="#ffc542" strokeWidth="1"/>
-
-                  {/* Inner shell core housing (dark metallic plates) */}
-                  <path d="M50 35 L58 42 L50 50 L42 42 Z" fill="#2a2e3d" stroke="#555" strokeWidth="1"/>
-                  <path d="M50 65 L58 58 L50 50 L42 58 Z" fill="#2a2e3d" stroke="#555" strokeWidth="1"/>
-                  <path d="M35 50 L42 42 L50 50 L42 58 Z" fill="#2a2e3d" stroke="#555" strokeWidth="1"/>
-                  <path d="M65 50 L58 42 L50 50 L58 58 Z" fill="#2a2e3d" stroke="#555" strokeWidth="1"/>
-
-                  {/* Center Eye */}
-                  {/* Outer eye border */}
-                  <circle cx="50" cy="50" r="10" fill="#151821" stroke="#00e5ff" strokeWidth="1.5" />
-                  {/* Inner pupil glowing blue/cyan */}
-                  <circle className="ghost-pupil" cx="50" cy="50" r="5" fill="#00e5ff">
-                    <animate attributeName="opacity" values="0.7;1;0.7" dur="2s" repeatCount="indefinite" />
-                  </circle>
-                  {/* Specular highlight on eye */}
-                  <circle cx="48" cy="48" r="1.5" fill="#ffffff" opacity="0.8" />
-                </svg>
+        {settings.theme === 'destiny2' && (() => {
+          const routeCd = getRouteScanCooldownSecs();
+          const glimmerPct = destinyGlimmer / 250000;
+          const glimmerColor = glimmerPct > 0.3 ? '#e5a823' : glimmerPct > 0.1 ? '#ff8c00' : '#ff2222';
+          const canScan = !ghostScanning && ghostScanCooldown === 0 && routeCd === 0 && destinyGlimmer < 250000;
+          const ghostTitle = ghostScanning
+            ? (settings.language === 'en' ? 'Ghost is scanning...' : 'Espectro escaneando...')
+            : ghostScanCooldown > 0
+            ? (settings.language === 'en' ? `Ghost recharging: ${fmtGSecs(ghostScanCooldown)}` : `Espectro recargando: ${fmtGSecs(ghostScanCooldown)}`)
+            : routeCd > 0
+            ? (settings.language === 'en' ? `Location already scanned. Wait: ${fmtGSecs(routeCd)}` : `Lugar ya escaneado. Espera: ${fmtGSecs(routeCd)}`)
+            : (settings.language === 'en' ? 'Click Ghost to scan for Glimmer' : 'Haz clic al Espectro para escanear Glimmer');
+          return (
+            <div className="destiny-hud-container">
+              {/* Scan effects */}
+              {ghostScanning && (
+                <>
+                  <div className="destiny-scan-grid" />
+                  <div className="destiny-scan-cone" />
+                  <div className="destiny-scan-ripple" />
+                  <div className="destiny-scan-ripple" style={{ animationDelay: '0.4s' }} />
+                  <div className="destiny-scan-ripple" style={{ animationDelay: '0.8s' }} />
+                </>
+              )}
+              {/* Glimmer gained popup */}
+              {lastGlimmerGained !== null && (
+                <div className="destiny-glimmer-gained">+{lastGlimmerGained.toLocaleString()} ◆</div>
+              )}
+              <div
+                className={`destiny-ghost-wrapper ${!canScan && !ghostScanning ? 'ghost-unavailable' : ''}`}
+                onClick={handleGhostScan}
+                title={ghostTitle}
+                style={{ cursor: canScan ? 'pointer' : 'not-allowed', position: 'relative', zIndex: 3 }}
+              >
+                <div className={`destiny-ghost ${ghostScanning ? 'scanning' : ''} ${!canScan && !ghostScanning ? 'ghost-cooldown' : ''}`}>
+                  <svg className="destiny-ghost-svg" viewBox="0 0 100 100" width="36" height="36" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M50 15 L62 42 L50 35 L38 42 Z" fill={canScan || ghostScanning ? '#e5a823' : '#555'} stroke={canScan || ghostScanning ? '#ffc542' : '#333'} strokeWidth="1"/>
+                    <path d="M50 85 L62 58 L50 65 L38 58 Z" fill={canScan || ghostScanning ? '#e5a823' : '#555'} stroke={canScan || ghostScanning ? '#ffc542' : '#333'} strokeWidth="1"/>
+                    <path d="M15 50 L42 38 L35 50 L42 62 Z" fill={canScan || ghostScanning ? '#e5a823' : '#555'} stroke={canScan || ghostScanning ? '#ffc542' : '#333'} strokeWidth="1"/>
+                    <path d="M85 50 L58 38 L65 50 L58 62 Z" fill={canScan || ghostScanning ? '#e5a823' : '#555'} stroke={canScan || ghostScanning ? '#ffc542' : '#333'} strokeWidth="1"/>
+                    <path d="M50 35 L58 42 L50 50 L42 42 Z" fill="#2a2e3d" stroke="#555" strokeWidth="1"/>
+                    <path d="M50 65 L58 58 L50 50 L42 58 Z" fill="#2a2e3d" stroke="#555" strokeWidth="1"/>
+                    <path d="M35 50 L42 42 L50 50 L42 58 Z" fill="#2a2e3d" stroke="#555" strokeWidth="1"/>
+                    <path d="M65 50 L58 42 L50 50 L58 58 Z" fill="#2a2e3d" stroke="#555" strokeWidth="1"/>
+                    <circle cx="50" cy="50" r="10" fill="#151821" stroke={canScan || ghostScanning ? '#00e5ff' : '#445'} strokeWidth="1.5" />
+                    <circle cx="50" cy="50" r="5" fill={canScan || ghostScanning ? '#00e5ff' : '#223'}>
+                      {(canScan || ghostScanning) && <animate attributeName="opacity" values="0.7;1;0.7" dur="2s" repeatCount="indefinite" />}
+                    </circle>
+                    <circle cx="48" cy="48" r="1.5" fill="#ffffff" opacity={canScan || ghostScanning ? '0.8' : '0.1'} />
+                  </svg>
+                  {/* Cooldown badge */}
+                  {ghostScanCooldown > 0 && (
+                    <div className="destiny-ghost-cd-badge">{fmtGSecs(ghostScanCooldown)}</div>
+                  )}
+                  {ghostScanCooldown === 0 && routeCd > 0 && (
+                    <div className="destiny-ghost-cd-badge" style={{ background: 'rgba(229,168,35,0.85)' }}>{fmtGSecs(routeCd)}</div>
+                  )}
+                </div>
+                <div style={{ position: 'relative', zIndex: 3 }}>
+                  <span className="destiny-glimmer-text" style={{ color: glimmerColor }}>
+                    {destinyGlimmer.toLocaleString()} GLIMMER
+                  </span>
+                  {glimmerPct <= 0.15 && destinyGlimmer > 0 && (
+                    <div className="destiny-glimmer-warning">
+                      ⚠ {settings.language === 'en' ? 'LOW GLIMMER' : 'GLIMMER BAJO'}
+                    </div>
+                  )}
+                </div>
               </div>
-              <span className="destiny-glimmer-text" style={{ position: 'relative', zIndex: 3 }}>{destinyGlimmer.toLocaleString()} GLIMMER</span>
+              {ghostScanning && <div className="ghost-laser-line" />}
             </div>
-            {ghostScanning && <div className="ghost-laser-line" />}
-          </div>
-        )}
+          );
+        })()}
 
         {/* Friday Night Funkin' HUD */}
         {settings.theme === 'fnf' && (
@@ -1491,6 +1621,46 @@ export default function Header({ onToggleSidebar }) {
                 {t('settings.save')}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Destiny 2 - GLIMMER DEPLETED global overlay */}
+      {settings.theme === 'destiny2' && destinyGlimmer <= 0 && (
+        <div className="destiny-depleted-overlay">
+          <div className="destiny-depleted-content">
+            <div className="destiny-depleted-ghost">
+              <svg viewBox="0 0 100 100" width="80" height="80" xmlns="http://www.w3.org/2000/svg">
+                <path d="M50 15 L62 42 L50 35 L38 42 Z" fill="#333" stroke="#444" strokeWidth="1"/>
+                <path d="M50 85 L62 58 L50 65 L38 58 Z" fill="#333" stroke="#444" strokeWidth="1"/>
+                <path d="M15 50 L42 38 L35 50 L42 62 Z" fill="#333" stroke="#444" strokeWidth="1"/>
+                <path d="M85 50 L58 38 L65 50 L58 62 Z" fill="#333" stroke="#444" strokeWidth="1"/>
+                <path d="M50 35 L58 42 L50 50 L42 42 Z" fill="#1a1a1a" stroke="#333" strokeWidth="1"/>
+                <path d="M50 65 L58 58 L50 50 L42 58 Z" fill="#1a1a1a" stroke="#333" strokeWidth="1"/>
+                <path d="M35 50 L42 42 L50 50 L42 58 Z" fill="#1a1a1a" stroke="#333" strokeWidth="1"/>
+                <path d="M65 50 L58 42 L50 50 L58 58 Z" fill="#1a1a1a" stroke="#333" strokeWidth="1"/>
+                <circle cx="50" cy="50" r="10" fill="#0a0a0f" stroke="#333" strokeWidth="1.5" />
+                <circle cx="50" cy="50" r="5" fill="#220000">
+                  <animate attributeName="opacity" values="1;0.2;1" dur="1s" repeatCount="indefinite" />
+                </circle>
+              </svg>
+            </div>
+            <div className="destiny-depleted-title">GLIMMER AGOTADO</div>
+            <div className="destiny-depleted-sub">Tu Espectro no puede procesar más movimiento</div>
+            <div className="destiny-depleted-sub">Escanea una nueva ubicación para recuperar Glimmer</div>
+            <button
+              className="destiny-depleted-btn"
+              onClick={handleGhostScan}
+              disabled={ghostScanCooldown > 0 || getRouteScanCooldownSecs() > 0 || ghostScanning}
+            >
+              {ghostScanCooldown > 0
+                ? `ESPECTRO RECARGANDO... ${fmtGSecs(ghostScanCooldown)}`
+                : getRouteScanCooldownSecs() > 0
+                ? `ZONA ESCANEADA. ESPERA ${fmtGSecs(getRouteScanCooldownSecs())}`
+                : ghostScanning
+                ? 'ESCANEANDO...'
+                : '🔷 ESCANEAR ZONA'}
+            </button>
           </div>
         </div>
       )}
