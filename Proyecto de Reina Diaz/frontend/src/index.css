@@ -3292,9 +3292,9 @@ body.theme-limbus ::-webkit-scrollbar-thumb:hover {
 
 /* Tema Library of Ruina 📖 (Estilo Biblioteca Gótica / Celestial Indigo & Gold) */
 body.theme-ruina {
-  --bg-dark: #070913;
-  --bg-card: #0c1024;
-  --bg-input: #121634;
+  --bg-dark: #05060b;
+  --bg-card: #0a0c18;
+  --bg-input: #101430;
   --text-primary: #f2f5fc;
   --text-secondary: #e5c158;
   --border-color: rgba(229, 193, 88, 0.25);
@@ -3302,19 +3302,18 @@ body.theme-ruina {
   --glass-shadow: 0 4px 25px 0 rgba(0, 0, 0, 0.55);
   --bg-hover: rgba(229, 193, 88, 0.08);
   --bg-th: rgba(229, 193, 88, 0.12);
-  --header-bg: rgba(12, 16, 36, 0.85);
-  --row-normal-bg: rgba(229, 193, 88, 0.08);
-  --row-normal-hover: rgba(229, 193, 88, 0.15);
+  --header-bg: rgba(10, 12, 24, 0.95);
+  --row-normal-bg: rgba(229, 193, 88, 0.05);
+  --row-normal-hover: rgba(229, 193, 88, 0.12);
   --row-warning-bg: rgba(239, 68, 68, 0.06);
   --row-warning-hover: rgba(239, 68, 68, 0.12);
   --row-danger-bg: rgba(239, 68, 68, 0.1);
   --row-danger-hover: rgba(239, 68, 68, 0.16);
-  --badge-bono-bg: rgba(229, 193, 88, 0.2);
+  --badge-bono-bg: rgba(229, 193, 88, 0.18);
   --badge-bono-text: #e5c158;
-  --badge-desc-bg: rgba(239, 68, 68, 0.25);
+  --badge-desc-bg: rgba(239, 68, 68, 0.22);
   --badge-desc-text: #ff6b6b;
   
-  /* Primary and danger accents overrides */
   --primary-color: #e5c158;
   --primary-hover: #c9a53d;
   --primary-shadow: rgba(229, 193, 88, 0.4);
@@ -3322,11 +3321,14 @@ body.theme-ruina {
   --danger-hover: #b71c1c;
   --success-color: #e5c158;
 
-  /* Starry cosmic blue & solar gold gradient background */
+  /* Starry cosmic blue & solar gold gradient background with nebulas */
   background-image: 
-    radial-gradient(circle at 50% 50%, rgba(229, 193, 88, 0.04) 0px, transparent 60%),
-    radial-gradient(at 0% 0%, rgba(12, 16, 36, 0.95) 0px, transparent 60%),
-    radial-gradient(at 100% 0%, rgba(229, 193, 88, 0.15) 0px, transparent 60%) !important;
+    radial-gradient(circle at 30% 20%, rgba(229, 193, 88, 0.05) 0%, transparent 40%),
+    radial-gradient(circle at 80% 70%, rgba(138, 43, 226, 0.08) 0%, transparent 50%),
+    radial-gradient(at 0% 0%, #070913 0%, transparent 60%),
+    radial-gradient(at 100% 100%, #04050a 0%, transparent 60%),
+    linear-gradient(to bottom, #07080e, #030407) !important;
+  background-attachment: fixed !important;
 }
 
 body.theme-ruina::before {
@@ -3374,6 +3376,35 @@ body.theme-ruina .kpi-value {
   color: #f2f5fc !important;
 }
 
+body.theme-ruina .main-header {
+  background: rgba(10, 12, 24, 0.95) !important;
+  border-bottom: 1px solid #e5c158 !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8) !important;
+  position: relative;
+}
+
+body.theme-ruina .main-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #e5c158, transparent) !important;
+  box-shadow: 0 0 8px #e5c158 !important;
+}
+
+body.theme-ruina .sidebar-logo .gradient-text {
+  background: none !important;
+  -webkit-text-fill-color: initial !important;
+  color: #e5c158 !important;
+  font-family: Georgia, serif !important;
+  font-weight: bold !important;
+  text-shadow: 0 0 10px rgba(229, 193, 88, 0.6) !important;
+  letter-spacing: 1px !important;
+  text-transform: uppercase !important;
+}
+
 body.theme-ruina .glass-card,
 body.theme-ruina .modal-content,
 body.theme-ruina .card,
@@ -3384,41 +3415,68 @@ body.theme-ruina .help-dropdown,
 body.theme-ruina .sidebar,
 body.theme-ruina .plancha-sidebar,
 body.theme-ruina aside {
-  border-radius: 8px !important;
-  border: 1px solid rgba(229, 193, 88, 0.35) !important;
-  background: rgba(12, 16, 36, 0.9) !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), inset 0 0 15px rgba(229, 193, 88, 0.03) !important;
+  border-radius: 4px !important; /* sharper gothic layout */
+  border: 1px solid #e5c158 !important;
+  background: rgba(10, 12, 24, 0.95) !important;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.9), 
+              inset 0 0 20px rgba(229, 193, 88, 0.05),
+              inset 0 0 12px rgba(0, 229, 255, 0.05) !important;
   transition: border-color 0.4s ease, box-shadow 0.4s ease !important;
 }
 
 body.theme-ruina .glass-card:hover,
 body.theme-ruina .card:hover {
-  border-color: #e5c158 !important;
-  box-shadow: 0 8px 32px rgba(229, 193, 88, 0.15), inset 0 0 25px rgba(229, 193, 88, 0.08) !important;
+  border-color: #00e5ff !important; /* glowing library blue */
+  box-shadow: 0 15px 35px rgba(0, 229, 255, 0.15), 
+              inset 0 0 20px rgba(0, 229, 255, 0.05) !important;
 }
 
+/* Nav links styling for Library of Ruina */
+body.theme-ruina .nav-link {
+  font-family: Georgia, serif !important;
+  color: #a0a5c0 !important;
+  border-left: 4px solid transparent !important;
+  transition: all 0.2s ease !important;
+}
+
+body.theme-ruina .nav-link:hover {
+  color: #e5c158 !important;
+  background: rgba(229, 193, 88, 0.04) !important;
+}
+
+body.theme-ruina .nav-link.active {
+  background: linear-gradient(90deg, rgba(0, 229, 255, 0.1), transparent) !important;
+  color: #00e5ff !important;
+  border-left: 4px solid #00e5ff !important;
+  text-shadow: 0 0 8px rgba(0, 229, 255, 0.6) !important;
+}
+
+/* Ornate Pill Buttons (Combat Cards Selection look) */
 body.theme-ruina .btn,
 body.theme-ruina button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
-  border-radius: 4px !important;
+  border-radius: 20px !important;
   border: 1px solid #e5c158 !important;
-  background: rgba(18, 22, 52, 0.5) !important;
+  background: rgba(10, 12, 24, 0.8) !important;
   color: #e5c158 !important;
   font-family: Georgia, serif !important;
-  font-weight: 500 !important;
+  font-weight: bold !important;
   letter-spacing: 0.5px !important;
-  box-shadow: 0 0 6px rgba(229, 193, 88, 0.15) !important;
-  transition: all 0.3s ease !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4) !important;
+  transition: all 0.25s ease !important;
   cursor: pointer;
+  padding: 6px 20px !important;
 }
 
 body.theme-ruina .btn:hover,
 body.theme-ruina button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
-  background: #e5c158 !important;
-  color: #070913 !important;
-  box-shadow: 0 0 15px rgba(229, 193, 88, 0.5) !important;
+  background: rgba(0, 229, 255, 0.08) !important;
+  color: #00e5ff !important;
+  border-color: #00e5ff !important;
+  box-shadow: 0 0 15px rgba(0, 229, 255, 0.5) !important;
   transform: translateY(-1px) !important;
 }
 
+/* Actions Dropdown items styling overrides */
 body.theme-ruina .actions-dropdown-item,
 body.theme-ruina a.actions-dropdown-item,
 body.theme-ruina button.actions-dropdown-item,
@@ -3428,20 +3486,21 @@ body.theme-ruina button.actions-dropdown-item.pink,
 body.theme-ruina .actions-dropdown-item.purple,
 body.theme-ruina a.actions-dropdown-item.purple,
 body.theme-ruina button.actions-dropdown-item.purple {
-  border-radius: 4px !important;
+  border-radius: 20px !important;
   border: 1px solid #e5c158 !important;
-  background: #0c1024 !important;
+  background: rgba(10, 12, 24, 0.9) !important;
   color: #e5c158 !important;
   font-family: Georgia, serif !important;
-  font-weight: 500 !important;
+  font-weight: bold !important;
   letter-spacing: 0.5px !important;
-  box-shadow: 0 0 6px rgba(229, 193, 88, 0.15) !important;
-  transition: all 0.3s ease !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4) !important;
+  transition: all 0.25s ease !important;
   cursor: pointer;
   text-decoration: none !important;
   display: flex !important;
   align-items: center !important;
   gap: 0.5rem !important;
+  padding: 6px 16px !important;
 }
 
 body.theme-ruina .actions-dropdown-item:hover,
@@ -3453,9 +3512,10 @@ body.theme-ruina button.actions-dropdown-item.pink:hover,
 body.theme-ruina .actions-dropdown-item.purple:hover,
 body.theme-ruina a.actions-dropdown-item.purple:hover,
 body.theme-ruina button.actions-dropdown-item.purple:hover {
-  background: #e5c158 !important;
-  color: #070913 !important;
-  box-shadow: 0 0 15px rgba(229, 193, 88, 0.5) !important;
+  background: rgba(0, 229, 255, 0.08) !important;
+  color: #00e5ff !important;
+  border-color: #00e5ff !important;
+  box-shadow: 0 0 15px rgba(0, 229, 255, 0.5) !important;
   transform: translateY(-1px) !important;
 }
 
@@ -3463,36 +3523,81 @@ body.theme-ruina .btn-primary {
   background: rgba(229, 193, 88, 0.12) !important;
 }
 
+body.theme-ruina .logout-btn {
+  border-color: #d32f2f !important;
+  color: #ff6b6b !important;
+  background: rgba(32, 16, 16, 0.8) !important;
+}
+
+body.theme-ruina .logout-btn:hover {
+  background: #d32f2f !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 15px rgba(211, 47, 47, 0.5) !important;
+}
+
+/* Elegant Pill Inputs */
 body.theme-ruina .form-input,
 body.theme-ruina input:not([type="checkbox"]):not([type="radio"]),
 body.theme-ruina select,
 body.theme-ruina textarea {
-  border-radius: 4px !important;
-  border: 1px solid rgba(229, 193, 88, 0.3) !important;
-  background: rgba(18, 22, 52, 0.8) !important;
+  border-radius: 20px !important;
+  border: 1px solid rgba(229, 193, 88, 0.4) !important;
+  background: rgba(18, 22, 52, 0.9) !important;
   color: #f2f5fc !important;
   font-family: Georgia, serif !important;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4) !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5) !important;
+  padding: 8px 16px !important;
 }
 
 body.theme-ruina .form-input:focus,
 body.theme-ruina input:focus,
 body.theme-ruina select:focus,
 body.theme-ruina textarea:focus {
-  border-color: #e5c158 !important;
-  box-shadow: 0 0 10px rgba(229, 193, 88, 0.45), inset 0 2px 4px rgba(0, 0, 0, 0.4) !important;
+  border-color: #00e5ff !important;
+  box-shadow: 0 0 8px rgba(0, 229, 255, 0.4), inset 0 2px 4px rgba(0, 0, 0, 0.5) !important;
   outline: none !important;
 }
 
-body.theme-ruina table,
-body.theme-ruina th,
-body.theme-ruina td {
-  border-radius: 0px !important;
-  border-color: rgba(229, 193, 88, 0.15) !important;
+/* Ruina Library Grid Table */
+body.theme-ruina table {
+  border-collapse: collapse !important;
+  background: rgba(10, 12, 24, 0.9) !important;
 }
+
 body.theme-ruina th {
-  background: #121634 !important;
+  background: rgba(18, 22, 52, 0.95) !important;
   color: #e5c158 !important;
+  font-family: Georgia, serif !important;
+  font-weight: bold !important;
+  text-transform: uppercase !important;
+  border-bottom: 2px solid #e5c158 !important;
+  letter-spacing: 0.5px !important;
+}
+
+body.theme-ruina td {
+  border-bottom: 1px solid rgba(229, 193, 88, 0.15) !important;
+  color: #f2f5fc !important;
+}
+
+body.theme-ruina tr:hover td {
+  background: rgba(0, 229, 255, 0.04) !important;
+}
+
+/* Custom Cosmic Scrollbar */
+body.theme-ruina ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+body.theme-ruina ::-webkit-scrollbar-track {
+  background: #030407;
+}
+body.theme-ruina ::-webkit-scrollbar-thumb {
+  background: #e5c158;
+  border: 2px solid #030407;
+  border-radius: 4px;
+}
+body.theme-ruina ::-webkit-scrollbar-thumb:hover {
+  background: #00e5ff;
 }
 
 /* Tema Minecraft ⛏️ (Estilo Retro Pixelado) */
