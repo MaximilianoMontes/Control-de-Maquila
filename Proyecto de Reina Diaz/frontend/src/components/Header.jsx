@@ -299,11 +299,17 @@ export default function Header({ onToggleSidebar }) {
   const [ror2Time, setRor2Time] = useState(0);
 
   useEffect(() => {
-    if (settings.theme !== 'ror2') return;
+    if (settings.theme !== 'ror2') {
+      sessionStorage.removeItem('ror2_session_time');
+      setRor2Time(0);
+      return;
+    }
 
     const saved = sessionStorage.getItem('ror2_session_time');
     if (saved) {
       setRor2Time(parseInt(saved, 10));
+    } else {
+      setRor2Time(0);
     }
 
     const interval = setInterval(() => {
