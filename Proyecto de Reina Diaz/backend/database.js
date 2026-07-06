@@ -921,6 +921,16 @@ async function initializeDatabase() {
         // Ignorar si ya existe
       }
 
+      // 8. Tabla plancha_borrador
+      await connection.query(`
+        CREATE TABLE IF NOT EXISTS plancha_borrador (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          user_id INT NULL,
+          burros LONGTEXT NOT NULL,
+          fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        );
+      `);
+
       // 7. Permitir NULL en camion_detalles_id para que los ajustes/cuadres no fallen por FK en MySQL
       try {
         await connection.query("ALTER TABLE plancha_trabajos MODIFY COLUMN camion_detalles_id INT NULL");
