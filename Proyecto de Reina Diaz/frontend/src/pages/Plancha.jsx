@@ -32,7 +32,7 @@ const BURROS_TALLAS = {
 
 export default function Plancha() {
   const { settings } = useSettings();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const userRole = (user?.role || user?.rol || '').toString().toLowerCase().trim();
   const [searchParams] = useSearchParams();
   const initialTab = searchParams.get('tab') || 'plancha';
@@ -144,6 +144,9 @@ export default function Plancha() {
         setBurrosState(res.data.burros);
       }
     } catch (e) {
+      if (e.response && e.response.status === 401) {
+        logout();
+      }
       console.error('Error fetching plancha borrador', e);
     } finally {
       setIsLoaded(true);
@@ -165,7 +168,9 @@ export default function Plancha() {
         }
       }
     } catch (e) {
-      // ignore
+      if (e.response && e.response.status === 401) {
+        logout();
+      }
     }
   };
 
@@ -178,6 +183,9 @@ export default function Plancha() {
         headers: { Authorization: `Bearer ${token}` }
       });
     } catch (e) {
+      if (e.response && e.response.status === 401) {
+        logout();
+      }
       console.error('Error saving plancha borrador', e);
     }
   };
@@ -212,10 +220,36 @@ export default function Plancha() {
 
   useEffect(() => {
     if (activeTab !== 'plancha') return;
-    const interval = setInterval(() => {
-      fetchPlanchaBorradorSilent();
-    }, 1500); // Poll every 1.5 seconds to refresh globally without delay
-    return () => clearInterval(interval);
+
+    let intervalId = null;
+
+    const startPolling = (delay) => {
+      if (intervalId) clearInterval(intervalId);
+      intervalId = setInterval(() => {
+        fetchPlanchaBorradorSilent();
+      }, delay);
+    };
+
+    // Start with 1.5s delay
+    startPolling(1500);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        // Slow down to 10 seconds if tab is hidden or phone screen is locked
+        startPolling(10000);
+      } else {
+        // Resume 1.5 seconds if tab becomes visible again
+        fetchPlanchaBorradorSilent();
+        startPolling(1500);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [activeTab]);
 
   return (

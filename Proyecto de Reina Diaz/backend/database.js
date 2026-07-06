@@ -939,6 +939,32 @@ async function initializeDatabase() {
         // Ignorar si falla o ya está
       }
       
+      // 8. Crear índices para optimizar búsquedas por fecha y reportes
+      try {
+        await connection.query("CREATE INDEX idx_plancha_trabajos_fecha_creacion ON plancha_trabajos(fecha_creacion)");
+        console.log("Migration: Created index idx_plancha_trabajos_fecha_creacion");
+      } catch (e) {}
+      try {
+        await connection.query("CREATE INDEX idx_plancha_trabajos_fecha_terminado ON plancha_trabajos(fecha_terminado)");
+        console.log("Migration: Created index idx_plancha_trabajos_fecha_terminado");
+      } catch (e) {}
+      try {
+        await connection.query("CREATE INDEX idx_planchador_asistencias_fecha ON planchador_asistencias(fecha)");
+        console.log("Migration: Created index idx_planchador_asistencias_fecha");
+      } catch (e) {}
+      try {
+        await connection.query("CREATE INDEX idx_corte_asistencia_fecha ON corte_asistencia(fecha)");
+        console.log("Migration: Created index idx_corte_asistencia_fecha");
+      } catch (e) {}
+      try {
+        await connection.query("CREATE INDEX idx_pagos_fecha ON pagos(fecha)");
+        console.log("Migration: Created index idx_pagos_fecha");
+      } catch (e) {}
+      try {
+        await connection.query("CREATE INDEX idx_historial_timestamp ON historial(timestamp)");
+        console.log("Migration: Created index idx_historial_timestamp");
+      } catch (e) {}
+
       console.log('--- FIN MIGRACIÓN MÓDULO PLANCHA ---');
     } catch (e) {
       console.error('Error al migrar tablas del módulo de plancha:', e);

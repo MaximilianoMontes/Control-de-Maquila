@@ -11,6 +11,7 @@ import { useSettings } from '../../context/SettingsContext';
 import API_URL from '../../config';
 import { toast, Swal } from '../../utils/themeNotifications';
 import ImageZoom from '../ImageZoom';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function PlanchaBurros({ 
   burrosState, 
@@ -1144,49 +1145,58 @@ export default function PlanchaBurros({
                         <span style={{ fontSize: '0.8rem' }}>Suelta un modelo aquí</span>
                       </div>
                     ) : (
-                      burro.modelos.map(m => (
-                        <div key={m.uid} style={{ background: 'var(--bg-card)', borderRadius: '8px', padding: '0.8rem', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '0.8rem', boxShadow: '0 1px 2px rgba(0,0,0,0.02)' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                            <span style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-primary)' }}>{m.modelo} ({m.color || 'Único'} - {displayTalla(m.talla)})</span>
-                            <button onClick={() => handleRemoveModeloFromBurro(index, m.uid)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', padding: '2px' }}><X size={14} /></button>
-                          </div>
-                          
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                              {m.tallas_colores_disponibles && Object.keys(m.tallas_colores_disponibles).length > 1 && (
-                                <select value={m.color} onChange={(e) => handleChangeModeloColor(index, m.uid, e.target.value)} style={{ fontSize: '0.75rem', padding: '2px 4px', borderRadius: '4px', border: '1px solid var(--border-color)', outline: 'none' }}>
-                                  {Object.keys(m.tallas_colores_disponibles).map(c => (
-                                    <option key={c} value={c}>{c}</option>
-                                  ))}
-                                </select>
-                              )}
-                              <select value={normalizeTalla(m.talla)} onChange={(e) => handleChangeModeloTalla(index, m.uid, e.target.value)} style={{ fontSize: '0.75rem', padding: '2px 4px', borderRadius: '4px', border: '1px solid var(--border-color)', outline: 'none' }}>
-                                {Object.entries(m.color && m.tallas_colores_disponibles && m.tallas_colores_disponibles[m.color] ? m.tallas_colores_disponibles[m.color] : (m.tallas_disponibles || {}))
-                                  .filter(([t, q]) => burro.is_comodin || q > 0 || normalizeTalla(t) === normalizeTalla(m.talla))
-                                  .sort((a,b) => sortTallasFunc(a[0], b[0]))
-                                  .map(([t, _]) => <option key={t} value={normalizeTalla(t)}>{displayTalla(t)}</option>)}
-                              </select>
+                      <AnimatePresence>
+                        {burro.modelos.map(m => (
+                          <motion.div 
+                            key={m.uid} 
+                            initial={{ opacity: 0, y: 12, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: -12, scale: 0.95 }}
+                            transition={{ duration: 0.2 }}
+                            style={{ background: 'var(--bg-card)', borderRadius: '8px', padding: '0.8rem', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '0.8rem', boxShadow: '0 1px 2px rgba(0,0,0,0.02)' }}
+                          >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                              <span style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-primary)' }}>{m.modelo} ({m.color || 'Único'} - {displayTalla(m.talla)})</span>
+                              <button onClick={() => handleRemoveModeloFromBurro(index, m.uid)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', padding: '2px' }}><X size={14} /></button>
+                            </div>
                             
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'var(--bg-input)', borderRadius: '6px', padding: '2px' }}>
-                              <button onClick={() => handleUpdatePiezas(index, m.uid, -1)} style={{ border: 'none', background: 'var(--bg-card)', width: '22px', height: '22px', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 1px 1px rgba(0,0,0,0.05)' }}>-</button>
-                              <input type="number" value={m.piezas} onChange={(e) => handleSetPiezas(index, m.uid, parseInt(e.target.value)||1)} style={{ width: '32px', border: 'none', background: 'transparent', textAlign: 'center', fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-primary)', outline: 'none' }} />
-                              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted, #94a3b8)', fontWeight: '600' }}>/ {m.maxPiezas}</span>
-                              <button onClick={() => handleUpdatePiezas(index, m.uid, 1)} style={{ border: 'none', background: 'var(--bg-card)', width: '22px', height: '22px', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 1px 1px rgba(0,0,0,0.05)' }}>+</button>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                {m.tallas_colores_disponibles && Object.keys(m.tallas_colores_disponibles).length > 1 && (
+                                  <select value={m.color} onChange={(e) => handleChangeModeloColor(index, m.uid, e.target.value)} style={{ fontSize: '0.75rem', padding: '2px 4px', borderRadius: '4px', border: '1px solid var(--border-color)', outline: 'none' }}>
+                                    {Object.keys(m.tallas_colores_disponibles).map(c => (
+                                      <option key={c} value={c}>{c}</option>
+                                    ))}
+                                  </select>
+                                )}
+                                <select value={normalizeTalla(m.talla)} onChange={(e) => handleChangeModeloTalla(index, m.uid, e.target.value)} style={{ fontSize: '0.75rem', padding: '2px 4px', borderRadius: '4px', border: '1px solid var(--border-color)', outline: 'none' }}>
+                                  {Object.entries(m.color && m.tallas_colores_disponibles && m.tallas_colores_disponibles[m.color] ? m.tallas_colores_disponibles[m.color] : (m.tallas_disponibles || {}))
+                                    .filter(([t, q]) => burro.is_comodin || q > 0 || normalizeTalla(t) === normalizeTalla(m.talla))
+                                    .sort((a,b) => sortTallasFunc(a[0], b[0]))
+                                    .map(([t, _]) => <option key={t} value={normalizeTalla(t)}>{displayTalla(t)}</option>)}
+                                </select>
+                              
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'var(--bg-input)', borderRadius: '6px', padding: '2px' }}>
+                                <button onClick={() => handleUpdatePiezas(index, m.uid, -1)} style={{ border: 'none', background: 'var(--bg-card)', width: '22px', height: '22px', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 1px 1px rgba(0,0,0,0.05)' }}>-</button>
+                                <input type="number" value={m.piezas} onChange={(e) => handleSetPiezas(index, m.uid, parseInt(e.target.value)||1)} style={{ width: '32px', border: 'none', background: 'transparent', textAlign: 'center', fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-primary)', outline: 'none' }} />
+                                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted, #94a3b8)', fontWeight: '600' }}>/ {m.maxPiezas}</span>
+                                <button onClick={() => handleUpdatePiezas(index, m.uid, 1)} style={{ border: 'none', background: 'var(--bg-card)', width: '22px', height: '22px', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 1px 1px rgba(0,0,0,0.05)' }}>+</button>
+                              </div>
                             </div>
-                          </div>
 
-                          {/* Progress Bar */}
-                          <div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--text-secondary)', marginBottom: '4px', fontWeight: '600' }}>
-                              <span>{m.piezas} / {m.maxPiezas} pz</span>
-                              <span>{Math.round((m.piezas/m.maxPiezas)*100)}%</span>
+                            {/* Progress Bar */}
+                            <div>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--text-secondary)', marginBottom: '4px', fontWeight: '600' }}>
+                                <span>{m.piezas} / {m.maxPiezas} pz</span>
+                                <span>{Math.round((m.piezas/m.maxPiezas)*100)}%</span>
+                              </div>
+                              <div style={{ width: '100%', height: '6px', background: '#e2e8f0', borderRadius: '3px', overflow: 'hidden' }}>
+                                <div style={{ width: `${(m.piezas/m.maxPiezas)*100}%`, height: '100%', background: '#10b981', transition: 'width 0.3s ease' }}></div>
+                              </div>
                             </div>
-                            <div style={{ width: '100%', height: '6px', background: '#e2e8f0', borderRadius: '3px', overflow: 'hidden' }}>
-                              <div style={{ width: `${(m.piezas/m.maxPiezas)*100}%`, height: '100%', background: '#10b981', transition: 'width 0.3s ease' }}></div>
-                            </div>
-                          </div>
 
-                        </div>
-                      ))
+                          </motion.div>
+                        ))}
+                      </AnimatePresence>
                     )}
                   </div>
 
