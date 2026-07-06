@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { useSettings } from '../context/SettingsContext';
@@ -127,6 +127,12 @@ export default function Plancha() {
   };
 
   const [isLoaded, setIsLoaded] = useState(false);
+  const lastLocalChangeTime = useRef(0);
+  const burrosStateRef = useRef(burrosState);
+
+  useEffect(() => {
+    burrosStateRef.current = burrosState;
+  }, [burrosState]);
 
   const fetchPlanchaBorrador = async () => {
     try {
@@ -141,6 +147,25 @@ export default function Plancha() {
       console.error('Error fetching plancha borrador', e);
     } finally {
       setIsLoaded(true);
+    }
+  };
+
+  const fetchPlanchaBorradorSilent = async () => {
+    if (Date.now() - lastLocalChangeTime.current < 2000) return;
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.get(`${API_URL}/api/plancha/borrador`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.data && res.data.burros && res.data.burros.length === 12) {
+        const currentStr = JSON.stringify(burrosStateRef.current);
+        const incomingStr = JSON.stringify(res.data.burros);
+        if (currentStr !== incomingStr && Date.now() - lastLocalChangeTime.current >= 2000) {
+          setBurrosState(res.data.burros);
+        }
+      }
+    } catch (e) {
+      // ignore
     }
   };
 
@@ -178,11 +203,20 @@ export default function Plancha() {
 
   useEffect(() => {
     if (!isLoaded) return;
+    lastLocalChangeTime.current = Date.now();
     const timer = setTimeout(() => {
       savePlanchaBorrador(burrosState);
     }, 400);
     return () => clearTimeout(timer);
   }, [burrosState, isLoaded]);
+
+  useEffect(() => {
+    if (activeTab !== 'plancha') return;
+    const interval = setInterval(() => {
+      fetchPlanchaBorradorSilent();
+    }, 1500); // Poll every 1.5 seconds to refresh globally without delay
+    return () => clearInterval(interval);
+  }, [activeTab]);
 
   return (
     <div className="app-layout">
