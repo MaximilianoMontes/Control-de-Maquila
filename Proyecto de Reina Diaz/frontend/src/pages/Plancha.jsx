@@ -126,6 +126,37 @@ export default function Plancha() {
     }
   };
 
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  const fetchPlanchaBorrador = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.get(`${API_URL}/api/plancha/borrador`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.data && res.data.burros && res.data.burros.length === 12) {
+        setBurrosState(res.data.burros);
+      }
+    } catch (e) {
+      console.error('Error fetching plancha borrador', e);
+    } finally {
+      setIsLoaded(true);
+    }
+  };
+
+  const savePlanchaBorrador = async (newBurros) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API_URL}/api/plancha/borrador`, {
+        burros: newBurros
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+    } catch (e) {
+      console.error('Error saving plancha borrador', e);
+    }
+  };
+
   useEffect(() => {
     if (activeTab === 'plancha') {
       fetchAsistenciasHoy();
@@ -136,6 +167,7 @@ export default function Plancha() {
     fetchPlanchadores();
     fetchModelosCamion();
     fetchModelosDisponibles();
+    fetchPlanchaBorrador();
   }, []);
 
   useEffect(() => {
@@ -143,6 +175,14 @@ export default function Plancha() {
       fetchHistorialGeneral();
     }
   }, [activeTab]);
+
+  useEffect(() => {
+    if (!isLoaded) return;
+    const timer = setTimeout(() => {
+      savePlanchaBorrador(burrosState);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [burrosState, isLoaded]);
 
   return (
     <div className="app-layout">

@@ -3421,6 +3421,59 @@ app.post('/api/plancha/asignar', authenticateToken, async (req, res) => {
   }
 });
 
+// GET PLANCHA ASSIGNMENTS DRAFT
+app.get('/api/plancha/borrador', authenticateToken, async (req, res) => {
+  const allowedRoles = ['admin', 'produccion1', 'produccion2', 'plancha', 'inventario1'];
+  if (!allowedRoles.includes(req.user.role)) {
+    return res.status(403).json({ error: 'No autorizado para esta sección' });
+  }
+  try {
+    const [rows] = await db.query(
+      "SELECT burros FROM plancha_borrador ORDER BY id DESC LIMIT 1"
+    );
+    if (rows.length > 0) {
+      let parsedBurros = [];
+      try {
+        parsedBurros = JSON.parse(rows[0].burros);
+      } catch (e) {
+        parsedBurros = [];
+      }
+      res.json({ burros: parsedBurros });
+    } else {
+      res.json({ burros: [] });
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// SAVE PLANCHA ASSIGNMENTS DRAFT
+app.post('/api/plancha/borrador', authenticateToken, async (req, res) => {
+  const allowedRoles = ['admin', 'produccion1', 'produccion2', 'plancha', 'inventario1'];
+  if (!allowedRoles.includes(req.user.role)) {
+    return res.status(403).json({ error: 'No autorizado para esta sección' });
+  }
+  const { burros } = req.body;
+  const connection = await db.getConnection();
+  try {
+    await connection.beginTransaction();
+    // Delete any existing global draft
+    await connection.query("DELETE FROM plancha_borrador");
+    // Insert new global draft
+    await connection.query(
+      "INSERT INTO plancha_borrador (user_id, burros) VALUES (?, ?)",
+      [req.user.id, JSON.stringify(burros || [])]
+    );
+    await connection.commit();
+    res.json({ success: true });
+  } catch (error) {
+    await connection.rollback();
+    res.status(500).json({ error: error.message });
+  } finally {
+    connection.release();
+  }
+});
+
 // 9. HISTORIAL DE PAGOS DE UN PLANCHADOR
 app.get('/api/planchadores/:id/pagos', authenticateToken, async (req, res) => {
   const { start, end } = req.query;
