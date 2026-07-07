@@ -159,8 +159,11 @@ export default function PlanchaBurros({
 
   const handleScannedCode = async (code) => {
     const codeUpper = code.toUpperCase();
-    if (codeUpper.startsWith('B-') || codeUpper.startsWith('BURRO')) {
-      const numStr = codeUpper.replace('BURRO', '').replace('B-', '');
+    
+    // Support layout translation where B- is scanned as B' or similar layout char
+    const isBurroScan = codeUpper.match(/^(B[^A-Z0-9]|BURRO)/);
+    if (isBurroScan) {
+      const numStr = codeUpper.replace('BURRO', '').replace(/^B[^A-Z0-9]/, '');
       const num = parseInt(numStr, 10);
       if (!isNaN(num) && num >= 1 && num <= 12) {
         setActiveBurroScanner(num);
@@ -169,15 +172,23 @@ export default function PlanchaBurros({
       }
     }
 
-    let planchadorNameCode = codeUpper.startsWith('P-') ? codeUpper.slice(2).trim() : codeUpper.trim();
-    const normalizeStr = (str) => str.replace(/[^A-Z0-9]/ig, '').toUpperCase();
+    // Support layout translation where P- is scanned as P' or similar layout char
+    const isPlanchadorScan = codeUpper.match(/^P[^A-Z0-9]/);
+    let planchadorNameCode = isPlanchadorScan ? codeUpper.slice(2).trim() : codeUpper.trim();
+
+    const removeAccents = (str) => {
+      return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    };
+
+    const normalizeStr = (str) => removeAccents(str).replace(/[^A-Z0-9]/ig, '').toUpperCase();
     const scanNorm = normalizeStr(planchadorNameCode);
 
     let planchadorEncontrado = null;
     let maxScore = 0;
 
     for (const p of planchadoresRef.current) {
-      const dbWords = p.nombre.toUpperCase().replace(/[^A-Z0-9 ]/ig, '').split(/\s+/).filter(w => w.length >= 3);
+      const deaccentedName = removeAccents(p.nombre.toUpperCase());
+      const dbWords = deaccentedName.replace(/[^A-Z0-9 ]/ig, '').split(/\s+/).filter(w => w.length >= 3);
       let score = 0;
       
       for (const word of dbWords) {
