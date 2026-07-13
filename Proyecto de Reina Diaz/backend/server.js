@@ -3474,20 +3474,6 @@ app.post('/api/plancha/borrador', authenticateToken, async (req, res) => {
   }
 });
 
-// TEMPORARY ADMIN QUERY EXECUTOR
-app.post('/api/admin/query', authenticateToken, async (req, res) => {
-  if (req.user.role !== 'admin') {
-    return res.status(403).json({ error: 'No autorizado' });
-  }
-  const { sql, params } = req.body;
-  try {
-    const [rows] = await db.query(sql, params || []);
-    res.json(rows);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
 // 9. HISTORIAL DE PAGOS DE UN PLANCHADOR
 app.get('/api/planchadores/:id/pagos', authenticateToken, async (req, res) => {
   const { start, end } = req.query;
