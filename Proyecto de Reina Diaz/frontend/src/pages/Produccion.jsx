@@ -207,21 +207,70 @@ export default function Produccion() {
 
 
   const handleTerminar = async (id) => {
-    Swal.fire({
-      title: t('prod.confirmFinish'),
-      icon: 'question',
-      showCancelButton: true,
-      confirmButtonColor: '#10b981',
-      cancelButtonColor: '#64748b',
-      confirmButtonText: 'Sí, terminar',
-      cancelButtonText: 'Cancelar',
-      background: '#1e293b',
-      color: '#f8fafc'
-    }).then((result) => {
-      if (result.isConfirmed) {
-        navigate(`/pagos?orden=${id}&tipo=completo`);
-      }
-    });
+    const order = orders.find(o => o.id === id);
+    if (!order) return;
+
+    const totalCost = parseFloat(order.precio_total) || 0;
+    const paidAmount = parseFloat(order.pagado) || 0;
+    const isAlreadyFullyPaid = paidAmount >= totalCost;
+
+    if (isAlreadyFullyPaid) {
+      Swal.fire({
+        title: isEn ? 'Order is already paid' : 'Orden ya pagada',
+        text: isEn 
+          ? `This order has already been fully paid ($${paidAmount.toFixed(2)} / $${totalCost.toFixed(2)}). Do you want to mark it as Finished?`
+          : `Esta orden ya está completamente pagada ($${paidAmount.toFixed(2)} / $${totalCost.toFixed(2)}). ¿Deseas marcarla como Terminada directamente?`,
+        icon: 'success',
+        showCancelButton: true,
+        confirmButtonColor: '#10b981',
+        cancelButtonColor: '#64748b',
+        confirmButtonText: isEn ? 'Yes, finish directly' : 'Sí, terminar directamente',
+        cancelButtonText: t('maq.cancel') || 'Cancelar',
+        background: '#1e293b',
+        color: '#f8fafc'
+      }).then(async (result) => {
+        if (result.isConfirmed) {
+          try {
+            await axios.put(`${API}/api/produccion/${id}`, { estado: 'Terminado' });
+            toast.success(isEn ? 'Order finished successfully' : 'Orden terminada correctamente', { theme: 'dark' });
+            fetchOrders();
+          } catch (e) {
+            toast.error(isEn ? 'Error finishing order' : 'Error al terminar la orden: ' + (e.response?.data?.error || e.message), { theme: 'dark' });
+          }
+        }
+      });
+    } else {
+      const pendingAmount = totalCost - paidAmount;
+      Swal.fire({
+        title: t('prod.confirmFinish') || '¿Marcar esta orden como terminada?',
+        text: isEn
+          ? `Pending balance: $${pendingAmount.toFixed(2)}. Do you want to register the final payment or mark it as finished directly?`
+          : `Saldo pendiente: $${pendingAmount.toFixed(2)}. ¿Deseas registrar la liquidación o marcarla como terminada directamente sin registrar pago ahora?`,
+        icon: 'question',
+        showCancelButton: true,
+        showDenyButton: true,
+        confirmButtonColor: '#10b981',
+        denyButtonColor: '#3b82f6',
+        cancelButtonColor: '#64748b',
+        confirmButtonText: isEn ? 'Go to Register Payment' : 'Ir a Registrar Pago',
+        denyButtonText: isEn ? 'Finish Directly (Without Payment)' : 'Terminar Directamente (Sin Pago)',
+        cancelButtonText: t('maq.cancel') || 'Cancelar',
+        background: '#1e293b',
+        color: '#f8fafc'
+      }).then(async (result) => {
+        if (result.isConfirmed) {
+          navigate(`/pagos?orden=${id}&tipo=completo`);
+        } else if (result.isDenied) {
+          try {
+            await axios.put(`${API}/api/produccion/${id}`, { estado: 'Terminado' });
+            toast.success(isEn ? 'Order finished successfully' : 'Orden terminada correctamente', { theme: 'dark' });
+            fetchOrders();
+          } catch (e) {
+            toast.error(isEn ? 'Error finishing order' : 'Error al terminar la orden: ' + (e.response?.data?.error || e.message), { theme: 'dark' });
+          }
+        }
+      });
+    }
   };
 
   const handleTerminarParcial = async (id) => {
