@@ -541,7 +541,11 @@ export default function Produccion() {
   // Folio = posición dentro de la lista visible, ordenada del más antiguo al más nuevo
   // Así siempre arranca en #1 independientemente de lo que esté oculto en la otra pestaña
   const filteredAsc = [...filteredOrders].sort((a, b) => a.id - b.id);
-  const getFolio = (o) => filteredAsc.findIndex(item => item.id === o.id) + 1;
+  const getFolio = (o) => {
+    if (!o) return '-';
+    const idx = filteredAsc.findIndex(item => item.id === o.id);
+    return idx >= 0 ? idx + 1 : (o.no_orden || o.id);
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
