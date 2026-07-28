@@ -240,18 +240,31 @@ export default function Produccion() {
   const fetchOrders = async () => {
     try {
       const res = await axios.get(`${API}/api/produccion?verArchivados=${verArchivados}`);
-      setOrders(res.data);
-    } catch (e) { console.error(e); }
+      setOrders(Array.isArray(res.data) ? res.data : []);
+    } catch (e) {
+      console.error(e);
+      setOrders([]);
+    }
   };
 
   const fetchMaquileros = async () => {
-    const res = await axios.get(`${API}/api/maquileros`);
-    setMaquileros(res.data);
+    try {
+      const res = await axios.get(`${API}/api/maquileros`);
+      setMaquileros(Array.isArray(res.data) ? res.data : []);
+    } catch (e) {
+      console.error(e);
+      setMaquileros([]);
+    }
   };
 
   const fetchInventario = async () => {
-    const res = await axios.get(`${API}/api/inventario`);
-    setInventario(res.data);
+    try {
+      const res = await axios.get(`${API}/api/inventario`);
+      setInventario(Array.isArray(res.data) ? res.data : []);
+    } catch (e) {
+      console.error(e);
+      setInventario([]);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -521,7 +534,9 @@ export default function Produccion() {
     });
   };
 
-  const filteredOrders = orders.filter(o => {
+  const safeOrders = Array.isArray(orders) ? orders : [];
+  const filteredOrders = safeOrders.filter(o => {
+    if (!o) return false;
     // Filtrar por pestaña activa
     if (activeTab === 'proceso') {
       if (o.estado === 'Terminado') {

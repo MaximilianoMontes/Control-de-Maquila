@@ -225,15 +225,15 @@ export default function Camion() {
       
       // Fetch active stock from finished / partially finished production orders
       const stockRes = await axios.get(`${API}/api/camiones/disponibles`, { headers });
-      setStock(stockRes.data);
+      setStock(Array.isArray(stockRes.data) ? stockRes.data : []);
 
       // Fetch history of sent trucks
       const historyRes = await axios.get(`${API}/api/camiones`, { headers });
-      setHistory(historyRes.data);
+      setHistory(Array.isArray(historyRes.data) ? historyRes.data : []);
 
       // Fetch returns from plancha
       const devRes = await axios.get(`${API}/api/maquila/devoluciones`, { headers });
-      setDevoluciones(devRes.data);
+      setDevoluciones(Array.isArray(devRes.data) ? devRes.data : []);
 
       // Fetch draft from database
       const draftRes = await axios.get(`${API}/api/camiones/borrador`, { headers });
