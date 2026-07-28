@@ -99,6 +99,14 @@ export default function Camion() {
   const [selectedAdelantadaOrder, setSelectedAdelantadaOrder] = useState(null);
   const [adelantadaTallas, setAdelantadaTallas] = useState({});
 
+  const getFolio = (o, list = activeProdOrders) => {
+    if (!o) return '';
+    if (o.no_orden) return o.no_orden;
+    const sorted = [...list].sort((a, b) => a.id - b.id);
+    const idx = sorted.findIndex(item => item.id === o.id);
+    return idx >= 0 ? `${idx + 1}` : `${o.id}`;
+  };
+
   const handleOpenAdelantadaModal = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -1428,7 +1436,7 @@ export default function Camion() {
                     >
                       <div>
                         <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>
-                          #{o.id} - {o.producto_modelo} ({o.maquilero_nombre})
+                          #{getFolio(o)} - {o.producto_modelo} ({o.maquilero_nombre})
                         </div>
                         <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                           Cantidad Pedida: <strong>{o.cantidad} pzs</strong> | Ya Recolectadas: {o.cantidad_recibida || 0} pzs
@@ -1446,7 +1454,7 @@ export default function Camion() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(139,92,246,0.1)', padding: '0.75rem', borderRadius: '8px' }}>
                   <div>
                     <div style={{ fontWeight: 700 }}>Modelo: {selectedAdelantadaOrder.producto_modelo} ({selectedAdelantadaOrder.maquilero_nombre})</div>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Orden #{selectedAdelantadaOrder.id} | Total Pedido: {selectedAdelantadaOrder.cantidad} pzs</div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Orden #{getFolio(selectedAdelantadaOrder)} | Total Pedido: {selectedAdelantadaOrder.cantidad} pzs</div>
                   </div>
                   <button type="button" className="btn btn-secondary" style={{ fontSize: '11px', padding: '3px 8px' }} onClick={() => setSelectedAdelantadaOrder(null)}>
                     Cambiar Orden
