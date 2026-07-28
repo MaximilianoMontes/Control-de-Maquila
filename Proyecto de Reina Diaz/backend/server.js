@@ -754,7 +754,7 @@ app.get('/api/camiones/disponibles', authenticateToken, async (req, res) => {
     await autoArchiveOrders();
 
     const [rows] = await db.query(`
-      SELECT p.id as id, p.id as produccion_id, p.cantidad, p.cantidad_recibida, p.estado,
+      SELECT p.id as id, p.id as produccion_id, p.cantidad, p.cantidad_recibida, p.tallas_recibidas, p.estado,
              m.nombre as maquilero_nombre,
              i.id as inventario_id, i.modelo, i.numero, i.temporada, i.color, i.cliente, i.no_orden, i.precio, i.imagen,
              (
@@ -765,11 +765,16 @@ app.get('/api/camiones/disponibles', authenticateToken, async (req, res) => {
       FROM produccion p
       JOIN maquileros m ON p.maquilero_id = m.id
       JOIN inventario i ON p.inventario_id = i.id
-      WHERE p.estado IN ('Terminado', 'Terminado Parcial') AND p.archivado = 0 AND (p.es_extra = 0 OR p.es_extra IS NULL)
+      WHERE p.estado != 'Cancelado' AND p.archivado = 0 AND (p.es_extra = 0 OR p.es_extra IS NULL)
     `);
 
     const available = rows.map(r => {
-      const piezas_producidas = r.cantidad_recibida !== null ? r.cantidad_recibida : r.cantidad;
+      let piezas_producidas = 0;
+      if (r.estado === 'Terminado') {
+        piezas_producidas = (r.cantidad_recibida !== null && r.cantidad_recibida !== undefined) ? r.cantidad_recibida : r.cantidad;
+      } else {
+        piezas_producidas = (r.cantidad_recibida !== null && r.cantidad_recibida !== undefined && r.cantidad_recibida > 0) ? r.cantidad_recibida : 0;
+      }
       const piezas_disponibles = piezas_producidas - r.piezas_enviadas;
       return {
         ...r,
@@ -1137,7 +1142,7 @@ app.get('/api/produccion', async (req, res) => {
 
     const [orders] = await db.query(`
       SELECT p.*, m.nombre as maquilero_nombre,
-      i.modelo as producto_modelo, i.imagen as producto_imagen, 
+      i.modelo as producto_modelo, i.imagen as producto_imagen, i.color as producto_color,
       COALESCE(p.precio_extra, i.precio) as precio_unitario,
       (SELECT COALESCE(SUM(monto), 0) FROM pagos WHERE produccion_id = p.id) as pagado_efectivo,
       (SELECT COALESCE(SUM(monto), 0) FROM pagos WHERE produccion_id = p.id) + 
@@ -1343,6 +1348,11 @@ app.put('/api/produccion/:id', authenticateToken, async (req, res) => {
       }
     }
 
+    let dbTallasRecibidas = old.tallas_recibidas;
+    if (req.body.tallas_recibidas !== undefined) {
+      dbTallasRecibidas = typeof req.body.tallas_recibidas === 'string' ? req.body.tallas_recibidas : JSON.stringify(req.body.tallas_recibidas);
+    }
+
     await db.query(`
       UPDATE produccion SET 
       maquilero_id = COALESCE(?, maquilero_id),
@@ -1353,6 +1363,7 @@ app.put('/api/produccion/:id', authenticateToken, async (req, res) => {
       precio_total = ?,
       cantidad = COALESCE(?, cantidad),
       cantidad_recibida = ?,
+      tallas_recibidas = ?,
       retrasos = COALESCE(?, retrasos),
       ajuste_tipo = ?,
       ajuste_porcentaje = ?,
@@ -1370,6 +1381,7 @@ app.put('/api/produccion/:id', authenticateToken, async (req, res) => {
       finalPrecioTotal, 
       cantidad || null, 
       dbCantidadRecibida, 
+      dbTallasRecibidas,
       retrasos !== undefined && retrasos !== '' ? retrasos : old.retrasos, 
       curAjusteTipo, 
       curAjustePorc, 
@@ -1399,7 +1411,7 @@ app.put('/api/produccion/:id', authenticateToken, async (req, res) => {
       changes.push(`Fecha Inicio: ${fmtDate(old.fecha_inicio)} -> ${fmtDate(fecha_inicio)}`);
     }
     
-    const silentFields = ['cantidad_recibida', 'ajuste_tipo', 'ajuste_porcentaje'];
+    const silentFields = ['cantidad_recibida', 'tallas_recibidas', 'ajuste_tipo', 'ajuste_porcentaje'];
     const isSilentUpdate = Object.keys(req.body).every(key => silentFields.includes(key));
 
     if (!isSilentUpdate) {
@@ -1414,6 +1426,37 @@ app.put('/api/produccion/:id', authenticateToken, async (req, res) => {
     res.json({ success: true });
   } catch (error) {
     console.error("Error en PUT produccion:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ENDPOINT DE RECEPCIÓN DE PIEZAS POR COLOR Y TALLA
+app.put('/api/produccion/:id/recepcion', authenticateToken, async (req, res) => {
+  const { cantidad_recibida, tallas_recibidas } = req.body;
+  try {
+    const [olds] = await db.query("SELECT * FROM produccion WHERE id = ?", [req.params.id]);
+    const old = olds[0];
+    if (!old) return res.status(404).json({ error: 'Orden no encontrada' });
+
+    let qty = old.cantidad_recibida;
+    if (cantidad_recibida !== undefined && cantidad_recibida !== null && cantidad_recibida !== '') {
+      qty = parseInt(cantidad_recibida);
+      if (isNaN(qty) || qty < 0) qty = 0;
+    } else if (cantidad_recibida === null || cantidad_recibida === '') {
+      qty = null;
+    }
+
+    const tallasJsonStr = tallas_recibidas ? (typeof tallas_recibidas === 'string' ? tallas_recibidas : JSON.stringify(tallas_recibidas)) : old.tallas_recibidas;
+
+    await db.query("UPDATE produccion SET cantidad_recibida = ?, tallas_recibidas = ? WHERE id = ?", 
+      [qty, tallasJsonStr, req.params.id]);
+
+    await checkAndMoveToInventory(req.params.id, req.user.id);
+    await autoArchiveOrders();
+
+    res.json({ success: true, cantidad_recibida: qty, tallas_recibidas: tallasJsonStr });
+  } catch (error) {
+    console.error("Error en PUT /api/produccion/:id/recepcion:", error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -1663,7 +1706,7 @@ app.post('/api/pagos', authenticateToken, async (req, res) => {
 
       // 3.5. Actualizar el estado de la orden de producción según el tipo de pago
       if (tipo_pago === 'abono' && currentStatus === 'En proceso') {
-        await connection.query("UPDATE produccion SET estado = 'Terminado Parcial' WHERE id = ?", [produccion_id]);
+        await connection.query("UPDATE produccion SET estado = 'Pago Parcial' WHERE id = ?", [produccion_id]);
       } else if (tipo_pago === 'completo') {
         const today = new Date().toISOString().split('T')[0];
         await connection.query(

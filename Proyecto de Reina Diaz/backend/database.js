@@ -108,6 +108,7 @@ async function initializeDatabase() {
         inventario_id INT,
         cantidad INT DEFAULT 1,
         cantidad_recibida INT DEFAULT NULL,
+        tallas_recibidas LONGTEXT DEFAULT NULL,
         precio_total DECIMAL(10, 2) DEFAULT 0,
         fecha_inicio DATE NOT NULL,
         fecha_fin DATE,
@@ -121,6 +122,12 @@ async function initializeDatabase() {
         FOREIGN KEY(inventario_id) REFERENCES inventario(id)
       );
     `);
+
+    try {
+      await connection.query("ALTER TABLE produccion ADD COLUMN tallas_recibidas LONGTEXT DEFAULT NULL;");
+    } catch (e) {
+      // Column may already exist
+    }
 
     await connection.query(`
       CREATE TABLE IF NOT EXISTS pagos (

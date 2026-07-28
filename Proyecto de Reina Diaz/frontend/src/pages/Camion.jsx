@@ -93,6 +93,129 @@ export default function Camion() {
   const [dragOver, setDragOver] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
 
+  // Entrega Adelantada Modal State
+  const [adelantadaModalOpen, setAdelantadaModalOpen] = useState(false);
+  const [activeProdOrders, setActiveProdOrders] = useState([]);
+  const [selectedAdelantadaOrder, setSelectedAdelantadaOrder] = useState(null);
+  const [adelantadaTallas, setAdelantadaTallas] = useState({});
+
+  const handleOpenAdelantadaModal = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.get(`${API}/api/produccion?incluirArchivados=false`, { headers: { Authorization: `Bearer ${token}` } });
+      const inProgress = res.data.filter(o => o.estado !== 'Cancelado' && o.estado !== 'Terminado');
+      setActiveProdOrders(inProgress);
+      setSelectedAdelantadaOrder(null);
+      setAdelantadaModalOpen(true);
+    } catch (e) {
+      console.error(e);
+      toast.error(isEn ? 'Error loading active orders' : 'Error al obtener órdenes en proceso', { theme: 'dark' });
+    }
+  };
+
+  const handleSelectAdelantadaOrder = (order) => {
+    setSelectedAdelantadaOrder(order);
+    let parsedColor = {};
+    try {
+      if (order.producto_color) {
+        const obj = typeof order.producto_color === 'string' ? JSON.parse(order.producto_color) : order.producto_color;
+        if (typeof obj === 'object' && obj !== null) parsedColor = obj;
+      }
+    } catch (e) {}
+
+    let existingRecibidas = {};
+    try {
+      if (order.tallas_recibidas) {
+        const obj = typeof order.tallas_recibidas === 'string' ? JSON.parse(order.tallas_recibidas) : order.tallas_recibidas;
+        if (typeof obj === 'object' && obj !== null) existingRecibidas = obj;
+      }
+    } catch (e) {}
+
+    let initialGrid = {};
+    const isNested = Object.values(parsedColor).some(v => typeof v === 'object' && v !== null);
+
+    if (isNested) {
+      Object.entries(parsedColor).forEach(([col, tallasObj]) => {
+        initialGrid[col] = {};
+        Object.entries(tallasObj).forEach(([sz, maxQty]) => {
+          const currentVal = existingRecibidas[col] && existingRecibidas[col][sz] !== undefined ? existingRecibidas[col][sz] : maxQty;
+          initialGrid[col][sz] = currentVal;
+        });
+      });
+    } else if (Object.keys(parsedColor).length > 0) {
+      initialGrid['GENERAL'] = {};
+      Object.entries(parsedColor).forEach(([sz, maxQty]) => {
+        const currentVal = existingRecibidas['GENERAL'] && existingRecibidas['GENERAL'][sz] !== undefined ? existingRecibidas['GENERAL'][sz] : maxQty;
+        initialGrid['GENERAL'][sz] = currentVal;
+      });
+    } else {
+      initialGrid['GENERAL'] = { 'TOTAL': order.cantidad };
+    }
+
+    setAdelantadaTallas(initialGrid);
+  };
+
+  const handleSaveAdelantadaCargo = async () => {
+    if (!selectedAdelantadaOrder) return;
+    let totalSum = 0;
+    Object.values(adelantadaTallas).forEach(colorObj => {
+      if (typeof colorObj === 'object' && colorObj !== null) {
+        Object.values(colorObj).forEach(val => {
+          totalSum += (parseInt(val) || 0);
+        });
+      } else {
+        totalSum += (parseInt(colorObj) || 0);
+      }
+    });
+
+    if (totalSum <= 0) {
+      toast.error(isEn ? 'Please enter a valid quantity of pieces received' : 'Ingresa una cantidad válida de piezas recibidas', { theme: 'dark' });
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      // 1. Update received pieces in Produccion
+      await axios.put(`${API}/api/produccion/${selectedAdelantadaOrder.id}/recepcion`, {
+        cantidad_recibida: totalSum,
+        tallas_recibidas: adelantadaTallas
+      }, { headers: { Authorization: `Bearer ${token}` } });
+
+      // 2. Build cargo item and add directly to cargo
+      const cargoItem = {
+        id: selectedAdelantadaOrder.id,
+        produccion_id: selectedAdelantadaOrder.id,
+        modelo: selectedAdelantadaOrder.producto_modelo,
+        color: selectedAdelantadaOrder.producto_color,
+        cliente: selectedAdelantadaOrder.cliente || 'GENERAL',
+        no_orden: selectedAdelantadaOrder.no_orden || selectedAdelantadaOrder.id,
+        piezas: totalSum,
+        precio: selectedAdelantadaOrder.precio_unitario || 0,
+        tallas_cantidades: adelantadaTallas,
+        imagen: selectedAdelantadaOrder.producto_imagen,
+        maquilero_nombre: selectedAdelantadaOrder.maquilero_nombre
+      };
+
+      setCargo(prev => {
+        const existingIdx = prev.findIndex(c => c.id === cargoItem.id);
+        if (existingIdx >= 0) {
+          const updated = [...prev];
+          updated[existingIdx] = cargoItem;
+          return updated;
+        }
+        return [...prev, cargoItem];
+      });
+
+      toast.success(isEn ? 'Early order loaded to truck and updated in Producción!' : '¡Orden cargada de forma adelantada al camión y sincronizada con Producción!', { theme: 'dark' });
+      setAdelantadaModalOpen(false);
+      setSelectedAdelantadaOrder(null);
+      fetchData();
+    } catch (e) {
+      console.error(e);
+      toast.error(isEn ? 'Error loading early order to truck' : 'Error al cargar orden adelantada al camión', { theme: 'dark' });
+    }
+  };
+
   // Fetch Data
   const fetchData = async () => {
     try {
@@ -502,9 +625,21 @@ export default function Camion() {
         
         {/* Left Side: Active Stock list */}
         <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', height: 'fit-content', minHeight: '500px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
             <h2 style={{ fontSize: '1.25rem', margin: 0, fontWeight: 700 }}>{t('camion.activeStock')}</h2>
-            <span className="badge badge-info" style={{ fontWeight: 700 }}>{filteredStock.length} {t('camion.lots') || 'Lotes'}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              {!isReadOnly && (
+                <button 
+                  className="btn btn-secondary" 
+                  style={{ fontSize: '11px', padding: '4px 8px', display: 'flex', alignItems: 'center', gap: '4px' }}
+                  onClick={handleOpenAdelantadaModal}
+                  title="Cargar prendas de una orden en proceso que entregaron antes"
+                >
+                  <Plus size={14} /> {isEn ? 'Early Delivery' : 'Entrega Adelantada'}
+                </button>
+              )}
+              <span className="badge badge-info" style={{ fontWeight: 700 }}>{filteredStock.length} {t('camion.lots') || 'Lotes'}</span>
+            </div>
           </div>
 
           {/* Search bar */}
@@ -1211,6 +1346,133 @@ export default function Camion() {
               </button>
             </div>
 
+          </div>
+        </div>
+      )}
+
+      {/* Modal Entrega Adelantada */}
+      {adelantadaModalOpen && (
+        <div className="modal-overlay" style={{ zIndex: 2500 }} onClick={() => setAdelantadaModalOpen(false)}>
+          <div className="modal-content glass-card" style={{ maxWidth: '720px', width: '95%' }} onClick={e => e.stopPropagation()}>
+            <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.75rem' }}>
+              <div>
+                <h2 style={{ fontSize: '1.25rem', margin: 0, fontWeight: 700 }}>
+                  {isEn ? 'Early Delivery - Load Active Order' : 'Cargar Entrega Adelantada de Piezas'}
+                </h2>
+                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                  Selecciona una orden en proceso que el maquilero entregó temprano para cargarla al camión.
+                </div>
+              </div>
+              <button className="btn-icon" onClick={() => setAdelantadaModalOpen(false)}><X size={22} /></button>
+            </div>
+
+            {!selectedAdelantadaOrder ? (
+              <div style={{ marginTop: '1rem', maxHeight: '400px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {activeProdOrders.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
+                    No hay órdenes activas en proceso.
+                  </div>
+                ) : (
+                  activeProdOrders.map(o => (
+                    <div 
+                      key={o.id}
+                      className="glass-card"
+                      style={{ padding: '0.85rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', cursor: 'pointer' }}
+                      onClick={() => handleSelectAdelantadaOrder(o)}
+                    >
+                      <div>
+                        <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>
+                          #{o.id} - {o.producto_modelo} ({o.maquilero_nombre})
+                        </div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                          Cantidad Pedida: <strong>{o.cantidad} pzs</strong> | Ya Recolectadas: {o.cantidad_recibida || 0} pzs
+                        </div>
+                      </div>
+                      <button type="button" className="btn btn-primary" style={{ padding: '4px 10px', fontSize: '12px' }}>
+                        Seleccionar
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+            ) : (
+              <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(139,92,246,0.1)', padding: '0.75rem', borderRadius: '8px' }}>
+                  <div>
+                    <div style={{ fontWeight: 700 }}>Modelo: {selectedAdelantadaOrder.producto_modelo} ({selectedAdelantadaOrder.maquilero_nombre})</div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Orden #{selectedAdelantadaOrder.id} | Total Pedido: {selectedAdelantadaOrder.cantidad} pzs</div>
+                  </div>
+                  <button type="button" className="btn btn-secondary" style={{ fontSize: '11px', padding: '3px 8px' }} onClick={() => setSelectedAdelantadaOrder(null)}>
+                    Cambiar Orden
+                  </button>
+                </div>
+
+                <div style={{ maxHeight: '300px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  {Object.entries(adelantadaTallas).map(([colKey, tallasObj]) => (
+                    <div key={colKey} style={{ background: 'rgba(255,255,255,0.03)', padding: '0.75rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                      <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#c084fc', marginBottom: '0.4rem' }}>
+                        Color: {colKey}
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '0.5rem' }}>
+                        {typeof tallasObj === 'object' && tallasObj !== null ? (
+                          Object.entries(tallasObj).map(([szKey, val]) => (
+                            <div key={szKey} style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                              <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Talla {szKey}</label>
+                              <input 
+                                type="number"
+                                min="0"
+                                className="form-input"
+                                style={{ padding: '0.25rem', textAlign: 'center', fontSize: '0.85rem', fontWeight: 700 }}
+                                value={val ?? 0}
+                                onChange={(e) => {
+                                  const q = parseInt(e.target.value) || 0;
+                                  setAdelantadaTallas(prev => ({
+                                    ...prev,
+                                    [colKey]: {
+                                      ...prev[colKey],
+                                      [szKey]: q
+                                    }
+                                  }));
+                                }}
+                              />
+                            </div>
+                          ))
+                        ) : (
+                          <input 
+                            type="number"
+                            min="0"
+                            className="form-input"
+                            style={{ padding: '0.25rem', textAlign: 'center', fontSize: '0.85rem', fontWeight: 700 }}
+                            value={tallasObj ?? 0}
+                            onChange={(e) => {
+                              const q = parseInt(e.target.value) || 0;
+                              setAdelantadaTallas(prev => ({ ...prev, [colKey]: q }));
+                            }}
+                          />
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                  <div style={{ fontWeight: 700 }}>
+                    Piezas a Cargar: <span style={{ color: '#34d399' }}>
+                      {Object.values(adelantadaTallas).reduce((acc, colObj) => {
+                        if (typeof colObj === 'object' && colObj !== null) {
+                          return acc + Object.values(colObj).reduce((s, v) => s + (parseInt(v) || 0), 0);
+                        }
+                        return acc + (parseInt(colObj) || 0);
+                      }, 0)} pzs
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button type="button" className="btn btn-secondary" onClick={() => setAdelantadaModalOpen(false)}>Cancelar</button>
+                    <button type="button" className="btn btn-primary" onClick={handleSaveAdelantadaCargo}>✓ Cargar al Camión</button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

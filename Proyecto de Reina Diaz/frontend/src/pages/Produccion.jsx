@@ -51,9 +51,120 @@ export default function Produccion() {
   const [splitOrder, setSplitOrder] = useState(null);
   const [splitData, setSplitData] = useState({ cantidad_entregada: '', nuevo_maquilero_id: '' });
   
-  const [obsModalOpen, setObsModalOpen] = useState(false);
-  const [obsText, setObsText] = useState("");
-  const [obsOrderId, setObsOrderId] = useState(null);
+  const [recepcionModalOpen, setRecepcionModalOpen] = useState(false);
+  const [recepcionOrder, setRecepcionOrder] = useState(null);
+  const [recepcionTallas, setRecepcionTallas] = useState({});
+
+  const handleOpenRecepcionModal = (order) => {
+    setRecepcionOrder(order);
+    let parsedColor = {};
+    try {
+      if (order.producto_color) {
+        const obj = typeof order.producto_color === 'string' ? JSON.parse(order.producto_color) : order.producto_color;
+        if (typeof obj === 'object' && obj !== null) parsedColor = obj;
+      }
+    } catch (e) {
+      parsedColor = {};
+    }
+
+    let existingRecibidas = {};
+    try {
+      if (order.tallas_recibidas) {
+        const obj = typeof order.tallas_recibidas === 'string' ? JSON.parse(order.tallas_recibidas) : order.tallas_recibidas;
+        if (typeof obj === 'object' && obj !== null) existingRecibidas = obj;
+      }
+    } catch (e) {}
+
+    let initialGrid = {};
+    const isNested = Object.values(parsedColor).some(v => typeof v === 'object' && v !== null);
+
+    if (isNested) {
+      Object.entries(parsedColor).forEach(([col, tallasObj]) => {
+        initialGrid[col] = {};
+        Object.entries(tallasObj).forEach(([sz, maxQty]) => {
+          const currentVal = existingRecibidas[col] && existingRecibidas[col][sz] !== undefined
+            ? existingRecibidas[col][sz]
+            : (order.cantidad_recibida !== null ? maxQty : 0);
+          initialGrid[col][sz] = currentVal;
+        });
+      });
+    } else if (Object.keys(parsedColor).length > 0) {
+      initialGrid['GENERAL'] = {};
+      Object.entries(parsedColor).forEach(([sz, maxQty]) => {
+        const currentVal = existingRecibidas['GENERAL'] && existingRecibidas['GENERAL'][sz] !== undefined
+          ? existingRecibidas['GENERAL'][sz]
+          : (existingRecibidas[sz] !== undefined ? existingRecibidas[sz] : (order.cantidad_recibida !== null ? maxQty : 0));
+        initialGrid['GENERAL'][sz] = currentVal;
+      });
+    } else {
+      initialGrid['GENERAL'] = { 'TOTAL': order.cantidad_recibida || 0 };
+    }
+
+    setRecepcionTallas(initialGrid);
+    setRecepcionModalOpen(true);
+  };
+
+  const handleSaveRecepcion = async () => {
+    if (!recepcionOrder) return;
+    let totalSum = 0;
+    Object.values(recepcionTallas).forEach(colorObj => {
+      if (typeof colorObj === 'object' && colorObj !== null) {
+        Object.values(colorObj).forEach(val => {
+          totalSum += (parseInt(val) || 0);
+        });
+      } else {
+        totalSum += (parseInt(colorObj) || 0);
+      }
+    });
+
+    try {
+      const res = await axios.put(`${API}/api/produccion/${recepcionOrder.id}/recepcion`, {
+        cantidad_recibida: totalSum,
+        tallas_recibidas: recepcionTallas
+      }, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+
+      if (res.data.success) {
+        toast.success(isEn ? `Received pieces updated (${totalSum} pz). Available in Truck!` : `Piezas recolectadas actualizadas (${totalSum} pz). Liberadas en Camión!`, { theme: 'dark' });
+        setRecepcionModalOpen(false);
+        setRecepcionOrder(null);
+        fetchOrders();
+      }
+    } catch (e) {
+      console.error(e);
+      toast.error(isEn ? 'Error saving received pieces' : 'Error al guardar recepción de piezas', { theme: 'dark' });
+    }
+  };
+
+  const handleMarcarTodoRecibido = () => {
+    if (!recepcionOrder) return;
+    let parsedColor = {};
+    try {
+      if (recepcionOrder.producto_color) {
+        const obj = typeof recepcionOrder.producto_color === 'string' ? JSON.parse(recepcionOrder.producto_color) : recepcionOrder.producto_color;
+        if (typeof obj === 'object' && obj !== null) parsedColor = obj;
+      }
+    } catch (e) {}
+
+    let fullGrid = {};
+    const isNested = Object.values(parsedColor).some(v => typeof v === 'object' && v !== null);
+
+    if (isNested) {
+      Object.entries(parsedColor).forEach(([col, tallasObj]) => {
+        fullGrid[col] = {};
+        Object.entries(tallasObj).forEach(([sz, maxQty]) => {
+          fullGrid[col][sz] = maxQty;
+        });
+      });
+    } else if (Object.keys(parsedColor).length > 0) {
+      fullGrid['GENERAL'] = {};
+      Object.entries(parsedColor).forEach(([sz, maxQty]) => {
+        fullGrid['GENERAL'][sz] = maxQty;
+      });
+    } else {
+      fullGrid['GENERAL'] = { 'TOTAL': recepcionOrder.cantidad };
+    }
+    setRecepcionTallas(fullGrid);
+  };
 
   const handleOpenObs = (o) => {
     setObsOrderId(o.id);
@@ -513,7 +624,7 @@ export default function Produccion() {
                 <th>{t('prod.tailor')}</th>
                 <th>{t('prod.model')}</th>
                 <th>{t('prod.pieces')} ({t('dash.status') === 'Status' ? 'Sent' : 'Env.'})</th>
-                <th>{t('prod.pieces')} ({t('dash.status') === 'Status' ? 'Recv.' : 'Rec.'})</th>
+                <th>{isEn ? 'Collected Pieces' : 'Piezas Recolectadas'}</th>
                 <th>{t('prod.startDate')} / {t('prod.endDate')}</th>
                 <th>{t('prod.maquilaCost')}</th>
                 <th>Costo Est.</th>
@@ -580,15 +691,26 @@ export default function Produccion() {
                       </td>
                       <td style={{ textAlign: 'center' }}>{o.cantidad}</td>
                       <td>
-                        <input 
-                          key={`${o.id}-${o.cantidad_recibida}`}
-                          type="number" 
-                          className="form-input" 
-                          style={{ width: '80px', padding: '0.25rem 0.5rem', textAlign: 'center' }}
-                          defaultValue={o.cantidad_recibida ?? ''}
-                          onBlur={(e) => handleRecibidasBlur(o.id, e.target.value)}
-                          disabled={!canEdit || o.estado === 'Terminado' || o.estado === 'Cancelado'}
-                        />
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                          {o.cantidad_recibida === null || o.cantidad_recibida === undefined || o.cantidad_recibida === 0 ? (
+                            <span className="badge badge-warning" style={{ fontSize: '10px', padding: '2px 6px', fontWeight: 600 }}>
+                              {isEn ? 'Pending Receive' : 'Pendiente Recibir'}
+                            </span>
+                          ) : (
+                            <span className="badge badge-success" style={{ fontSize: '11px', padding: '2px 6px', fontWeight: 700 }}>
+                              {o.cantidad_recibida} / {o.cantidad} pz
+                            </span>
+                          )}
+                          <button 
+                            type="button"
+                            className="btn btn-secondary" 
+                            style={{ padding: '3px 8px', fontSize: '11px', borderRadius: '6px' }}
+                            onClick={() => handleOpenRecepcionModal(o)}
+                            disabled={!canEdit || o.estado === 'Cancelado'}
+                          >
+                            {isEn ? 'Receive' : 'Recepcionar'}
+                          </button>
+                        </div>
                       </td>
                       <td>
                         <div style={{ display: 'flex', flexDirection: 'column', fontSize: '0.75rem', gap: '2px' }}>
@@ -964,6 +1086,107 @@ export default function Produccion() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Recepción por Color y Talla */}
+      {recepcionModalOpen && recepcionOrder && (
+        <div className="modal-overlay" style={{ zIndex: 1900 }} onClick={() => setRecepcionModalOpen(false)}>
+          <div className="modal-content glass-card" style={{ maxWidth: '680px', width: '95%' }} onClick={e => e.stopPropagation()}>
+            <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.75rem' }}>
+              <div>
+                <h2 style={{ fontSize: '1.25rem', margin: 0, fontWeight: 700 }}>
+                  {isEn ? 'Receive Collected Pieces' : 'Recepcionar Piezas Recolectadas'}
+                </h2>
+                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                  Orden #{getFolio(recepcionOrder)} | Modelo: <strong>{recepcionOrder.producto_modelo}</strong> ({recepcionOrder.maquilero_nombre})
+                </div>
+              </div>
+              <button className="btn-icon" onClick={() => setRecepcionModalOpen(false)}><X size={22} /></button>
+            </div>
+
+            <div style={{ margin: '1rem 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+              <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>
+                Total Orden: <strong>{recepcionOrder.cantidad} pzs</strong>
+              </div>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button type="button" className="btn btn-secondary" style={{ fontSize: '12px', padding: '4px 10px' }} onClick={handleMarcarTodoRecibido}>
+                  ✓ Marcar Todo Recibido
+                </button>
+                <button type="button" className="btn btn-secondary" style={{ fontSize: '12px', padding: '4px 10px' }} onClick={() => setRecepcionTallas({})}>
+                  Limpiar
+                </button>
+              </div>
+            </div>
+
+            <div style={{ maxHeight: '380px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem', paddingRight: '4px' }}>
+              {Object.entries(recepcionTallas).map(([colorKey, tallasObj]) => (
+                <div key={colorKey} style={{ background: 'rgba(255,255,255,0.03)', padding: '0.85rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                  <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#c084fc', marginBottom: '0.5rem' }}>
+                    Color: {colorKey}
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '0.6rem' }}>
+                    {typeof tallasObj === 'object' && tallasObj !== null ? (
+                      Object.entries(tallasObj).map(([szKey, val]) => (
+                        <div key={szKey} style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                          <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Talla {szKey}</label>
+                          <input 
+                            type="number" 
+                            min="0"
+                            className="form-input" 
+                            style={{ padding: '0.25rem 0.5rem', textAlign: 'center', fontSize: '0.9rem', fontWeight: 700 }}
+                            value={val ?? 0}
+                            onChange={(e) => {
+                              const newQty = parseInt(e.target.value) || 0;
+                              setRecepcionTallas(prev => ({
+                                ...prev,
+                                [colorKey]: {
+                                  ...prev[colorKey],
+                                  [szKey]: newQty
+                                }
+                              }));
+                            }}
+                          />
+                        </div>
+                      ))
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                        <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Cantidad</label>
+                        <input 
+                          type="number" 
+                          min="0"
+                          className="form-input" 
+                          style={{ padding: '0.25rem 0.5rem', textAlign: 'center', fontSize: '0.9rem', fontWeight: 700 }}
+                          value={tallasObj ?? 0}
+                          onChange={(e) => {
+                            const newQty = parseInt(e.target.value) || 0;
+                            setRecepcionTallas(prev => ({ ...prev, [colorKey]: newQty }));
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ marginTop: '1.25rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ fontSize: '1rem', fontWeight: 800 }}>
+                Total Recolectado: <span style={{ color: '#34d399' }}>
+                  {Object.values(recepcionTallas).reduce((acc, colObj) => {
+                    if (typeof colObj === 'object' && colObj !== null) {
+                      return acc + Object.values(colObj).reduce((s, v) => s + (parseInt(v) || 0), 0);
+                    }
+                    return acc + (parseInt(colObj) || 0);
+                  }, 0)} pzs
+                </span>
+              </div>
+              <div style={{ display: 'flex', gap: '0.75rem' }}>
+                <button type="button" className="btn btn-secondary" onClick={() => setRecepcionModalOpen(false)}>Cancelar</button>
+                <button type="button" className="btn btn-primary" onClick={handleSaveRecepcion}>Guardar Recepción</button>
+              </div>
+            </div>
           </div>
         </div>
       )}
