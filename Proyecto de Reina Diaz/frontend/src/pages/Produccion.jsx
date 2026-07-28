@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { Component, useState, useEffect } from 'react';
 import { 
   Plus, Search, Pencil, Trash2, CheckCircle, XCircle, 
   Archive, ArchiveRestore, Image as ImageIcon, AlertTriangle, AlertCircle, Calendar, X, Sparkles,
@@ -31,7 +31,7 @@ const displayDate = (date) => {
   return `${d.getUTCDate()}/${d.getUTCMonth() + 1}/${d.getUTCFullYear()}`;
 };
 
-export default function Produccion() {
+function Produccion() {
   const { user } = useAuth();
   const { settings, t, formatCurrency } = useSettings();
   const isEn = settings?.language === 'en';
@@ -192,27 +192,6 @@ export default function Produccion() {
     setRecepcionTallas(fullGrid);
   };
 
-  const handleOpenObs = (o) => {
-    setObsOrderId(o.id);
-    setObsText(o.observaciones || "");
-    setObsModalOpen(true);
-  };
-
-  const handleSaveObs = async () => {
-    try {
-      const res = await axios.put(`${API}/api/produccion/${obsOrderId}/observaciones`, {
-        observaciones: obsText
-      }, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
-      if (res.data.success) {
-        setObsModalOpen(false);
-        toast.success("Observaciones guardadas", { theme: 'dark' });
-        fetchOrders();
-      }
-    } catch (e) {
-      console.error(e);
-      toast.error("Error al guardar observaciones", { theme: 'dark' });
-    }
-  };
   const [verArchivados, setVerArchivados] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const [activeTab, setActiveTab] = useState('proceso'); // 'proceso' o 'terminado'
@@ -1254,5 +1233,40 @@ export default function Produccion() {
         </div>
       )}
     </div>
+  );
+}
+
+class ProduccionErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error, errorInfo) {
+    console.error("Error capturado en Producción:", error, errorInfo);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="glass-card" style={{ margin: '2rem', padding: '3rem', textAlign: 'center', color: '#fff' }}>
+          <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem', color: '#f87171' }}>Módulo de Producción</h2>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>{this.state.error?.toString()}</p>
+          <button type="button" className="btn btn-primary" onClick={() => window.location.reload()}>
+            Reintentar / Recargar Página
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+export default function ProduccionWrapper(props) {
+  return (
+    <ProduccionErrorBoundary>
+      <Produccion {...props} />
+    </ProduccionErrorBoundary>
   );
 }
