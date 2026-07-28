@@ -202,8 +202,9 @@ export default function Camion() {
 
   const handleSelectAdelantadaOrder = (order) => {
     setAdelantadaModalOpen(false);
-    const remainingQty = Math.max(0, (parseInt(order.cantidad) || 0) - (parseInt(order.cantidad_recibida) || 0));
-    const maxQty = remainingQty > 0 ? remainingQty : (parseInt(order.cantidad) || 0);
+    const recQty = parseInt(order.cantidad_recibida) || 0;
+    const totalQty = parseInt(order.cantidad) || 0;
+    const maxQty = recQty > 0 ? recQty : totalQty;
 
     const stockItem = {
       id: `prod_${order.id}`,
@@ -496,8 +497,9 @@ export default function Camion() {
       try {
         const token = localStorage.getItem('token');
         const prevReceived = selectedStockItem.orderRef?.cantidad_recibida || 0;
+        const targetReceived = Math.max(prevReceived, cargoQty);
         await axios.put(`${API}/api/produccion/${selectedStockItem.produccion_id}/recepcion`, {
-          cantidad_recibida: prevReceived + cargoQty,
+          cantidad_recibida: targetReceived,
           tallas_recibidas: tallas
         }, { headers: { Authorization: `Bearer ${token}` } });
         toast.success(isEn ? 'Early delivery synchronized with Production!' : '¡Entrega adelantada cargada al camión y sincronizada con Producción!', { theme: 'dark' });
