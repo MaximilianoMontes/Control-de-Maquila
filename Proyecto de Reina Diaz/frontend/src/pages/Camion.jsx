@@ -24,19 +24,36 @@ const formatDate = (dateStr) => {
 const SIZES = ["05", "07", "09", "11", "13", "15"];
 const parseColors = (colorStr) => {
   if (!colorStr) return ['N/A'];
-  const trimmed = colorStr.trim();
+  if (typeof colorStr === 'object' && !Array.isArray(colorStr)) {
+    return Object.keys(colorStr);
+  }
+  if (Array.isArray(colorStr)) {
+    const list = colorStr.map(c => typeof c === 'object' ? (c.color || c.nombre_color || c.name || 'GENERAL') : String(c)).filter(Boolean);
+    return list.length > 0 ? list : ['N/A'];
+  }
+  const trimmed = typeof colorStr === 'string' ? colorStr.trim() : '';
   if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
     try {
       const parsed = JSON.parse(trimmed);
       if (Array.isArray(parsed)) {
-        return parsed.map(c => c.color || c.Color || c.name || c).filter(Boolean);
+        const list = parsed.map(c => typeof c === 'object' ? (c.color || c.nombre_color || c.name || 'GENERAL') : String(c)).filter(Boolean);
+        return list.length > 0 ? list : ['N/A'];
       }
     } catch (e) {
       console.error("Error parsing color JSON:", e);
     }
+  } else if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      const keys = Object.keys(parsed);
+      return keys.length > 0 ? keys : ['N/A'];
+    } catch (e) {}
   }
-  // Fallback to comma-separated string
-  return colorStr.split(',').map(c => c.trim()).filter(Boolean);
+  if (colorStr && typeof colorStr === 'string') {
+    const split = colorStr.split(',').map(c => c.trim()).filter(Boolean);
+    return split.length > 0 ? split : [colorStr];
+  }
+  return ['N/A'];
 };
 
 const formatColorsDisplay = (colorStr) => {
@@ -184,29 +201,26 @@ export default function Camion() {
   };
 
   const handleSelectAdelantadaOrder = (order) => {
-    setSelectedAdelantadaOrder(order);
-    const maxGrid = parseColorAndTallasStructure(order.producto_color, order.cantidad);
+    setAdelantadaModalOpen(false);
+    const remainingQty = Math.max(0, (parseInt(order.cantidad) || 0) - (parseInt(order.cantidad_recibida) || 0));
+    const maxQty = remainingQty > 0 ? remainingQty : (parseInt(order.cantidad) || 0);
 
-    let existingRecibidas = {};
-    try {
-      if (order.tallas_recibidas) {
-        const obj = typeof order.tallas_recibidas === 'string' ? JSON.parse(order.tallas_recibidas) : order.tallas_recibidas;
-        if (typeof obj === 'object' && obj !== null) existingRecibidas = obj;
-      }
-    } catch (e) {}
+    const stockItem = {
+      id: `prod_${order.id}`,
+      produccion_id: order.id,
+      modelo: order.producto_modelo,
+      color: order.producto_color,
+      cliente: order.cliente || 'GENERAL',
+      no_orden: order.no_orden || order.id,
+      precio: order.precio_unitario || 0,
+      piezas: maxQty,
+      imagen: order.producto_imagen,
+      maquilero_nombre: order.maquilero_nombre,
+      isAdelantada: true,
+      orderRef: order
+    };
 
-    let initialGrid = {};
-    Object.entries(maxGrid).forEach(([colKey, tallasObj]) => {
-      initialGrid[colKey] = {};
-      Object.entries(tallasObj).forEach(([szKey, maxQty]) => {
-        const currentVal = (existingRecibidas[colKey] && existingRecibidas[colKey][szKey] !== undefined)
-          ? existingRecibidas[colKey][szKey]
-          : ((existingRecibidas[szKey] !== undefined) ? existingRecibidas[szKey] : maxQty);
-        initialGrid[colKey][szKey] = currentVal;
-      });
-    });
-
-    setAdelantadaTallas(initialGrid);
+    openCargoModal(stockItem);
   };
 
   const handleSaveAdelantadaCargo = async () => {
@@ -469,14 +483,28 @@ export default function Camion() {
   }, 0);
   const isTallaValid = tallasSum === cargoQty && cargoQty > 0;
 
-  const handleConfirmCargo = () => {
-    if (!isTallaValid) return;
+  const handleConfirmCargo = async () => {
+    if (!isTallaValid || !selectedStockItem) return;
 
     const cargoItem = {
       ...selectedStockItem,
       piezas: cargoQty,
       tallas_cantidades: { ...tallas }
     };
+
+    if (selectedStockItem.isAdelantada && selectedStockItem.produccion_id) {
+      try {
+        const token = localStorage.getItem('token');
+        const prevReceived = selectedStockItem.orderRef?.cantidad_recibida || 0;
+        await axios.put(`${API}/api/produccion/${selectedStockItem.produccion_id}/recepcion`, {
+          cantidad_recibida: prevReceived + cargoQty,
+          tallas_recibidas: tallas
+        }, { headers: { Authorization: `Bearer ${token}` } });
+        toast.success(isEn ? 'Early delivery synchronized with Production!' : '¡Entrega adelantada cargada al camión y sincronizada con Producción!', { theme: 'dark' });
+      } catch (err) {
+        console.error("Error syncing early delivery with production:", err);
+      }
+    }
 
     if (editIndex !== null) {
       // Update
