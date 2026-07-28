@@ -81,17 +81,71 @@ function Produccion() {
   const [recepcionOrder, setRecepcionOrder] = useState(null);
   const [recepcionTallas, setRecepcionTallas] = useState({});
 
+  const parseColorAndTallasStructure = (rawColor, defaultQty = 0) => {
+    if (!rawColor) return { 'GENERAL': { 'TOTAL': defaultQty } };
+    let parsed = rawColor;
+    if (typeof rawColor === 'string') {
+      try {
+        parsed = JSON.parse(rawColor);
+      } catch (e) {
+        const colName = rawColor.trim() || 'GENERAL';
+        return { [colName]: { 'TOTAL': defaultQty } };
+      }
+    }
+    const grid = {};
+    if (Array.isArray(parsed)) {
+      parsed.forEach((item, index) => {
+        if (typeof item === 'object' && item !== null) {
+          const colorName = item.color || item.nombre_color || item.name || `Color ${index + 1}`;
+          grid[colorName] = {};
+          const tallasObj = item.tallas || item.variantes || item.tallas_cantidades;
+          if (tallasObj && typeof tallasObj === 'object' && !Array.isArray(tallasObj)) {
+            Object.entries(tallasObj).forEach(([sz, qty]) => {
+              grid[colorName][sz] = parseInt(qty) || 0;
+            });
+          } else {
+            const qty = parseInt(item.cantidad ?? item.piezas ?? item.total ?? defaultQty) || 0;
+            grid[colorName]['CANTIDAD'] = qty;
+          }
+        } else if (typeof item === 'string' || typeof item === 'number') {
+          grid[String(item)] = { 'CANTIDAD': defaultQty };
+        }
+      });
+    } else if (typeof parsed === 'object' && parsed !== null) {
+      const entries = Object.entries(parsed);
+      if (entries.length === 0) return { 'GENERAL': { 'TOTAL': defaultQty } };
+      const isNested = entries.some(([_, val]) => typeof val === 'object' && val !== null && !Array.isArray(val));
+      if (isNested) {
+        entries.forEach(([col, tallasObj]) => {
+          grid[col] = {};
+          if (typeof tallasObj === 'object' && tallasObj !== null && !Array.isArray(tallasObj)) {
+            Object.entries(tallasObj).forEach(([sz, qty]) => {
+              grid[col][sz] = parseInt(qty) || 0;
+            });
+          } else {
+            grid[col]['CANTIDAD'] = parseInt(tallasObj) || 0;
+          }
+        });
+      } else {
+        const isSizeKeys = entries.every(([k]) => /^\d+$|^(XS|S|M|L|XL|2XL|3XL|4XL|XXL|EG|CH|G|MED|GDE)$/i.test(k.trim()));
+        if (isSizeKeys) {
+          grid['GENERAL'] = {};
+          entries.forEach(([sz, qty]) => {
+            grid['GENERAL'][sz] = parseInt(qty) || 0;
+          });
+        } else {
+          entries.forEach(([col, qty]) => {
+            grid[col] = { 'CANTIDAD': parseInt(qty) || 0 };
+          });
+        }
+      }
+    }
+    return Object.keys(grid).length > 0 ? grid : { 'GENERAL': { 'TOTAL': defaultQty } };
+  };
+
   const handleOpenRecepcionModal = (order) => {
     setRecepcionOrder(order);
-    let parsedColor = {};
-    try {
-      if (order.producto_color) {
-        const obj = typeof order.producto_color === 'string' ? JSON.parse(order.producto_color) : order.producto_color;
-        if (typeof obj === 'object' && obj !== null) parsedColor = obj;
-      }
-    } catch (e) {
-      parsedColor = {};
-    }
+    const maxGrid = parseColorAndTallasStructure(order.producto_color, order.cantidad);
 
     let existingRecibidas = {};
     try {
@@ -102,29 +156,15 @@ function Produccion() {
     } catch (e) {}
 
     let initialGrid = {};
-    const isNested = Object.values(parsedColor).some(v => typeof v === 'object' && v !== null);
-
-    if (isNested) {
-      Object.entries(parsedColor).forEach(([col, tallasObj]) => {
-        initialGrid[col] = {};
-        Object.entries(tallasObj).forEach(([sz, maxQty]) => {
-          const currentVal = existingRecibidas[col] && existingRecibidas[col][sz] !== undefined
-            ? existingRecibidas[col][sz]
-            : (order.cantidad_recibida !== null ? maxQty : 0);
-          initialGrid[col][sz] = currentVal;
-        });
+    Object.entries(maxGrid).forEach(([colKey, tallasObj]) => {
+      initialGrid[colKey] = {};
+      Object.entries(tallasObj).forEach(([szKey, maxQty]) => {
+        const currentVal = (existingRecibidas[colKey] && existingRecibidas[colKey][szKey] !== undefined)
+          ? existingRecibidas[colKey][szKey]
+          : ((existingRecibidas[szKey] !== undefined) ? existingRecibidas[szKey] : (order.cantidad_recibida !== null ? maxQty : 0));
+        initialGrid[colKey][szKey] = currentVal;
       });
-    } else if (Object.keys(parsedColor).length > 0) {
-      initialGrid['GENERAL'] = {};
-      Object.entries(parsedColor).forEach(([sz, maxQty]) => {
-        const currentVal = existingRecibidas['GENERAL'] && existingRecibidas['GENERAL'][sz] !== undefined
-          ? existingRecibidas['GENERAL'][sz]
-          : (existingRecibidas[sz] !== undefined ? existingRecibidas[sz] : (order.cantidad_recibida !== null ? maxQty : 0));
-        initialGrid['GENERAL'][sz] = currentVal;
-      });
-    } else {
-      initialGrid['GENERAL'] = { 'TOTAL': order.cantidad_recibida || 0 };
-    }
+    });
 
     setRecepcionTallas(initialGrid);
     setRecepcionModalOpen(true);
@@ -163,33 +203,8 @@ function Produccion() {
 
   const handleMarcarTodoRecibido = () => {
     if (!recepcionOrder) return;
-    let parsedColor = {};
-    try {
-      if (recepcionOrder.producto_color) {
-        const obj = typeof recepcionOrder.producto_color === 'string' ? JSON.parse(recepcionOrder.producto_color) : recepcionOrder.producto_color;
-        if (typeof obj === 'object' && obj !== null) parsedColor = obj;
-      }
-    } catch (e) {}
-
-    let fullGrid = {};
-    const isNested = Object.values(parsedColor).some(v => typeof v === 'object' && v !== null);
-
-    if (isNested) {
-      Object.entries(parsedColor).forEach(([col, tallasObj]) => {
-        fullGrid[col] = {};
-        Object.entries(tallasObj).forEach(([sz, maxQty]) => {
-          fullGrid[col][sz] = maxQty;
-        });
-      });
-    } else if (Object.keys(parsedColor).length > 0) {
-      fullGrid['GENERAL'] = {};
-      Object.entries(parsedColor).forEach(([sz, maxQty]) => {
-        fullGrid['GENERAL'][sz] = maxQty;
-      });
-    } else {
-      fullGrid['GENERAL'] = { 'TOTAL': recepcionOrder.cantidad };
-    }
-    setRecepcionTallas(fullGrid);
+    const maxGrid = parseColorAndTallasStructure(recepcionOrder.producto_color, recepcionOrder.cantidad);
+    setRecepcionTallas(maxGrid);
   };
 
   const [verArchivados, setVerArchivados] = useState(false);
@@ -1148,13 +1163,15 @@ function Produccion() {
               {Object.entries(recepcionTallas).map(([colorKey, tallasObj]) => (
                 <div key={colorKey} style={{ background: 'rgba(255,255,255,0.03)', padding: '0.85rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.08)' }}>
                   <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#c084fc', marginBottom: '0.5rem' }}>
-                    Color: {colorKey}
+                    {colorKey === 'GENERAL' ? 'Desglose por Tallas' : `Color: ${colorKey}`}
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '0.6rem' }}>
                     {typeof tallasObj === 'object' && tallasObj !== null ? (
                       Object.entries(tallasObj).map(([szKey, val]) => (
                         <div key={szKey} style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                          <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Talla {szKey}</label>
+                          <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+                            {(szKey === 'CANTIDAD' || szKey === 'TOTAL') ? 'Cantidad' : (szKey.toLowerCase().startsWith('talla') ? szKey : `Talla ${szKey}`)}
+                          </label>
                           <input 
                             type="number" 
                             min="0"

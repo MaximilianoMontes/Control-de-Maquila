@@ -113,15 +113,71 @@ export default function Camion() {
     }
   };
 
+  const parseColorAndTallasStructure = (rawColor, defaultQty = 0) => {
+    if (!rawColor) return { 'GENERAL': { 'TOTAL': defaultQty } };
+    let parsed = rawColor;
+    if (typeof rawColor === 'string') {
+      try {
+        parsed = JSON.parse(rawColor);
+      } catch (e) {
+        const colName = rawColor.trim() || 'GENERAL';
+        return { [colName]: { 'TOTAL': defaultQty } };
+      }
+    }
+    const grid = {};
+    if (Array.isArray(parsed)) {
+      parsed.forEach((item, index) => {
+        if (typeof item === 'object' && item !== null) {
+          const colorName = item.color || item.nombre_color || item.name || `Color ${index + 1}`;
+          grid[colorName] = {};
+          const tallasObj = item.tallas || item.variantes || item.tallas_cantidades;
+          if (tallasObj && typeof tallasObj === 'object' && !Array.isArray(tallasObj)) {
+            Object.entries(tallasObj).forEach(([sz, qty]) => {
+              grid[colorName][sz] = parseInt(qty) || 0;
+            });
+          } else {
+            const qty = parseInt(item.cantidad ?? item.piezas ?? item.total ?? defaultQty) || 0;
+            grid[colorName]['CANTIDAD'] = qty;
+          }
+        } else if (typeof item === 'string' || typeof item === 'number') {
+          grid[String(item)] = { 'CANTIDAD': defaultQty };
+        }
+      });
+    } else if (typeof parsed === 'object' && parsed !== null) {
+      const entries = Object.entries(parsed);
+      if (entries.length === 0) return { 'GENERAL': { 'TOTAL': defaultQty } };
+      const isNested = entries.some(([_, val]) => typeof val === 'object' && val !== null && !Array.isArray(val));
+      if (isNested) {
+        entries.forEach(([col, tallasObj]) => {
+          grid[col] = {};
+          if (typeof tallasObj === 'object' && tallasObj !== null && !Array.isArray(tallasObj)) {
+            Object.entries(tallasObj).forEach(([sz, qty]) => {
+              grid[col][sz] = parseInt(qty) || 0;
+            });
+          } else {
+            grid[col]['CANTIDAD'] = parseInt(tallasObj) || 0;
+          }
+        });
+      } else {
+        const isSizeKeys = entries.every(([k]) => /^\d+$|^(XS|S|M|L|XL|2XL|3XL|4XL|XXL|EG|CH|G|MED|GDE)$/i.test(k.trim()));
+        if (isSizeKeys) {
+          grid['GENERAL'] = {};
+          entries.forEach(([sz, qty]) => {
+            grid['GENERAL'][sz] = parseInt(qty) || 0;
+          });
+        } else {
+          entries.forEach(([col, qty]) => {
+            grid[col] = { 'CANTIDAD': parseInt(qty) || 0 };
+          });
+        }
+      }
+    }
+    return Object.keys(grid).length > 0 ? grid : { 'GENERAL': { 'TOTAL': defaultQty } };
+  };
+
   const handleSelectAdelantadaOrder = (order) => {
     setSelectedAdelantadaOrder(order);
-    let parsedColor = {};
-    try {
-      if (order.producto_color) {
-        const obj = typeof order.producto_color === 'string' ? JSON.parse(order.producto_color) : order.producto_color;
-        if (typeof obj === 'object' && obj !== null) parsedColor = obj;
-      }
-    } catch (e) {}
+    const maxGrid = parseColorAndTallasStructure(order.producto_color, order.cantidad);
 
     let existingRecibidas = {};
     try {
@@ -132,25 +188,15 @@ export default function Camion() {
     } catch (e) {}
 
     let initialGrid = {};
-    const isNested = Object.values(parsedColor).some(v => typeof v === 'object' && v !== null);
-
-    if (isNested) {
-      Object.entries(parsedColor).forEach(([col, tallasObj]) => {
-        initialGrid[col] = {};
-        Object.entries(tallasObj).forEach(([sz, maxQty]) => {
-          const currentVal = existingRecibidas[col] && existingRecibidas[col][sz] !== undefined ? existingRecibidas[col][sz] : maxQty;
-          initialGrid[col][sz] = currentVal;
-        });
+    Object.entries(maxGrid).forEach(([colKey, tallasObj]) => {
+      initialGrid[colKey] = {};
+      Object.entries(tallasObj).forEach(([szKey, maxQty]) => {
+        const currentVal = (existingRecibidas[colKey] && existingRecibidas[colKey][szKey] !== undefined)
+          ? existingRecibidas[colKey][szKey]
+          : ((existingRecibidas[szKey] !== undefined) ? existingRecibidas[szKey] : maxQty);
+        initialGrid[colKey][szKey] = currentVal;
       });
-    } else if (Object.keys(parsedColor).length > 0) {
-      initialGrid['GENERAL'] = {};
-      Object.entries(parsedColor).forEach(([sz, maxQty]) => {
-        const currentVal = existingRecibidas['GENERAL'] && existingRecibidas['GENERAL'][sz] !== undefined ? existingRecibidas['GENERAL'][sz] : maxQty;
-        initialGrid['GENERAL'][sz] = currentVal;
-      });
-    } else {
-      initialGrid['GENERAL'] = { 'TOTAL': order.cantidad };
-    }
+    });
 
     setAdelantadaTallas(initialGrid);
   };
@@ -1411,13 +1457,15 @@ export default function Camion() {
                   {Object.entries(adelantadaTallas).map(([colKey, tallasObj]) => (
                     <div key={colKey} style={{ background: 'rgba(255,255,255,0.03)', padding: '0.75rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.08)' }}>
                       <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#c084fc', marginBottom: '0.4rem' }}>
-                        Color: {colKey}
+                        {colKey === 'GENERAL' ? 'Desglose por Tallas' : `Color: ${colKey}`}
                       </div>
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '0.5rem' }}>
                         {typeof tallasObj === 'object' && tallasObj !== null ? (
                           Object.entries(tallasObj).map(([szKey, val]) => (
                             <div key={szKey} style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                              <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Talla {szKey}</label>
+                              <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                                {(szKey === 'CANTIDAD' || szKey === 'TOTAL') ? 'Cantidad' : (szKey.toLowerCase().startsWith('talla') ? szKey : `Talla ${szKey}`)}
+                              </label>
                               <input 
                                 type="number"
                                 min="0"
