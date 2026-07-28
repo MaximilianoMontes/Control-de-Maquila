@@ -51,6 +51,32 @@ export default function Produccion() {
   const [splitOrder, setSplitOrder] = useState(null);
   const [splitData, setSplitData] = useState({ cantidad_entregada: '', nuevo_maquilero_id: '' });
   
+  const [obsModalOpen, setObsModalOpen] = useState(false);
+  const [obsText, setObsText] = useState("");
+  const [obsOrderId, setObsOrderId] = useState(null);
+
+  const handleOpenObs = (o) => {
+    setObsOrderId(o.id);
+    setObsText(o.observaciones || "");
+    setObsModalOpen(true);
+  };
+
+  const handleSaveObs = async () => {
+    try {
+      const res = await axios.put(`${API}/api/produccion/${obsOrderId}/observaciones`, {
+        observaciones: obsText
+      }, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+      if (res.data.success) {
+        setObsModalOpen(false);
+        toast.success("Observaciones guardadas", { theme: 'dark' });
+        fetchOrders();
+      }
+    } catch (e) {
+      console.error(e);
+      toast.error("Error al guardar observaciones", { theme: 'dark' });
+    }
+  };
+
   const [recepcionModalOpen, setRecepcionModalOpen] = useState(false);
   const [recepcionOrder, setRecepcionOrder] = useState(null);
   const [recepcionTallas, setRecepcionTallas] = useState({});
