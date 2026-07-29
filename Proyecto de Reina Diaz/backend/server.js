@@ -1728,7 +1728,8 @@ app.post('/api/pagos', authenticateToken, async (req, res) => {
   const connection = await db.getConnection();
   try {
     await connection.beginTransaction();
-    const fecha = new Date().toISOString().split('T')[0];
+    const now = new Date();
+    const fecha = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     
     // 1. Insertar el Pago
     const [result] = await connection.query("INSERT INTO pagos (produccion_id, monto, fecha, tipo_pago, con_iva) VALUES (?, ?, ?, ?, ?)",
@@ -1751,7 +1752,7 @@ app.post('/api/pagos', authenticateToken, async (req, res) => {
       if (tipo_pago === 'abono' && currentStatus === 'En proceso') {
         await connection.query("UPDATE produccion SET estado = 'Pago Parcial' WHERE id = ?", [produccion_id]);
       } else if (tipo_pago === 'completo') {
-        const today = new Date().toISOString().split('T')[0];
+        const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
         await connection.query(
           "UPDATE produccion SET estado = 'Terminado', fecha_terminado = COALESCE(fecha_terminado, NOW()), fecha_fin = COALESCE(fecha_fin, ?) WHERE id = ?",
           [today, produccion_id]

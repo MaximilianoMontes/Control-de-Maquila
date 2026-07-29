@@ -455,7 +455,7 @@ export default function Pagos() {
                       pagos.map((p, index) => (
                         <tr key={p.id}>
                           <td>#{pagos.length - index}</td>
-                          <td>{new Date(p.fecha).toLocaleDateString()}</td>
+                          <td>{formatDate(p.fecha)}</td>
                           <td><span className="badge badge-info" style={{ textTransform: 'uppercase' }}>{p.tipo_pago}</span></td>
                           <td style={{ color: '#34d399', fontWeight: 'bold' }}>{formatCurrency(p.monto)}</td>
                           <td>
@@ -613,7 +613,7 @@ export default function Pagos() {
                     ) : (
                       historialDescuentos.map(d => (
                         <tr key={d.id}>
-                          <td>{new Date(d.fecha).toLocaleDateString()}</td>
+                          <td>{formatDate(d.fecha)}</td>
                           <td><strong>{d.producto_modelo}</strong></td>
                           <td style={{ fontSize: '0.85rem', maxWidth: '200px' }}>{d.motivo}</td>
                           <td style={{ textAlign: 'center' }}>{d.piezas_afectadas}</td>
