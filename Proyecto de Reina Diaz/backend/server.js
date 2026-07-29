@@ -2250,13 +2250,20 @@ app.get('/api/reportes/recoleccion', async (req, res) => {
     query += ` ORDER BY p.fecha_fin ASC`;
     const [orders] = await db.query(query, params);
 
+    const cleanPdfText = (str) => {
+      if (!str) return '-';
+      return String(str)
+        .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F700}-\u{1F77F}\u{1F780}-\u{1F7FF}\u{1F800}-\u{1F8FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '')
+        .trim() || '-';
+    };
+
     // Calcular Semáforo para cada orden
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
     orders.forEach(o => {
       let colorStatus = 'verde';
-      let semaforoLabel = tLabel('🟢 A Tiempo', '🟢 On Time');
+      let semaforoLabel = tLabel('A Tiempo', 'On Time');
 
       if (o.fecha_fin) {
         const finDate = new Date(o.fecha_fin);
@@ -2265,13 +2272,13 @@ app.get('/api/reportes/recoleccion', async (req, res) => {
 
         if (diffDays < 0 || (o.retrasos && o.retrasos > 2)) {
           colorStatus = 'rojo';
-          semaforoLabel = tLabel('🔴 Vencido', '🔴 Overdue');
+          semaforoLabel = tLabel('Vencido', 'Overdue');
         } else if (diffDays === 0 || diffDays === 1 || (o.retrasos && o.retrasos > 0)) {
           colorStatus = 'amarillo';
-          semaforoLabel = tLabel('🟡 Próximo', '🟡 Urgent');
+          semaforoLabel = tLabel('Próximo', 'Urgent');
         } else {
           colorStatus = 'verde';
-          semaforoLabel = tLabel('🟢 A Tiempo', '🟢 On Time');
+          semaforoLabel = tLabel('A Tiempo', 'On Time');
         }
       }
 
@@ -2346,7 +2353,7 @@ app.get('/api/reportes/recoleccion', async (req, res) => {
              } catch(e) { return o.producto_color || '-'; }
           })(),
           estado: o.semaforoLabel || '-',
-          observacion: o.producto_observaciones || '-',
+          observacion: cleanPdfText(o.producto_observaciones),
           orden: o.inventario_orden || '-',
           piezas: String(o.cantidad || 0),
           entrega: formatDateToDMY(o.fecha_fin)
