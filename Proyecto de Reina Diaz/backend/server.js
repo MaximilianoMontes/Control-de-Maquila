@@ -431,22 +431,65 @@ app.post('/api/inventario', authenticateToken, upload.single('imagenBtn'), async
     await logActivity(req.user.id, logTag, 'INVENTARIO', `${isReprog ? 'Reprogramó' : 'Agregó'} ${modelo} (${piezas_en_proceso} piezas)`);
     
     // Automatically mirror the new cut in inventario_real
-    await db.query(`
-      INSERT INTO inventario_real (numero, temporada, modelo, precio, color, cliente, no_orden, piezas, imagen, observaciones, fecha_ingreso, precio_plancha)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?)
-    `, [
-      numero ? String(numero) : null,
-      req.body.temporada ? String(req.body.temporada) : null,
-      modelo ? String(modelo) : null,
-      parseFloat(String(precio).replace(/[^0-9.-]+/g,"")) || 0,
-      color ? String(color) : null,
-      cliente ? String(cliente) : null,
-      no_orden ? String(no_orden) : null,
-      parseInt(piezas_en_proceso) || 0,
-      finalImageUrl ? String(finalImageUrl) : null,
-      observaciones ? String(observaciones) : null,
-      parseFloat(String(precio_plancha).replace(/[^0-9.-]+/g,"")) || 0
-    ]);
+    if (isReprog) {
+      await db.query(`
+        INSERT INTO inventario_real (numero, temporada, modelo, precio, color, cliente, no_orden, piezas, imagen, observaciones, fecha_ingreso, precio_plancha, es_reprogramacion)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, 1)
+      `, [
+        numero ? String(numero) : null,
+        req.body.temporada ? String(req.body.temporada) : null,
+        modelo ? String(modelo) : null,
+        parseFloat(String(precio).replace(/[^0-9.-]+/g,"")) || 0,
+        color ? String(color) : null,
+        cliente ? String(cliente) : null,
+        no_orden ? String(no_orden) : null,
+        parseInt(piezas_en_proceso) || 0,
+        finalImageUrl ? String(finalImageUrl) : null,
+        observaciones ? String(observaciones) : null,
+        parseFloat(String(precio_plancha).replace(/[^0-9.-]+/g,"")) || 0
+      ]);
+    } else {
+      const [existingReal] = await db.query(
+        "SELECT id FROM inventario_real WHERE modelo = ? AND COALESCE(es_reprogramacion, 0) = 0",
+        [modelo ? String(modelo) : null]
+      );
+      if (existingReal.length > 0) {
+        await db.query(`
+          UPDATE inventario_real
+          SET numero=?, temporada=?, precio=?, color=?, cliente=?, no_orden=?, piezas = piezas + ?, imagen=?, observaciones=?, precio_plancha=?
+          WHERE id=?
+        `, [
+          numero ? String(numero) : null,
+          req.body.temporada ? String(req.body.temporada) : null,
+          parseFloat(String(precio).replace(/[^0-9.-]+/g,"")) || 0,
+          color ? String(color) : null,
+          cliente ? String(cliente) : null,
+          no_orden ? String(no_orden) : null,
+          parseInt(piezas_en_proceso) || 0,
+          finalImageUrl ? String(finalImageUrl) : null,
+          observaciones ? String(observaciones) : null,
+          parseFloat(String(precio_plancha).replace(/[^0-9.-]+/g,"")) || 0,
+          existingReal[0].id
+        ]);
+      } else {
+        await db.query(`
+          INSERT INTO inventario_real (numero, temporada, modelo, precio, color, cliente, no_orden, piezas, imagen, observaciones, fecha_ingreso, precio_plancha, es_reprogramacion)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, 0)
+        `, [
+          numero ? String(numero) : null,
+          req.body.temporada ? String(req.body.temporada) : null,
+          modelo ? String(modelo) : null,
+          parseFloat(String(precio).replace(/[^0-9.-]+/g,"")) || 0,
+          color ? String(color) : null,
+          cliente ? String(cliente) : null,
+          no_orden ? String(no_orden) : null,
+          parseInt(piezas_en_proceso) || 0,
+          finalImageUrl ? String(finalImageUrl) : null,
+          observaciones ? String(observaciones) : null,
+          parseFloat(String(precio_plancha).replace(/[^0-9.-]+/g,"")) || 0
+        ]);
+      }
+    }
 
     res.json({ id: result.insertId, success: true });
   } catch (error) {

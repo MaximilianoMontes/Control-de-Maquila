@@ -225,7 +225,27 @@ export default function Inventario() {
                           </div>
                         )}
                       </td>
-                      <td style={{ fontWeight: 700 }}>{item.modelo}</td>
+                      <td style={{ fontWeight: 700 }}>
+                        {item.modelo}
+                        {(item.es_reprogramacion === 1 || item.es_reprogramacion === '1' || item.es_reprogramacion === true) && (
+                          <span 
+                            style={{ 
+                              marginLeft: '0.5rem', 
+                              fontSize: '0.68rem', 
+                              padding: '0.15rem 0.4rem', 
+                              background: 'rgba(168, 85, 247, 0.2)', 
+                              color: '#c084fc', 
+                              border: '1px solid rgba(168, 85, 247, 0.4)', 
+                              borderRadius: '4px',
+                              fontWeight: 600,
+                              display: 'inline-block'
+                            }}
+                            title="Corrida reprogramada"
+                          >
+                            Reprogramación
+                          </span>
+                        )}
+                      </td>
                       <td>
                         {(() => {
                           try {

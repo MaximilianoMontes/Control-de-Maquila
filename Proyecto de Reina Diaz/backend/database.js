@@ -96,6 +96,7 @@ async function initializeDatabase() {
         piezas INT DEFAULT 0,
         imagen TEXT,
         observaciones TEXT,
+        es_reprogramacion TINYINT(1) DEFAULT 0,
         fecha_ingreso TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         precio_plancha DECIMAL(10, 2) DEFAULT 0.00
       );
@@ -293,6 +294,13 @@ async function initializeDatabase() {
       console.log("Migration: observaciones column added to produccion");
     } catch (e) {
       if (e.code !== 'ER_DUP_FIELDNAME') console.error("Migration error (observaciones):", e.message);
+    }
+
+    try {
+      await connection.query("ALTER TABLE inventario_real ADD COLUMN es_reprogramacion TINYINT(1) DEFAULT 0");
+      console.log("Migration: es_reprogramacion column added to inventario_real");
+    } catch (e) {
+      if (e.code !== 'ER_DUP_FIELDNAME') console.error("Migration error (es_reprogramacion):", e.message);
     }
 
     // Migration: Backfill fecha_creacion for existing cuts using historial records
@@ -1112,6 +1120,68 @@ async function initializeDatabase() {
       }
     } catch (e) {
       console.error('Error al resetear plancha:', e);
+    }
+
+    // Migration: Limpiar duplicados no reprogramados de inventario_real
+    try {
+      await connection.query(`
+        CREATE TABLE IF NOT EXISTS migrations_run (
+          migration_name VARCHAR(255) PRIMARY KEY
+        );
+      `);
+
+      const [dupRun] = await connection.query("SELECT 1 FROM migrations_run WHERE migration_name = 'cleanup_non_reprogramacion_duplicates'");
+      if (dupRun.length === 0) {
+        console.log('--- MIGRACIÓN MANUAL: Sincronizar flags de reprogramación y eliminar duplicados no reprogramados ---');
+
+        // 1. Sincronizar flag es_reprogramacion desde inventario
+        try {
+          await connection.query(`
+            UPDATE inventario_real ir
+            JOIN inventario i ON i.modelo = ir.modelo AND i.no_orden = ir.no_orden
+            SET ir.es_reprogramacion = i.es_reprogramacion
+            WHERE i.es_reprogramacion IS NOT NULL
+          `);
+        } catch (syncErr) {
+          console.error("Error al sincronizar es_reprogramacion:", syncErr.message);
+        }
+
+        // 2. Buscar modelos con múltiples registros no reprogramados (es_reprogramacion = 0)
+        const [dupRows] = await connection.query(`
+          SELECT modelo
+          FROM inventario_real
+          WHERE COALESCE(es_reprogramacion, 0) = 0
+          GROUP BY modelo
+          HAVING COUNT(*) > 1
+        `);
+
+        for (const r of dupRows) {
+          if (!r.modelo) continue;
+
+          const [records] = await connection.query(`
+            SELECT id, piezas, no_orden, fecha_ingreso
+            FROM inventario_real
+            WHERE modelo = ? AND COALESCE(es_reprogramacion, 0) = 0
+            ORDER BY id ASC
+          `, [r.modelo]);
+
+          if (records.length > 1) {
+            const primaryId = records[0].id;
+            const deleteIds = records.slice(1).map(rec => rec.id);
+
+            // Eliminar los duplicados no reprogramados
+            for (const delId of deleteIds) {
+              await connection.query("DELETE FROM inventario_real WHERE id = ?", [delId]);
+            }
+            console.log(`Modelo '${r.modelo}': Eliminados ${deleteIds.length} registros duplicados no reprogramados (conservado ID ${primaryId})`);
+          }
+        }
+
+        await connection.query("INSERT INTO migrations_run (migration_name) VALUES ('cleanup_non_reprogramacion_duplicates')");
+        console.log('--- MIGRACIÓN MANUAL COMPLETADA: Limpieza de duplicados terminada ---');
+      }
+    } catch (e) {
+      console.error('Error en migración cleanup_non_reprogramacion_duplicates:', e);
     }
 
     // Revert stock restoration in inventario_real
