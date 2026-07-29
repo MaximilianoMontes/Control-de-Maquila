@@ -769,7 +769,7 @@ function Produccion() {
                               {o.ajuste_tipo === 'bono' ? (t('prod.bonuses') === 'Bonuses' ? 'BONUS' : 'BONO') : (t('prod.discounts') === 'Discounts' ? 'DISC' : 'DESC')} {o.ajuste_porcentaje}%
                             </span>
                           )}
-                          {canEdit && (o.estado === 'En proceso' || o.estado === 'Terminado Parcial') && (
+                          {canEdit && (o.estado !== 'Terminado' && o.estado !== 'Cancelado') && (
                             <select className="form-input" style={{ width: '100%', padding: '2px', fontSize: '10px', height: '24px' }} value={o.ajuste_tipo === 'ninguno' ? '' : `${o.ajuste_tipo}-${o.ajuste_porcentaje}`} onChange={(e) => handleApplyAdjustment(o.id, e.target.value)}>
                               <option value="">{t('prod.adjust')}</option>
                               <option value="ninguno-0">{t('prod.noAdjust')}</option>
@@ -793,11 +793,11 @@ function Produccion() {
                       <td>
                         <span className={`badge ${
                           o.estado === 'Terminado' ? 'badge-success' : 
-                          o.estado === 'Terminado Parcial' ? 'badge-partial' : 
+                          (o.estado === 'Terminado Parcial' || o.estado === 'Pago Parcial') ? 'badge-partial' : 
                           o.estado === 'Cancelado' ? 'badge-danger' : 'badge-warning'
                         }`}>
                           {o.estado === 'Terminado' ? t('prod.statusFinished') : 
-                           o.estado === 'Terminado Parcial' ? t('prod.statusPartial') : 
+                           (o.estado === 'Terminado Parcial' || o.estado === 'Pago Parcial') ? t('prod.statusPartial') : 
                            o.estado === 'Cancelado' ? t('prod.statusCanceled') : t('prod.statusInProgress')}
                         </span>
                       </td>
@@ -817,8 +817,8 @@ function Produccion() {
                               
                               {activeDropdownId === o.id && (
                                 <div className={`actions-dropdown-menu ${index >= filteredOrders.length - 3 && filteredOrders.length > 3 ? 'open-upward' : ''}`}>
-                                  {/* Acciones principales en proceso */}
-                                  {(o.estado === 'En proceso' || o.estado === 'Terminado Parcial') && (
+                                  {/* Acciones principales en proceso / pago parcial */}
+                                  {(o.estado !== 'Terminado' && o.estado !== 'Cancelado') && (
                                     <>
                                       <button className="actions-dropdown-item success" onClick={() => { setActiveDropdownId(null); handleTerminar(o.id); }}>
                                         <CheckCircle size={16} /> {isEn ? 'Finish Order' : 'Terminar Orden'}
