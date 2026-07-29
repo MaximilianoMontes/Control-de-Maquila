@@ -1477,7 +1477,12 @@ app.put('/api/produccion/:id', authenticateToken, async (req, res) => {
 app.put('/api/produccion/:id/recepcion', authenticateToken, async (req, res) => {
   const { cantidad_recibida, tallas_recibidas } = req.body;
   try {
-    const [olds] = await db.query("SELECT * FROM produccion WHERE id = ?", [req.params.id]);
+    const [olds] = await db.query(`
+      SELECT p.*, i.precio as unit_price 
+      FROM produccion p 
+      LEFT JOIN inventario i ON p.inventario_id = i.id 
+      WHERE p.id = ?
+    `, [req.params.id]);
     const old = olds[0];
     if (!old) return res.status(404).json({ error: 'Orden no encontrada' });
 
@@ -1491,13 +1496,30 @@ app.put('/api/produccion/:id/recepcion', authenticateToken, async (req, res) => 
 
     const tallasJsonStr = tallas_recibidas ? (typeof tallas_recibidas === 'string' ? tallas_recibidas : JSON.stringify(tallas_recibidas)) : old.tallas_recibidas;
 
-    await db.query("UPDATE produccion SET cantidad_recibida = ?, tallas_recibidas = ? WHERE id = ?", 
-      [qty, tallasJsonStr, req.params.id]);
+    const effectiveQty = (qty !== null && qty !== undefined && qty >= 0) ? qty : old.cantidad;
+    const up = old.es_extra === 1
+      ? (old.precio_extra !== null ? parseFloat(old.precio_extra) : 0)
+      : (old.unit_price || (old.precio_total / (old.cantidad || 1)) || 0);
+
+    let subtotal = effectiveQty * up;
+    let adjustmentAmount = 0;
+    let finalPrecioTotal = subtotal;
+
+    if (old.ajuste_tipo === 'bono') {
+      adjustmentAmount = subtotal * ((old.ajuste_porcentaje || 0) / 100);
+      finalPrecioTotal = subtotal + adjustmentAmount;
+    } else if (old.ajuste_tipo === 'descuento') {
+      adjustmentAmount = subtotal * ((old.ajuste_porcentaje || 0) / 100);
+      finalPrecioTotal = subtotal - adjustmentAmount;
+    }
+
+    await db.query("UPDATE produccion SET cantidad_recibida = ?, tallas_recibidas = ?, precio_total = ?, ajuste_monto = ? WHERE id = ?", 
+      [qty, tallasJsonStr, finalPrecioTotal, adjustmentAmount, req.params.id]);
 
     await checkAndMoveToInventory(req.params.id, req.user.id);
     await autoArchiveOrders();
 
-    res.json({ success: true, cantidad_recibida: qty, tallas_recibidas: tallasJsonStr });
+    res.json({ success: true, cantidad_recibida: qty, tallas_recibidas: tallasJsonStr, precio_total: finalPrecioTotal });
   } catch (error) {
     console.error("Error en PUT /api/produccion/:id/recepcion:", error);
     res.status(500).json({ error: error.message });

@@ -354,6 +354,41 @@ async function initializeDatabase() {
       console.error('Error al migrar roles:', e);
     }
 
+    try {
+      const [recRows] = await connection.query(`
+        SELECT p.id, p.cantidad, p.cantidad_recibida, p.precio_total, p.precio_extra, p.es_extra, p.ajuste_tipo, p.ajuste_porcentaje, i.precio as unit_price
+        FROM produccion p
+        LEFT JOIN inventario i ON p.inventario_id = i.id
+        WHERE p.cantidad_recibida IS NOT NULL AND p.cantidad_recibida >= 0
+      `);
+
+      for (const r of recRows) {
+        const up = r.es_extra === 1
+          ? (r.precio_extra !== null ? parseFloat(r.precio_extra) : 0)
+          : (r.unit_price || (r.precio_total / (r.cantidad || 1)) || 0);
+
+        const subtotal = r.cantidad_recibida * up;
+        let adj = 0;
+        let newTotal = subtotal;
+
+        if (r.ajuste_tipo === 'bono') {
+          adj = subtotal * ((r.ajuste_porcentaje || 0) / 100);
+          newTotal = subtotal + adj;
+        } else if (r.ajuste_tipo === 'descuento') {
+          adj = subtotal * ((r.ajuste_porcentaje || 0) / 100);
+          newTotal = subtotal - adj;
+        }
+
+        await connection.query(
+          "UPDATE produccion SET precio_total = ?, ajuste_monto = ? WHERE id = ?",
+          [newTotal, adj, r.id]
+        );
+      }
+      console.log('Migration: Recalculated y actualizado precio_total para órdenes recolectadas.');
+    } catch (e) {
+      console.error('Error al recalcular precio_total:', e);
+    }
+
     /*
     try {
       console.log('--- MIGRACIÓN MANUAL: Eliminación de órdenes duplicadas/erróneas ---');
