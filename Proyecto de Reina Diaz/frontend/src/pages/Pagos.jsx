@@ -13,6 +13,15 @@ export default function Pagos() {
   const initialOrdenId = searchParams.get('orden') || '';
   const initialTipoPago = searchParams.get('tipo') === 'completo' ? 'completo' : 'abono';
 
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '-';
+    const cleanDate = String(dateStr).split('T')[0];
+    const parts = cleanDate.split('-');
+    if (parts.length < 3) return dateStr;
+    const [year, month, day] = parts;
+    return `${parseInt(day, 10)}/${parseInt(month, 10)}/${year}`;
+  };
+
   // Estados para Pagos de Órdenes
   const [orders, setOrders] = useState([]);
   const [pagos, setPagos] = useState([]);
