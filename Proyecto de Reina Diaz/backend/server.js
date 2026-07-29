@@ -1871,13 +1871,7 @@ app.get('/api/pagos/:id/comprobante', authenticateToken, async (req, res) => {
       LEFT JOIN inventario i ON p.inventario_id = i.id
       WHERE pg.id = ?
     `, [pagoId]);
-    const pago = pagos[0];
-
     if (!pago) return res.status(404).json({ error: tLabel('Pago no encontrado', 'Payment not found') });
-
-    if (pago.orden_estado !== 'Terminado' && pago.orden_estado !== 'Terminado Parcial') {
-      return res.status(403).send(tLabel('Solo se puede generar el comprobante para ordenes terminadas o con pago parcial.', 'Only finished or partially paid orders can generate receipts.'));
-    }
 
     const [todosLosPagos] = await db.query("SELECT id FROM pagos WHERE produccion_id = ? ORDER BY id ASC", [pago.produccion_id]);
     const index = todosLosPagos.findIndex(p => p.id === parseInt(pagoId));
