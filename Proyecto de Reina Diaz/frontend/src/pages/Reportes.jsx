@@ -6,6 +6,9 @@ import API_URL from '../config';
 export default function Reportes() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [recVerde, setRecVerde] = useState(true);
+  const [recAmarillo, setRecAmarillo] = useState(true);
+  const [recRojo, setRecRojo] = useState(true);
   const [prodStart, setProdStart] = useState('');
   const [prodEnd, setProdEnd] = useState('');
   const [payStart, setPayStart] = useState('');
@@ -36,6 +39,18 @@ export default function Reportes() {
     const params = new URLSearchParams();
     if (startDate) params.append('start', startDate);
     if (endDate) params.append('end', endDate);
+
+    const colors = [];
+    if (recVerde) colors.push('verde');
+    if (recAmarillo) colors.push('amarillo');
+    if (recRojo) colors.push('rojo');
+
+    if (colors.length > 0) {
+      params.append('colors', colors.join(','));
+    } else {
+      params.append('colors', 'none');
+    }
+
     params.append('lang', lang);
     
     const query = params.toString();
@@ -162,11 +177,47 @@ export default function Reportes() {
             {(startDate || endDate) && (
               <button 
                 onClick={() => { setStartDate(''); setEndDate(''); document.getElementById('showRange').checked = false; }}
-                style={{ background: 'none', border: 'none', color: '#64748b', fontSize: '0.75rem', marginTop: '1rem', cursor: 'pointer', textDecoration: 'underline' }}
+                style={{ background: 'none', border: 'none', color: '#64748b', fontSize: '0.75rem', marginTop: '0.5rem', cursor: 'pointer', textDecoration: 'underline' }}
               >
                 {t('rep.cleanDates')}
               </button>
             )}
+
+            {/* Filtro por Semáforo (Checkboxes) */}
+            <div style={{ marginTop: '1.25rem', paddingTop: '1rem', borderTop: '1px solid rgba(255, 255, 255, 0.1)' }}>
+              <label className="form-label" style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.5rem', display: 'block' }}>
+                Filtro por Semáforo (Estado):
+              </label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: '0.85rem', cursor: 'pointer', color: '#10b981', fontWeight: 600 }}>
+                  <input 
+                    type="checkbox" 
+                    checked={recVerde} 
+                    onChange={e => setRecVerde(e.target.checked)} 
+                    style={{ accentColor: '#10b981', width: '16px', height: '16px', cursor: 'pointer' }}
+                  />
+                  🟢 A tiempo (Verde)
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: '0.85rem', cursor: 'pointer', color: '#f59e0b', fontWeight: 600 }}>
+                  <input 
+                    type="checkbox" 
+                    checked={recAmarillo} 
+                    onChange={e => setRecAmarillo(e.target.checked)} 
+                    style={{ accentColor: '#f59e0b', width: '16px', height: '16px', cursor: 'pointer' }}
+                  />
+                  🟡 Próximos / Prórroga (Amarillo)
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: '0.85rem', cursor: 'pointer', color: '#ef4444', fontWeight: 600 }}>
+                  <input 
+                    type="checkbox" 
+                    checked={recRojo} 
+                    onChange={e => setRecRojo(e.target.checked)} 
+                    style={{ accentColor: '#ef4444', width: '16px', height: '16px', cursor: 'pointer' }}
+                  />
+                  🔴 Vencidos / Con Retraso (Rojo)
+                </label>
+              </div>
+            </div>
           </div>
 
           <button className="btn btn-primary" onClick={handleDownloadRecoleccion} style={{ width: '100%', background: 'linear-gradient(135deg, #a855f7, #7c3aed)', marginTop: 'auto' }}>

@@ -2209,7 +2209,7 @@ app.get('/api/reportes/inventario', async (req, res) => {
 });
 
 app.get('/api/reportes/recoleccion', async (req, res) => {
-  const { start, end } = req.query;
+  const { start, end, colors } = req.query;
   const lang = req.query.lang || 'es';
   const tLabel = (esText, enText) => lang === 'en' ? enText : esText;
 
@@ -2250,6 +2250,57 @@ app.get('/api/reportes/recoleccion', async (req, res) => {
     query += ` ORDER BY p.fecha_fin ASC`;
     const [orders] = await db.query(query, params);
 
+    // Calcular Semáforo para cada orden
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    orders.forEach(o => {
+      let colorStatus = 'verde';
+      let semaforoLabel = tLabel('🟢 A Tiempo', '🟢 On Time');
+
+      if (o.fecha_fin) {
+        const finDate = new Date(o.fecha_fin);
+        finDate.setHours(0, 0, 0, 0);
+        const diffDays = Math.round((finDate - today) / (1000 * 60 * 60 * 24));
+
+        if (diffDays < 0 || (o.retrasos && o.retrasos > 2)) {
+          colorStatus = 'rojo';
+          semaforoLabel = tLabel('🔴 Vencido', '🔴 Overdue');
+        } else if (diffDays === 0 || diffDays === 1 || (o.retrasos && o.retrasos > 0)) {
+          colorStatus = 'amarillo';
+          semaforoLabel = tLabel('🟡 Próximo', '🟡 Urgent');
+        } else {
+          colorStatus = 'verde';
+          semaforoLabel = tLabel('🟢 A Tiempo', '🟢 On Time');
+        }
+      }
+
+      o.semaforoColor = colorStatus;
+      o.semaforoLabel = semaforoLabel;
+    });
+
+    // Filtrar por los colores seleccionados si se proporcionan
+    let filteredOrders = orders;
+    let colorFilterText = "";
+    if (colors) {
+      if (colors === 'none') {
+        filteredOrders = [];
+        colorFilterText = tLabel(" | Filtro: Ninguno", " | Filter: None");
+      } else {
+        const allowedColors = colors.split(',').map(c => c.trim().toLowerCase());
+        filteredOrders = orders.filter(o => allowedColors.includes(o.semaforoColor));
+        if (allowedColors.length < 3) {
+          const names = allowedColors.map(c => {
+            if (c === 'verde') return tLabel('Verde (A tiempo)', 'Green (On Time)');
+            if (c === 'amarillo') return tLabel('Amarillo (Próximos)', 'Yellow (Urgent)');
+            if (c === 'rojo') return tLabel('Rojo (Vencidos)', 'Red (Overdue)');
+            return c;
+          });
+          colorFilterText = ` | Semáforo: ${names.join(', ')}`;
+        }
+      }
+    }
+
     const doc = new PDFDocument({ margins: { top: 30, bottom: 50, left: 30, right: 30 }, size: 'A4', layout: 'landscape' });
     res.setHeader('Content-disposition', 'attachment; filename="Reporte_Recoleccion.pdf"');
     res.setHeader('Content-type', 'application/pdf');
@@ -2265,25 +2316,26 @@ app.get('/api/reportes/recoleccion', async (req, res) => {
 
     doc.y = 130;
 
-    if (orders.length === 0) {
+    if (filteredOrders.length === 0) {
       doc.fontSize(20).text(tLabel('Reporte de Recolección', 'Recollection Report'), { align: 'center' });
       doc.moveDown();
-      doc.fontSize(12).text(tLabel('No hay entregas programadas.', 'No scheduled deliveries.'), { align: 'center' });
+      doc.fontSize(12).text(tLabel('No hay entregas programadas que coincidan con los filtros.', 'No scheduled deliveries matching filters.'), { align: 'center' });
     } else {
       const tableConfig = {
         title: tLabel("Reporte de Recolección", "Recollection Report"),
-        subtitle: tLabel(`Producción a entregar ${subtitleDateText}`, `Production to collect ${subtitleDateText}`) + tLabel(" - Generado el ", " - Generated on ") + formatDateToDMY(new Date()),
+        subtitle: tLabel(`Producción a entregar ${subtitleDateText}`, `Production to collect ${subtitleDateText}`) + colorFilterText + tLabel(" - Generado el ", " - Generated on ") + formatDateToDMY(new Date()),
         headers: [
-          { label: tLabel("MAQUILERO", "TAILOR"), property: "maquilero", width: 120 },
-          { label: tLabel("MODELO", "MODEL"), property: "modelo", width: 70 },
-          { label: tLabel("CODIGO", "CODE"), property: "codigo", width: 90 },
-          { label: tLabel("COLOR", "COLOR"), property: "color", width: 100 },
-          { label: tLabel("OBSERVACIÓN", "OBSERVATION"), property: "observacion", width: 162 },
-          { label: tLabel("ORDEN", "ORDER"), property: "orden", width: 80 },
-          { label: tLabel("PIEZAS", "PIECES"), property: "piezas", width: 60 },
-          { label: tLabel("ENTREGA", "DELIVERY"), property: "entrega", width: 100 }
+          { label: tLabel("MAQUILERO", "TAILOR"), property: "maquilero", width: 115 },
+          { label: tLabel("MODELO", "MODEL"), property: "modelo", width: 65 },
+          { label: tLabel("CODIGO", "CODE"), property: "codigo", width: 75 },
+          { label: tLabel("COLOR", "COLOR"), property: "color", width: 85 },
+          { label: tLabel("ESTADO", "STATUS"), property: "estado", width: 75 },
+          { label: tLabel("OBSERVACIÓN", "OBSERVATION"), property: "observacion", width: 135 },
+          { label: tLabel("ORDEN", "ORDER"), property: "orden", width: 70 },
+          { label: tLabel("PIEZAS", "PIECES"), property: "piezas", width: 50 },
+          { label: tLabel("ENTREGA", "DELIVERY"), property: "entrega", width: 80 }
         ],
-        datas: orders.map(o => ({
+        datas: filteredOrders.map(o => ({
           maquilero: (o.maquilero_nombre || '').toUpperCase(),
           modelo: '\n\n\n\n\n\n',
           codigo: o.producto_modelo || '-',
@@ -2293,6 +2345,7 @@ app.get('/api/reportes/recoleccion', async (req, res) => {
                 return Array.isArray(arr) ? arr.map(c => c.color).join(', ') : (o.producto_color || '-');
              } catch(e) { return o.producto_color || '-'; }
           })(),
+          estado: o.semaforoLabel || '-',
           observacion: o.producto_observaciones || '-',
           orden: o.inventario_orden || '-',
           piezas: String(o.cantidad || 0),
@@ -2302,22 +2355,22 @@ app.get('/api/reportes/recoleccion', async (req, res) => {
       };
 
       await doc.table(tableConfig, {
-        prepareHeader: () => doc.font("Helvetica-Bold").fontSize(10),
+        prepareHeader: () => doc.font("Helvetica-Bold").fontSize(9),
         prepareRow: (row, indexColumn, indexRow, rectRow) => {
-          doc.font("Helvetica").fontSize(10);
+          doc.font("Helvetica").fontSize(9);
           try {
-             const order = orders[indexRow];
+             const order = filteredOrders[indexRow];
              if (indexColumn === 1 && order.producto_imagen) {
                 const imgPath = path.join(__dirname, order.producto_imagen);
                 if (fs.existsSync(imgPath)) {
-                   doc.image(imgPath, rectRow.x + 120 + 5, rectRow.y + 5, { fit: [60, 60] });
+                   doc.image(imgPath, rectRow.x + 115 + 5, rectRow.y + 5, { fit: [55, 55] });
                 }
              }
           } catch(e) {}
         }
       });
 
-      const totalPiezas = orders.reduce((sum, o) => sum + (o.cantidad || 0), 0);
+      const totalPiezas = filteredOrders.reduce((sum, o) => sum + (o.cantidad || 0), 0);
       doc.moveDown();
       doc.fontSize(14).font("Helvetica-Bold").text(`${tLabel('TOTAL DE PIEZAS A RECOLECTAR', 'TOTAL PIECES TO COLLECT')}: ${totalPiezas}`, { align: 'right' });
     }
