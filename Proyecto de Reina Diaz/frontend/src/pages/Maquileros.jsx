@@ -103,6 +103,38 @@ export default function Maquileros() {
     handleRowClick(filteredMaquileros[nextIndex].id);
   };
 
+  const handleSaveObservacion = async (historialId, currentObs) => {
+    const { value: text, isConfirmed } = await Swal.fire({
+      title: 'Observaciones de Producción',
+      input: 'textarea',
+      inputValue: currentObs || '',
+      inputPlaceholder: 'Escribe aquí observaciones o detalles sobre el trabajo del maquilero en esta orden...',
+      showCancelButton: true,
+      confirmButtonText: 'Guardar',
+      cancelButtonText: 'Cancelar',
+      background: '#1e293b',
+      color: '#f8fafc',
+      confirmButtonColor: '#0284c7'
+    });
+
+    if (isConfirmed) {
+      try {
+        await axios.put(`${API}/api/produccion/${historialId}/observaciones`, { observaciones: text });
+        toast.success('Observaciones actualizadas', { theme: 'dark' });
+        setSelectedMaquilero(prev => {
+          if (!prev || !prev.historial) return prev;
+          return {
+            ...prev,
+            historial: prev.historial.map(item => item.id === historialId ? { ...item, observaciones: text } : item)
+          };
+        });
+      } catch (err) {
+        console.error(err);
+        toast.error('Error al actualizar observaciones', { theme: 'dark' });
+      }
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -198,17 +230,21 @@ export default function Maquileros() {
                 filteredMaquileros.map((m, index) => (
                   <tr key={m.id} onClick={() => handleRowClick(m.id)} style={{ cursor: 'pointer' }}>
                     <td><Avatar imagen={m.imagen} nombre={m.nombre} /></td>
-                    <td>#{index + 1}</td>
+                    <td>{m.id}</td>
                     <td style={{ fontWeight: 600 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        {m.nombre}
+                        <span>{m.nombre}</span>
                         {isDataIncomplete(m) && (
-                          <AlertTriangle size={16} color="#f59e0b" title="Datos incompletos en el perfil" />
+                          <AlertTriangle 
+                            size={16} 
+                            color="#f59e0b" 
+                            title="Información incompleta (Faltan datos de contacto, dirección o maquinaria)"
+                          />
                         )}
                       </div>
                     </td>
-                    <td>{m.telefono || 'N/A'}</td>
-                    <td>{m.colonia || 'N/A'}</td>
+                    <td>{m.telefono || '-'}</td>
+                    <td>{m.colonia || '-'}</td>
                     <td>
                       <div style={{ display: 'flex', gap: '0.5rem' }} onClick={e => e.stopPropagation()}>
                         {canEdit ? (
@@ -216,7 +252,7 @@ export default function Maquileros() {
                             <button className="btn btn-secondary" style={{ padding: '0.35rem 0.6rem' }} onClick={(e) => openEdit(m, e)} title="Editar">
                               <Pencil size={15} />
                             </button>
-                            <button className="btn btn-danger" style={{ padding: '0.35rem 0.6rem' }} onClick={(e) => handleDelete(m.id, e)} title="Eliminar">
+                            <button className="btn btn-secondary" style={{ padding: '0.35rem 0.6rem', color: '#ef4444' }} onClick={(e) => handleDelete(m.id, e)} title="Eliminar">
                               <Trash2 size={15} />
                             </button>
                           </>
@@ -238,7 +274,7 @@ export default function Maquileros() {
       {/* Modal Perfil */}
       {selectedMaquilero && (
         <div className="modal-overlay">
-            <div className="modal-content glass-card" style={{ maxWidth: '1350px', width: '95%', position: 'relative', padding: '2rem 3.5rem' }} onClick={e => e.stopPropagation()}>
+            <div className="modal-content glass-card" style={{ maxWidth: '98vw', width: '98vw', maxHeight: '94vh', position: 'relative', padding: '1.5rem 2.5rem', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
               {/* Botones de Navegación (Dentro del modal para evitar scrollbars) */}
               <button 
                 className="btn-icon" 
@@ -288,11 +324,11 @@ export default function Maquileros() {
                 <button className="btn-icon" onClick={() => setSelectedMaquilero(null)}><X size={24} /></button>
               </div>
             
-            <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: '2rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: '1.5rem' }}>
               {/* Columna Izquierda: Perfil y Calificación */}
-              <div style={{ borderRight: '1px solid #e2e8f0', paddingRight: '2rem' }}>
+              <div style={{ borderRight: '1px solid #e2e8f0', paddingRight: '1.5rem' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '1.5rem', textAlign: 'center' }}>
-                  <Avatar imagen={selectedMaquilero.imagen} nombre={selectedMaquilero.nombre} size={300} showZoom={true} />
+                  <Avatar imagen={selectedMaquilero.imagen} nombre={selectedMaquilero.nombre} size={260} showZoom={true} />
                   <h3 style={{ marginTop: '1rem', marginBottom: '0.25rem', fontSize: '1.25rem', width: '100%' }}>{selectedMaquilero.nombre}</h3>
                   
                   {/* Calificación Visual */}
@@ -347,7 +383,7 @@ export default function Maquileros() {
               {/* Columna Derecha: Historial */}
               <div style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
                 <h3 style={{ marginBottom: '1rem', color: '#1e293b' }}>{t('maq.historyTitle')}</h3>
-                <div className="table-wrapper" style={{ flex: 1, maxHeight: '90vh', overflowY: 'auto' }}>
+                <div className="table-wrapper" style={{ flex: 1, maxHeight: '80vh', overflowY: 'auto' }}>
                   <table className="data-table" style={{ fontSize: '0.85rem' }}>
                     <thead>
                       <tr>
@@ -359,11 +395,12 @@ export default function Maquileros() {
                         <th>{t('maq.tableNeto')}</th>
                         <th>{t('maq.tableEntrega')}</th>
                         <th>{t('maq.tableCalidad')}</th>
+                        <th>{t('maq.tableObservaciones')}</th>
                       </tr>
                     </thead>
                     <tbody>
                       {(!selectedMaquilero.historial || selectedMaquilero.historial.length === 0) ? (
-                        <tr><td colSpan="6" style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>{t('maq.noHistory')}</td></tr>
+                        <tr><td colSpan="9" style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>{t('maq.noHistory')}</td></tr>
                       ) : (
                         selectedMaquilero.historial.map(h => {
                           const pImg = h.producto_imagen ? (h.producto_imagen.startsWith('http') ? h.producto_imagen : `${API}${h.producto_imagen}`) : null;
@@ -406,6 +443,43 @@ export default function Maquileros() {
                                   <div style={{ width: 12, height: 12, borderRadius: '50%', background: esPuntual ? '#10b981' : '#f59e0b' }} title={esPuntual ? t('maq.ontimeTitle') : t('maq.delayedTitle')}></div>
                                   <div style={{ width: 12, height: 12, borderRadius: '50%', background: esCompleto ? '#10b981' : '#dc2626' }} title={esCompleto ? t('maq.completeTitle') : t('maq.incompleteTitle')}></div>
                                 </div>
+                              </td>
+                              <td style={{ minWidth: '220px', maxWidth: '350px' }}>
+                                {h.observaciones ? (
+                                  <div 
+                                    style={{ 
+                                      fontSize: '0.8rem', 
+                                      color: 'var(--text-primary, #f8fafc)', 
+                                      background: 'rgba(15, 23, 42, 0.65)', 
+                                      padding: '0.45rem 0.65rem', 
+                                      borderRadius: '6px',
+                                      border: '1px solid rgba(56, 189, 248, 0.3)',
+                                      maxHeight: '85px',
+                                      overflowY: 'auto',
+                                      whiteSpace: 'pre-wrap',
+                                      wordBreak: 'break-word',
+                                      lineHeight: '1.35',
+                                      cursor: canEdit ? 'pointer' : 'default'
+                                    }}
+                                    title={canEdit ? "Haz clic para editar esta observación" : h.observaciones}
+                                    onClick={() => canEdit && handleSaveObservacion(h.id, h.observaciones)}
+                                  >
+                                    {h.observaciones}
+                                  </div>
+                                ) : (
+                                  canEdit ? (
+                                    <button 
+                                      className="btn btn-secondary" 
+                                      style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', color: '#94a3b8', background: 'rgba(255,255,255,0.05)', border: '1px dashed #64748b' }}
+                                      onClick={() => handleSaveObservacion(h.id, '')}
+                                      title="Agregar observación a esta orden"
+                                    >
+                                      + Nota
+                                    </button>
+                                  ) : (
+                                    <span style={{ color: '#64748b', fontSize: '0.8rem' }}>-</span>
+                                  )
+                                )}
                               </td>
                             </tr>
                           );
