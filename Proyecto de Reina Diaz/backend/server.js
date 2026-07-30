@@ -1670,7 +1670,7 @@ app.put('/api/produccion/:id', authenticateToken, async (req, res) => {
 
     const currentCant = dbCantidadRecibida;
     const orderQty = cantidad !== undefined ? (parseInt(cantidad) || 1) : old.cantidad;
-    const effectiveCant = (currentCant !== null && currentCant !== undefined && currentCant > 0) ? currentCant : orderQty;
+    const effectiveCant = (currentCant !== null && currentCant !== undefined) ? currentCant : orderQty;
     
     let dbPrecioExtra = old.precio_extra;
     if (old.es_extra === 1) {
