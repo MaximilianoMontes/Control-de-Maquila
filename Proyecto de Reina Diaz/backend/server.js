@@ -166,8 +166,27 @@ app.get('/api/admin/fix-pago-dates', authenticateToken, async (req, res) => {
       correcciones_aplicadas: aplicadas,
       apply_mode: applyFix,
       correcciones,
-      inspeccion: inspeccion.filter(i => i.necesita_correccion || i.sin_historial)
+      inspeccion
     });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Admin endpoint to view raw pagos table
+app.get('/api/admin/dump-pagos', authenticateToken, async (req, res) => {
+  try {
+    const [rows] = await db.query(`
+      SELECT pg.id, pg.produccion_id, pg.monto, pg.fecha, DATE_FORMAT(pg.fecha, '%Y-%m-%d') as fecha_str,
+             pg.tipo_pago, m.nombre as maquilero, i.modelo
+      FROM pagos pg
+      JOIN produccion p ON pg.produccion_id = p.id
+      JOIN maquileros m ON p.maquilero_id = m.id
+      LEFT JOIN inventario i ON p.inventario_id = i.id
+      ORDER BY pg.id DESC
+      LIMIT 50
+    `);
+    res.json(rows);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
