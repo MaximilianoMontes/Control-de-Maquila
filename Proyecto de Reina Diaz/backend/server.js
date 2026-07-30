@@ -50,14 +50,10 @@ const authenticateToken = (req, res, next) => {
 // Helper para formatear fechas a DD/MM/YYYY
 const formatDateToDMY = (dateVal) => {
   if (!dateVal) return '-';
-  let str = "";
   if (dateVal instanceof Date) {
-    const offset = dateVal.getTimezoneOffset();
-    const localDate = new Date(dateVal.getTime() - (offset * 60 * 1000));
-    str = localDate.toISOString();
-  } else {
-    str = String(dateVal);
+    return `${dateVal.getUTCDate()}/${dateVal.getUTCMonth() + 1}/${dateVal.getUTCFullYear()}`;
   }
+  const str = String(dateVal);
   const match = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
   if (match) {
     const [_, year, month, day] = match;
@@ -1920,13 +1916,28 @@ app.get('/api/pagos/:id/comprobante', authenticateToken, async (req, res) => {
 
     doc.fontSize(12).font('Helvetica').text(`${tLabel('Folio Interno', 'Internal Folio')}: #${pago.id}`, { align: 'right' });
     
-    const fechaParts = String(pago.fecha).split('T')[0].split('-');
-    let fechaFormateada = pago.fecha;
-    if (fechaParts.length >= 3) {
-      const dObj = new Date(parseInt(fechaParts[0]), parseInt(fechaParts[1]) - 1, parseInt(fechaParts[2]));
-      fechaFormateada = dObj.toLocaleDateString(lang === 'en' ? 'en-US' : 'es-MX', { 
-        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
-      });
+    let fechaFormateada = '';
+    if (pago.fecha) {
+      let dObj;
+      if (pago.fecha instanceof Date) {
+        dObj = new Date(pago.fecha.getUTCFullYear(), pago.fecha.getUTCMonth(), pago.fecha.getUTCDate());
+      } else {
+        const str = String(pago.fecha);
+        const match = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if (match) {
+          dObj = new Date(parseInt(match[1], 10), parseInt(match[2], 10) - 1, parseInt(match[3], 10));
+        } else {
+          dObj = new Date(pago.fecha);
+        }
+      }
+      if (dObj && !isNaN(dObj.getTime())) {
+        const formatted = dObj.toLocaleDateString(lang === 'en' ? 'en-US' : 'es-MX', { 
+          weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+        });
+        fechaFormateada = formatted.charAt(0).toUpperCase() + formatted.slice(1);
+      } else {
+        fechaFormateada = String(pago.fecha);
+      }
     }
     doc.text(`${tLabel('Fecha', 'Date')}: ${fechaFormateada}`, { align: 'right' });
     doc.moveDown(1.5);

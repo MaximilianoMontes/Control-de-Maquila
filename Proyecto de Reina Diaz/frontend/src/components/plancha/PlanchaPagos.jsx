@@ -113,13 +113,19 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
     }
   }, [showCuadreModal, cuadrePlanchadorId, cuadreStart]);
 
-  const formatDate = (dateStr) => {
-    if (!dateStr) return '';
-    const cleanDate = dateStr.split('T')[0];
-    const parts = cleanDate.split('-');
-    if (parts.length < 3) return dateStr;
-    const [year, month, day] = parts;
-    return `${parseInt(day, 10)}/${parseInt(month, 10)}/${year}`;
+  const formatDate = (dateVal) => {
+    if (!dateVal) return '';
+    if (dateVal instanceof Date) {
+      return `${dateVal.getDate()}/${dateVal.getMonth() + 1}/${dateVal.getFullYear()}`;
+    }
+    const str = String(dateVal);
+    const match = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (match) {
+      return `${parseInt(match[3], 10)}/${parseInt(match[2], 10)}/${match[1]}`;
+    }
+    const d = new Date(dateVal);
+    if (isNaN(d.getTime())) return str;
+    return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
   };
 
   const handleCargarPagosPlanchador = (id) => {
