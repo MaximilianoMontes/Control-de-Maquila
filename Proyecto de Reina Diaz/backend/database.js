@@ -367,7 +367,7 @@ async function initializeDatabase() {
           ? (r.precio_extra !== null ? parseFloat(r.precio_extra) : 0)
           : (r.unit_price || (r.precio_total / (r.cantidad || 1)) || 0);
 
-        const subtotal = r.cantidad_recibida * up;
+        const subtotal = (r.cantidad || 1) * up;
         let adj = 0;
         let newTotal = subtotal;
 

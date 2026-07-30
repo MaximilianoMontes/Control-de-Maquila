@@ -1342,7 +1342,7 @@ app.put('/api/produccion/:id', authenticateToken, async (req, res) => {
     }
 
     const currentCant = dbCantidadRecibida;
-    const effectiveCant = (currentCant !== null && currentCant !== undefined) ? currentCant : (cantidad !== undefined ? cantidad : old.cantidad);
+    const effectiveCant = cantidad !== undefined ? (parseInt(cantidad) || 1) : old.cantidad;
     
     let dbPrecioExtra = old.precio_extra;
     if (old.es_extra === 1) {
@@ -1496,12 +1496,12 @@ app.put('/api/produccion/:id/recepcion', authenticateToken, async (req, res) => 
 
     const tallasJsonStr = tallas_recibidas ? (typeof tallas_recibidas === 'string' ? tallas_recibidas : JSON.stringify(tallas_recibidas)) : old.tallas_recibidas;
 
-    const effectiveQty = (qty !== null && qty !== undefined && qty >= 0) ? qty : old.cantidad;
+    const fullQty = old.cantidad || 1;
     const up = old.es_extra === 1
       ? (old.precio_extra !== null ? parseFloat(old.precio_extra) : 0)
-      : (old.unit_price || (old.precio_total / (old.cantidad || 1)) || 0);
+      : (old.unit_price || (old.precio_total / fullQty) || 0);
 
-    let subtotal = effectiveQty * up;
+    let subtotal = fullQty * up;
     let adjustmentAmount = 0;
     let finalPrecioTotal = subtotal;
 
