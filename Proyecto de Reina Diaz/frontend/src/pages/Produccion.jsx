@@ -147,11 +147,13 @@ function Produccion() {
     setRecepcionOrder(order);
     const maxGrid = parseColorAndTallasStructure(order.producto_color, order.cantidad);
 
-    let existingRecibidas = {};
+    let existingRecibidas = null;
     try {
       if (order.tallas_recibidas) {
         const obj = typeof order.tallas_recibidas === 'string' ? JSON.parse(order.tallas_recibidas) : order.tallas_recibidas;
-        if (typeof obj === 'object' && obj !== null) existingRecibidas = obj;
+        if (typeof obj === 'object' && obj !== null && Object.keys(obj).length > 0) {
+          existingRecibidas = obj;
+        }
       }
     } catch (e) {}
 
@@ -159,9 +161,18 @@ function Produccion() {
     Object.entries(maxGrid).forEach(([colKey, tallasObj]) => {
       initialGrid[colKey] = {};
       Object.entries(tallasObj).forEach(([szKey, maxQty]) => {
-        const currentVal = (existingRecibidas[colKey] && existingRecibidas[colKey][szKey] !== undefined)
-          ? existingRecibidas[colKey][szKey]
-          : ((existingRecibidas[szKey] !== undefined) ? existingRecibidas[szKey] : (order.cantidad_recibida !== null ? maxQty : 0));
+        let currentVal = 0;
+        if (existingRecibidas) {
+          if (existingRecibidas[colKey] && existingRecibidas[colKey][szKey] !== undefined) {
+            currentVal = parseInt(existingRecibidas[colKey][szKey]) || 0;
+          } else if (existingRecibidas[szKey] !== undefined) {
+            currentVal = parseInt(existingRecibidas[szKey]) || 0;
+          }
+        } else if (order.cantidad_recibida !== null && order.cantidad_recibida > 0) {
+          currentVal = maxQty;
+        } else {
+          currentVal = 0;
+        }
         initialGrid[colKey][szKey] = currentVal;
       });
     });
@@ -205,6 +216,19 @@ function Produccion() {
     if (!recepcionOrder) return;
     const maxGrid = parseColorAndTallasStructure(recepcionOrder.producto_color, recepcionOrder.cantidad);
     setRecepcionTallas(maxGrid);
+  };
+
+  const handleLimpiarRecepcion = () => {
+    if (!recepcionOrder) return;
+    const maxGrid = parseColorAndTallasStructure(recepcionOrder.producto_color, recepcionOrder.cantidad);
+    const clearedGrid = {};
+    Object.entries(maxGrid).forEach(([colKey, tallasObj]) => {
+      clearedGrid[colKey] = {};
+      Object.entries(tallasObj).forEach(([szKey]) => {
+        clearedGrid[colKey][szKey] = 0;
+      });
+    });
+    setRecepcionTallas(clearedGrid);
   };
 
   const [verArchivados, setVerArchivados] = useState(false);
@@ -1153,7 +1177,7 @@ function Produccion() {
                 <button type="button" className="btn btn-secondary" style={{ fontSize: '12px', padding: '4px 10px' }} onClick={handleMarcarTodoRecibido}>
                   ✓ Marcar Todo Recibido
                 </button>
-                <button type="button" className="btn btn-secondary" style={{ fontSize: '12px', padding: '4px 10px' }} onClick={() => setRecepcionTallas({})}>
+                <button type="button" className="btn btn-secondary" style={{ fontSize: '12px', padding: '4px 10px' }} onClick={handleLimpiarRecepcion}>
                   Limpiar
                 </button>
               </div>

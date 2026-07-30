@@ -1312,7 +1312,7 @@ const autoArchiveOrders = async () => {
              i.precio as unit_price
       FROM produccion p
       LEFT JOIN inventario i ON p.inventario_id = i.id
-      WHERE p.cantidad_recibida IS NOT NULL AND p.cantidad_recibida > 0 AND p.archivado < 2
+      WHERE p.cantidad_recibida IS NOT NULL AND p.archivado < 2
     `);
     for (const p of ordersWithReceived) {
       const up = p.es_extra === 1
@@ -1506,7 +1506,7 @@ app.put('/api/produccion/:id/recepcion', authenticateToken, async (req, res) => 
     const tallasJsonStr = tallas_recibidas ? (typeof tallas_recibidas === 'string' ? tallas_recibidas : JSON.stringify(tallas_recibidas)) : old.tallas_recibidas;
 
     const fullQty = old.cantidad || 1;
-    const effectiveQty = (qty !== null && qty !== undefined && qty > 0) ? qty : fullQty;
+    const effectiveQty = (qty !== null && qty !== undefined) ? qty : fullQty;
     let rawUnitPrice = old.precio_extra;
     if (old.es_extra !== 1 && old.inventario_id) {
       const [invs] = await db.query("SELECT precio FROM inventario WHERE id = ?", [old.inventario_id]);
