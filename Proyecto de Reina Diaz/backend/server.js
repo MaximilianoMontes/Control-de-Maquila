@@ -1499,7 +1499,7 @@ app.put('/api/produccion/:id/recepcion', authenticateToken, async (req, res) => 
     let qty = old.cantidad_recibida;
     if (cantidad_recibida !== undefined && cantidad_recibida !== null && cantidad_recibida !== '') {
       qty = parseInt(cantidad_recibida);
-      if (isNaN(qty) || qty < 0) qty = 0;
+      if (isNaN(qty) || qty <= 0) qty = null;
     } else if (cantidad_recibida === null || cantidad_recibida === '') {
       qty = null;
     }
@@ -1666,7 +1666,7 @@ app.put('/api/produccion/:id', authenticateToken, async (req, res) => {
       dbCantidadRecibida = null;
     } else if (cantidad_recibida !== undefined) {
       dbCantidadRecibida = parseInt(cantidad_recibida);
-      if (isNaN(dbCantidadRecibida)) dbCantidadRecibida = null;
+      if (isNaN(dbCantidadRecibida) || dbCantidadRecibida <= 0) dbCantidadRecibida = null;
     }
 
     const currentCant = dbCantidadRecibida;
