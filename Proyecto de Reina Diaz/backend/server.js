@@ -1304,6 +1304,8 @@ const autoArchiveOrders = async () => {
     for (const p of toUnarchive) {
       await db.query("UPDATE produccion SET archivado = 0 WHERE id = ?", [p.id]);
       await checkAndMoveToInventory(p.id, 1);
+    }
+
     // 5. Sync precio_total for active production orders with received pieces
     const [ordersWithReceived] = await db.query(`
       SELECT p.id, p.cantidad, p.cantidad_recibida, p.ajuste_tipo, p.ajuste_porcentaje, p.es_extra, p.precio_extra, p.precio_total,
