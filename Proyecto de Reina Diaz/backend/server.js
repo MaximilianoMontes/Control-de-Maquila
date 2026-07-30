@@ -2028,27 +2028,31 @@ app.get('/api/reportes/produccion', async (req, res) => {
         FROM produccion p 
         JOIN maquileros m ON p.maquilero_id = m.id 
         LEFT JOIN inventario i ON p.inventario_id = i.id
-        WHERE p.estado = 'Terminado' AND p.es_extra = 0
+        WHERE p.estado IN ('Terminado', 'Terminado Parcial') AND (p.es_extra = 0 OR p.es_extra IS NULL)
       `;
       const params = [];
       let subtitleDate = "";
 
       if (start && end) {
         if (start === end) {
-          query += ` AND p.fecha_fin = ?`;
+          query += ` AND DATE(p.fecha_fin) = ?`;
           params.push(start);
           subtitleDate = tLabel(`Reporte del día ${formatDateToDMY(start)}`, `Report for ${formatDateToDMY(start)}`);
         } else {
-          query += ` AND p.fecha_fin BETWEEN ? AND ?`;
+          query += ` AND DATE(p.fecha_fin) BETWEEN ? AND ?`;
           params.push(start, end);
           subtitleDate = tLabel(`Del ${formatDateToDMY(start)} al ${formatDateToDMY(end)}`, `From ${formatDateToDMY(start)} to ${formatDateToDMY(end)}`);
         }
       } else if (start) {
-        query += ` AND p.fecha_fin = ?`;
+        query += ` AND DATE(p.fecha_fin) >= ?`;
         params.push(start);
-        subtitleDate = tLabel(`Reporte del día ${formatDateToDMY(start)}`, `Report for ${formatDateToDMY(start)}`);
+        subtitleDate = tLabel(`desde ${formatDateToDMY(start)}`, `since ${formatDateToDMY(start)}`);
+      } else if (end) {
+        query += ` AND DATE(p.fecha_fin) <= ?`;
+        params.push(end);
+        subtitleDate = tLabel(`hasta ${formatDateToDMY(end)}`, `until ${formatDateToDMY(end)}`);
       } else if (date) {
-        query += ` AND p.fecha_fin = ?`;
+        query += ` AND DATE(p.fecha_fin) = ?`;
         params.push(date);
         subtitleDate = tLabel(`Reporte del día ${formatDateToDMY(date)}`, `Report for ${formatDateToDMY(date)}`);
       } else {
@@ -2266,19 +2270,22 @@ app.get('/api/reportes/recoleccion', async (req, res) => {
 
     if (start && end) {
       if (start === end) {
-        query += ` AND p.fecha_fin = ?`;
+        query += ` AND DATE(p.fecha_fin) = ?`;
         params.push(start);
         subtitleDateText = tLabel(`del día ${formatDateToDMY(start)}`, `for ${formatDateToDMY(start)}`);
       } else {
-        query += ` AND p.fecha_fin BETWEEN ? AND ?`;
+        query += ` AND DATE(p.fecha_fin) BETWEEN ? AND ?`;
         params.push(start, end);
         subtitleDateText = tLabel(`del ${formatDateToDMY(start)} al ${formatDateToDMY(end)}`, `from ${formatDateToDMY(start)} to ${formatDateToDMY(end)}`);
       }
-    } else if (start || end) {
-      const d = start || end;
-      query += ` AND p.fecha_fin = ?`;
-      params.push(d);
-      subtitleDateText = tLabel(`del día ${formatDateToDMY(d)}`, `for ${formatDateToDMY(d)}`);
+    } else if (start) {
+      query += ` AND DATE(p.fecha_fin) >= ?`;
+      params.push(start);
+      subtitleDateText = tLabel(`desde ${formatDateToDMY(start)}`, `since ${formatDateToDMY(start)}`);
+    } else if (end) {
+      query += ` AND DATE(p.fecha_fin) <= ?`;
+      params.push(end);
+      subtitleDateText = tLabel(`hasta ${formatDateToDMY(end)}`, `until ${formatDateToDMY(end)}`);
     } else {
       subtitleDateText = tLabel("estimada", "estimated");
     }
@@ -2301,7 +2308,17 @@ app.get('/api/reportes/recoleccion', async (req, res) => {
       let semaforoLabel = tLabel('A Tiempo', 'On Time');
 
       if (o.fecha_fin) {
-        const finDate = new Date(o.fecha_fin);
+        let finDate;
+        if (o.fecha_fin instanceof Date) {
+          finDate = new Date(o.fecha_fin.getUTCFullYear(), o.fecha_fin.getUTCMonth(), o.fecha_fin.getUTCDate());
+        } else {
+          const parts = String(o.fecha_fin).split('T')[0].split('-');
+          if (parts.length >= 3) {
+            finDate = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+          } else {
+            finDate = new Date(o.fecha_fin);
+          }
+        }
         finDate.setHours(0, 0, 0, 0);
         const diffDays = Math.round((finDate - today) / (1000 * 60 * 60 * 24));
 
@@ -2435,27 +2452,27 @@ app.get('/api/reportes/pagos', async (req, res) => {
       JOIN produccion p ON pg.produccion_id = p.id
       JOIN maquileros m ON p.maquilero_id = m.id
       LEFT JOIN inventario i ON p.inventario_id = i.id
-      WHERE p.estado IN ('Terminado', 'Terminado Parcial')
+      WHERE 1=1
     `;
     const params = [];
     let subtitleDate = "";
 
     if (start && end) {
       if (start === end) {
-        query += ` AND pg.fecha = ?`;
+        query += ` AND DATE(pg.fecha) = ?`;
         params.push(start);
         subtitleDate = tLabel(`del día ${formatDateToDMY(start)}`, `for ${formatDateToDMY(start)}`);
       } else {
-        query += ` AND pg.fecha BETWEEN ? AND ?`;
+        query += ` AND DATE(pg.fecha) BETWEEN ? AND ?`;
         params.push(start, end);
         subtitleDate = tLabel(`del ${formatDateToDMY(start)} al ${formatDateToDMY(end)}`, `from ${formatDateToDMY(start)} to ${formatDateToDMY(end)}`);
       }
     } else if (start) {
-      query += ` AND pg.fecha >= ?`;
+      query += ` AND DATE(pg.fecha) >= ?`;
       params.push(start);
       subtitleDate = tLabel(`desde ${formatDateToDMY(start)}`, `since ${formatDateToDMY(start)}`);
     } else if (end) {
-      query += ` AND pg.fecha <= ?`;
+      query += ` AND DATE(pg.fecha) <= ?`;
       params.push(end);
       subtitleDate = tLabel(`hasta ${formatDateToDMY(end)}`, `until ${formatDateToDMY(end)}`);
     }
@@ -2504,7 +2521,7 @@ app.get('/api/reportes/pagos', async (req, res) => {
             modelo: r.producto_modelo || '-',
             iva: hasIva ? '$' + ivaVal.toFixed(2) : 'N/A',
             tipo: (r.tipo_pago === 'completo' ? tLabel('LIQUIDACIÓN', 'SETTLEMENT') : (r.tipo_pago === 'abono' ? tLabel('ABONO', 'DEPOSIT') : (r.tipo_pago || 'ABONO'))).toUpperCase(),
-            monto: '$' + base.toFixed(2)
+            monto: '$' + Number(r.monto).toFixed(2)
           };
         }),
         options: { padding: 4 }
@@ -4058,7 +4075,7 @@ app.get('/api/reportes/plancha/pagos', async (req, res) => {
       return `${parseInt(day, 10)}/${parseInt(month, 10)}/${year}`;
     };
 
-    const localNow = new Date(new Date().getTime() - 6 * 60 * 60 * 1000);
+    const localNow = new Date();
 
     if (planchadorId) {
       // ----------------------------------------------------
@@ -4714,7 +4731,7 @@ app.get('/api/reportes/plancha/resumen', async (req, res) => {
 
     doc.y = 80;
 
-    const localNow = new Date(new Date().getTime() - 6 * 60 * 60 * 1000);
+    const localNow = new Date();
 
     const formatDateUTC = (dateVal) => {
       if (!dateVal) return '';
