@@ -1872,7 +1872,7 @@ app.delete('/api/pagos/:id', authenticateToken, async (req, res) => {
 
 app.get('/api/pagos/:id/comprobante', authenticateToken, async (req, res) => {
   const userRole = (req.user?.role || req.user?.rol || '').toString().toLowerCase().trim();
-  const allowedRoles = ['admin', 'produccion1', 'produccion2'];
+  const allowedRoles = ['admin', 'produccion1', 'produccion2', 'produccion', 'inventario1', 'inventario', 'maquila'];
   const lang = req.query.lang || 'es';
   const tLabel = (esText, enText) => lang === 'en' ? enText : esText;
 
@@ -1893,6 +1893,7 @@ app.get('/api/pagos/:id/comprobante', authenticateToken, async (req, res) => {
       LEFT JOIN inventario i ON p.inventario_id = i.id
       WHERE pg.id = ?
     `, [pagoId]);
+    const pago = pagos[0];
     if (!pago) return res.status(404).json({ error: tLabel('Pago no encontrado', 'Payment not found') });
 
     const [todosLosPagos] = await db.query("SELECT id FROM pagos WHERE produccion_id = ? ORDER BY id ASC", [pago.produccion_id]);
@@ -1918,9 +1919,15 @@ app.get('/api/pagos/:id/comprobante', authenticateToken, async (req, res) => {
     doc.moveDown(2); 
 
     doc.fontSize(12).font('Helvetica').text(`${tLabel('Folio Interno', 'Internal Folio')}: #${pago.id}`, { align: 'right' });
-    const fechaFormateada = new Date(pago.fecha).toLocaleDateString(lang === 'en' ? 'en-US' : 'es-MX', { 
-      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
-    });
+    
+    const fechaParts = String(pago.fecha).split('T')[0].split('-');
+    let fechaFormateada = pago.fecha;
+    if (fechaParts.length >= 3) {
+      const dObj = new Date(parseInt(fechaParts[0]), parseInt(fechaParts[1]) - 1, parseInt(fechaParts[2]));
+      fechaFormateada = dObj.toLocaleDateString(lang === 'en' ? 'en-US' : 'es-MX', { 
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+      });
+    }
     doc.text(`${tLabel('Fecha', 'Date')}: ${fechaFormateada}`, { align: 'right' });
     doc.moveDown(1.5);
 

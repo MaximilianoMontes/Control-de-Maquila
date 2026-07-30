@@ -721,6 +721,9 @@ export default function Camion() {
                           <span className="badge badge-partial" style={{ fontSize: '10px', padding: '2px 6px', fontWeight: 600, display: 'inline-block' }}>
                             {item.maquilero_nombre}
                           </span>
+                          <span className="badge badge-info" style={{ fontSize: '10px', padding: '2px 6px', fontWeight: 700 }}>
+                            Total: {item.piezas} pzs
+                          </span>
                         </div>
                         <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                           {t('pay.order') || 'Orden'}: {item.no_orden || 'N/A'} | {t('cortes.color') || 'Color'}: {formatColorsDisplay(item.color)}

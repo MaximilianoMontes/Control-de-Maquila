@@ -230,121 +230,158 @@ export default function PlanchaModelos({ modelosCamion, fetchModelosCamion, fetc
                 if (dateB - dateA !== 0) return dateB - dateA;
                 return a.modelo.localeCompare(b.modelo);
               });
+
+              // Consolidar entradas por modelo único
+              const modelMap = new Map();
+              g.items.forEach(m => {
+                if (!modelMap.has(m.modelo)) {
+                  modelMap.set(m.modelo, {
+                    id: m.id,
+                    modelo: m.modelo,
+                    imagen: m.imagen,
+                    verificado: m.verificado,
+                    precio_plancha: m.precio_plancha,
+                    entries: []
+                  });
+                }
+                const record = modelMap.get(m.modelo);
+                record.entries.push(m);
+                if (m.verificado) record.verificado = 1;
+                if (m.precio_plancha) record.precio_plancha = m.precio_plancha;
+                if (!record.imagen && m.imagen) record.imagen = m.imagen;
+              });
+              g.modelosConsolidados = Array.from(modelMap.values());
             });
-            
 
             return grupos.map((grupo) => (
               <div key={grupo.nombre} style={{ marginBottom: '1.5rem' }}>
                 <h3 style={{ fontSize: '1.2rem', margin: '0 0 1rem 0', paddingBottom: '0.5rem', borderBottom: '1px solid var(--border-color)', color: 'var(--text-primary)' }}>
-                  {grupo.nombre} <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginLeft: '8px', fontWeight: 'normal' }}>({grupo.items.length} {grupo.items.length === 1 ? 'modelo' : 'modelos'})</span>
+                  {grupo.nombre} <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginLeft: '8px', fontWeight: 'normal' }}>({grupo.modelosConsolidados.length} {grupo.modelosConsolidados.length === 1 ? 'modelo' : 'modelos'})</span>
                 </h3>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
-                  {grupo.items.map(m => (
-                    <div 
-                      key={m.id} 
-                      className="glass-card" 
-                      style={{ 
-                        position: 'relative', 
-                        padding: '1.5rem', 
-                        borderRadius: '16px',
-                        background: m.verificado ? 'rgba(16, 185, 129, 0.02)' : 'rgba(239, 68, 68, 0.01)',
-                        border: `1px solid ${m.verificado ? 'rgba(16, 185, 129, 0.15)' : 'rgba(255,255,255,0.06)'}`,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '1rem',
-                        overflow: 'hidden'
-                      }}
-                    >
-                      {/* Candado / Estado de bloqueo */}
-                      <div style={{ position: 'absolute', top: '12px', right: '12px' }}>
-                        {m.verificado ? (
-                          <span className="badge badge-success" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <Unlock size={12} /> {isEn ? 'Unlocked' : 'Desbloqueado'}
-                          </span>
-                        ) : (
-                          <span className="badge badge-warning" style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(245, 158, 11, 0.1)', color: '#fbbf24' }}>
-                            <Lock size={12} /> {isEn ? 'Locked' : 'Bloqueado'}
-                          </span>
-                        )}
-                      </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
+                  {grupo.modelosConsolidados.map(m => {
+                    const totalPiezasModelo = m.entries.reduce((sum, e) => sum + (parseInt(e.piezas_pendientes) || 0), 0);
+                    const primaryEntry = m.entries[0];
+                    return (
+                      <div 
+                        key={m.modelo} 
+                        className="glass-card" 
+                        style={{ 
+                          position: 'relative', 
+                          padding: '1.5rem', 
+                          borderRadius: '16px',
+                          background: m.verificado ? 'rgba(16, 185, 129, 0.02)' : 'rgba(239, 68, 68, 0.01)',
+                          border: `1px solid ${m.verificado ? 'rgba(16, 185, 129, 0.15)' : 'rgba(255,255,255,0.06)'}`,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '1rem',
+                          overflow: 'hidden'
+                        }}
+                      >
+                        {/* Candado / Estado de bloqueo */}
+                        <div style={{ position: 'absolute', top: '12px', right: '12px' }}>
+                          {m.verificado ? (
+                            <span className="badge badge-success" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <Unlock size={12} /> {isEn ? 'Unlocked' : 'Desbloqueado'}
+                            </span>
+                          ) : (
+                            <span className="badge badge-warning" style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(245, 158, 11, 0.1)', color: '#fbbf24' }}>
+                              <Lock size={12} /> {isEn ? 'Locked' : 'Bloqueado'}
+                            </span>
+                          )}
+                        </div>
 
-                      {/* Imagen y Detalles del modelo */}
-                      <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                        <ImageZoom
-                          src={m.imagen ? `${API_URL}${m.imagen}` : null}
-                          alt={m.modelo}
-                          style={{ width: '60px', height: '60px', borderRadius: '8px', objectFit: 'contain', background: 'var(--bg-card)' }}
-                          fallback={
-                            <div style={{ width: '60px', height: '60px', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                              <Layers size={24} color="#64748b" />
+                        {/* Imagen y Detalles del modelo */}
+                        <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                          <ImageZoom
+                            src={m.imagen ? `${API_URL}${m.imagen}` : null}
+                            alt={m.modelo}
+                            style={{ width: '64px', height: '64px', borderRadius: '8px', objectFit: 'contain', background: 'var(--bg-card)' }}
+                            fallback={
+                              <div style={{ width: '64px', height: '64px', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <Layers size={24} color="#64748b" />
+                              </div>
+                            }
+                          />
+                          <div style={{ flexGrow: 1 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+                              <h3 style={{ margin: 0, fontSize: '1.25rem' }}>{isEn ? 'Model' : 'Modelo'} {m.modelo}</h3>
+                              <span className="badge badge-info" style={{ fontWeight: 700, fontSize: '0.75rem' }}>
+                                {totalPiezasModelo} {isEn ? 'pcs' : 'pzs'}
+                              </span>
                             </div>
-                          }
-                        />
-                        <div>
-                          <h3 style={{ margin: 0, fontSize: '1.3rem' }}>{isEn ? 'Model' : 'Modelo'} {m.modelo}</h3>
-                          <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                            Camión del: {formatDate(m.fecha_envio)}
+
+                            {/* Desglose de Fechas por Envíos / Colores */}
+                            <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '6px', display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                              {m.entries.map((e, idx) => (
+                                <div key={e.id || idx} style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                                  <span style={{ color: '#c084fc', fontWeight: 600 }}>{e.color || 'Lote'}:</span>
+                                  <span>{e.piezas_pendientes} pzs</span>
+                                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>({formatDate(e.fecha_envio)})</span>
+                                </div>
+                              ))}
+                            </div>
                           </div>
                         </div>
-                      </div>
 
-                      {/* Acciones */}
-                      <div style={{ marginTop: 'auto', paddingTop: '0.5rem' }}>
-                        {m.verificado ? (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.9rem' }}>
-                              <span style={{ color: 'var(--text-muted, #94a3b8)' }}>{isEn ? 'Ironing Pay' : 'Pago de Plancha'}:</span>
-                              <strong style={{ color: '#34d399', fontSize: '1.1rem' }}>{formatCurrency(m.precio_plancha)} <span style={{ fontSize: '0.75rem', fontWeight: 'normal', color: 'var(--text-secondary)' }}>{isEn ? '/ pc' : '/ pza'}</span></strong>
-                            </div>
-                            {userRole !== 'plancha' && (
-                              <button 
-                                className="btn btn-secondary" 
-                                style={{ width: '100%', padding: '6px', fontSize: '0.8rem', borderColor: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
-                                onClick={() => handleAbrirVerificacion(m)}
-                              >
-                                <Edit3 size={12} /> {isEn ? 'Edit Price' : 'Editar Precio'}
-                              </button>
-                            )}
-                          </div>
-                        ) : (
-                          userRole === 'plancha' ? (
-                            <div style={{ textAlign: 'center', color: 'var(--text-muted, #94a3b8)', fontSize: '0.85rem', fontStyle: 'italic', padding: '4px 0' }}>
-                              {isEn ? 'Pending Verification' : 'Pendiente de Verificación'}
-                            </div>
-                          ) : (
-                            <div style={{ display: 'flex', gap: '0.5rem' }}>
-                              <button 
-                                className="btn btn-primary" 
-                                style={{ flex: 1, padding: '8px', fontSize: '0.85rem' }}
-                                onClick={() => handleAbrirVerificacion(m)}
-                              >
-                                {isEn ? 'Verify' : 'Verificar'}
-                              </button>
-                              {m.modelo === '723131' ? (
+                        {/* Acciones */}
+                        <div style={{ marginTop: 'auto', paddingTop: '0.5rem' }}>
+                          {m.verificado ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.9rem' }}>
+                                <span style={{ color: 'var(--text-muted, #94a3b8)' }}>{isEn ? 'Ironing Pay' : 'Pago de Plancha'}:</span>
+                                <strong style={{ color: '#34d399', fontSize: '1.1rem' }}>{formatCurrency(m.precio_plancha)} <span style={{ fontSize: '0.75rem', fontWeight: 'normal', color: 'var(--text-secondary)' }}>{isEn ? '/ pc' : '/ pza'}</span></strong>
+                              </div>
+                              {userRole !== 'plancha' && (
                                 <button 
-                                  className="btn" 
-                                  style={{ flex: 1, padding: '8px', fontSize: '0.85rem', background: 'rgba(255, 255, 255, 0.05)', color: 'var(--text-muted)', border: '1px solid rgba(255, 255, 255, 0.1)', cursor: 'not-allowed' }}
-                                  disabled
-                                  title={isEn ? 'Returns not allowed for this model' : 'No se permiten devoluciones para este modelo'}
+                                  className="btn btn-secondary" 
+                                  style={{ width: '100%', padding: '6px', fontSize: '0.8rem', borderColor: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
+                                  onClick={() => handleAbrirVerificacion(primaryEntry)}
                                 >
-                                  {isEn ? 'No Return' : 'Sin Devolución'}
-                                </button>
-                              ) : (
-                                <button 
-                                  className="btn" 
-                                  style={{ flex: 1, padding: '8px', fontSize: '0.85rem', background: 'rgba(239, 68, 68, 0.15)', color: '#f87171', border: '1px solid rgba(239, 68, 68, 0.3)' }}
-                                  onClick={() => handleAbrirDevolucion(m)}
-                                >
-                                  {isEn ? 'Return' : 'Devolución'}
+                                  <Edit3 size={12} /> {isEn ? 'Edit Price' : 'Editar Precio'}
                                 </button>
                               )}
                             </div>
-                          )
-                        )}
-                      </div>
+                          ) : (
+                            userRole === 'plancha' ? (
+                              <div style={{ textAlign: 'center', color: 'var(--text-muted, #94a3b8)', fontSize: '0.85rem', fontStyle: 'italic', padding: '4px 0' }}>
+                                {isEn ? 'Pending Verification' : 'Pendiente de Verificación'}
+                              </div>
+                            ) : (
+                              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                <button 
+                                  className="btn btn-primary" 
+                                  style={{ flex: 1, padding: '8px', fontSize: '0.85rem' }}
+                                  onClick={() => handleAbrirVerificacion(primaryEntry)}
+                                >
+                                  {isEn ? 'Verify' : 'Verificar'}
+                                </button>
+                                {m.modelo === '723131' ? (
+                                  <button 
+                                    className="btn" 
+                                    style={{ flex: 1, padding: '8px', fontSize: '0.85rem', background: 'rgba(255, 255, 255, 0.05)', color: 'var(--text-muted)', border: '1px solid rgba(255, 255, 255, 0.1)', cursor: 'not-allowed' }}
+                                    disabled
+                                    title={isEn ? 'Returns not allowed for this model' : 'No se permiten devoluciones para este modelo'}
+                                  >
+                                    {isEn ? 'No Return' : 'Sin Devolución'}
+                                  </button>
+                                ) : (
+                                  <button 
+                                    className="btn" 
+                                    style={{ flex: 1, padding: '8px', fontSize: '0.85rem', background: 'rgba(239, 68, 68, 0.15)', color: '#f87171', border: '1px solid rgba(239, 68, 68, 0.3)' }}
+                                    onClick={() => handleAbrirDevolucion(primaryEntry)}
+                                  >
+                                    {isEn ? 'Return' : 'Devolución'}
+                                  </button>
+                                )}
+                              </div>
+                            )
+                          )}
+                        </div>
 
-                    </div>
-                  ))}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             ));
