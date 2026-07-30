@@ -1304,6 +1304,31 @@ const autoArchiveOrders = async () => {
     for (const p of toUnarchive) {
       await db.query("UPDATE produccion SET archivado = 0 WHERE id = ?", [p.id]);
       await checkAndMoveToInventory(p.id, 1);
+    // 5. Sync precio_total for active production orders with received pieces
+    const [ordersWithReceived] = await db.query(`
+      SELECT p.id, p.cantidad, p.cantidad_recibida, p.ajuste_tipo, p.ajuste_porcentaje, p.es_extra, p.precio_extra, p.precio_total,
+             i.precio as unit_price
+      FROM produccion p
+      LEFT JOIN inventario i ON p.inventario_id = i.id
+      WHERE p.cantidad_recibida IS NOT NULL AND p.cantidad_recibida > 0 AND p.archivado < 2
+    `);
+    for (const p of ordersWithReceived) {
+      const up = p.es_extra === 1
+        ? (p.precio_extra !== null ? parseFloat(p.precio_extra) : 0)
+        : (p.unit_price || (p.cantidad > 0 ? p.precio_total / p.cantidad : 0) || 0);
+      const subtotal = p.cantidad_recibida * up;
+      let adj = 0;
+      let targetTotal = subtotal;
+      if (p.ajuste_tipo === 'bono') {
+        adj = subtotal * ((p.ajuste_porcentaje || 0) / 100);
+        targetTotal = subtotal + adj;
+      } else if (p.ajuste_tipo === 'descuento') {
+        adj = subtotal * ((p.ajuste_porcentaje || 0) / 100);
+        targetTotal = subtotal - adj;
+      }
+      if (Math.abs((p.precio_total || 0) - targetTotal) > 0.01) {
+        await db.query("UPDATE produccion SET precio_total = ?, ajuste_monto = ? WHERE id = ?", [targetTotal, adj, p.id]);
+      }
     }
   } catch (error) {
     console.error("Error running auto-archive:", error);
@@ -1499,7 +1524,8 @@ app.put('/api/produccion/:id', authenticateToken, async (req, res) => {
     }
 
     const currentCant = dbCantidadRecibida;
-    const effectiveCant = cantidad !== undefined ? (parseInt(cantidad) || 1) : old.cantidad;
+    const orderQty = cantidad !== undefined ? (parseInt(cantidad) || 1) : old.cantidad;
+    const effectiveCant = (currentCant !== null && currentCant !== undefined && currentCant > 0) ? currentCant : orderQty;
     
     let dbPrecioExtra = old.precio_extra;
     if (old.es_extra === 1) {
@@ -1521,7 +1547,7 @@ app.put('/api/produccion/:id', authenticateToken, async (req, res) => {
 
     const up = old.es_extra === 1
       ? (dbPrecioExtra !== null ? parseFloat(dbPrecioExtra) : 0)
-      : (precio_unitario !== undefined ? parseFloat(precio_unitario) : (old.unit_price || (old.precio_total / old.cantidad) || 0));
+      : (precio_unitario !== undefined ? parseFloat(precio_unitario) : (old.unit_price || (old.cantidad > 0 ? old.precio_total / old.cantidad : 0) || 0));
     
     let subtotal = effectiveCant * up;
     
@@ -1654,11 +1680,12 @@ app.put('/api/produccion/:id/recepcion', authenticateToken, async (req, res) => 
     const tallasJsonStr = tallas_recibidas ? (typeof tallas_recibidas === 'string' ? tallas_recibidas : JSON.stringify(tallas_recibidas)) : old.tallas_recibidas;
 
     const fullQty = old.cantidad || 1;
+    const effectiveQty = (qty !== null && qty !== undefined && qty > 0) ? qty : fullQty;
     const up = old.es_extra === 1
       ? (old.precio_extra !== null ? parseFloat(old.precio_extra) : 0)
-      : (old.unit_price || (old.precio_total / fullQty) || 0);
+      : (old.unit_price || (old.cantidad > 0 ? old.precio_total / old.cantidad : 0) || 0);
 
-    let subtotal = fullQty * up;
+    let subtotal = effectiveQty * up;
     let adjustmentAmount = 0;
     let finalPrecioTotal = subtotal;
 
@@ -1695,7 +1722,8 @@ app.put('/api/produccion/:id/ajuste', authenticateToken, async (req, res) => {
       const [invs] = await db.query("SELECT precio FROM inventario WHERE id = ?", [old.inventario_id]);
       unitPrice = invs[0]?.precio || (old.precio_total / old.cantidad);
     }
-    const subtotal = (old.cantidad_recibida !== null ? old.cantidad_recibida : old.cantidad) * unitPrice;
+    const effectiveQty = (old.cantidad_recibida !== null && old.cantidad_recibida !== undefined && old.cantidad_recibida > 0) ? old.cantidad_recibida : old.cantidad;
+    const subtotal = effectiveQty * unitPrice;
     
     let adjustmentAmount = subtotal * (porcentaje / 100);
     let finalTotal = (tipo === 'bono') ? (subtotal + adjustmentAmount) : (subtotal - adjustmentAmount);
