@@ -49,6 +49,11 @@ const authenticateToken = (req, res, next) => {
 
 // =====================================================================
 // ADMIN: Inspeccionar y corregir fechas de pagos (bug zona horaria UTC)
+// Algoritmo correcto: para cada pago, busca su entrada de historial
+// más cercana en tiempo (mismo produccion_id y monto), y si la fecha
+// MX del historial difiere de la fecha guardada, lo corrige.
+// El bug: servidor en UTC, Mexico = UTC-6. Pagos despues de las 6 PM MX
+// se guardaban con fecha del dia siguiente (0:xx UTC = dia+1).
 // =====================================================================
 app.get('/api/admin/fix-pago-dates', authenticateToken, async (req, res) => {
   if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admins' });
@@ -61,58 +66,89 @@ app.get('/api/admin/fix-pago-dates', authenticateToken, async (req, res) => {
         timeZone: 'America/Mexico_City',
         year: 'numeric', month: '2-digit', day: '2-digit'
       }).formatToParts(d);
-      const year = parts.find(p => p.type === 'year').value;
-      const month = parts.find(p => p.type === 'month').value;
-      const day = parts.find(p => p.type === 'day').value;
-      return `${year}-${month}-${day}`;
+      return parts.find(p => p.type === 'year').value + '-' +
+             parts.find(p => p.type === 'month').value + '-' +
+             parts.find(p => p.type === 'day').value;
     };
 
-    // Traer todos los pagos
+    // Para cada pago, buscar su timestamp en el historial usando produccion_id.
+    // El historial guarda: "Registró pago de $MONTO para MODELO (Multas liquidadas)"
+    // Usamos JOIN via produccion_id -> produccion -> inventario.modelo para identificar.
+    // Pero lo más confiable: buscar en historial la entrada ALTA PAGO cuyo timestamp
+    // sea el más cercano a la fecha guardada del pago (dentro de ±2 dias) Y que mencione
+    // el mismo monto. Si su fecha en MX difiere de la fecha guardada, es un bug UTC.
+
     const [pagos] = await db.query(
-      "SELECT p.id, p.produccion_id, p.monto, DATE_FORMAT(p.fecha,'%Y-%m-%d') as fecha_guardada, p.tipo_pago FROM pagos p ORDER BY p.id ASC"
+      "SELECT p.id, p.produccion_id, p.monto, DATE_FORMAT(p.fecha,'%Y-%m-%d') as fecha_guardada, p.tipo_pago, i.modelo " +
+      "FROM pagos p JOIN produccion pr ON p.produccion_id = pr.id JOIN inventario i ON pr.inventario_id = i.id " +
+      "ORDER BY p.id ASC"
     );
 
-    // Traer historial de ALTA PAGO con timestamp
+    // Traer SOLO historial de ALTA PAGO
     const [historial] = await db.query(
-      "SELECT h.id, h.description, h.timestamp FROM historial h WHERE h.action='ALTA' AND h.target='PAGO' ORDER BY h.timestamp ASC"
+      "SELECT h.id, h.description, h.timestamp FROM historial h " +
+      "WHERE h.action='ALTA' AND h.target='PAGO' ORDER BY h.timestamp ASC"
     );
 
     const correcciones = [];
     const inspeccion = [];
 
     for (const pago of pagos) {
-      const pagoFechaStr = pago.fecha_guardada;
+      const pagoFechaStr = pago.fecha_guardada;  // YYYY-MM-DD as stored (UTC-based)
       const montoNum = parseFloat(pago.monto);
       const montoStr = String(montoNum);
+      const modelo = pago.modelo || '';
 
-      // Buscar entradas del historial que mencionen este monto exacto
-      const matches = historial.filter(h =>
-        h.description.includes('$' + montoStr)
-      );
+      // Buscar en historial: mismo monto Y mismo modelo, con timestamp cercano a la fecha guardada
+      const pagoFechaMs = new Date(pagoFechaStr + 'T12:00:00Z').getTime(); // noon UTC del dia guardado
+      const DOS_DIAS_MS = 2 * 24 * 60 * 60 * 1000;
 
-      let bestMatch = null;
-      for (const match of matches) {
-        const fechaMX = toMexDate(match.timestamp);
-        if (fechaMX && fechaMX !== pagoFechaStr) {
-          bestMatch = { historial_id: match.id, fecha_mx: fechaMX, ts: match.timestamp, desc: match.description };
-          break;
-        }
-      }
-
-      inspeccion.push({
-        pago_id: pago.id,
-        produccion_id: pago.produccion_id,
-        monto: pago.monto,
-        tipo_pago: pago.tipo_pago,
-        fecha_guardada: pagoFechaStr,
-        fecha_correcta_mx: bestMatch ? bestMatch.fecha_mx : pagoFechaStr,
-        necesita_correccion: !!bestMatch,
-        historial_ts: bestMatch ? bestMatch.ts : null,
-        historial_desc: bestMatch ? bestMatch.desc : null
+      const candidatos = historial.filter(h => {
+        if (!h.description.includes('$' + montoStr)) return false;
+        // Verificar que el modelo coincida
+        if (modelo && !h.description.includes(modelo)) return false;
+        // El timestamp debe estar dentro de ±2 dias de la fecha guardada
+        const diff = Math.abs(new Date(h.timestamp).getTime() - pagoFechaMs);
+        return diff <= DOS_DIAS_MS;
       });
 
-      if (bestMatch) {
-        correcciones.push({ pago_id: pago.id, fecha_guardada: pagoFechaStr, fecha_correcta: bestMatch.fecha_mx });
+      if (candidatos.length === 0) {
+        // Sin match en historial: no podemos determinar la fecha correcta
+        inspeccion.push({
+          pago_id: pago.id, produccion_id: pago.produccion_id, modelo,
+          monto: pago.monto, tipo_pago: pago.tipo_pago,
+          fecha_guardada: pagoFechaStr, fecha_correcta_mx: pagoFechaStr,
+          necesita_correccion: false, sin_historial: true
+        });
+        continue;
+      }
+
+      // Tomar el candidato con timestamp más cercano a la fecha guardada
+      candidatos.sort((a, b) =>
+        Math.abs(new Date(a.timestamp).getTime() - pagoFechaMs) -
+        Math.abs(new Date(b.timestamp).getTime() - pagoFechaMs)
+      );
+      const mejor = candidatos[0];
+      const fechaMX = toMexDate(mejor.timestamp);
+
+      const necesita = (fechaMX !== null && fechaMX !== pagoFechaStr);
+
+      inspeccion.push({
+        pago_id: pago.id, produccion_id: pago.produccion_id, modelo,
+        monto: pago.monto, tipo_pago: pago.tipo_pago,
+        fecha_guardada: pagoFechaStr,
+        fecha_correcta_mx: fechaMX || pagoFechaStr,
+        necesita_correccion: necesita,
+        historial_ts: mejor.timestamp,
+        historial_desc: mejor.description
+      });
+
+      if (necesita) {
+        correcciones.push({
+          pago_id: pago.id, modelo,
+          fecha_guardada: pagoFechaStr,
+          fecha_correcta: fechaMX
+        });
       }
     }
 
@@ -130,7 +166,7 @@ app.get('/api/admin/fix-pago-dates', authenticateToken, async (req, res) => {
       correcciones_aplicadas: aplicadas,
       apply_mode: applyFix,
       correcciones,
-      inspeccion
+      inspeccion: inspeccion.filter(i => i.necesita_correccion || i.sin_historial)
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
