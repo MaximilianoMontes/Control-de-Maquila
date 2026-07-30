@@ -1480,6 +1480,149 @@ app.post('/api/produccion', authenticateToken, async (req, res) => {
   }
 });
 
+// ENDPOINT DE RECEPCIÓN DE PIEZAS POR COLOR Y TALLA
+app.put('/api/produccion/:id/recepcion', authenticateToken, async (req, res) => {
+  const { cantidad_recibida, tallas_recibidas } = req.body;
+  try {
+    const [olds] = await db.query(`
+      SELECT p.*, i.precio as unit_price 
+      FROM produccion p 
+      LEFT JOIN inventario i ON p.inventario_id = i.id 
+      WHERE p.id = ?
+    `, [req.params.id]);
+    const old = olds[0];
+    if (!old) return res.status(404).json({ error: 'Orden no encontrada' });
+
+    let qty = old.cantidad_recibida;
+    if (cantidad_recibida !== undefined && cantidad_recibida !== null && cantidad_recibida !== '') {
+      qty = parseInt(cantidad_recibida);
+      if (isNaN(qty) || qty < 0) qty = 0;
+    } else if (cantidad_recibida === null || cantidad_recibida === '') {
+      qty = null;
+    }
+
+    const tallasJsonStr = tallas_recibidas ? (typeof tallas_recibidas === 'string' ? tallas_recibidas : JSON.stringify(tallas_recibidas)) : old.tallas_recibidas;
+
+    const fullQty = old.cantidad || 1;
+    const effectiveQty = (qty !== null && qty !== undefined && qty > 0) ? qty : fullQty;
+    let rawUnitPrice = old.precio_extra;
+    if (old.es_extra !== 1 && old.inventario_id) {
+      const [invs] = await db.query("SELECT precio FROM inventario WHERE id = ?", [old.inventario_id]);
+      rawUnitPrice = invs[0]?.precio;
+    }
+    const up = parseFloat(rawUnitPrice) || (old.cantidad > 0 ? parseFloat(old.precio_total) / old.cantidad : 0) || 0;
+
+    let subtotal = effectiveQty * up;
+    let adjustmentAmount = 0;
+    let finalPrecioTotal = subtotal;
+
+    if (old.ajuste_tipo === 'bono') {
+      adjustmentAmount = subtotal * ((old.ajuste_porcentaje || 0) / 100);
+      finalPrecioTotal = subtotal + adjustmentAmount;
+    } else if (old.ajuste_tipo === 'descuento') {
+      adjustmentAmount = subtotal * ((old.ajuste_porcentaje || 0) / 100);
+      finalPrecioTotal = subtotal - adjustmentAmount;
+    }
+
+    await db.query("UPDATE produccion SET cantidad_recibida = ?, tallas_recibidas = ?, precio_total = ?, ajuste_monto = ? WHERE id = ?", 
+      [qty, tallasJsonStr, finalPrecioTotal, adjustmentAmount, req.params.id]);
+
+    await checkAndMoveToInventory(req.params.id, req.user.id);
+    await autoArchiveOrders();
+
+    res.json({ success: true, cantidad_recibida: qty, tallas_recibidas: tallasJsonStr, precio_total: finalPrecioTotal, unit_price: up, effective_qty: effectiveQty });
+  } catch (error) {
+    console.error("Error en PUT /api/produccion/:id/recepcion:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.put('/api/produccion/:id/ajuste', authenticateToken, async (req, res) => {
+  const { tipo, porcentaje } = req.body;
+  try {
+    const [olds] = await db.query("SELECT * FROM produccion WHERE id = ?", [req.params.id]);
+    const old = olds[0];
+    if (!old) return res.status(404).json({ error: 'Orden no encontrada' });
+
+    let unitPrice = old.precio_extra;
+    if (old.es_extra !== 1) {
+      const [invs] = await db.query("SELECT precio FROM inventario WHERE id = ?", [old.inventario_id]);
+      unitPrice = invs[0]?.precio || (old.precio_total / old.cantidad);
+    }
+    const effectiveQty = (old.cantidad_recibida !== null && old.cantidad_recibida !== undefined && old.cantidad_recibida > 0) ? old.cantidad_recibida : old.cantidad;
+    const subtotal = effectiveQty * unitPrice;
+    
+    let adjustmentAmount = subtotal * (porcentaje / 100);
+    let finalTotal = (tipo === 'bono') ? (subtotal + adjustmentAmount) : (subtotal - adjustmentAmount);
+
+    await db.query("UPDATE produccion SET ajuste_tipo = ?, ajuste_porcentaje = ?, ajuste_monto = ?, precio_total = ? WHERE id = ?", 
+      [tipo, porcentaje, adjustmentAmount, finalTotal, req.params.id]);
+    
+    // Check and update inventory and archiving status dynamically
+    await checkAndMoveToInventory(req.params.id, req.user.id);
+    await autoArchiveOrders();
+
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.put('/api/produccion/:id/agregar-dia', authenticateToken, async (req, res) => {
+  const { dias } = req.body;
+  const numDias = parseInt(dias) || 1;
+  try {
+    // Primero actualizamos usando aritmética de SQL para evitar problemas de zona horaria en JS
+    await db.query("UPDATE produccion SET fecha_fin = DATE_ADD(fecha_fin, INTERVAL ? DAY), retrasos = retrasos + 1 WHERE id = ?", [numDias, req.params.id]);
+    
+    // Obtenemos los datos actualizados para el log y la respuesta
+    const [rows] = await db.query(`
+      SELECT p.fecha_fin, p.retrasos, i.modelo 
+      FROM produccion p 
+      LEFT JOIN inventario i ON p.inventario_id = i.id 
+      WHERE p.id = ?
+    `, [req.params.id]);
+    
+    const updated = rows[0];
+    if (updated) {
+      const fmtDate = updated.fecha_fin ? new Date(updated.fecha_fin).toISOString().split('T')[0] : 'N/A';
+      await logActivity(req.user.id, 'EDIT', 'PRODUCCION', `Agregó ${numDias} días de prórroga a ${updated.modelo || 'ID '+req.params.id} (Nueva fecha: ${fmtDate})`);
+      res.json({ success: true, newDate: updated.fecha_fin, newRetrasos: updated.retrasos });
+    } else {
+      res.status(404).json({ error: 'Orden no encontrada' });
+    }
+  } catch (error) {
+    console.error("Error en /agregar-dia:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.put('/api/produccion/:id/archivo', authenticateToken, async (req, res) => {
+  const { archivado } = req.body;
+  try {
+    const [olds] = await db.query("SELECT i.modelo FROM produccion p LEFT JOIN inventario i ON p.inventario_id = i.id WHERE p.id = ?", [req.params.id]);
+    const old = olds[0];
+    await db.query("UPDATE produccion SET archivado = ? WHERE id = ?", [archivado ? 1 : 0, req.params.id]);
+    
+    await logActivity(req.user.id, 'EDIT', 'PRODUCCION', `${archivado ? 'Archivó' : 'Desarchivó'} orden de ${old ? old.modelo : req.params.id}`);
+    
+    await checkAndMoveToInventory(req.params.id, req.user.id);
+    
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.put('/api/produccion/:id/observaciones', authenticateToken, async (req, res) => {
+  try {
+    await db.query("UPDATE produccion SET observaciones = ? WHERE id = ?", [req.body.observaciones || null, req.params.id]);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.put('/api/produccion/:id', authenticateToken, async (req, res) => {
   const { maquilero_id, inventario_id, fecha_inicio, fecha_fin, estado, precio_total, cantidad, cantidad_recibida, retrasos, ajuste_tipo, ajuste_porcentaje, precio_extra, observaciones, precio_unitario } = req.body;
   try {
@@ -1652,149 +1795,6 @@ app.put('/api/produccion/:id', authenticateToken, async (req, res) => {
     res.json({ success: true });
   } catch (error) {
     console.error("Error en PUT produccion:", error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// ENDPOINT DE RECEPCIÓN DE PIEZAS POR COLOR Y TALLA
-app.put('/api/produccion/:id/recepcion', authenticateToken, async (req, res) => {
-  const { cantidad_recibida, tallas_recibidas } = req.body;
-  try {
-    const [olds] = await db.query(`
-      SELECT p.*, i.precio as unit_price 
-      FROM produccion p 
-      LEFT JOIN inventario i ON p.inventario_id = i.id 
-      WHERE p.id = ?
-    `, [req.params.id]);
-    const old = olds[0];
-    if (!old) return res.status(404).json({ error: 'Orden no encontrada' });
-
-    let qty = old.cantidad_recibida;
-    if (cantidad_recibida !== undefined && cantidad_recibida !== null && cantidad_recibida !== '') {
-      qty = parseInt(cantidad_recibida);
-      if (isNaN(qty) || qty < 0) qty = 0;
-    } else if (cantidad_recibida === null || cantidad_recibida === '') {
-      qty = null;
-    }
-
-    const tallasJsonStr = tallas_recibidas ? (typeof tallas_recibidas === 'string' ? tallas_recibidas : JSON.stringify(tallas_recibidas)) : old.tallas_recibidas;
-
-    const fullQty = old.cantidad || 1;
-    const effectiveQty = (qty !== null && qty !== undefined && qty > 0) ? qty : fullQty;
-    let rawUnitPrice = old.precio_extra;
-    if (old.es_extra !== 1 && old.inventario_id) {
-      const [invs] = await db.query("SELECT precio FROM inventario WHERE id = ?", [old.inventario_id]);
-      rawUnitPrice = invs[0]?.precio;
-    }
-    const up = parseFloat(rawUnitPrice) || (old.cantidad > 0 ? parseFloat(old.precio_total) / old.cantidad : 0) || 0;
-
-    let subtotal = effectiveQty * up;
-    let adjustmentAmount = 0;
-    let finalPrecioTotal = subtotal;
-
-    if (old.ajuste_tipo === 'bono') {
-      adjustmentAmount = subtotal * ((old.ajuste_porcentaje || 0) / 100);
-      finalPrecioTotal = subtotal + adjustmentAmount;
-    } else if (old.ajuste_tipo === 'descuento') {
-      adjustmentAmount = subtotal * ((old.ajuste_porcentaje || 0) / 100);
-      finalPrecioTotal = subtotal - adjustmentAmount;
-    }
-
-    await db.query("UPDATE produccion SET cantidad_recibida = ?, tallas_recibidas = ?, precio_total = ?, ajuste_monto = ? WHERE id = ?", 
-      [qty, tallasJsonStr, finalPrecioTotal, adjustmentAmount, req.params.id]);
-
-    await checkAndMoveToInventory(req.params.id, req.user.id);
-    await autoArchiveOrders();
-
-    res.json({ success: true, cantidad_recibida: qty, tallas_recibidas: tallasJsonStr, precio_total: finalPrecioTotal, unit_price: up, effective_qty: effectiveQty });
-  } catch (error) {
-    console.error("Error en PUT /api/produccion/:id/recepcion:", error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.put('/api/produccion/:id/ajuste', authenticateToken, async (req, res) => {
-  const { tipo, porcentaje } = req.body;
-  try {
-    const [olds] = await db.query("SELECT * FROM produccion WHERE id = ?", [req.params.id]);
-    const old = olds[0];
-    if (!old) return res.status(404).json({ error: 'Orden no encontrada' });
-
-    let unitPrice = old.precio_extra;
-    if (old.es_extra !== 1) {
-      const [invs] = await db.query("SELECT precio FROM inventario WHERE id = ?", [old.inventario_id]);
-      unitPrice = invs[0]?.precio || (old.precio_total / old.cantidad);
-    }
-    const effectiveQty = (old.cantidad_recibida !== null && old.cantidad_recibida !== undefined && old.cantidad_recibida > 0) ? old.cantidad_recibida : old.cantidad;
-    const subtotal = effectiveQty * unitPrice;
-    
-    let adjustmentAmount = subtotal * (porcentaje / 100);
-    let finalTotal = (tipo === 'bono') ? (subtotal + adjustmentAmount) : (subtotal - adjustmentAmount);
-
-    await db.query("UPDATE produccion SET ajuste_tipo = ?, ajuste_porcentaje = ?, ajuste_monto = ?, precio_total = ? WHERE id = ?", 
-      [tipo, porcentaje, adjustmentAmount, finalTotal, req.params.id]);
-    
-    // Check and update inventory and archiving status dynamically
-    await checkAndMoveToInventory(req.params.id, req.user.id);
-    await autoArchiveOrders();
-
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.put('/api/produccion/:id/agregar-dia', authenticateToken, async (req, res) => {
-  const { dias } = req.body;
-  const numDias = parseInt(dias) || 1;
-  try {
-    // Primero actualizamos usando aritmética de SQL para evitar problemas de zona horaria en JS
-    await db.query("UPDATE produccion SET fecha_fin = DATE_ADD(fecha_fin, INTERVAL ? DAY), retrasos = retrasos + 1 WHERE id = ?", [numDias, req.params.id]);
-    
-    // Obtenemos los datos actualizados para el log y la respuesta
-    const [rows] = await db.query(`
-      SELECT p.fecha_fin, p.retrasos, i.modelo 
-      FROM produccion p 
-      LEFT JOIN inventario i ON p.inventario_id = i.id 
-      WHERE p.id = ?
-    `, [req.params.id]);
-    
-    const updated = rows[0];
-    if (updated) {
-      const fmtDate = updated.fecha_fin ? new Date(updated.fecha_fin).toISOString().split('T')[0] : 'N/A';
-      await logActivity(req.user.id, 'EDIT', 'PRODUCCION', `Agregó ${numDias} días de prórroga a ${updated.modelo || 'ID '+req.params.id} (Nueva fecha: ${fmtDate})`);
-      res.json({ success: true, newDate: updated.fecha_fin, newRetrasos: updated.retrasos });
-    } else {
-      res.status(404).json({ error: 'Orden no encontrada' });
-    }
-  } catch (error) {
-    console.error("Error en /agregar-dia:", error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.put('/api/produccion/:id/archivo', authenticateToken, async (req, res) => {
-  const { archivado } = req.body;
-  try {
-    const [olds] = await db.query("SELECT i.modelo FROM produccion p LEFT JOIN inventario i ON p.inventario_id = i.id WHERE p.id = ?", [req.params.id]);
-    const old = olds[0];
-    await db.query("UPDATE produccion SET archivado = ? WHERE id = ?", [archivado ? 1 : 0, req.params.id]);
-    
-    await logActivity(req.user.id, 'EDIT', 'PRODUCCION', `${archivado ? 'Archivó' : 'Desarchivó'} orden de ${old ? old.modelo : req.params.id}`);
-    
-    await checkAndMoveToInventory(req.params.id, req.user.id);
-    
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.put('/api/produccion/:id/observaciones', authenticateToken, async (req, res) => {
-  try {
-    await db.query("UPDATE produccion SET observaciones = ? WHERE id = ?", [req.body.observaciones || null, req.params.id]);
-    res.json({ success: true });
-  } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
