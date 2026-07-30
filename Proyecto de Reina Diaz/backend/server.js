@@ -1315,7 +1315,7 @@ const autoArchiveOrders = async () => {
     for (const p of ordersWithReceived) {
       const up = p.es_extra === 1
         ? (p.precio_extra !== null ? parseFloat(p.precio_extra) : 0)
-        : (p.unit_price || (p.cantidad > 0 ? p.precio_total / p.cantidad : 0) || 0);
+        : (parseFloat(p.unit_price) || 0);
       const subtotal = p.cantidad_recibida * up;
       let adj = 0;
       let targetTotal = subtotal;
@@ -1547,7 +1547,7 @@ app.put('/api/produccion/:id', authenticateToken, async (req, res) => {
 
     const up = old.es_extra === 1
       ? (dbPrecioExtra !== null ? parseFloat(dbPrecioExtra) : 0)
-      : (precio_unitario !== undefined ? parseFloat(precio_unitario) : (old.unit_price || (old.cantidad > 0 ? old.precio_total / old.cantidad : 0) || 0));
+      : (precio_unitario !== undefined ? parseFloat(precio_unitario) : (parseFloat(old.unit_price) || 0));
     
     let subtotal = effectiveCant * up;
     
@@ -1683,7 +1683,7 @@ app.put('/api/produccion/:id/recepcion', authenticateToken, async (req, res) => 
     const effectiveQty = (qty !== null && qty !== undefined && qty > 0) ? qty : fullQty;
     const up = old.es_extra === 1
       ? (old.precio_extra !== null ? parseFloat(old.precio_extra) : 0)
-      : (old.unit_price || (old.cantidad > 0 ? old.precio_total / old.cantidad : 0) || 0);
+      : (parseFloat(old.unit_price) || 0);
 
     let subtotal = effectiveQty * up;
     let adjustmentAmount = 0;
