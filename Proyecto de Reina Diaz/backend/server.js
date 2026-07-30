@@ -47,6 +47,96 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
+// =====================================================================
+// ADMIN: Inspeccionar y corregir fechas de pagos (bug zona horaria UTC)
+// =====================================================================
+app.get('/api/admin/fix-pago-dates', authenticateToken, async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admins' });
+  const applyFix = req.query.apply === '1';
+  try {
+    const toMexDate = (tsVal) => {
+      const d = new Date(tsVal);
+      if (isNaN(d.getTime())) return null;
+      const parts = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/Mexico_City',
+        year: 'numeric', month: '2-digit', day: '2-digit'
+      }).formatToParts(d);
+      const year = parts.find(p => p.type === 'year').value;
+      const month = parts.find(p => p.type === 'month').value;
+      const day = parts.find(p => p.type === 'day').value;
+      return `${year}-${month}-${day}`;
+    };
+
+    // Traer todos los pagos
+    const [pagos] = await db.query(
+      "SELECT p.id, p.produccion_id, p.monto, DATE_FORMAT(p.fecha,'%Y-%m-%d') as fecha_guardada, p.tipo_pago FROM pagos p ORDER BY p.id ASC"
+    );
+
+    // Traer historial de ALTA PAGO con timestamp
+    const [historial] = await db.query(
+      "SELECT h.id, h.description, h.timestamp FROM historial h WHERE h.action='ALTA' AND h.target='PAGO' ORDER BY h.timestamp ASC"
+    );
+
+    const correcciones = [];
+    const inspeccion = [];
+
+    for (const pago of pagos) {
+      const pagoFechaStr = pago.fecha_guardada;
+      const montoNum = parseFloat(pago.monto);
+      const montoStr = String(montoNum);
+
+      // Buscar entradas del historial que mencionen este monto exacto
+      const matches = historial.filter(h =>
+        h.description.includes('$' + montoStr)
+      );
+
+      let bestMatch = null;
+      for (const match of matches) {
+        const fechaMX = toMexDate(match.timestamp);
+        if (fechaMX && fechaMX !== pagoFechaStr) {
+          bestMatch = { historial_id: match.id, fecha_mx: fechaMX, ts: match.timestamp, desc: match.description };
+          break;
+        }
+      }
+
+      inspeccion.push({
+        pago_id: pago.id,
+        produccion_id: pago.produccion_id,
+        monto: pago.monto,
+        tipo_pago: pago.tipo_pago,
+        fecha_guardada: pagoFechaStr,
+        fecha_correcta_mx: bestMatch ? bestMatch.fecha_mx : pagoFechaStr,
+        necesita_correccion: !!bestMatch,
+        historial_ts: bestMatch ? bestMatch.ts : null,
+        historial_desc: bestMatch ? bestMatch.desc : null
+      });
+
+      if (bestMatch) {
+        correcciones.push({ pago_id: pago.id, fecha_guardada: pagoFechaStr, fecha_correcta: bestMatch.fecha_mx });
+      }
+    }
+
+    let aplicadas = 0;
+    if (applyFix && correcciones.length > 0) {
+      for (const c of correcciones) {
+        await db.query('UPDATE pagos SET fecha = ? WHERE id = ?', [c.fecha_correcta, c.pago_id]);
+        aplicadas++;
+      }
+    }
+
+    res.json({
+      total_pagos: pagos.length,
+      correcciones_encontradas: correcciones.length,
+      correcciones_aplicadas: aplicadas,
+      apply_mode: applyFix,
+      correcciones,
+      inspeccion
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Helper para formatear fechas a DD/MM/YYYY
 const formatDateToDMY = (dateVal) => {
   if (!dateVal) return '-';
