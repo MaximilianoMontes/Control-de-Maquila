@@ -64,6 +64,22 @@ const formatDateToDMY = (dateVal) => {
   return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
 };
 
+// Helper: obtiene la fecha actual en la zona horaria America/Mexico_City (CDT/CST)
+// El servidor corre en UTC (Railway). Un pago a las 6 PM MX = 12 AM UTC del día siguiente.
+// Esta función devuelve SIEMPRE el día real en México, ej: "2026-07-29"
+const localDateMX = () => {
+  const now = new Date();
+  // Intl.DateTimeFormat es la forma canónica de obtener partes de fecha en una timezone específica
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Mexico_City',
+    year: 'numeric', month: '2-digit', day: '2-digit'
+  }).formatToParts(now);
+  const year = parts.find(p => p.type === 'year').value;
+  const month = parts.find(p => p.type === 'month').value;
+  const day = parts.find(p => p.type === 'day').value;
+  return `${year}-${month}-${day}`;
+};
+
 // Helper para registrar actividad
 const logActivity = async (userId, action, target, description) => {
   try {
@@ -1746,8 +1762,7 @@ app.post('/api/pagos', authenticateToken, async (req, res) => {
   const connection = await db.getConnection();
   try {
     await connection.beginTransaction();
-    const now = new Date();
-    const fecha = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const fecha = localDateMX();
     
     // 1. Insertar el Pago
     const [result] = await connection.query("INSERT INTO pagos (produccion_id, monto, fecha, tipo_pago, con_iva) VALUES (?, ?, ?, ?, ?)",
@@ -1770,7 +1785,7 @@ app.post('/api/pagos', authenticateToken, async (req, res) => {
       if (tipo_pago === 'abono' && currentStatus === 'En proceso') {
         await connection.query("UPDATE produccion SET estado = 'Pago Parcial' WHERE id = ?", [produccion_id]);
       } else if (tipo_pago === 'completo') {
-        const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        const today = localDateMX();
         await connection.query(
           "UPDATE produccion SET estado = 'Terminado', fecha_terminado = COALESCE(fecha_terminado, NOW()), fecha_fin = COALESCE(fecha_fin, ?) WHERE id = ?",
           [today, produccion_id]
@@ -3795,8 +3810,8 @@ app.post('/api/plancha/pagos', authenticateToken, async (req, res) => {
 
     const [paymentResult] = await connection.query(`
       INSERT INTO planchador_pagos (planchador_id, monto, fecha, tipo_pago, fecha_desde, fecha_hasta)
-      VALUES (?, ?, CURDATE(), ?, ?, ?)
-    `, [planchador_id, monto, tipo_pago || 'completo', startClean, endClean]);
+      VALUES (?, ?, ?, ?, ?, ?)
+    `, [planchador_id, monto, localDateMX(), tipo_pago || 'completo', startClean, endClean]);
     const pagoId = paymentResult.insertId;
 
     const queryTrabajos = "UPDATE plancha_trabajos SET pago_id = ? WHERE planchador_id = ? AND estado = 'terminado' AND pago_id IS NULL AND DATE(fecha_terminado) BETWEEN ? AND ?";
@@ -3823,8 +3838,8 @@ app.post('/api/planchadores/:id/asistencia', authenticateToken, async (req, res)
   const planchadorId = req.params.id;
   const fecha = req.body.fecha;
   try {
-    let dateCondition = "fecha = CURDATE()";
-    let insertDateValue = "CURDATE()";
+    let dateCondition = `fecha = '${localDateMX()}'`;
+    let insertDateValue = `'${localDateMX()}'`;
     let queryParamsExisting = [planchadorId];
     let queryParamsInsert = [planchadorId];
 
@@ -3875,7 +3890,8 @@ app.post('/api/planchadores/:id/asistencia', authenticateToken, async (req, res)
 // 10.1.1 OBTENER ASISTENCIAS DE HOY
 app.get('/api/plancha/asistencias/hoy', authenticateToken, async (req, res) => {
   try {
-    const [asistencias] = await db.query("SELECT planchador_id FROM planchador_asistencias WHERE fecha = CURDATE()");
+    const todayMX = localDateMX();
+    const [asistencias] = await db.query("SELECT planchador_id FROM planchador_asistencias WHERE fecha = ?", [todayMX]);
     res.json(asistencias.map(a => a.planchador_id));
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -3915,9 +3931,9 @@ app.post('/api/plancha/ajustes', authenticateToken, async (req, res) => {
     // Validar si ya se registró un ajuste con la misma descripción en esta fecha para este planchador
     const checkQuery = targetDateStr
       ? `SELECT id FROM plancha_trabajos WHERE planchador_id = ? AND (camion_detalles_id = 0 OR camion_detalles_id IS NULL) AND DATE(fecha_creacion) = ? AND color = ?`
-      : `SELECT id FROM plancha_trabajos WHERE planchador_id = ? AND (camion_detalles_id = 0 OR camion_detalles_id IS NULL) AND DATE(fecha_creacion) = CURDATE() AND color = ?`;
+      : `SELECT id FROM plancha_trabajos WHERE planchador_id = ? AND (camion_detalles_id = 0 OR camion_detalles_id IS NULL) AND DATE(fecha_creacion) = ? AND color = ?`;
     
-    const checkParams = targetDateStr ? [planchador_id, targetDateStr, razon] : [planchador_id, razon];
+    const checkParams = targetDateStr ? [planchador_id, targetDateStr, razon] : [planchador_id, localDateMX(), razon];
     const [existing] = await connection.query(checkQuery, checkParams);
 
     if (existing.length > 0) {
