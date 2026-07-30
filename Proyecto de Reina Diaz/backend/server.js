@@ -1681,9 +1681,12 @@ app.put('/api/produccion/:id/recepcion', authenticateToken, async (req, res) => 
 
     const fullQty = old.cantidad || 1;
     const effectiveQty = (qty !== null && qty !== undefined && qty > 0) ? qty : fullQty;
-    const up = old.es_extra === 1
-      ? (old.precio_extra !== null ? parseFloat(old.precio_extra) : 0)
-      : (parseFloat(old.unit_price) || (old.cantidad > 0 ? parseFloat(old.precio_total) / old.cantidad : 0) || 0);
+    let rawUnitPrice = old.precio_extra;
+    if (old.es_extra !== 1 && old.inventario_id) {
+      const [invs] = await db.query("SELECT precio FROM inventario WHERE id = ?", [old.inventario_id]);
+      rawUnitPrice = invs[0]?.precio;
+    }
+    const up = parseFloat(rawUnitPrice) || (old.cantidad > 0 ? parseFloat(old.precio_total) / old.cantidad : 0) || 0;
 
     let subtotal = effectiveQty * up;
     let adjustmentAmount = 0;
