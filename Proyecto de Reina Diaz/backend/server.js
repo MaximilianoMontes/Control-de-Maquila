@@ -1683,7 +1683,7 @@ app.put('/api/produccion/:id/recepcion', authenticateToken, async (req, res) => 
     const effectiveQty = (qty !== null && qty !== undefined && qty > 0) ? qty : fullQty;
     const up = old.es_extra === 1
       ? (old.precio_extra !== null ? parseFloat(old.precio_extra) : 0)
-      : (parseFloat(old.unit_price) || 0);
+      : (parseFloat(old.unit_price) || (old.cantidad > 0 ? parseFloat(old.precio_total) / old.cantidad : 0) || 0);
 
     let subtotal = effectiveQty * up;
     let adjustmentAmount = 0;
@@ -1703,7 +1703,7 @@ app.put('/api/produccion/:id/recepcion', authenticateToken, async (req, res) => 
     await checkAndMoveToInventory(req.params.id, req.user.id);
     await autoArchiveOrders();
 
-    res.json({ success: true, cantidad_recibida: qty, tallas_recibidas: tallasJsonStr, precio_total: finalPrecioTotal });
+    res.json({ success: true, cantidad_recibida: qty, tallas_recibidas: tallasJsonStr, precio_total: finalPrecioTotal, unit_price: up, effective_qty: effectiveQty });
   } catch (error) {
     console.error("Error en PUT /api/produccion/:id/recepcion:", error);
     res.status(500).json({ error: error.message });
