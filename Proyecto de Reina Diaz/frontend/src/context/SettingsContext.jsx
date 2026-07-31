@@ -417,7 +417,7 @@ const translations = {
     'prod.tooltipPartial': 'Marcar como Pago Parcial',
     'prod.confirmPartial': '¿Seguro que deseas marcar esta orden como Pago Parcial?',
     'nav.camion': 'Camión',
-    'camion.title': 'Camión de Envío a Fábrica (Colima)',
+    'camion.title': 'Envío de Camión',
     'camion.activeStock': 'Modelos Terminados en Maquila',
     'camion.cargoArea': 'Arrastra o añade modelos al camión aquí',
     'camion.loadBtn': 'Subir al Camión',
