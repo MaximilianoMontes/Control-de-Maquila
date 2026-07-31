@@ -38,3 +38,4 @@ Thumbs.db
 # Base de datos local (ya no necesaria para GitHub)
 backend/erp.db
 backend/erp.db-journal
+backend/uploads/
