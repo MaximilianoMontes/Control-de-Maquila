@@ -2826,7 +2826,8 @@ app.get('/api/reportes/pagos', async (req, res) => {
   const tLabel = (esText, enText) => lang === 'en' ? enText : esText;
   try {
     let query = `
-      SELECT pg.*, m.nombre as maquilero_nombre, i.modelo as producto_modelo
+      SELECT pg.*, m.nombre as maquilero_nombre, i.modelo as producto_modelo,
+             p.es_extra, p.precio_extra, i.precio as precio_inventario
       FROM pagos pg
       JOIN produccion p ON pg.produccion_id = p.id
       JOIN maquileros m ON p.maquilero_id = m.id
@@ -2883,21 +2884,32 @@ app.get('/api/reportes/pagos', async (req, res) => {
         title: tLabel("Reporte de Pagos a Maquileros", "Payments to Tailors Report"),
         subtitle: tLabel(`Pagos realizados `, `Payments made `) + subtitleDate + tLabel(" - Generado el ", " - Generated on ") + formatDateToDMY(new Date()),
         headers: [
-          { label: tLabel("FECHA", "DATE"), property: "fecha", width: 70 },
-          { label: tLabel("MAQUILERO", "TAILOR"), property: "maquilero", width: 160 },
-          { label: tLabel("MODELO", "MODEL"), property: "modelo", width: 80 },
-          { label: tLabel("IVA (16%)", "IVA (16%)"), property: "iva", width: 70 },
-          { label: tLabel("TIPO", "TYPE"), property: "tipo", width: 75 },
-          { label: tLabel("MONTO", "AMOUNT"), property: "monto", width: 80 }
+          { label: tLabel("FECHA", "DATE"), property: "fecha", width: 65 },
+          { label: tLabel("MAQUILERO", "TAILOR"), property: "maquilero", width: 135 },
+          { label: tLabel("MODELO", "MODEL"), property: "modelo", width: 65 },
+          { label: tLabel("PIEZAS", "PIECES"), property: "piezas", width: 55 },
+          { label: tLabel("IVA (16%)", "IVA (16%)"), property: "iva", width: 65 },
+          { label: tLabel("TIPO", "TYPE"), property: "tipo", width: 70 },
+          { label: tLabel("MONTO", "AMOUNT"), property: "monto", width: 75 }
         ],
         datas: rows.map(r => {
           const hasIva = r.con_iva === 1 || r.con_iva;
           const base = hasIva ? Number(r.monto) / 1.16 : Number(r.monto);
           const ivaVal = hasIva ? Number(r.monto) - base : 0;
+
+          // Piezas equivalentes al monto pagado (igual que en el comprobante individual):
+          // monto base entre el precio por pieza. En abonos no es un total exacto de piezas
+          // ya recibidas, es una referencia de a cuántas piezas equivale ese pago.
+          const precioUnitario = (r.es_extra === 1)
+            ? Number(r.precio_extra) || 0
+            : Number(r.precio_inventario) || 0;
+          const piezasEquivalentes = precioUnitario > 0 ? Math.round(base / precioUnitario) : null;
+
           return {
             fecha: formatDateToDMY(r.fecha),
             maquilero: (r.maquilero_nombre || '').toUpperCase(),
             modelo: r.producto_modelo || '-',
+            piezas: piezasEquivalentes !== null ? String(piezasEquivalentes) : 'N/A',
             iva: hasIva ? '$' + ivaVal.toFixed(2) : 'N/A',
             tipo: (r.tipo_pago === 'completo' ? tLabel('LIQUIDACIÓN', 'SETTLEMENT') : (r.tipo_pago === 'abono' ? tLabel('ABONO', 'DEPOSIT') : (r.tipo_pago || 'ABONO'))).toUpperCase(),
             monto: '$' + Number(r.monto).toFixed(2)
