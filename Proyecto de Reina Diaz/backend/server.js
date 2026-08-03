@@ -3230,10 +3230,29 @@ app.post('/api/plancha/modelos/:id/devolver', authenticateToken, async (req, res
       throw new Error('Debes seleccionar al menos una pieza para devolver.');
     }
 
+    // En lotes con varios colores, el campo `color` guarda un resumen aparte
+    // ([{"color":"CAF","cantidad":"68"}, ...]) que Modelos Camión usa para mostrar
+    // qué colores están disponibles para planchar. Antes, una devolución solo
+    // actualizaba `tallas_cantidades` y dejaba ese resumen desactualizado: un color
+    // devuelto por completo seguía apareciendo como disponible aunque ya no hubiera
+    // ni una pieza física en el camión (esto fue lo que se reportó con 731148,
+    // 731104 y 731143 en café). Se recalcula el resumen a partir del desglose real
+    // por talla ya actualizado, para que ambos campos nunca se desalineen.
+    let updatedColorField = cd.color;
+    if (isNested) {
+      const recalculatedColors = Object.entries(originalTallas)
+        .map(([color, tallasObj]) => {
+          const total = Object.values(tallasObj).reduce((sum, q) => sum + (parseInt(q) || 0), 0);
+          return { color, cantidad: String(total) };
+        })
+        .filter(item => parseInt(item.cantidad) > 0);
+      updatedColorField = JSON.stringify(recalculatedColors);
+    }
+
     // Actualizar camion_detalles
     await connection.query(
-      "UPDATE camion_detalles SET tallas_cantidades = ?, piezas = piezas - ? WHERE id = ?",
-      [JSON.stringify(originalTallas), totalDevolver, req.params.id]
+      "UPDATE camion_detalles SET tallas_cantidades = ?, color = ?, piezas = piezas - ? WHERE id = ?",
+      [JSON.stringify(originalTallas), updatedColorField, totalDevolver, req.params.id]
     );
 
     // Insertar en plancha_devoluciones
