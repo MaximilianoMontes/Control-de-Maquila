@@ -300,17 +300,22 @@ export default function PlanchaModelos({ modelosCamion, fetchModelosCamion, fetc
                           overflow: 'hidden'
                         }}
                       >
-                        {/* Candado / Estado de bloqueo */}
-                        <div style={{ position: 'absolute', top: '12px', right: '12px' }}>
+                        {/* Candado y total de piezas: van juntos en una columna fija en la esquina
+                            para que el título del modelo nunca los invada, sin importar cuánto
+                            ancho ocupe su texto (algunos temas fuerzan negritas/mayúsculas anchas). */}
+                        <div style={{ position: 'absolute', top: '12px', right: '12px', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px', zIndex: 1 }}>
                           {m.verificado ? (
-                            <span className="badge badge-success" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <span className="badge badge-success" style={{ display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
                               <Unlock size={12} /> {isEn ? 'Unlocked' : 'Desbloqueado'}
                             </span>
                           ) : (
-                            <span className="badge badge-warning" style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(245, 158, 11, 0.1)', color: '#fbbf24' }}>
+                            <span className="badge badge-warning" style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(245, 158, 11, 0.1)', color: '#fbbf24', whiteSpace: 'nowrap' }}>
                               <Lock size={12} /> {isEn ? 'Locked' : 'Bloqueado'}
                             </span>
                           )}
+                          <span className="badge badge-info" style={{ fontWeight: 700, fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
+                            {totalPiezasModelo} {isEn ? 'pcs' : 'pzs'}
+                          </span>
                         </div>
 
                         {/* Imagen y Detalles del modelo */}
@@ -318,19 +323,16 @@ export default function PlanchaModelos({ modelosCamion, fetchModelosCamion, fetc
                           <ImageZoom
                             src={m.imagen ? `${API_URL}${m.imagen}` : null}
                             alt={m.modelo}
-                            style={{ width: '64px', height: '64px', borderRadius: '8px', objectFit: 'contain', background: 'var(--bg-card)' }}
+                            style={{ width: '64px', height: '64px', borderRadius: '8px', objectFit: 'contain', background: 'var(--bg-card)', flexShrink: 0 }}
                             fallback={
-                              <div style={{ width: '64px', height: '64px', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <div style={{ width: '64px', height: '64px', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                                 <Layers size={24} color="#64748b" />
                               </div>
                             }
                           />
-                          <div style={{ flexGrow: 1 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+                          <div style={{ flexGrow: 1, minWidth: 0 }}>
+                            <div style={{ paddingRight: '150px' }}>
                               <h3 style={{ margin: 0, fontSize: '1.25rem' }}>{isEn ? 'Model' : 'Modelo'} {m.modelo}</h3>
-                              <span className="badge badge-info" style={{ fontWeight: 700, fontSize: '0.75rem' }}>
-                                {totalPiezasModelo} {isEn ? 'pcs' : 'pzs'}
-                              </span>
                             </div>
 
                             {/* Desglose de Fechas por Envíos / Colores */}
