@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
-import { ChevronLeft, ChevronRight, Plus, Trash2, X, Calendar as CalendarIcon, Clock, AlignLeft, Home } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Trash2, X, Calendar as CalendarIcon, Clock, AlignLeft } from 'lucide-react';
 import API_URL from '../config';
 
 import { toast, Swal } from '../utils/themeNotifications';
@@ -11,7 +10,6 @@ import { toast, Swal } from '../utils/themeNotifications';
 export default function Calendario() {
   const { user } = useAuth();
   const { t, settings } = useSettings();
-  const navigate = useNavigate();
   const isEn = settings.language === 'en';
 
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -214,20 +212,11 @@ export default function Calendario() {
     <div className="calendar-standalone-container">
       <style>{`
         .calendar-standalone-container {
-          min-height: 100vh;
           width: 100%;
           box-sizing: border-box;
           display: flex;
           flex-direction: column;
           gap: 1.5rem;
-          padding: 2rem 3rem;
-          font-family: 'Inter', sans-serif;
-        }
-        @media (max-width: 768px) {
-          .calendar-standalone-container {
-            padding: 1rem;
-            gap: 1rem;
-          }
         }
         .calendar-container {
           background: var(--bg-card);
@@ -237,7 +226,7 @@ export default function Calendario() {
           box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
           display: flex;
           flex-direction: column;
-          height: calc(100vh - 210px);
+          min-height: 560px;
         }
         .calendar-header {
           display: flex;
@@ -350,6 +339,7 @@ export default function Calendario() {
           justify-content: center;
           z-index: 1000;
           backdrop-filter: blur(4px);
+          animation: modalOverlayIn 0.18s ease-out;
         }
         .modal-content {
           background: var(--bg-card);
@@ -359,6 +349,12 @@ export default function Calendario() {
           max-width: 500px;
           box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
           overflow: hidden;
+          animation: modalContentIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .modal-overlay, .modal-content {
+            animation: none;
+          }
         }
         .modal-header {
           padding: 1.5rem;
@@ -444,14 +440,6 @@ export default function Calendario() {
 
       <div className="calendar-top-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-          <button 
-            className="btn btn-secondary calendar-back-btn" 
-            onClick={() => navigate('/')}
-            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: isMobile ? '0.5rem 0.8rem' : '0.6rem 1.2rem', fontSize: isMobile ? '0.85rem' : '0.95rem' }}
-          >
-            <Home size={18} />
-            <span>{isEn ? 'Home' : 'Inicio'}</span>
-          </button>
           <h1 className="gradient-text" style={{ fontSize: isMobile ? '1.5rem' : '2rem', margin: 0 }}>{isEn ? 'Calendar & Alerts' : 'Calendario y Alertas'}</h1>
         </div>
         <button className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: isMobile ? '0.6rem 1rem' : '0.75rem 1.5rem', fontSize: isMobile ? '0.9rem' : '1rem' }} onClick={() => openModal()}>
@@ -510,18 +498,18 @@ export default function Calendario() {
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                  <div className="form-group" style={{ marginBottom: 0 }}>
+                  <div className="form-group" style={{ marginBottom: 0, minWidth: 0 }}>
                     <label className="form-label">{isEn ? 'Start' : 'Inicio'}</label>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <input type="date" className="form-input" value={fechaInicio} onChange={e => setFechaInicio(e.target.value)} required />
-                      <input type="time" className="form-input" value={horaInicio} onChange={e => setHoraInicio(e.target.value)} required />
+                    <div style={{ display: 'flex', gap: '8px', minWidth: 0 }}>
+                      <input type="date" className="form-input" style={{ minWidth: 0 }} value={fechaInicio} onChange={e => setFechaInicio(e.target.value)} required />
+                      <input type="time" className="form-input" style={{ minWidth: 0 }} value={horaInicio} onChange={e => setHoraInicio(e.target.value)} required />
                     </div>
                   </div>
-                  <div className="form-group" style={{ marginBottom: 0 }}>
+                  <div className="form-group" style={{ marginBottom: 0, minWidth: 0 }}>
                     <label className="form-label">{isEn ? 'End' : 'Fin'}</label>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <input type="date" className="form-input" value={fechaFin} onChange={e => setFechaFin(e.target.value)} required />
-                      <input type="time" className="form-input" value={horaFin} onChange={e => setHoraFin(e.target.value)} required />
+                    <div style={{ display: 'flex', gap: '8px', minWidth: 0 }}>
+                      <input type="date" className="form-input" style={{ minWidth: 0 }} value={fechaFin} onChange={e => setFechaFin(e.target.value)} required />
+                      <input type="time" className="form-input" style={{ minWidth: 0 }} value={horaFin} onChange={e => setHoraFin(e.target.value)} required />
                     </div>
                   </div>
                 </div>

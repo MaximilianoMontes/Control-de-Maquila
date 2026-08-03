@@ -84,11 +84,11 @@ export default function Reportes() {
           
           <div style={{ width: '100%', marginBottom: '1.5rem', textAlign: 'left' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-              <div>
+              <div style={{ minWidth: 0 }}>
                 <label className="form-label" style={{ fontSize: '0.75rem' }}>{t('rep.from')}</label>
                 <input type="date" className="form-input" value={prodStart} onChange={e => setProdStart(e.target.value)} />
               </div>
-              <div>
+              <div style={{ minWidth: 0 }}>
                 <label className="form-label" style={{ fontSize: '0.75rem' }}>{t('rep.to')}</label>
                 <input type="date" className="form-input" value={prodEnd} onChange={e => setProdEnd(e.target.value)} />
               </div>
@@ -234,11 +234,11 @@ export default function Reportes() {
           
           <div style={{ width: '100%', marginBottom: '1rem', textAlign: 'left' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-              <div>
+              <div style={{ minWidth: 0 }}>
                 <label className="form-label" style={{ fontSize: '0.75rem' }}>{t('rep.from')}</label>
                 <input type="date" className="form-input" value={payStart} onChange={e => setPayStart(e.target.value)} />
               </div>
-              <div>
+              <div style={{ minWidth: 0 }}>
                 <label className="form-label" style={{ fontSize: '0.75rem' }}>{t('rep.to')}</label>
                 <input type="date" className="form-input" value={payEnd} onChange={e => setPayEnd(e.target.value)} />
               </div>

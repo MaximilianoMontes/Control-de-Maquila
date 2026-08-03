@@ -513,25 +513,25 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
             {pagoPlanchadorId && (
               <div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginTop: '0.5rem', marginBottom: '0.5rem' }}>
-                  <div className="form-group">
+                  <div className="form-group" style={{ minWidth: 0 }}>
                     <label className="form-label" style={{ fontSize: '0.8rem' }}>{isEn ? 'From Date *' : 'Desde la Fecha *'}</label>
                     <input
                       type="date"
                       className="form-input"
                       value={fechaInicioFiltro}
                       onChange={e => setFechaInicioFiltro(e.target.value)}
-                      style={{ padding: '0.4rem 0.6rem', fontSize: '0.85rem' }}
+                      style={{ padding: '0.4rem 0.6rem', fontSize: '0.85rem', minWidth: 0 }}
                       required
                     />
                   </div>
-                  <div className="form-group">
+                  <div className="form-group" style={{ minWidth: 0 }}>
                     <label className="form-label" style={{ fontSize: '0.8rem' }}>{isEn ? 'To Date *' : 'Hasta la Fecha *'}</label>
                     <input
                       type="date"
                       className="form-input"
                       value={fechaFinFiltro}
                       onChange={e => setFechaFinFiltro(e.target.value)}
-                      style={{ padding: '0.4rem 0.6rem', fontSize: '0.85rem' }}
+                      style={{ padding: '0.4rem 0.6rem', fontSize: '0.85rem', minWidth: 0 }}
                       required
                     />
                   </div>
@@ -791,9 +791,9 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
               Gestión de Faltas
             </h3>
             <form onSubmit={handleAddAsistenciaManual} style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', alignItems: 'flex-end' }}>
-              <div className="form-group" style={{ flex: 1 }}>
+              <div className="form-group" style={{ flex: 1, minWidth: 0 }}>
                 <label className="form-label">Agregar Falta Manual (Fecha)</label>
-                <input type="date" className="form-input" value={fechaManualAsistencia} onChange={e => setFechaManualAsistencia(e.target.value)} required />
+                <input type="date" className="form-input" style={{ minWidth: 0 }} value={fechaManualAsistencia} onChange={e => setFechaManualAsistencia(e.target.value)} required />
               </div>
               <button type="submit" className="btn btn-primary" style={{ padding: '0.6rem 1.2rem', background: '#ef4444', borderColor: '#ef4444' }}>Registrar Falta</button>
             </form>
@@ -1358,22 +1358,24 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div className="form-group">
+                <div className="form-group" style={{ minWidth: 0 }}>
                   <label className="form-label">{isEn ? 'Day advanced' : 'Día adelantado'}</label>
                   <input
                     type="date"
                     required
                     className="form-input"
+                    style={{ minWidth: 0 }}
                     value={cuadreStart}
                     onChange={e => setCuadreStart(e.target.value)}
                   />
                 </div>
-                <div className="form-group">
+                <div className="form-group" style={{ minWidth: 0 }}>
                   <label className="form-label">{isEn ? 'Apply difference on date' : 'Aplicar diferencia el día'}</label>
                   <input
                     type="date"
                     required
                     className="form-input"
+                    style={{ minWidth: 0 }}
                     value={cuadreEnd}
                     onChange={e => setCuadreEnd(e.target.value)}
                   />

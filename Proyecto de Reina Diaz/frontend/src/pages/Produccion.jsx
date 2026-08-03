@@ -995,24 +995,26 @@ function Produccion() {
                 />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div className="form-group">
+                <div className="form-group" style={{ minWidth: 0 }}>
                   <label className="form-label">{t('prod.startDateLabel')}</label>
-                  <input 
-                    type="date" 
-                    required 
-                    className="form-input" 
-                    value={formData.fecha_inicio} 
+                  <input
+                    type="date"
+                    required
+                    className="form-input"
+                    style={{ minWidth: 0 }}
+                    value={formData.fecha_inicio}
                     onChange={e => setFormData({...formData, fecha_inicio: e.target.value})}
                     disabled={!canEdit && isEditModalOpen}
                   />
                 </div>
-                <div className="form-group">
+                <div className="form-group" style={{ minWidth: 0 }}>
                   <label className="form-label">{t('prod.endDateLabel')}</label>
-                  <input 
-                    type="date" 
-                    required 
-                    className="form-input" 
-                    value={formData.fecha_fin} 
+                  <input
+                    type="date"
+                    required
+                    className="form-input"
+                    style={{ minWidth: 0 }}
+                    value={formData.fecha_fin}
                     onChange={e => setFormData({...formData, fecha_fin: e.target.value})}
                     disabled={!canEdit && isEditModalOpen}
                   />

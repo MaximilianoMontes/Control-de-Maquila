@@ -1,12 +1,11 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { 
-  Users, 
-  Layers, 
-  Flame, 
-  Wallet, 
-  Home, 
+import {
+  Users,
+  Layers,
+  Flame,
+  Wallet,
+  Home,
   LogOut,
-  Shirt,
   History,
   LayoutDashboard
 } from 'lucide-react';
@@ -40,27 +39,26 @@ export default function PlanchaSidebar({ activeTab, setActiveTab, onClose }) {
   ];
 
   return (
-    <aside className="sidebar plancha-sidebar" style={{ borderRight: '1px solid rgba(14, 165, 233, 0.15)' }}>
-      {/* Logo exclusivo del módulo de plancha */}
-      <Link to="/" className="sidebar-logo" style={{ gap: '0.8rem' }}>
-        <div 
-          style={{ 
-            background: 'linear-gradient(135deg, #0ea5e9, #22d3ee)', 
-            padding: '8px', 
-            borderRadius: '10px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 4px 12px rgba(14, 165, 233, 0.25)'
+    <aside className="sidebar plancha-sidebar">
+      {/* Misma marca que el resto de la app: el módulo se identifica con una
+          etiqueta secundaria, no con un logo y nombre completamente distintos. */}
+      <Link to="/dashboard" className="sidebar-logo">
+        <img src="/logo.png" alt="Logo Maquila" className="logo-img" />
+        <span className="gradient-text">Maquila ERP</span>
+        <span
+          style={{
+            fontSize: '0.7rem',
+            fontWeight: 700,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            color: 'var(--primary-color)',
+            opacity: 0.75
           }}
         >
-          <Shirt size={22} color="#fff" />
-        </div>
-        <span className="gradient-text" style={{ background: 'linear-gradient(135deg, #0ea5e9, #22d3ee)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-          Plancha ERP
+          {isEn ? 'Ironing Module' : 'Módulo de Plancha'}
         </span>
       </Link>
-      
+
       {/* Botones de navegación de pestañas */}
       <nav className="nav-links">
         {menuItems.map(item => (

@@ -922,20 +922,20 @@ export default function Camion() {
 
           {/* Form input: Shipping controls */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', minWidth: 0 }}>
               <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>{t('camion.shippingDate') || 'Fecha de Envío'}</label>
-              <div style={{ display: 'flex', alignItems: 'center', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', padding: '0.5rem', border: '1px solid rgba(255,255,255,0.08)' }}>
-                <Calendar size={16} color="#c084fc" style={{ marginRight: '0.5rem' }} />
-                <input 
-                  type="date" 
-                  value={fechaEnvio} 
+              <div style={{ display: 'flex', alignItems: 'center', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', padding: '0.5rem', border: '1px solid rgba(255,255,255,0.08)', minWidth: 0 }}>
+                <Calendar size={16} color="#c084fc" style={{ marginRight: '0.5rem', flexShrink: 0 }} />
+                <input
+                  type="date"
+                  value={fechaEnvio}
                   onChange={e => setFechaEnvio(e.target.value)}
                   disabled={isReadOnly}
-                  style={{ border: 'none', background: 'transparent', color: 'var(--text-primary)', outline: 'none', fontSize: '0.9rem', width: '100%', opacity: isReadOnly ? 0.6 : 1 }}
+                  style={{ border: 'none', background: 'transparent', color: 'var(--text-primary)', outline: 'none', fontSize: '0.9rem', width: '100%', minWidth: 0, opacity: isReadOnly ? 0.6 : 1 }}
                 />
               </div>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', minWidth: 0 }}>
               <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>{t('camion.observationsLabel') || 'Observaciones del Chofer / Camión'}</label>
               <input 
                 type="text" 
