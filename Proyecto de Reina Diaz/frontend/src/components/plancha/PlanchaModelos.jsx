@@ -50,6 +50,28 @@ export default function PlanchaModelos({ modelosCamion, fetchModelosCamion, fetc
     return `${parseInt(day, 10)}/${parseInt(month, 10)}/${year}`;
   };
 
+  // En lotes con varios colores, el campo "color" a veces guarda el desglose completo
+  // como texto JSON (ej. [{"color":"ARE","cantidad":"60"},{"color":"HUE","cantidad":"68"}])
+  // en vez de un solo código. Esto lo convierte en algo legible ("ARE 60, HUE 68")
+  // en vez de mostrar el JSON crudo.
+  const formatColorLabel = (colorValue) => {
+    if (!colorValue) return isEn ? 'Batch' : 'Lote';
+    if (typeof colorValue === 'string' && colorValue.trim().startsWith('[')) {
+      try {
+        const parsed = JSON.parse(colorValue);
+        if (Array.isArray(parsed)) {
+          return parsed
+            .map(item => item && item.color ? `${item.color}${item.cantidad ? ` (${item.cantidad})` : ''}` : null)
+            .filter(Boolean)
+            .join(', ') || (isEn ? 'Batch' : 'Lote');
+        }
+      } catch {
+        // No era JSON válido, se muestra el texto tal cual abajo.
+      }
+    }
+    return colorValue;
+  };
+
   const handleAbrirVerificacion = (modelo) => {
     setModeloAVerificar(modelo);
     setPrecioPlanchaInput(modelo.precio_plancha !== undefined && modelo.precio_plancha !== null ? String(modelo.precio_plancha) : '');
@@ -315,7 +337,7 @@ export default function PlanchaModelos({ modelosCamion, fetchModelosCamion, fetc
                             <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '6px', display: 'flex', flexDirection: 'column', gap: '3px' }}>
                               {m.entries.map((e, idx) => (
                                 <div key={e.id || idx} style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                                  <span style={{ color: '#c084fc', fontWeight: 600 }}>{e.color || 'Lote'}:</span>
+                                  <span style={{ color: '#c084fc', fontWeight: 600 }}>{formatColorLabel(e.color)}:</span>
                                   <span>{e.piezas_pendientes} pzs</span>
                                   <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>({formatDate(e.fecha_envio)})</span>
                                 </div>

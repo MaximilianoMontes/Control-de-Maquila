@@ -233,7 +233,7 @@ function Produccion() {
 
   const [verArchivados, setVerArchivados] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
-  const [activeTab, setActiveTab] = useState('proceso'); // 'proceso' o 'terminado'
+  const [activeTab, setActiveTab] = useState('proceso'); // 'proceso', 'recepcion' o 'terminado'
   
   const [formData, setFormData] = useState({ maquilero_id: '', inventario_id: '', fecha_inicio: '', fecha_fin: '', precio_unitario: '', cantidad: '' });
   const [editingOrder, setEditingOrder] = useState(null);
@@ -579,11 +579,20 @@ function Produccion() {
   };
 
   const safeOrders = Array.isArray(orders) ? orders : [];
+  // "Recibido en bodega" = tiene cantidad_recibida > 0. Esto se registra con el botón
+  // "Recepcionar" y es independiente del estado de la orden (el estado solo pasa a
+  // 'Terminado' cuando el pago se liquida por completo). Antes, una orden ya recibida
+  // pero sin pago cerrado se mostraba en "En Proceso" como si siguiera en la maquila.
+  const tieneRecepcion = (o) => o.cantidad_recibida !== null && o.cantidad_recibida !== undefined && o.cantidad_recibida > 0;
   const filteredOrders = safeOrders.filter(o => {
     if (!o) return false;
     // Filtrar por pestaña activa
     if (activeTab === 'proceso') {
-      if (o.estado === 'Terminado') {
+      if (o.estado === 'Terminado' || tieneRecepcion(o)) {
+        return false;
+      }
+    } else if (activeTab === 'recepcion') {
+      if (o.estado === 'Terminado' || !tieneRecepcion(o)) {
         return false;
       }
     } else if (activeTab === 'terminado') {
@@ -638,7 +647,23 @@ function Produccion() {
         >
           {isEn ? 'In Process' : 'En Proceso'}
         </button>
-        <button 
+        <button
+          onClick={() => setActiveTab('recepcion')}
+          style={{
+            padding: '10px 20px',
+            background: activeTab === 'recepcion' ? 'rgba(59, 130, 246, 0.12)' : 'transparent',
+            border: 'none',
+            borderBottom: activeTab === 'recepcion' ? '2px solid var(--primary-color)' : 'none',
+            color: activeTab === 'recepcion' ? '#fff' : 'var(--text-secondary)',
+            fontWeight: 600,
+            borderRadius: '8px 8px 0 0',
+            cursor: 'pointer',
+            transition: 'all 0.2s'
+          }}
+        >
+          {isEn ? 'Received' : 'Recepción'}
+        </button>
+        <button
           onClick={() => setActiveTab('terminado')}
           style={{
             padding: '10px 20px',
