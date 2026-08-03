@@ -1,4 +1,4 @@
-// Server initialized - Triggering redeploy
+﻿// Server initialized - Triggering redeploy
 const express = require('express');
 const cors = require('cors');
 const db = require('./database');
@@ -22,17 +22,73 @@ const storage = multer.diskStorage({
     cb(null, Date.now() + '-' + Math.round(Math.random()*1E9) + ext);
   }
 });
-const upload = multer({ storage: storage });
+
+const ALLOWED_IMAGE_MIMES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 8 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (!ALLOWED_IMAGE_MIMES.has(file.mimetype)) {
+      return cb(new Error('Tipo de archivo no permitido. Solo se aceptan imágenes (JPG, PNG, WEBP, GIF).'));
+    }
+    cb(null, true);
+  }
+});
+
+const ALLOWED_SPREADSHEET_MIMES = new Set([
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.ms-excel',
+  'application/zip', // .xlsx es un zip; algunos navegadores/SO lo reportan así
+  'application/octet-stream', // fallback genérico que mandan varios navegadores/SO para .xlsx/.xls
+  'text/csv',
+  'text/plain' // algunos exportan .csv como texto plano
+]);
+const ALLOWED_SPREADSHEET_EXTENSIONS = new Set(['.xlsx', '.xls', '.csv']);
+const uploadSpreadsheet = multer({
+  storage: storage,
+  limits: { fileSize: 15 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    // El tipo MIME que reportan los navegadores para hojas de cálculo es poco confiable
+    // (varía por SO/navegador), así que se acepta si el MIME o la extensión coinciden.
+    const ext = path.extname(file.originalname || '').toLowerCase();
+    if (!ALLOWED_SPREADSHEET_MIMES.has(file.mimetype) && !ALLOWED_SPREADSHEET_EXTENSIONS.has(ext)) {
+      return cb(new Error('Tipo de archivo no permitido. Solo se aceptan hojas de cálculo (XLSX, XLS, CSV).'));
+    }
+    cb(null, true);
+  }
+});
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-const SECRET_KEY = process.env.SECRET_KEY || 'minierp_secret_key_super_secure';
+const SECRET_KEY = process.env.SECRET_KEY;
+if (!SECRET_KEY) {
+  console.error('FATAL: la variable de entorno SECRET_KEY no está configurada. El servidor no puede arrancar sin ella.');
+  process.exit(1);
+}
 
+// Necesario para que req.ip refleje la IP real del cliente detrás del proxy de Railway,
+// en vez de la IP interna del proxy (de lo contrario el límite de intentos de login de abajo
+// agruparía a todos los usuarios bajo la misma IP).
+app.set('trust proxy', 1);
 
-
-app.use(cors());
+// Si ALLOWED_ORIGIN está configurado, solo ese origen puede llamar a la API (por ejemplo,
+// el dominio del frontend en producción). Si no está configurado, se permite cualquier
+// origen (desarrollo local).
+const allowedOrigin = process.env.ALLOWED_ORIGIN;
+app.use(cors(allowedOrigin ? { origin: allowedOrigin } : {}));
 app.use(express.json());
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Cabeceras de seguridad básicas (equivalentes mínimos de "helmet" sin agregar una dependencia).
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  next();
+});
+
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
+  setHeaders: (res) => res.setHeader('X-Content-Type-Options', 'nosniff')
+}));
 
 // Middleware de Autenticación
 const authenticateToken = (req, res, next) => {
@@ -46,6 +102,34 @@ const authenticateToken = (req, res, next) => {
     next();
   });
 };
+
+// Límite de intentos de login por IP, en memoria (sin dependencias externas): evita fuerza
+// bruta sobre /api/login. Se reinicia al hacer login correcto o al pasar la ventana de tiempo.
+// El límite es generoso a propósito: si varios usuarios comparten la misma salida a internet
+// (una sola oficina/red), comparten también la misma IP vista por el servidor.
+const LOGIN_MAX_ATTEMPTS = 20;
+const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+const loginAttemptsByIp = new Map();
+
+function loginRateLimiter(req, res, next) {
+  const key = req.ip;
+  const now = Date.now();
+  const entry = loginAttemptsByIp.get(key);
+
+  if (!entry || now - entry.firstAttempt > LOGIN_WINDOW_MS) {
+    loginAttemptsByIp.set(key, { count: 1, firstAttempt: now });
+    return next();
+  }
+
+  entry.count += 1;
+  if (entry.count > LOGIN_MAX_ATTEMPTS) {
+    const retryAfterSec = Math.ceil((LOGIN_WINDOW_MS - (now - entry.firstAttempt)) / 1000);
+    res.setHeader('Retry-After', String(retryAfterSec));
+    return res.status(429).json({ error: 'Demasiados intentos de inicio de sesión. Intenta de nuevo en unos minutos.' });
+  }
+  next();
+}
+loginRateLimiter.reset = (req) => loginAttemptsByIp.delete(req.ip);
 
 // =====================================================================
 // ADMIN: Inspeccionar y corregir fechas de pagos (bug zona horaria UTC)
@@ -234,6 +318,68 @@ const logActivity = async (userId, action, target, description) => {
   }
 };
 
+// Fuente única de verdad para lo que un planchador tiene pendiente de cobrar en un rango de fechas.
+// Usada tanto para mostrar el pendiente (GET) como para calcular el monto real de un pago (POST),
+// de forma que ambos nunca puedan desalinearse entre sí.
+const calcularPendientePlanchador = async (executor, planchadorId, start, end) => {
+  let trabajosQuery = `
+    SELECT pt.*, cd.modelo as modelo_nombre,
+           (SELECT imagen FROM inventario WHERE modelo = cd.modelo LIMIT 1) as modelo_imagen
+    FROM plancha_trabajos pt
+    LEFT JOIN camion_detalles cd ON pt.camion_detalles_id = cd.id
+    WHERE pt.planchador_id = ? AND pt.estado = 'terminado' AND pt.pago_id IS NULL
+  `;
+  const trabajosParams = [planchadorId];
+  if (start && end) {
+    trabajosQuery += ` AND DATE(pt.fecha_terminado) BETWEEN ? AND ?`;
+    trabajosParams.push(start, end);
+  }
+  trabajosQuery += ` ORDER BY pt.fecha_creacion DESC`;
+  const [trabajosPendientes] = await executor.query(trabajosQuery, trabajosParams);
+
+  let asistenciasQuery = `SELECT * FROM planchador_asistencias WHERE planchador_id = ? AND pago_id IS NULL`;
+  const asistenciasParams = [planchadorId];
+  if (start && end) {
+    asistenciasQuery += ` AND fecha BETWEEN ? AND ?`;
+    asistenciasParams.push(start, end);
+  }
+  asistenciasQuery += ` ORDER BY fecha DESC`;
+  const [asistenciasPendientes] = await executor.query(asistenciasQuery, asistenciasParams);
+
+  const pendingWorksSum = trabajosPendientes.reduce((sum, pt) => sum + parseFloat(pt.total || 0), 0);
+  const pendingAsistenciasSum = asistenciasPendientes.reduce((sum, pa) => sum + parseFloat(pa.monto || 0), 0);
+
+  // Bono quincenal de asistencia ($500), una sola vez por quincena
+  let bonoBase = 500;
+  if (start && end && start === end) {
+    bonoBase = 0;
+  } else {
+    const refDateStr = end || new Date().toISOString().split('T')[0];
+    const refDate = new Date(refDateStr + 'T12:00:00');
+    const day = refDate.getDate();
+    const month = refDate.getMonth();
+    const year = refDate.getFullYear();
+
+    const fnStart = day <= 15
+      ? new Date(year, month, 1)
+      : new Date(year, month, 16);
+    const fnEnd = day <= 15
+      ? new Date(year, month, 15, 23, 59, 59)
+      : new Date(year, month + 1, 0, 23, 59, 59);
+
+    const [existingPayments] = await executor.query(
+      'SELECT id FROM planchador_pagos WHERE planchador_id = ? AND fecha_hasta IS NOT NULL AND DATE(fecha_hasta) BETWEEN ? AND ?',
+      [planchadorId, fnStart.toISOString().split('T')[0], fnEnd.toISOString().split('T')[0]]
+    );
+    if (existingPayments.length > 0) {
+      bonoBase = 0;
+    }
+  }
+
+  const pendiente = pendingWorksSum + pendingAsistenciasSum + bonoBase;
+  return { trabajosPendientes, asistenciasPendientes, pendingWorksSum, pendingAsistenciasSum, bonoBase, pendiente };
+};
+
 // Helper para procesar y comprimir imágenes
 const processImage = async (file) => {
   if (!file) return null;
@@ -335,9 +481,9 @@ const checkAndMoveToInventory = async (produccionId, userId) => {
 };
 
 // Auth Endpoint
-app.post('/api/login', async (req, res) => {
+app.post('/api/login', loginRateLimiter, async (req, res) => {
   const { username, password } = req.body;
-  
+
   if (!username || !password) {
     return res.status(400).json({ error: 'Username y password requeridos' });
   }
@@ -346,15 +492,13 @@ app.post('/api/login', async (req, res) => {
     const [users] = await db.query("SELECT * FROM users WHERE username = ?", [username]);
     const user = users[0];
 
-    if (!user) {
-      return res.status(401).json({ error: 'Usuario no encontrado' });
+    // Mensaje genérico en ambos casos (usuario inexistente o contraseña incorrecta) para no
+    // permitir que alguien averigüe qué nombres de usuario existen probando uno por uno.
+    if (!user || !bcrypt.compareSync(password, user.password)) {
+      return res.status(401).json({ error: 'Usuario o contraseña incorrectos' });
     }
-    
-    const match = bcrypt.compareSync(password, user.password);
-    if (!match) {
-      return res.status(401).json({ error: 'Contraseña incorrecta' });
-    }
-    
+
+    loginRateLimiter.reset(req);
     const token = jwt.sign({ id: user.id, username: user.username, role: user.role }, SECRET_KEY, { expiresIn: '12h' });
     res.json({ token, user: { id: user.id, username: user.username, role: user.role } });
   } catch (error) {
@@ -398,7 +542,7 @@ app.get('/api/historial', authenticateToken, async (req, res) => {
   }
 });
 
-app.get('/api/maquileros', async (req, res) => {
+app.get('/api/maquileros', authenticateToken, async (req, res) => {
   try {
     const [maquileros] = await db.query("SELECT * FROM maquileros");
     res.json(maquileros);
@@ -407,7 +551,7 @@ app.get('/api/maquileros', async (req, res) => {
   }
 });
 
-app.get('/api/maquileros/:id', async (req, res) => {
+app.get('/api/maquileros/:id', authenticateToken, async (req, res) => {
   try {
     const [maquileros] = await db.query("SELECT * FROM maquileros WHERE id = ?", [req.params.id]);
     const maquilero = maquileros[0];
@@ -472,7 +616,7 @@ app.post('/api/maquileros', authenticateToken, upload.single('imagenBtn'), async
   }
 });
 
-app.put('/api/maquileros/:id/imagen', upload.single('imagenBtn'), async (req, res) => {
+app.put('/api/maquileros/:id/imagen', authenticateToken, upload.single('imagenBtn'), async (req, res) => {
   const imagen = await processImage(req.file);
   if (!imagen) return res.status(400).json({ error: 'No se recibió imagen' });
   try {
@@ -557,8 +701,8 @@ app.post('/api/inventario', authenticateToken, upload.single('imagenBtn'), async
 
   try {
     if (!isReprog) {
-      const [existingRows] = await db.query("SELECT id FROM inventario WHERE numero = ? OR modelo = ?", [
-        numero ? String(numero) : null, 
+      const [existingRows] = await db.query("SELECT id FROM inventario WHERE numero = ? AND modelo = ?", [
+        numero ? String(numero) : null,
         modelo ? String(modelo) : null
       ]);
       if (existingRows.length > 0) {
@@ -654,7 +798,7 @@ app.post('/api/inventario', authenticateToken, upload.single('imagenBtn'), async
   }
 });
 
-app.put('/api/inventario/:id/imagen', upload.single('imagenBtn'), async (req, res) => {
+app.put('/api/inventario/:id/imagen', authenticateToken, upload.single('imagenBtn'), async (req, res) => {
   const { imagenUrl } = req.body;
   const finalImageUrl = req.file ? await processImage(req.file) : (imagenUrl || null);
   try {
@@ -726,11 +870,16 @@ app.put('/api/inventario/:id', authenticateToken, upload.single('imagenBtn'), as
     const desc = changes.length > 0 ? `Editó ${modelo}: ${changes.join(', ')}` : `Actualizó datos de ${modelo}`;
     await logActivity(req.user.id, 'EDIT', 'INVENTARIO', desc);
 
-    // Automatically update the mirrored record in inventario_real
+    // Automatically update the mirrored record in inventario_real.
+    // Se enlaza por modelo + es_reprogramacion (igual que ya hace el alta en POST /api/inventario)
+    // en vez de no_orden+modelo: una vez que un modelo se reprograma existen dos filas de
+    // inventario_real con el mismo modelo, y matchear solo por no_orden+modelo puede actualizar
+    // la corrida equivocada.
+    const oldEsReprog = old.es_reprogramacion ? 1 : 0;
     const [updateResult] = await db.query(`
-      UPDATE inventario_real 
+      UPDATE inventario_real
       SET numero=?, modelo=?, precio=?, color=?, cliente=?, no_orden=?, piezas=?, imagen=?, observaciones=?, precio_plancha=?
-      WHERE no_orden=? AND modelo=?
+      WHERE modelo=? AND COALESCE(es_reprogramacion, 0) = ?
     `, [
       numero ? String(numero) : null,
       modelo ? String(modelo) : null,
@@ -742,14 +891,14 @@ app.put('/api/inventario/:id', authenticateToken, upload.single('imagenBtn'), as
       imagen ? String(imagen) : null,
       observaciones ? String(observaciones) : null,
       parseFloat(String(precio_plancha).replace(/[^0-9.-]+/g,"")) || 0,
-      old.no_orden || '',
-      old.modelo
+      old.modelo,
+      oldEsReprog
     ]);
 
     if (updateResult.affectedRows === 0) {
       await db.query(`
-        INSERT INTO inventario_real (numero, modelo, precio, color, cliente, no_orden, piezas, imagen, observaciones, fecha_ingreso, precio_plancha)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?)
+        INSERT INTO inventario_real (numero, modelo, precio, color, cliente, no_orden, piezas, imagen, observaciones, fecha_ingreso, precio_plancha, es_reprogramacion)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?)
       `, [
         numero ? String(numero) : null,
         modelo ? String(modelo) : null,
@@ -760,7 +909,8 @@ app.put('/api/inventario/:id', authenticateToken, upload.single('imagenBtn'), as
         parseInt(piezas_en_proceso) || 0,
         imagen ? String(imagen) : null,
         observaciones ? String(observaciones) : null,
-        parseFloat(String(precio_plancha).replace(/[^0-9.-]+/g,"")) || 0
+        parseFloat(String(precio_plancha).replace(/[^0-9.-]+/g,"")) || 0,
+        oldEsReprog
       ]);
     }
 
@@ -772,14 +922,17 @@ app.put('/api/inventario/:id', authenticateToken, upload.single('imagenBtn'), as
 
 app.delete('/api/inventario/:id', authenticateToken, async (req, res) => {
   try {
-    const [olds] = await db.query("SELECT modelo, no_orden FROM inventario WHERE id = ?", [req.params.id]);
+    const [olds] = await db.query("SELECT modelo, no_orden, es_reprogramacion FROM inventario WHERE id = ?", [req.params.id]);
     const old = olds[0];
     if (!old) return res.status(404).json({ error: 'Producto no encontrado' });
 
     await db.query("DELETE FROM inventario WHERE id = ?", [req.params.id]);
 
-    // Automatically delete the mirrored record in inventario_real
-    await db.query("DELETE FROM inventario_real WHERE no_orden = ? AND modelo = ?", [old.no_orden || '', old.modelo]);
+    // Igual que en la edición: se enlaza por modelo + es_reprogramacion, no por no_orden+modelo.
+    await db.query(
+      "DELETE FROM inventario_real WHERE modelo = ? AND COALESCE(es_reprogramacion, 0) = ?",
+      [old.modelo, old.es_reprogramacion ? 1 : 0]
+    );
 
     await logActivity(req.user.id, 'BAJA', 'INVENTARIO', `Eliminó del inventario: ${old.modelo}`);
     res.json({ success: true });
@@ -791,7 +944,7 @@ app.delete('/api/inventario/:id', authenticateToken, async (req, res) => {
   }
 });
 
-app.post('/api/inventario/import', upload.single('file'), async (req, res) => {
+app.post('/api/inventario/import', authenticateToken, uploadSpreadsheet.single('file'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Archivo no proporcionado' });
   try {
     const workbook = xlsx.readFile(req.file.path);
@@ -832,27 +985,41 @@ app.post('/api/inventario/import', upload.single('file'), async (req, res) => {
 
         if (modelo) {
           const m = String(modelo).trim();
-          await connection.query(`
-            INSERT INTO inventario (numero, temporada, modelo, precio, color, cliente, no_orden, piezas_en_proceso, en_inventario, precio_plancha) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?)
-            ON DUPLICATE KEY UPDATE 
-            piezas_en_proceso = piezas_en_proceso + VALUES(piezas_en_proceso),
-            temporada = VALUES(temporada),
-            precio = VALUES(precio),
-            color = VALUES(color),
-            cliente = VALUES(cliente),
-            no_orden = VALUES(no_orden),
-            precio_plancha = VALUES(precio_plancha)
-          `, [String(numero), temporada, m, precio, color, cliente, no_orden, piezas_en_proceso, precio_plancha]);
 
-          // Mirror immediately to inventario_real
-          const [existingReal] = await connection.query("SELECT id FROM inventario_real WHERE no_orden = ? AND modelo = ?", [no_orden, m]);
+          // `inventario` no tiene una llave única real sobre (numero, modelo), así que
+          // ON DUPLICATE KEY UPDATE nunca se disparaba: cada reimportación del mismo archivo
+          // creaba una fila nueva en vez de sumar piezas. Se busca explícitamente la fila
+          // existente (no reprogramada) antes de decidir si insertar o actualizar.
+          const [existingInv] = await connection.query(
+            "SELECT id FROM inventario WHERE numero = ? AND modelo = ? AND COALESCE(es_reprogramacion, 0) = 0",
+            [String(numero), m]
+          );
+
+          if (existingInv.length > 0) {
+            await connection.query(`
+              UPDATE inventario
+              SET temporada=?, precio=?, color=?, cliente=?, no_orden=?, piezas_en_proceso = piezas_en_proceso + ?, precio_plancha=?
+              WHERE id=?
+            `, [temporada, precio, color, cliente, no_orden, piezas_en_proceso, precio_plancha, existingInv[0].id]);
+          } else {
+            await connection.query(`
+              INSERT INTO inventario (numero, temporada, modelo, precio, color, cliente, no_orden, piezas_en_proceso, en_inventario, precio_plancha)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?)
+            `, [String(numero), temporada, m, precio, color, cliente, no_orden, piezas_en_proceso, precio_plancha]);
+          }
+
+          // Mirror immediately to inventario_real, enlazado por modelo + es_reprogramacion
+          // (igual que el resto de las rutas de inventario), no por no_orden+modelo.
+          const [existingReal] = await connection.query(
+            "SELECT id FROM inventario_real WHERE modelo = ? AND COALESCE(es_reprogramacion, 0) = 0",
+            [m]
+          );
           if (existingReal.length > 0) {
             await connection.query(`
-              UPDATE inventario_real 
-              SET numero=?, temporada=?, precio=?, color=?, cliente=?, piezas=piezas + ?, precio_plancha=?
-              WHERE no_orden=? AND modelo=?
-            `, [String(numero), temporada, precio, color, cliente, piezas_en_proceso, precio_plancha, no_orden, m]);
+              UPDATE inventario_real
+              SET numero=?, temporada=?, precio=?, color=?, cliente=?, no_orden=?, piezas=piezas + ?, precio_plancha=?
+              WHERE id=?
+            `, [String(numero), temporada, precio, color, cliente, no_orden, piezas_en_proceso, precio_plancha, existingReal[0].id]);
           } else {
             await connection.query(`
               INSERT INTO inventario_real (numero, temporada, modelo, precio, color, cliente, no_orden, piezas, fecha_ingreso, precio_plancha)
@@ -1341,12 +1508,19 @@ const autoArchiveOrders = async () => {
 const syncPhysicalInventory = async (connection) => {
   const conn = connection || db;
   try {
+    // Se enlaza también por es_reprogramacion (no solo no_orden+modelo): un modelo reprogramado
+    // tiene dos filas con el mismo no_orden+modelo, una original y una reprogramada. Sin este
+    // campo en el JOIN, MySQL empareja una fila arbitraria de `inventario` con cada fila de
+    // `inventario_real` y puede escribir el stock en la corrida equivocada.
     await conn.query(`
       UPDATE inventario_real ir
-      JOIN inventario i ON i.no_orden = ir.no_orden AND i.modelo = ir.modelo
+      JOIN inventario i
+        ON i.no_orden = ir.no_orden
+        AND i.modelo = ir.modelo
+        AND COALESCE(i.es_reprogramacion, 0) = COALESCE(ir.es_reprogramacion, 0)
       SET ir.piezas = i.piezas_en_proceso - COALESCE((
-        SELECT SUM(cd.piezas) 
-        FROM camion_detalles cd 
+        SELECT SUM(cd.piezas)
+        FROM camion_detalles cd
         WHERE cd.no_orden = ir.no_orden AND cd.modelo = ir.modelo
       ), 0)
     `);
@@ -1818,6 +1992,17 @@ app.post('/api/produccion/:id/dividir', authenticateToken, async (req, res) => {
     const qtyEntregada = parseInt(cantidad_entregada);
     if (isNaN(qtyEntregada) || qtyEntregada <= 0 || qtyEntregada >= old.cantidad) {
       return res.status(400).json({ error: 'La cantidad entregada debe ser mayor a 0 y menor a la cantidad original de la orden.' });
+    }
+
+    // La orden no se puede dividir por debajo de lo que ya salió físicamente en camión,
+    // o el inventario disponible calculado a partir de `cantidad` quedaría negativo
+    // (oculto, porque /api/camiones/disponibles filtra por piezas > 0).
+    const [[{ piezasEnviadas }]] = await db.query(
+      "SELECT COALESCE(SUM(piezas), 0) as piezasEnviadas FROM camion_detalles WHERE produccion_id = ?",
+      [req.params.id]
+    );
+    if (qtyEntregada < piezasEnviadas) {
+      return res.status(400).json({ error: `No puedes dividir esta orden a ${qtyEntregada} piezas: ya se enviaron ${piezasEnviadas} piezas en camión para esta orden.` });
     }
 
     const remainingQty = old.cantidad - qtyEntregada;
@@ -2797,365 +2982,6 @@ app.get('/api/descuentos/maquilero/:id', authenticateToken, async (req, res) => 
   }
 });
 
-// DIAGNOSTIC RESTORE MODELS
-app.get('/api/admin/restore-models', async (req, res) => {
-  try {
-    const targetModels = ['554258', '554296', '526260', '554223'];
-    const diagnostics = {};
-
-    // Get first maquilero as fallback for new production orders
-    const [maqs] = await db.query("SELECT id, nombre FROM maquileros LIMIT 1");
-    const defaultMaquilero = maqs[0] || null;
-
-    diagnostics.defaultMaquilero = defaultMaquilero;
-    diagnostics.results = [];
-
-    for (const model of targetModels) {
-      const modelResult = { model, status: 'Not processed' };
-      
-      // 1. Search cuts exact
-      let [cuts] = await db.query("SELECT * FROM inventario WHERE modelo = ?", [model]);
-      
-      // 2. If not found, search with LIKE
-      if (cuts.length === 0) {
-        const [likeCuts] = await db.query("SELECT * FROM inventario WHERE modelo LIKE ?", [`%${model}%`]);
-        cuts = likeCuts;
-        modelResult.searchType = 'LIKE';
-      } else {
-        modelResult.searchType = 'EXACT';
-      }
-
-      modelResult.foundCutsCount = cuts.length;
-      modelResult.cuts = cuts.map(c => ({ id: c.id, modelo: c.modelo, en_inventario: c.en_inventario }));
-
-      if (cuts.length > 0) {
-        modelResult.actions = [];
-        for (const cut of cuts) {
-          const cutActions = { cutId: cut.id, modelo: cut.modelo };
-
-          // A. Ensure en_inventario = 0 (so it shows in production/cuts list)
-          if (cut.en_inventario !== 0) {
-            await db.query("UPDATE inventario SET en_inventario = 0 WHERE id = ?", [cut.id]);
-            cutActions.cutStatusUpdated = 'Set en_inventario = 0';
-          } else {
-            cutActions.cutStatusUpdated = 'Already 0';
-          }
-
-          // B. Get production rows for this cut
-          const [prodRows] = await db.query("SELECT * FROM produccion WHERE inventario_id = ?", [cut.id]);
-          cutActions.productionCount = prodRows.length;
-          cutActions.productionRowsBefore = prodRows.map(p => ({ id: p.id, estado: p.estado, archivado: p.archivado }));
-
-          if (prodRows.length > 0) {
-            // Update existing production rows to 'Terminado' and archived = 2 (so they disappear from Maquila active list)
-            const [updateResult] = await db.query(
-              "UPDATE produccion SET estado = 'Terminado', archivado = 2, fecha_terminado = NOW() WHERE inventario_id = ?",
-              [cut.id]
-            );
-            cutActions.actionPerformed = `Updated ${updateResult.affectedRows} existing production rows to Terminado / Archived`;
-          } else {
-            // No production rows! Let's insert a completed one so it is in history
-            if (defaultMaquilero) {
-              const [insertResult] = await db.query(
-                "INSERT INTO produccion (maquilero_id, inventario_id, cantidad, precio_total, fecha_inicio, fecha_fin, estado, archivado) VALUES (?, ?, 100, 0, CURRENT_DATE(), CURRENT_DATE(), 'Terminado', 2)",
-                [defaultMaquilero.id, cut.id]
-              );
-              cutActions.actionPerformed = `Created new production row ID ${insertResult.insertId} with Terminado / Archived state for maquilero: ${defaultMaquilero.nombre}`;
-            } else {
-              cutActions.actionPerformed = `Could not create production row because no maquileros exist in the database. Please create a maquilero first!`;
-            }
-          }
-          modelResult.actions.push(cutActions);
-        }
-        modelResult.status = 'Processed and Restored';
-      } else {
-        // Model not found in inventario at all!
-        // Let's create it in inventario and then create its production order as completed!
-        if (defaultMaquilero) {
-          // Create cut in inventario
-          const [invInsert] = await db.query(
-            "INSERT INTO inventario (modelo, numero, piezas_en_proceso, en_inventario) VALUES (?, 'RESTORED', 100, 0)",
-            [model]
-          );
-          const newCutId = invInsert.insertId;
-          
-          // Create production order as completed
-          const [prodInsert] = await db.query(
-            "INSERT INTO produccion (maquilero_id, inventario_id, cantidad, precio_total, fecha_inicio, fecha_fin, estado, archivado) VALUES (?, ?, 100, 0, CURRENT_DATE(), CURRENT_DATE(), 'Terminado', 2)",
-            [defaultMaquilero.id, newCutId]
-          );
-          
-          modelResult.status = 'Created brand new cut and completed production row';
-          modelResult.actions = [{
-            cutId: newCutId,
-            modelo: model,
-            cutStatusUpdated: 'Created new cut in inventario',
-            actionPerformed: `Created new production row ID ${prodInsert.insertId} with Terminado / Archived state for maquilero: ${defaultMaquilero.nombre}`
-          }];
-        } else {
-          modelResult.status = 'Failed to create because no default maquilero exists';
-        }
-      }
-      
-      diagnostics.results.push(modelResult);
-    }
-
-    // --- INTEGRACIÓN CON MÓDULO PLANCHA (HISTORIAL) ---
-    const planchaResults = [];
-    
-    // 1. Get or create a default truck
-    let [trucks] = await db.query("SELECT id FROM camiones ORDER BY id DESC LIMIT 1");
-    let truckId;
-    let truckStatus = "Found existing truck";
-    if (trucks.length > 0) {
-      truckId = trucks[0].id;
-    } else {
-      const [tInsert] = await db.query(
-        "INSERT INTO camiones (fecha_envio, observaciones) VALUES (CURRENT_DATE(), 'Camion de recuperacion automatica')"
-      );
-      truckId = tInsert.insertId;
-      truckStatus = "Created new truck";
-    }
-
-    // 2. Get or create a default planchador
-    let [planchadores] = await db.query("SELECT id, nombre FROM planchadores LIMIT 1");
-    let planchadorId;
-    let planchadorNombre;
-    let planchadorStatus = "Found existing planchador";
-    if (planchadores.length > 0) {
-      planchadorId = planchadores[0].id;
-      planchadorNombre = planchadores[0].nombre;
-    } else {
-      const [pInsert] = await db.query(
-        "INSERT INTO planchadores (nombre, telefono) VALUES ('Hernàndez Bravo Olga', '3121234567')"
-      );
-      planchadorId = pInsert.insertId;
-      planchadorNombre = 'Hernàndez Bravo Olga';
-      planchadorStatus = "Created default planchador (Hernàndez Bravo Olga)";
-    }
-
-    diagnostics.planchaSetup = {
-      truckId,
-      truckStatus,
-      planchadorId,
-      planchadorNombre,
-      planchadorStatus
-    };
-
-    // 3. Process each model for plancha history
-    for (const model of targetModels) {
-      const planchaItem = { model };
-
-      // A. Get or create camion_detalles for this model
-      let [cdRows] = await db.query("SELECT id, piezas, precio_plancha FROM camion_detalles WHERE modelo = ? AND camion_id = ?", [model, truckId]);
-      let camionDetallesId;
-      if (cdRows.length > 0) {
-        camionDetallesId = cdRows[0].id;
-        planchaItem.camionDetalles = { id: camionDetallesId, status: "Found existing" };
-      } else {
-        const [cdInsert] = await db.query(
-          `INSERT INTO camion_detalles 
-           (camion_id, modelo, piezas, tallas_cantidades, precio_plancha, no_orden, color, cliente, temporada, numero)
-           VALUES (?, ?, 100, '{"U": 100}', 5.00, 'CD-RESTORED', 'Único', 'General', '2026', 'RESTORED')`,
-          [truckId, model]
-        );
-        camionDetallesId = cdInsert.insertId;
-        planchaItem.camionDetalles = { id: camionDetallesId, status: "Created new" };
-      }
-
-      // B. Get or create plancha_trabajos for this planchador and camion_detalles_id
-      let [ptRows] = await db.query("SELECT id, piezas, estado FROM plancha_trabajos WHERE camion_detalles_id = ? AND planchador_id = ?", [camionDetallesId, planchadorId]);
-      if (ptRows.length > 0) {
-        planchaItem.planchaTrabajo = { id: ptRows[0].id, status: "Found existing, already in history" };
-      } else {
-        const [ptInsert] = await db.query(
-          `INSERT INTO plancha_trabajos 
-           (planchador_id, camion_detalles_id, talla, piezas, burro_numero, estado, precio_unitario, neto, total, fecha_terminado)
-           VALUES (?, ?, 'U', 100, 1, 'terminado', 5.00, 500.00, 500.00, NOW())`,
-          [planchadorId, camionDetallesId]
-        );
-        planchaItem.planchaTrabajo = { id: ptInsert.insertId, status: "Created new completed job in history" };
-      }
-
-      planchaResults.push(planchaItem);
-    }
-    diagnostics.planchaResults = planchaResults;
-
-    res.json({
-      success: true,
-      message: "Diagnostics, Maquila, and Plancha recovery run successfully.",
-      diagnostics
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// ADMINISTRATIVE ROUTE TO MANUALLY CLEAN UP TEST ORDER 73 DATA (pruebas / pruebsas)
-app.get('/api/admin/cleanup-test-73', async (req, res) => {
-  try {
-    const connection = await db.getConnection();
-    try {
-      console.log('--- ADMIN ON-DEMAND CLEANUP: Eliminación de datos de pruebas (modelo: pruebsas, maquilero: pruebas) ---');
-
-      // 1. Obtener los IDs de producción asociados al maquilero 'pruebas' o al modelo 'pruebsas'
-      const [testOrders] = await connection.query(`
-        SELECT p.id, p.inventario_id, p.maquilero_id 
-        FROM produccion p
-        LEFT JOIN maquileros m ON p.maquilero_id = m.id
-        LEFT JOIN inventario i ON p.inventario_id = i.id
-        WHERE m.nombre = 'pruebas' OR i.modelo = 'pruebsas'
-      `);
-
-      const deletedOrders = [];
-
-      for (const order of testOrders) {
-        // Find pagos associated with this order
-        const [pagos] = await connection.query("SELECT id FROM pagos WHERE produccion_id = ?", [order.id]);
-        const pagoIds = pagos.map(p => p.id);
-        
-        if (pagoIds.length > 0) {
-          // Delete personal discounts linked to payments
-          await connection.query("DELETE FROM descuentos_personales WHERE pago_id IN (?)", [pagoIds]);
-          // Delete payments
-          await connection.query("DELETE FROM pagos WHERE id IN (?)", [pagoIds]);
-        }
-
-        // Delete personal discounts linked to inventario_id
-        if (order.inventario_id) {
-          await connection.query("DELETE FROM descuentos_personales WHERE inventario_id = ?", [order.inventario_id]);
-        }
-
-        // Delete plancha devoluciones associated with this order
-        await connection.query("DELETE FROM plancha_devoluciones WHERE produccion_id = ?", [order.id]);
-
-        // Find camion_detalles associated with this order
-        const [camionDetalles] = await connection.query("SELECT id FROM camion_detalles WHERE produccion_id = ?", [order.id]);
-        const cdIds = camionDetalles.map(cd => cd.id);
-        if (cdIds.length > 0) {
-          // Delete plancha devoluciones referencing camion_detalles
-          await connection.query("DELETE FROM plancha_devoluciones WHERE camion_detalles_id IN (?)", [cdIds]);
-          // Delete plancha_trabajos referencing camion_detalles
-          await connection.query("DELETE FROM plancha_trabajos WHERE camion_detalles_id IN (?)", [cdIds]);
-          // Delete camion_detalles
-          await connection.query("DELETE FROM camion_detalles WHERE id IN (?)", [cdIds]);
-        }
-
-        // Delete production order
-        await connection.query("DELETE FROM produccion WHERE id = ?", [order.id]);
-
-        // Delete inventory record
-        if (order.inventario_id) {
-          const [cuts] = await connection.query("SELECT modelo, no_orden FROM inventario WHERE id = ?", [order.inventario_id]);
-          if (cuts.length > 0) {
-            const cut = cuts[0];
-            await connection.query("DELETE FROM inventario WHERE id = ?", [order.inventario_id]);
-            await connection.query("DELETE FROM inventario_real WHERE no_orden = ? AND modelo = ?", [cut.no_orden || '', cut.modelo]);
-          }
-        }
-        deletedOrders.push(order.id);
-      }
-
-      // 2. Eliminar cualquier modelo 'pruebsas' huérfano de inventario e inventario_real
-      await connection.query("DELETE FROM inventario WHERE modelo = 'pruebsas'");
-      await connection.query("DELETE FROM inventario_real WHERE modelo = 'pruebsas'");
-
-      // 3. Eliminar el maquilero 'pruebas'
-      await connection.query("DELETE FROM maquileros WHERE nombre = 'pruebas'");
-
-      // 4. Limpiar historial
-      await connection.query(`
-        DELETE FROM historial 
-        WHERE description LIKE '%pruebsas%' 
-           OR description LIKE '%pruebas%' 
-           OR description LIKE '%orden 73%' 
-           OR description LIKE '%ID 73%' 
-           OR description LIKE '%ID #73%'
-      `);
-
-      res.json({
-        success: true,
-        message: "Clean up of test data 'pruebas' and 'pruebsas' completed successfully.",
-        deletedOrdersCount: deletedOrders.length,
-        deletedOrders
-      });
-    } finally {
-      connection.release();
-    }
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// ADMINISTRATIVE ROUTE TO MANUALLY RESET FERMIN BRUNO RODRIGUEZ'S ORDER TO IN PROCESS
-app.get('/api/admin/reset-order-fermin', async (req, res) => {
-  try {
-    const connection = await db.getConnection();
-    try {
-      console.log('--- ADMIN ON-DEMAND RESET: Orden de Fermin Bruno Rodriguez (modelo 752995) ---');
-
-      // 1. Buscar el ID real de la orden de producción
-      const [orderRows] = await connection.query(`
-        SELECT p.id, p.maquilero_id, p.inventario_id
-        FROM produccion p
-        JOIN maquileros m ON p.maquilero_id = m.id
-        JOIN inventario i ON p.inventario_id = i.id
-        WHERE i.modelo = '752995' AND m.nombre LIKE '%Fermin Bruno%' AND p.cantidad = 180
-      `);
-
-      if (orderRows.length === 0) {
-        return res.status(404).json({ error: "Orden de producción no encontrada (modelo 752995, cantidad 180)" });
-      }
-
-      const orderId = orderRows[0].id;
-
-      // 2. Obtener los pagos asociados a esta orden
-      const [pagos] = await connection.query("SELECT id FROM pagos WHERE produccion_id = ?", [orderId]);
-      const pagoIds = pagos.map(p => p.id);
-
-      if (pagoIds.length > 0) {
-        // 3. Restaurar o eliminar descuentos personales vinculados a estos pagos
-        await connection.query("DELETE FROM descuentos_personales WHERE pago_id IN (?)", [pagoIds]);
-        
-        // 4. Eliminar los pagos
-        await connection.query("DELETE FROM pagos WHERE id IN (?)", [pagoIds]);
-      }
-
-      // 5. Restablecer el estado de la orden en 'produccion'
-      await connection.query(`
-        UPDATE produccion 
-        SET estado = 'En proceso', 
-            cantidad_recibida = NULL, 
-            archivado = 0 
-        WHERE id = ?
-      `, [orderId]);
-
-      // 6. Eliminar cualquier detalle de camión o trabajo de plancha
-      const [camionDetalles] = await connection.query("SELECT id FROM camion_detalles WHERE produccion_id = ?", [orderId]);
-      const cdIds = camionDetalles.map(cd => cd.id);
-      if (cdIds.length > 0) {
-        await connection.query("DELETE FROM plancha_devoluciones WHERE camion_detalles_id IN (?)", [cdIds]);
-        await connection.query("DELETE FROM plancha_trabajos WHERE camion_detalles_id IN (?)", [cdIds]);
-        await connection.query("DELETE FROM camion_detalles WHERE id IN (?)", [cdIds]);
-      }
-
-      // También eliminar cualquier devolución directa de plancha
-      await connection.query("DELETE FROM plancha_devoluciones WHERE produccion_id = ?", [orderId]);
-
-      res.json({
-        success: true,
-        message: "Order reset to 'En proceso' with payments set to 0 successfully.",
-        orderId,
-        deletedPaymentsCount: pagoIds.length
-      });
-    } finally {
-      connection.release();
-    }
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
 // ==========================================
 // --- NUEVO MÓDULO: PLANCHA (IRONING) ------
 // ==========================================
@@ -3249,135 +3075,6 @@ app.delete('/api/planchadores/:id', authenticateToken, async (req, res) => {
   }
 });
 
-// TEMPORARY ROUTE TO UNDO TODAY'S ACCIDENTAL VALERIA PAYMENT REGISTRATION
-app.get('/api/temp-rollback-payment', async (req, res) => {
-  try {
-    const [planchadores] = await db.query("SELECT id FROM planchadores WHERE nombre LIKE '%Valeria%'");
-    if (planchadores.length === 0) {
-      return res.status(404).json({ error: "Valeria not found" });
-    }
-    const valeriaId = planchadores[0].id;
-
-    // 1. Find all payments registered today (June 24, 2026) for Valeria
-    const [payments] = await db.query(
-      "SELECT id, monto FROM planchador_pagos WHERE planchador_id = ? AND DATE(fecha) = '2026-06-24'",
-      [valeriaId]
-    );
-
-    if (payments.length === 0) {
-      return res.json({ success: false, message: "No payments found for Valeria registered today (June 24, 2026)." });
-    }
-
-    const paymentIds = payments.map(p => p.id);
-
-    // 2. Set pago_id = NULL for all jobs linked to these payments
-    const [jobsResult] = await db.query(
-      "UPDATE plancha_trabajos SET pago_id = NULL WHERE planchador_id = ? AND pago_id IN (?)",
-      [valeriaId, paymentIds]
-    );
-
-    // 3. Set pago_id = NULL for all absences linked to these payments
-    const [asistenciasResult] = await db.query(
-      "UPDATE planchador_asistencias SET pago_id = NULL WHERE planchador_id = ? AND pago_id IN (?)",
-      [valeriaId, paymentIds]
-    );
-
-    // 4. Delete these payments from planchador_pagos
-    const [deleteResult] = await db.query(
-      "DELETE FROM planchador_pagos WHERE id IN (?)",
-      [paymentIds]
-    );
-
-    res.json({
-      success: true,
-      message: `Successfully rolled back today's payments.`,
-      deletedPayments: payments,
-      restoredJobsCount: jobsResult.affectedRows,
-      restoredAsistenciasCount: asistenciasResult.affectedRows
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-// TEMPORARY COMPREHENSIVE DATABASE DEBUGGING ENDPOINT
-app.get('/api/temp-debug-all', async (req, res) => {
-  try {
-    const [allPls] = await db.query("SELECT id FROM planchadores WHERE activo = 1");
-    const ids = allPls.map(p => p.id);
-    const result = {};
-    for (const id of ids) {
-      const [planchador] = await db.query("SELECT nombre FROM planchadores WHERE id = ?", [id]);
-      if (planchador.length > 0) {
-        const name = planchador[0].nombre;
-        const [jobs] = await db.query(
-          "SELECT id, pago_id, estado, total, DATE_FORMAT(fecha_terminado, '%Y-%m-%d %H:%i:%s') as finished FROM plancha_trabajos WHERE planchador_id = ? ORDER BY id DESC LIMIT 10",
-          [id]
-        );
-        const [payments] = await db.query(
-          "SELECT id, monto, fecha FROM planchador_pagos WHERE planchador_id = ? ORDER BY id DESC LIMIT 5",
-          [id]
-        );
-        result[name] = { id, jobs, payments };
-      }
-    }
-    const [users] = await db.query("SELECT id, username, role FROM users");
-    result._users = users;
-    const [history] = await db.query("SELECT * FROM historial ORDER BY id DESC LIMIT 50");
-    result._history = history;
-    result._db_env = {
-      host: process.env.DB_HOST,
-      database: process.env.DB_NAME,
-      port: process.env.DB_PORT,
-      has_url: !!process.env.DATABASE_URL
-    };
-    res.json(result);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-
-// TEMPORARY TRANSACTION-BASED REPAIR ENDPOINT
-app.get('/api/temp-repair-payments', async (req, res) => {
-  const connection = await db.getConnection();
-  try {
-    await connection.beginTransaction();
-
-    // 1. Set pago_id = NULL for all jobs finished on or after June 19, 2026 that were marked as paid
-    const [jobsResult] = await connection.query(
-      "UPDATE plancha_trabajos SET pago_id = NULL WHERE DATE(fecha_terminado) >= '2026-06-19' AND pago_id IS NOT NULL"
-    );
-
-    // 2. Set pago_id = NULL for all asistencias on or after June 19, 2026 that were marked as paid
-    const [asistenciasResult] = await connection.query(
-      "UPDATE planchador_asistencias SET pago_id = NULL WHERE fecha >= '2026-06-19' AND pago_id IS NOT NULL"
-    );
-
-    await connection.commit();
-
-    res.json({
-      success: true,
-      message: "Successfully repaired payments with explicit commit.",
-      restoredJobsCount: jobsResult.affectedRows,
-      restoredAsistenciasCount: asistenciasResult.affectedRows
-    });
-  } catch (error) {
-    await connection.rollback();
-    res.status(500).json({ error: error.message });
-  } finally {
-    connection.release();
-  }
-});
-
-app.post('/api/temp-query', async (req, res) => {
-  const { sql, params } = req.body;
-  try {
-    const [result] = await db.query(sql, params);
-    res.json(result);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
 // 5. OBTENER MODELOS DE LOS CAMIONES (solo con piezas pendientes de planchar)
 app.get('/api/plancha/modelos', authenticateToken, async (req, res) => {
   try {
@@ -3462,7 +3159,9 @@ app.post('/api/plancha/modelos/:id/devolver', authenticateToken, async (req, res
     );
     const cd = cdRows[0];
     if (!cd) {
-      connection.release();
+      // No liberar aquí: el bloque finally ya libera la conexión al salir del try
+      // (liberarla dos veces puede hacer que el pool entregue la misma conexión
+      // a dos peticiones simultáneas y mezcle transacciones).
       return res.status(404).json({ error: 'Modelo no encontrado en el camión' });
     }
 
@@ -3881,62 +3580,9 @@ app.get('/api/planchadores/:id/pagos', authenticateToken, async (req, res) => {
     );
     const pagado = parseFloat(paymentsResult[0].pagado) || 0;
 
-    let trabajosQuery = `
-      SELECT pt.*, cd.modelo as modelo_nombre,
-             (SELECT imagen FROM inventario WHERE modelo = cd.modelo LIMIT 1) as modelo_imagen
-      FROM plancha_trabajos pt
-      LEFT JOIN camion_detalles cd ON pt.camion_detalles_id = cd.id
-      WHERE pt.planchador_id = ? AND pt.estado = 'terminado' AND pt.pago_id IS NULL
-    `;
-    const trabajosParams = [req.params.id];
-    if (start && end) {
-      trabajosQuery += ` AND DATE(pt.fecha_terminado) BETWEEN ? AND ?`;
-      trabajosParams.push(start, end);
-    }
-    trabajosQuery += ` ORDER BY pt.fecha_creacion DESC`;
-    const [trabajosPendientes] = await db.query(trabajosQuery, trabajosParams);
+    const { trabajosPendientes, asistenciasPendientes, bonoBase, pendiente } =
+      await calcularPendientePlanchador(db, req.params.id, start, end);
 
-    let asistenciasQuery = `SELECT * FROM planchador_asistencias WHERE planchador_id = ? AND pago_id IS NULL`;
-    const asistenciasParams = [req.params.id];
-    if (start && end) {
-      asistenciasQuery += ` AND fecha BETWEEN ? AND ?`;
-      asistenciasParams.push(start, end);
-    }
-    asistenciasQuery += ` ORDER BY fecha DESC`;
-    const [asistenciasPendientes] = await db.query(asistenciasQuery, asistenciasParams);
-
-    const pendingWorksSum = trabajosPendientes.reduce((sum, pt) => sum + parseFloat(pt.total || 0), 0);
-    const pendingAsistenciasSum = asistenciasPendientes.reduce((sum, pa) => sum + parseFloat(pa.monto || 0), 0);
-
-    // Calculate dynamic quincenal attendance bonus ($500)
-    let bonoBase = 500;
-    if (start && end && start === end) {
-      // Daily payout: no quincenal bonus
-      bonoBase = 0;
-    } else {
-      const refDateStr = end || new Date().toISOString().split('T')[0];
-      const refDate = new Date(refDateStr + 'T12:00:00');
-      const day = refDate.getDate();
-      const month = refDate.getMonth();
-      const year = refDate.getFullYear();
-      
-      const fnStart = day <= 15 
-        ? new Date(year, month, 1) 
-        : new Date(year, month, 16);
-      const fnEnd = day <= 15 
-        ? new Date(year, month, 15, 23, 59, 59) 
-        : new Date(year, month + 1, 0, 23, 59, 59);
-
-      const [existingPayments] = await db.query(
-        'SELECT id FROM planchador_pagos WHERE planchador_id = ? AND fecha_hasta IS NOT NULL AND DATE(fecha_hasta) BETWEEN ? AND ?',
-        [req.params.id, fnStart.toISOString().split('T')[0], fnEnd.toISOString().split('T')[0]]
-      );
-      if (existingPayments.length > 0) {
-        bonoBase = 0;
-      }
-    }
-
-    const pendiente = pendingWorksSum + pendingAsistenciasSum + bonoBase;
     const ganado = pagado + pendiente;
 
     res.json({
@@ -3955,8 +3601,8 @@ app.get('/api/planchadores/:id/pagos', authenticateToken, async (req, res) => {
 
 // 10. REGISTRAR PAGO A PLANCHADOR
 app.post('/api/plancha/pagos', authenticateToken, async (req, res) => {
-  const { planchador_id, monto, tipo_pago, fecha_inicio, fecha_fin } = req.body;
-  if (!planchador_id || !monto || monto <= 0) {
+  const { planchador_id, tipo_pago, fecha_inicio, fecha_fin } = req.body;
+  if (!planchador_id) {
     return res.status(400).json({ error: 'Parámetros requeridos inválidos' });
   }
 
@@ -3987,10 +3633,19 @@ app.post('/api/plancha/pagos', authenticateToken, async (req, res) => {
     const planchador = planchadores[0];
     if (!planchador) throw new Error('Planchador no encontrado');
 
+    // El monto se calcula en el servidor a partir de los trabajos/asistencias que se van a
+    // vincular a este pago — nunca se confía en un monto enviado desde el cliente, para que
+    // lo que se marca como "pagado" siempre coincida con lo realmente registrado.
+    const { pendiente: montoCalculado } = await calcularPendientePlanchador(connection, planchador_id, startClean, endClean);
+    if (montoCalculado <= 0) {
+      throw new Error('No hay trabajos, asistencias ni bono pendientes en ese rango de fechas para registrar un pago.');
+    }
+    const montoFinal = Math.round(montoCalculado * 100) / 100;
+
     const [paymentResult] = await connection.query(`
       INSERT INTO planchador_pagos (planchador_id, monto, fecha, tipo_pago, fecha_desde, fecha_hasta)
       VALUES (?, ?, ?, ?, ?, ?)
-    `, [planchador_id, monto, localDateMX(), tipo_pago || 'completo', startClean, endClean]);
+    `, [planchador_id, montoFinal, localDateMX(), tipo_pago || 'completo', startClean, endClean]);
     const pagoId = paymentResult.insertId;
 
     const queryTrabajos = "UPDATE plancha_trabajos SET pago_id = ? WHERE planchador_id = ? AND estado = 'terminado' AND pago_id IS NULL AND DATE(fecha_terminado) BETWEEN ? AND ?";
@@ -4002,8 +3657,8 @@ app.post('/api/plancha/pagos', authenticateToken, async (req, res) => {
     await connection.query(queryAsistencias, paramsAsistencias);
 
     await connection.commit();
-    await logActivity(req.user.id, 'ADD', 'PLANCHA_PAGO', `Registró pago de $${monto} al planchador ${planchador.nombre} para el rango ${startClean} al ${endClean}`);
-    res.json({ success: true, pagoId });
+    await logActivity(req.user.id, 'ADD', 'PLANCHA_PAGO', `Registró pago de $${montoFinal} al planchador ${planchador.nombre} para el rango ${startClean} al ${endClean}`);
+    res.json({ success: true, pagoId, monto: montoFinal });
   } catch (error) {
     await connection.rollback();
     res.status(400).json({ error: error.message });
@@ -4294,15 +3949,18 @@ app.get('/api/reportes/plancha/pagos', async (req, res) => {
 
       doc.y = 100;
 
+      // Incluye trabajos regulares Y ajustes/pagos fijos (talla = 'AJUSTE'): antes se excluían
+      // con el filtro `pt.talla <> 'AJUSTE'` aunque el título del reporte decía "Detalle de
+      // trabajos y asistencias", así que el TOTAL PAGADO impreso nunca coincidía con lo
+      // realmente registrado en planchador_pagos cuando el trabajador tenía ajustes.
       let worksQuery = `
         SELECT pt.fecha_terminado, pt.talla, pt.piezas, pt.precio_unitario, pt.total, pt.color,
                COALESCE(cd.modelo, CONCAT('Ajuste: ', pt.color)) as modelo_nombre,
                COALESCE(pt.color, cd.color, 'Único') as color_nombre
         FROM plancha_trabajos pt
         LEFT JOIN camion_detalles cd ON pt.camion_detalles_id = cd.id
-        WHERE pt.planchador_id = ? 
-          AND pt.estado = 'terminado' 
-          AND pt.talla <> 'AJUSTE'
+        WHERE pt.planchador_id = ?
+          AND pt.estado = 'terminado'
       `;
       let worksParams = [planchadorId];
       if (start && end) {
@@ -4318,6 +3976,20 @@ app.get('/api/reportes/plancha/pagos', async (req, res) => {
       worksQuery += ` ORDER BY pt.fecha_terminado ASC, pt.id ASC`;
       const [works] = await db.query(worksQuery, worksParams);
 
+      let asistenciasQuery = `SELECT fecha, monto FROM planchador_asistencias WHERE planchador_id = ?`;
+      let asistenciasParams = [planchadorId];
+      if (start && end) {
+        asistenciasQuery += ` AND fecha BETWEEN ? AND ?`;
+        asistenciasParams.push(start, end);
+      } else if (start) {
+        asistenciasQuery += ` AND fecha >= ?`;
+        asistenciasParams.push(start);
+      } else if (end) {
+        asistenciasQuery += ` AND fecha <= ?`;
+        asistenciasParams.push(end);
+      }
+      const [asistencias] = await db.query(asistenciasQuery, asistenciasParams);
+
       const items = [];
       for (const w of works) {
         items.push({
@@ -4328,6 +4000,17 @@ app.get('/api/reportes/plancha/pagos', async (req, res) => {
           piezas: w.piezas || 0,
           precio_unitario: Number(w.precio_unitario) || 0,
           total: Number(w.total) || 0
+        });
+      }
+      for (const a of asistencias) {
+        items.push({
+          fecha: a.fecha,
+          modelo: tLabel('Falta / Asistencia', 'Absence'),
+          color: '',
+          talla: '',
+          piezas: 0,
+          precio_unitario: 0,
+          total: Number(a.monto) || 0
         });
       }
 

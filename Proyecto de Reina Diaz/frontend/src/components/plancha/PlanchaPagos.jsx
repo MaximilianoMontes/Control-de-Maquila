@@ -174,7 +174,9 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
 
       const filteredTrabajos = trabajos.filter(pt => {
         if (!fechaInicioFiltro || !fechaFinFiltro) return true;
-        const dateStr = pt.fecha_creacion ? pt.fecha_creacion.split('T')[0] : '';
+        // Debe coincidir con el filtro que usa el backend para vincular trabajos al pago
+        // (fecha_terminado, no fecha_creacion) para que el total mostrado sea el que se cobra.
+        const dateStr = pt.fecha_terminado ? pt.fecha_terminado.split('T')[0] : '';
         return dateStr >= fechaInicioFiltro && dateStr <= fechaFinFiltro;
       });
 
@@ -545,7 +547,7 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
             {planchadorPagoDetalle && (() => {
               const trabajos = (planchadorPagoDetalle.trabajosPendientes || []).filter(pt => {
                 if (!fechaInicioFiltro || !fechaFinFiltro) return true;
-                const dateStr = pt.fecha_creacion ? pt.fecha_creacion.split('T')[0] : '';
+                const dateStr = pt.fecha_terminado ? pt.fecha_terminado.split('T')[0] : '';
                 return dateStr >= fechaInicioFiltro && dateStr <= fechaFinFiltro;
               });
 
@@ -573,8 +575,9 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
               const pagoFijoItems = trabajos.filter(pt => pt.talla === 'AJUSTE' && !(pt.color?.includes('Cuadre') || pt.color?.includes('Diferencia')));
 
               const bonoBase = planchadorPagoDetalle.bonoBase || 0;
+              const pagado = planchadorPagoDetalle.pagado || 0;
               const pendiente = regularWork + cuadreDif + pagoFijoVal + asistenciasVal + bonoBase;
-              const ganado = pendiente;
+              const ganado = pagado + pendiente;
 
               return (
                 <div style={{ background: 'rgba(0,0,0,0.02)', padding: '1rem', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.95rem' }}>
@@ -679,7 +682,7 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
                     </div>
                   )}
 
-                  <p style={{ margin: 0, color: '#34d399' }}><strong>{isEn ? 'Total Paid' : 'Total Pagado'}:</strong> {formatCurrency(0)}</p>
+                  <p style={{ margin: 0, color: '#34d399' }}><strong>{isEn ? 'Total Paid' : 'Total Pagado'}:</strong> {formatCurrency(pagado)}</p>
                   <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,0.05)', margin: '0.4rem 0' }} />
                   <p style={{ margin: 0, fontSize: '1.1rem', color: pendiente > 0 ? '#ef4444' : '#34d399' }}>
                     <strong>{isEn ? 'Fortnightly Payment' : 'Pago Quincena'}: {formatCurrency(pendiente)}</strong>
@@ -702,10 +705,11 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
                 step="0.01"
                 required
                 className="form-input"
-                placeholder={planchadorPagoDetalle ? (isEn ? `Suggested: ${formatCurrency(planchadorPagoDetalle.pendiente)}` : `Sugerido: ${formatCurrency(planchadorPagoDetalle.pendiente)}`) : (isEn ? 'e.g. 500' : 'Ej: 500')}
                 value={montoPago}
-                onChange={e => setMontoPago(e.target.value)}
-                disabled={!pagoPlanchadorId}
+                readOnly
+                disabled
+                style={{ background: 'rgba(255,255,255,0.05)', cursor: 'not-allowed' }}
+                title={isEn ? 'Calculated automatically from pending jobs, absences and bonus for the selected range' : 'Se calcula automáticamente a partir de los trabajos, faltas y bono pendientes del rango seleccionado'}
               />
             </div>
 
@@ -1019,7 +1023,7 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
                 ) : (
                   (() => {
                     return planchadorPagoDetalle.trabajosPendientes.map(t => {
-                      const dateStr = t.fecha_creacion ? t.fecha_creacion.split('T')[0] : '';
+                      const dateStr = t.fecha_terminado ? t.fecha_terminado.split('T')[0] : '';
                       const isWithinRange = !fechaInicioFiltro || !fechaFinFiltro || (dateStr >= fechaInicioFiltro && dateStr <= fechaFinFiltro);
                       const isFilterActive = !!(fechaInicioFiltro && fechaFinFiltro);
 

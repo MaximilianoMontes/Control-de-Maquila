@@ -39,3 +39,6 @@ Thumbs.db
 backend/erp.db
 backend/erp.db-journal
 backend/uploads/
+
+# Volcados de depuración / archivos de trabajo temporales (pueden contener datos de negocio)
+scratch/
