@@ -2688,7 +2688,7 @@ app.get('/api/reportes/recoleccion', async (req, res) => {
       FROM produccion p 
       JOIN maquileros m ON p.maquilero_id = m.id 
       LEFT JOIN inventario i ON p.inventario_id = i.id
-      WHERE p.archivado = 0 AND p.estado IN ('En proceso', 'Terminado Parcial') AND (p.es_extra = 0 OR p.es_extra IS NULL)
+      WHERE p.archivado = 0 AND p.estado NOT IN ('Terminado', 'Cancelado') AND (p.es_extra = 0 OR p.es_extra IS NULL)
     `;
     const params = [];
     let subtitleDateText = "";
