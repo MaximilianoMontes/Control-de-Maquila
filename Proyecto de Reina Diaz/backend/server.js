@@ -1135,6 +1135,33 @@ app.get('/api/camiones/disponibles', authenticateToken, async (req, res) => {
       WHERE p.estado != 'Cancelado' AND p.archivado = 0 AND (p.es_extra = 0 OR p.es_extra IS NULL)
     `);
 
+    // Cuánto de cada color ya se cargó en camiones anteriores, por orden de producción.
+    // Sin esto, el desglose de "Color: X (Y pzs)" siempre mostraba la composición
+    // original completa de la orden, aunque ya se hubiera enviado casi todo — el total
+    // de piezas sí bajaba correctamente, pero el desglose por color no, dando números
+    // que no cuadraban entre sí (y coloreS que en realidad ya no quedan disponibles).
+    const [shippedDetails] = await db.query(
+      `SELECT produccion_id, color, tallas_cantidades FROM camion_detalles WHERE produccion_id IS NOT NULL`
+    );
+    const shippedByProdColor = {};
+    for (const d of shippedDetails) {
+      let tallas = {};
+      try { tallas = d.tallas_cantidades ? JSON.parse(d.tallas_cantidades) : {}; } catch (e) { tallas = {}; }
+      const firstVal = Object.values(tallas)[0];
+      const isNested = typeof firstVal === 'object' && firstVal !== null;
+      if (isNested) {
+        for (const [color, tallasObj] of Object.entries(tallas)) {
+          const sum = Object.values(tallasObj).reduce((s, q) => s + (parseInt(q) || 0), 0);
+          const key = `${d.produccion_id}|${color}`;
+          shippedByProdColor[key] = (shippedByProdColor[key] || 0) + sum;
+        }
+      } else {
+        const sum = Object.values(tallas).reduce((s, q) => s + (parseInt(q) || 0), 0);
+        const key = `${d.produccion_id}|${d.color || ''}`;
+        shippedByProdColor[key] = (shippedByProdColor[key] || 0) + sum;
+      }
+    }
+
     const available = rows.map(r => {
       let piezas_producidas = 0;
       if (r.estado === 'Terminado') {
@@ -1143,8 +1170,27 @@ app.get('/api/camiones/disponibles', authenticateToken, async (req, res) => {
         piezas_producidas = (r.cantidad_recibida !== null && r.cantidad_recibida !== undefined && r.cantidad_recibida > 0) ? r.cantidad_recibida : 0;
       }
       const piezas_disponibles = piezas_producidas - r.piezas_enviadas;
+
+      let colorRestante = r.color;
+      try {
+        const colorArr = JSON.parse(r.color);
+        if (Array.isArray(colorArr)) {
+          const restante = colorArr
+            .map(item => {
+              const enviado = shippedByProdColor[`${r.produccion_id}|${item.color}`] || 0;
+              const qty = Math.max(0, (parseInt(item.cantidad) || 0) - enviado);
+              return { color: item.color, cantidad: String(qty) };
+            })
+            .filter(item => parseInt(item.cantidad) > 0);
+          colorRestante = JSON.stringify(restante);
+        }
+      } catch (e) {
+        // color no es un arreglo JSON (variante única) — se deja tal cual.
+      }
+
       return {
         ...r,
+        color: colorRestante,
         piezas_producidas,
         piezas: piezas_disponibles
       };
@@ -3104,14 +3150,48 @@ app.get('/api/plancha/modelos', authenticateToken, async (req, res) => {
       HAVING (cd.piezas - piezas_terminadas) > 0
       ORDER BY c.fecha_envio DESC, cd.id DESC
     `);
-    
-    const processed = rows.map(r => {
-      try {
-        r.tallas_cantidades = r.tallas_cantidades ? JSON.parse(r.tallas_cantidades) : {};
-      } catch (e) {
-        r.tallas_cantidades = {};
+
+    // Piezas ya planchadas por color, para poder mostrar en la lista solo los colores
+    // que de verdad quedan pendientes (y con la cantidad real que resta), en vez del
+    // desglose original completo del camión. Antes, un color que ya se mandó por
+    // completo a planchar seguía apareciendo en la lista como si siguiera disponible.
+    let ironedMap = {};
+    if (rows.length > 0) {
+      const ids = rows.map(r => r.id);
+      const [ironedByColor] = await db.query(
+        `SELECT camion_detalles_id, COALESCE(color, '') as color, SUM(piezas) as total
+         FROM plancha_trabajos
+         WHERE estado = 'terminado' AND camion_detalles_id IN (?)
+         GROUP BY camion_detalles_id, color`,
+        [ids]
+      );
+      for (const row of ironedByColor) {
+        ironedMap[`${row.camion_detalles_id}|${row.color}`] = parseInt(row.total) || 0;
       }
+    }
+
+    const processed = rows.map(r => {
+      let tallas = {};
+      try {
+        tallas = r.tallas_cantidades ? JSON.parse(r.tallas_cantidades) : {};
+      } catch (e) {
+        tallas = {};
+      }
+      r.tallas_cantidades = tallas;
       r.piezas_pendientes = Math.max(0, (parseInt(r.piezas) || 0) - (parseInt(r.piezas_terminadas) || 0));
+
+      const firstVal = Object.values(tallas)[0];
+      const isNested = typeof firstVal === 'object' && firstVal !== null;
+      if (isNested) {
+        const restante = Object.entries(tallas)
+          .map(([color, tallasObj]) => {
+            const originalTotal = Object.values(tallasObj).reduce((s, q) => s + (parseInt(q) || 0), 0);
+            const yaPlanchado = ironedMap[`${r.id}|${color}`] || 0;
+            return { color, cantidad: String(Math.max(0, originalTotal - yaPlanchado)) };
+          })
+          .filter(item => parseInt(item.cantidad) > 0);
+        r.color = JSON.stringify(restante);
+      }
       return r;
     });
 
