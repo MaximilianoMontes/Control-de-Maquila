@@ -3571,8 +3571,12 @@ app.post('/api/plancha/asignar', authenticateToken, async (req, res) => {
       const itemTalla = modelTalla || talla;
       const normTalla = normalizeTalla(itemTalla);
 
+      // FOR UPDATE bloquea esta fila mientras dure la transaccion: si dos solicitudes de
+      // asignacion (p.ej. doble clic) llegan casi al mismo tiempo para el mismo camion_detalles,
+      // la segunda espera a que la primera confirme antes de leer "ya planchado" mas abajo, en vez
+      // de que ambas lean el mismo disponible y ambas inserten el mismo trabajo por duplicado.
       const [models] = await connection.query(
-        "SELECT precio_plancha, modelo, tallas_cantidades FROM camion_detalles WHERE id = ?", 
+        "SELECT precio_plancha, modelo, tallas_cantidades FROM camion_detalles WHERE id = ? FOR UPDATE",
         [camion_detalles_id]
       );
       const model = models[0];

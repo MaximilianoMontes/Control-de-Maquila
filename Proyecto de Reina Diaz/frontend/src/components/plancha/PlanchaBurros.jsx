@@ -35,6 +35,10 @@ export default function PlanchaBurros({
 
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
   const [mobileSubTab, setMobileSubTab] = useState('burros'); // 'burros', 'pendientes', 'detalle'
+  // Evita que clicks dobles en "Finalizar Planchado" (hay dos botones para el mismo burro:
+  // el del mapa y el del panel de detalle) manden la misma asignacion varias veces antes de
+  // que la respuesta limpie burro.modelos, duplicando los trabajos en plancha_trabajos.
+  const [finalizingBurros, setFinalizingBurros] = useState({});
 
   useEffect(() => {
     const handleResize = () => {
@@ -788,6 +792,8 @@ export default function PlanchaBurros({
       toast.warning(isEn ? 'Drag at least one model to this board.' : 'Debes arrastrar al menos un modelo a este burro', { theme: 'dark' });
       return;
     }
+    if (finalizingBurros[index]) return;
+    setFinalizingBurros(prev => ({ ...prev, [index]: true }));
 
     try {
       const token = localStorage.getItem('token');
@@ -813,6 +819,8 @@ export default function PlanchaBurros({
     } catch (e) {
       console.error(e);
       toast.error(e.response?.data?.error || (isEn ? 'Error finalizing ironing job' : 'Error al finalizar planchado'), { theme: 'dark' });
+    } finally {
+      setFinalizingBurros(prev => ({ ...prev, [index]: false }));
     }
   };
 
@@ -1212,24 +1220,24 @@ export default function PlanchaBurros({
                   </div>
 
                   {/* Footer Action */}
-                  <button 
+                  <button
                     onClick={() => handleFinalizarPlanchado(index)}
-                    disabled={!hasPlanchador || !hasModelos}
-                    style={{ 
-                      width: '100%', 
-                      padding: '0.8rem', 
-                      border: 'none', 
-                      borderRadius: '8px', 
-                      background: (!hasPlanchador || !hasModelos) ? 'var(--bg-input)' : '#2563eb', 
-                      color: (!hasPlanchador || !hasModelos) ? '#94a3b8' : '#fff', 
-                      fontWeight: '600', 
-                      cursor: (!hasPlanchador || !hasModelos) ? 'not-allowed' : 'pointer',
+                    disabled={!hasPlanchador || !hasModelos || !!finalizingBurros[index]}
+                    style={{
+                      width: '100%',
+                      padding: '0.8rem',
+                      border: 'none',
+                      borderRadius: '8px',
+                      background: (!hasPlanchador || !hasModelos || finalizingBurros[index]) ? 'var(--bg-input)' : '#2563eb',
+                      color: (!hasPlanchador || !hasModelos || finalizingBurros[index]) ? '#94a3b8' : '#fff',
+                      fontWeight: '600',
+                      cursor: (!hasPlanchador || !hasModelos || finalizingBurros[index]) ? 'not-allowed' : 'pointer',
                       transition: 'all 0.2s',
                       marginTop: 'auto',
-                      boxShadow: (!hasPlanchador || !hasModelos) ? 'none' : '0 2px 4px rgba(37, 99, 235, 0.2)'
+                      boxShadow: (!hasPlanchador || !hasModelos || finalizingBurros[index]) ? 'none' : '0 2px 4px rgba(37, 99, 235, 0.2)'
                     }}
                   >
-                    Confirmar asignación
+                    {finalizingBurros[index] ? (isEn ? 'Saving...' : 'Guardando...') : (isEn ? 'Confirm assignment' : 'Confirmar asignación')}
                   </button>
                 </div>
               );
@@ -1445,22 +1453,22 @@ export default function PlanchaBurros({
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem' }}>
                       <button 
                         onClick={() => handleFinalizarPlanchado(activeBurroScanner - 1)}
-                        disabled={!activeBurroObj.planchador || activeBurroObj.modelos.length === 0}
-                        style={{ 
-                          width: '100%', 
-                          padding: '0.8rem', 
-                          background: (!activeBurroObj.planchador || activeBurroObj.modelos.length === 0) ? 'var(--bg-input)' : '#2563eb', 
-                          color: (!activeBurroObj.planchador || activeBurroObj.modelos.length === 0) ? '#94a3b8' : '#fff', 
-                          border: 'none', 
-                          borderRadius: '8px', 
-                          fontWeight: '600', 
+                        disabled={!activeBurroObj.planchador || activeBurroObj.modelos.length === 0 || !!finalizingBurros[activeBurroScanner - 1]}
+                        style={{
+                          width: '100%',
+                          padding: '0.8rem',
+                          background: (!activeBurroObj.planchador || activeBurroObj.modelos.length === 0 || finalizingBurros[activeBurroScanner - 1]) ? 'var(--bg-input)' : '#2563eb',
+                          color: (!activeBurroObj.planchador || activeBurroObj.modelos.length === 0 || finalizingBurros[activeBurroScanner - 1]) ? '#94a3b8' : '#fff',
+                          border: 'none',
+                          borderRadius: '8px',
+                          fontWeight: '600',
                           fontSize: '0.95rem',
-                          cursor: (!activeBurroObj.planchador || activeBurroObj.modelos.length === 0) ? 'not-allowed' : 'pointer',
-                          boxShadow: (!activeBurroObj.planchador || activeBurroObj.modelos.length === 0) ? 'none' : '0 2px 6px rgba(37,99,235,0.3)',
+                          cursor: (!activeBurroObj.planchador || activeBurroObj.modelos.length === 0 || finalizingBurros[activeBurroScanner - 1]) ? 'not-allowed' : 'pointer',
+                          boxShadow: (!activeBurroObj.planchador || activeBurroObj.modelos.length === 0 || finalizingBurros[activeBurroScanner - 1]) ? 'none' : '0 2px 6px rgba(37,99,235,0.3)',
                           transition: 'all 0.2s'
                         }}
                       >
-                        Confirmar asignación
+                        {finalizingBurros[activeBurroScanner - 1] ? (isEn ? 'Saving...' : 'Guardando...') : (isEn ? 'Confirm assignment' : 'Confirmar asignación')}
                       </button>
                       
                       <button 
