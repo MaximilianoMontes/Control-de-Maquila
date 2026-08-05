@@ -2320,6 +2320,7 @@ app.get('/api/pagos/:id/comprobante', authenticateToken, async (req, res) => {
     const [pagos] = await db.query(`
       SELECT pg.*, p.id as orden_id, p.maquilero_id, p.inventario_id, p.estado as orden_estado,
              p.cantidad, p.cantidad_recibida, p.ajuste_tipo, p.ajuste_porcentaje, p.ajuste_monto,
+             p.es_extra, p.precio_extra,
              m.nombre as maquilero_nombre,
              i.modelo as producto_modelo, i.precio as precio_unitario, i.no_orden as no_orden
       FROM pagos pg
@@ -2341,7 +2342,7 @@ app.get('/api/pagos/:id/comprobante', authenticateToken, async (req, res) => {
 
     doc.pipe(res);
 
-    doc.rect(20, 20, 570, 410).stroke();
+    doc.rect(20, 20, 570, 430).stroke();
 
     try {
       const logoPath = path.join(__dirname, '..', 'frontend', 'public', 'logo.png');
@@ -2405,6 +2406,16 @@ app.get('/api/pagos/:id/comprobante', authenticateToken, async (req, res) => {
     doc.fontSize(14).font('Helvetica-Bold').text(tLabel('DETALLE DEL PAGO', 'PAYMENT DETAILS'));
     doc.fontSize(12).font('Helvetica').text(`${tLabel('Concepto', 'Concept')}: ${pago.tipo_pago === 'completo' ? tLabel('LIQUIDACIÓN', 'SETTLEMENT') : tLabel('ABONO', 'DEPOSIT')} ${tLabel('DE PRODUCCIÓN', 'OF PRODUCTION')}`);
     doc.text(`${tLabel('Número de Pago', 'Payment Number')}: ${nroPago} ${tLabel('de', 'of')} ${todosLosPagos.length}`);
+
+    // Piezas a las que equivale este pago en particular (no el total de la orden):
+    // monto base (sin IVA) entre el precio por pieza. En abonos es una referencia de
+    // a cuantas piezas equivale ese pago especifico, no un conteo real ya entregado.
+    const montoBasePago = (pago.con_iva === 1 || pago.con_iva) ? Number(pago.monto) / 1.16 : Number(pago.monto);
+    const precioUnitarioCobro = (pago.es_extra === 1) ? (Number(pago.precio_extra) || 0) : (Number(pago.precio_unitario) || 0);
+    const piezasCobradas = precioUnitarioCobro > 0 ? Math.round(montoBasePago / precioUnitarioCobro) : null;
+    if (piezasCobradas !== null) {
+      doc.text(`${tLabel('Piezas Cobradas', 'Pieces Charged')}: ${piezasCobradas} ${tLabel('piezas', 'pieces')}`);
+    }
     doc.moveDown();
 
     if (pago.con_iva === 1 || pago.con_iva) {
