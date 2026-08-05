@@ -316,18 +316,20 @@ export default function Pagos() {
   const totalConIva = aplicarIva && ordenActual ? (ordenActual.precio_total * 1.16) : (ordenActual ? ordenActual.precio_total : 0);
   const restanteConIva = ordenActual ? (totalConIva - totalPagado) : 0;
 
+  const modeloCodigo = (o) => o.producto_modelo ? `${o.producto_modelo} - ` : '';
+
   const selectOrderOptions = [
     ...activeProds.map(o => ({
       id: o.id.toString(),
-      nombre: `${t('pay.order')} #${getFolioNumber(o)} - ${o.maquilero_nombre}`
+      nombre: `${t('pay.order')} #${getFolioNumber(o)} - ${modeloCodigo(o)}${o.maquilero_nombre}`
     })),
     ...activeExtras.map(o => ({
       id: o.id.toString(),
-      nombre: `${t('pay.order')} #${getFolioNumber(o)} - ${o.maquilero_nombre} (EXTRA)`
+      nombre: `${t('pay.order')} #${getFolioNumber(o)} - ${modeloCodigo(o)}${o.maquilero_nombre} (EXTRA)`
     })),
     ...archivedOrders.map(o => ({
       id: o.id.toString(),
-      nombre: `${t('pay.order')} #${getFolioNumber(o)} - ${o.maquilero_nombre}${o.es_extra === 1 || o.es_extra ? ' (EXTRA)' : ''} (${settings.language === 'en' ? 'Archived' : 'Archivada'})`
+      nombre: `${t('pay.order')} #${getFolioNumber(o)} - ${modeloCodigo(o)}${o.maquilero_nombre}${o.es_extra === 1 || o.es_extra ? ' (EXTRA)' : ''} (${settings.language === 'en' ? 'Archived' : 'Archivada'})`
     }))
   ];
 
