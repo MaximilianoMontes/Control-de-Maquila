@@ -2264,12 +2264,16 @@ app.post('/api/pagos', authenticateToken, async (req, res) => {
       const maquileroId = orders[0].maquilero_id;
       const currentStatus = orders[0].estado;
 
-      // 3. Vincular y marcar como aplicados los descuentos pendientes de ese maquilero
-      const [descuentosResult] = await connection.query(
-        "UPDATE descuentos_personales SET aplicado = 1, pago_id = ? WHERE maquilero_id = ? AND aplicado = 0",
-        [pagoId, maquileroId]
-      );
-      descuentosAplicados = descuentosResult.affectedRows || 0;
+      // 3. Vincular y marcar como aplicados los descuentos pendientes de ese maquilero —
+      // solo en pago 'completo' (liquidación final de la orden). Un abono parcial no
+      // necesariamente cubre las multas pendientes, así que no debe perdonarlas de paso.
+      if (tipo_pago === 'completo') {
+        const [descuentosResult] = await connection.query(
+          "UPDATE descuentos_personales SET aplicado = 1, pago_id = ? WHERE maquilero_id = ? AND aplicado = 0",
+          [pagoId, maquileroId]
+        );
+        descuentosAplicados = descuentosResult.affectedRows || 0;
+      }
 
       // 3.5. Actualizar el estado de la orden de producción según el tipo de pago
       if (tipo_pago === 'abono' && currentStatus === 'En proceso') {
