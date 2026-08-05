@@ -427,7 +427,7 @@ export default function Pagos() {
               <input
                 type="number"
                 step="0.01"
-                min="0.01"
+                max={restanteConIva}
                 required
                 className="form-input"
                 value={monto}
@@ -435,14 +435,9 @@ export default function Pagos() {
                 disabled={!selectedOrden}
                 placeholder={restanteConIva > 0 ? `${t('pay.suggested')} ${formatCurrency(Math.max(0, restanteConIva - pendingDiscount))}` : ''}
               />
-              <small style={{ color: '#94a3b8', display: 'block', marginTop: '0.3rem' }}>
-                {settings.language === 'en'
-                  ? 'You can enter more than the suggested amount to pay an extra/bonus on top.'
-                  : 'Puedes capturar más del monto sugerido para pagar un extra o bono adicional.'}
-              </small>
             </div>
 
-              <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={!selectedOrden}>
+              <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={!selectedOrden || restanteConIva <= 0}>
                 {t('pay.register')}
               </button>
             </form>
