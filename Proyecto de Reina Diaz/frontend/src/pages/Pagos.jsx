@@ -321,15 +321,15 @@ export default function Pagos() {
   const selectOrderOptions = [
     ...activeProds.map(o => ({
       id: o.id.toString(),
-      nombre: `${t('pay.order')} #${getFolioNumber(o)} - ${modeloCodigo(o)}${o.maquilero_nombre}`
+      nombre: `${modeloCodigo(o)}${o.maquilero_nombre}`
     })),
     ...activeExtras.map(o => ({
       id: o.id.toString(),
-      nombre: `${t('pay.order')} #${getFolioNumber(o)} - ${modeloCodigo(o)}${o.maquilero_nombre} (EXTRA)`
+      nombre: `${modeloCodigo(o)}${o.maquilero_nombre} (EXTRA)`
     })),
     ...archivedOrders.map(o => ({
       id: o.id.toString(),
-      nombre: `${t('pay.order')} #${getFolioNumber(o)} - ${modeloCodigo(o)}${o.maquilero_nombre}${o.es_extra === 1 || o.es_extra ? ' (EXTRA)' : ''} (${settings.language === 'en' ? 'Archived' : 'Archivada'})`
+      nombre: `${modeloCodigo(o)}${o.maquilero_nombre}${o.es_extra === 1 || o.es_extra ? ' (EXTRA)' : ''} (${settings.language === 'en' ? 'Archived' : 'Archivada'})`
     }))
   ];
 
