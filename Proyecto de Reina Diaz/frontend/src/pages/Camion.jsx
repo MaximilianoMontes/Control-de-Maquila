@@ -667,6 +667,7 @@ export default function Camion() {
                 </button>
               )}
               <span className="badge badge-info" style={{ fontWeight: 700 }}>{filteredStock.length} {t('camion.lots') || 'Lotes'}</span>
+              <span className="badge badge-success" style={{ fontWeight: 700 }}>{filteredStock.reduce((sum, item) => sum + (parseInt(item.piezas) || 0), 0)} {isEn ? 'Pieces' : 'Piezas'}</span>
             </div>
           </div>
 
