@@ -1162,6 +1162,10 @@ export default function Header({ onToggleSidebar }) {
                       IconComponent = Calendar;
                       iconColor = '#c084fc'; // a nice purple
                       bgColor = 'rgba(192, 132, 252, 0.1)';
+                    } else if (actionLower === 'recepcion') {
+                      IconComponent = Package;
+                      iconColor = '#0ea5e9';
+                      bgColor = 'rgba(14, 165, 233, 0.1)';
                     }
 
                     return (

@@ -1722,9 +1722,10 @@ app.put('/api/produccion/:id/recepcion', authenticateToken, async (req, res) => 
   const { cantidad_recibida, tallas_recibidas } = req.body;
   try {
     const [olds] = await db.query(`
-      SELECT p.*, i.precio as unit_price 
-      FROM produccion p 
-      LEFT JOIN inventario i ON p.inventario_id = i.id 
+      SELECT p.*, i.precio as unit_price, i.modelo as inv_m, m.nombre as maq_n
+      FROM produccion p
+      LEFT JOIN inventario i ON p.inventario_id = i.id
+      LEFT JOIN maquileros m ON p.maquilero_id = m.id
       WHERE p.id = ?
     `, [req.params.id]);
     const old = olds[0];
@@ -1761,8 +1762,10 @@ app.put('/api/produccion/:id/recepcion', authenticateToken, async (req, res) => 
       finalPrecioTotal = subtotal - adjustmentAmount;
     }
 
-    await db.query("UPDATE produccion SET cantidad_recibida = ?, tallas_recibidas = ?, precio_total = ?, ajuste_monto = ? WHERE id = ?", 
+    await db.query("UPDATE produccion SET cantidad_recibida = ?, tallas_recibidas = ?, precio_total = ?, ajuste_monto = ? WHERE id = ?",
       [qty, tallasJsonStr, finalPrecioTotal, adjustmentAmount, req.params.id]);
+
+    await logActivity(req.user.id, 'RECEPCION', 'PRODUCCION', `Recepcionó ${effectiveQty} pz de ${old.inv_m || 'modelo'} (${old.maq_n || 'maquilero'})`);
 
     await checkAndMoveToInventory(req.params.id, req.user.id);
     await autoArchiveOrders();
