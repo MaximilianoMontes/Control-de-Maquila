@@ -93,6 +93,7 @@ export default function Camion() {
 
   const [draftLoaded, setDraftLoaded] = useState(false);
   const [savingStatus, setSavingStatus] = useState(''); // '', 'saving', 'saved', 'error'
+  const [shippingTruck, setShippingTruck] = useState(false);
 
   // Modal State for Size Entry
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -505,6 +506,7 @@ export default function Camion() {
       toast.error(t('camion.emptyCargo') || 'Carga vacía', { theme: 'dark' });
       return;
     }
+    if (shippingTruck) return;
 
     Swal.fire({
       title: t('prod.confirmFinish') || '¿Seguro que deseas enviar el camión?',
@@ -518,10 +520,11 @@ export default function Camion() {
       color: '#f8fafc'
     }).then(async (result) => {
       if (result.isConfirmed) {
+        setShippingTruck(true);
         try {
           const token = localStorage.getItem('token');
           const headers = { Authorization: `Bearer ${token}` };
-          
+
           const payload = {
             fecha_envio: fechaEnvio,
             observaciones,
@@ -560,6 +563,8 @@ export default function Camion() {
         } catch (e) {
           console.error(e);
           toast.error(e.response?.data?.error || t('prod.alertGenericError') || 'Error al enviar el camión', { theme: 'dark' });
+        } finally {
+          setShippingTruck(false);
         }
       }
     });
@@ -950,13 +955,13 @@ export default function Camion() {
           </div>
 
           {!isReadOnly ? (
-            <button 
-              className="btn btn-primary" 
+            <button
+              className="btn btn-primary"
               style={{ width: '100%', padding: '0.8rem', fontSize: '1rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', borderRadius: '8px' }}
-              disabled={cargo.length === 0}
+              disabled={cargo.length === 0 || shippingTruck}
               onClick={handleShipTruck}
             >
-              <Truck size={20} /> {t('camion.shipBtn')} <ArrowRight size={18} />
+              <Truck size={20} /> {shippingTruck ? (isEn ? 'Sending...' : 'Enviando...') : t('camion.shipBtn')} <ArrowRight size={18} />
             </button>
           ) : (
             <div style={{ textAlign: 'center', padding: '0.8rem', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>

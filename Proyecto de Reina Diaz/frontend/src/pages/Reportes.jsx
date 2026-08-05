@@ -22,15 +22,16 @@ export default function Reportes() {
     if (prodStart) params.append('start', prodStart);
     if (prodEnd) params.append('end', prodEnd);
     params.append('lang', lang);
+    params.append('token', localStorage.getItem('token'));
     const query = params.toString();
     if (query) url += `?${query}`;
     window.open(url, '_blank');
   };
 
   const [invFilter, setInvFilter] = useState('todos');
-  
+
   const handleDownloadInventario = () => {
-    let url = `${API_URL}/api/reportes/inventario?filter=${invFilter}&lang=${lang}`;
+    let url = `${API_URL}/api/reportes/inventario?filter=${invFilter}&lang=${lang}&token=${localStorage.getItem('token')}`;
     window.open(url, '_blank');
   };
 
@@ -52,7 +53,8 @@ export default function Reportes() {
     }
 
     params.append('lang', lang);
-    
+    params.append('token', localStorage.getItem('token'));
+
     const query = params.toString();
     if (query) url += `?${query}`;
 
@@ -65,6 +67,7 @@ export default function Reportes() {
     if (payStart) params.append('start', payStart);
     if (payEnd) params.append('end', payEnd);
     params.append('lang', lang);
+    params.append('token', localStorage.getItem('token'));
     const query = params.toString();
     if (query) url += `?${query}`;
     window.open(url, '_blank');

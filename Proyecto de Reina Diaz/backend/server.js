@@ -435,17 +435,23 @@ const checkAndMoveToInventory = async (produccionId, userId) => {
       return;
     }
 
-    // A cut is complete (en_inventario = 1) if all production orders for it are archived (archivado >= 1)
+    // A cut is complete (en_inventario = 1) if all its NON-CANCELED production orders are
+    // archived (archivado >= 1). Sin el filtro de estado, una orden cancelada (que nunca se
+    // archiva) hacía que total_orders > archived_orders para siempre, y el corte se quedaba
+    // visible en Cortes aunque todas sus órdenes reales ya estuvieran liquidadas.
     const [ordersStatus] = await connection.query(`
-      SELECT 
+      SELECT
         COUNT(*) as total_orders,
         SUM(CASE WHEN archivado >= 1 THEN 1 ELSE 0 END) as archived_orders
       FROM produccion
-      WHERE inventario_id = ?
+      WHERE inventario_id = ? AND estado != 'Cancelado'
     `, [prod.cut_id]);
 
-    const totalOrders = ordersStatus[0].total_orders || 0;
-    const archivedOrders = ordersStatus[0].archived_orders || 0;
+    // COUNT(*) llega como number pero SUM(CASE...) llega como string (mysql2 devuelve los
+    // agregados DECIMAL como texto) — sin el Number(...), "1" === 1 siempre es false y
+    // shouldBeInInventory nunca era true, así que un corte jamás se marcaba completo.
+    const totalOrders = Number(ordersStatus[0].total_orders) || 0;
+    const archivedOrders = Number(ordersStatus[0].archived_orders) || 0;
     const shouldBeInInventory = totalOrders > 0 && totalOrders === archivedOrders;
 
     if (shouldBeInInventory) {
@@ -1348,8 +1354,10 @@ app.post('/api/camiones', authenticateToken, async (req, res) => {
 
       if (isDev) {
         // It's a return!
+        // FOR UPDATE: evita que dos envios casi simultaneos lean la misma devolucion
+        // 'arreglado' disponible y ambos la carguen a un camion (doble envio del mismo lote).
         const [devRows] = await connection.query(
-          "SELECT id, piezas, tallas_cantidades, produccion_id FROM plancha_devoluciones WHERE id = ? AND estado = 'arreglado'",
+          "SELECT id, piezas, tallas_cantidades, produccion_id FROM plancha_devoluciones WHERE id = ? AND estado = 'arreglado' FOR UPDATE",
           [devId]
         );
         const devRow = devRows[0];
@@ -1382,8 +1390,11 @@ app.post('/api/camiones', authenticateToken, async (req, res) => {
         );
       } else {
         // Normal production order: check stock in production order
+        // FOR UPDATE en ambas lecturas: sin esto, dos envios casi simultaneos para la
+        // misma orden podrian leer el mismo "disponible" antes de que ninguno confirme,
+        // y ambos pasar la validacion y sobre-vender las mismas piezas fisicas.
         const [prodRows] = await connection.query(
-          "SELECT p.cantidad, p.cantidad_recibida, i.precio_plancha FROM produccion p LEFT JOIN inventario i ON p.inventario_id = i.id WHERE p.id = ?",
+          "SELECT p.cantidad, p.cantidad_recibida, i.precio_plancha FROM produccion p LEFT JOIN inventario i ON p.inventario_id = i.id WHERE p.id = ? FOR UPDATE",
           [prodId]
         );
         const prodRow = prodRows[0];
@@ -1393,9 +1404,9 @@ app.post('/api/camiones', authenticateToken, async (req, res) => {
 
         const piezas_producidas = prodRow.cantidad_recibida !== null ? prodRow.cantidad_recibida : prodRow.cantidad;
         precioPlancha = prodRow.precio_plancha || 0.00;
-        
+
         const [shippedRows] = await connection.query(
-          "SELECT COALESCE(SUM(piezas), 0) as total FROM camion_detalles WHERE produccion_id = ?",
+          "SELECT COALESCE(SUM(piezas), 0) as total FROM camion_detalles WHERE produccion_id = ? FOR UPDATE",
           [prodId]
         );
         const piezas_ya_enviadas = parseInt(shippedRows[0].total) || 0;
@@ -1780,7 +1791,13 @@ app.put('/api/produccion/:id/recepcion', authenticateToken, async (req, res) => 
 app.put('/api/produccion/:id/ajuste', authenticateToken, async (req, res) => {
   const { tipo, porcentaje } = req.body;
   try {
-    const [olds] = await db.query("SELECT * FROM produccion WHERE id = ?", [req.params.id]);
+    const [olds] = await db.query(`
+      SELECT p.*, i.modelo as inv_m, m.nombre as maq_n
+      FROM produccion p
+      LEFT JOIN inventario i ON p.inventario_id = i.id
+      LEFT JOIN maquileros m ON p.maquilero_id = m.id
+      WHERE p.id = ?
+    `, [req.params.id]);
     const old = olds[0];
     if (!old) return res.status(404).json({ error: 'Orden no encontrada' });
 
@@ -1795,9 +1812,11 @@ app.put('/api/produccion/:id/ajuste', authenticateToken, async (req, res) => {
     let adjustmentAmount = subtotal * (porcentaje / 100);
     let finalTotal = (tipo === 'bono') ? (subtotal + adjustmentAmount) : (subtotal - adjustmentAmount);
 
-    await db.query("UPDATE produccion SET ajuste_tipo = ?, ajuste_porcentaje = ?, ajuste_monto = ?, precio_total = ? WHERE id = ?", 
+    await db.query("UPDATE produccion SET ajuste_tipo = ?, ajuste_porcentaje = ?, ajuste_monto = ?, precio_total = ? WHERE id = ?",
       [tipo, porcentaje, adjustmentAmount, finalTotal, req.params.id]);
-    
+
+    await logActivity(req.user.id, 'EDIT', 'PRODUCCION', `Aplicó ${tipo} de ${porcentaje}% a la orden ${old.inv_m || 'ID '+req.params.id} (${old.maq_n || 'maquilero'}): ${tipo === 'bono' ? '+' : '-'}$${adjustmentAmount.toFixed(2)}`);
+
     // Check and update inventory and archiving status dynamically
     await checkAndMoveToInventory(req.params.id, req.user.id);
     await autoArchiveOrders();
@@ -1922,8 +1941,15 @@ app.put('/api/produccion/:id', authenticateToken, async (req, res) => {
         await db.query("UPDATE inventario SET precio = ? WHERE id = ?", [parseFloat(precio_unitario) || 0, old.inventario_id]);
       }
       if (cantidad !== undefined && old.inventario_id) {
-        await db.query("UPDATE inventario SET piezas_en_proceso = ? WHERE id = ?", [parseInt(cantidad) || 0, old.inventario_id]);
-        await db.query("UPDATE inventario_real SET piezas = ? WHERE no_orden = ? AND modelo = ?", [parseInt(cantidad) || 0, old.no_orden || '', old.inv_m || '']);
+        // Un corte puede estar dividido entre varias órdenes de producción (vía "Dividir").
+        // piezas_en_proceso es el total del corte, no de esta orden sola — hay que sumar
+        // esta orden con sus hermanas (no canceladas), no sobrescribir con solo su cantidad.
+        const [siblingSums] = await db.query(
+          "SELECT COALESCE(SUM(cantidad), 0) as total FROM produccion WHERE inventario_id = ? AND estado != 'Cancelado' AND id != ?",
+          [old.inventario_id, req.params.id]
+        );
+        const nuevoTotalCorte = (parseInt(siblingSums[0].total) || 0) + (parseInt(cantidad) || 0);
+        await db.query("UPDATE inventario SET piezas_en_proceso = ? WHERE id = ?", [nuevoTotalCorte, old.inventario_id]);
         await syncPhysicalInventory();
       }
     }
@@ -2041,30 +2067,43 @@ app.put('/api/produccion/:id', authenticateToken, async (req, res) => {
 
 app.post('/api/produccion/:id/dividir', authenticateToken, async (req, res) => {
   const { cantidad_entregada, nuevo_maquilero_id, estado_original } = req.body;
+  const connection = await db.getConnection();
   try {
-    const [olds] = await db.query(`
+    await connection.beginTransaction();
+
+    // FOR UPDATE: sin esto, un doble clic en "Dividir" podía leer la misma
+    // orden original dos veces antes de que ninguna confirmara, y crear DOS
+    // órdenes nuevas con las piezas restantes en vez de una — duplicando
+    // piezas que físicamente no existen dos veces.
+    const [olds] = await connection.query(`
       SELECT p.*, i.precio as unit_price, i.modelo as inv_m, m.nombre as maq_n
-      FROM produccion p 
-      LEFT JOIN inventario i ON p.inventario_id = i.id 
+      FROM produccion p
+      LEFT JOIN inventario i ON p.inventario_id = i.id
       LEFT JOIN maquileros m ON p.maquilero_id = m.id
       WHERE p.id = ?
+      FOR UPDATE
     `, [req.params.id]);
     const old = olds[0];
-    if (!old) return res.status(404).json({ error: 'Producción no encontrada' });
-    
+    if (!old) {
+      await connection.rollback();
+      return res.status(404).json({ error: 'Producción no encontrada' });
+    }
+
     const qtyEntregada = parseInt(cantidad_entregada);
     if (isNaN(qtyEntregada) || qtyEntregada <= 0 || qtyEntregada >= old.cantidad) {
+      await connection.rollback();
       return res.status(400).json({ error: 'La cantidad entregada debe ser mayor a 0 y menor a la cantidad original de la orden.' });
     }
 
     // La orden no se puede dividir por debajo de lo que ya salió físicamente en camión,
     // o el inventario disponible calculado a partir de `cantidad` quedaría negativo
     // (oculto, porque /api/camiones/disponibles filtra por piezas > 0).
-    const [[{ piezasEnviadas }]] = await db.query(
-      "SELECT COALESCE(SUM(piezas), 0) as piezasEnviadas FROM camion_detalles WHERE produccion_id = ?",
+    const [[{ piezasEnviadas }]] = await connection.query(
+      "SELECT COALESCE(SUM(piezas), 0) as piezasEnviadas FROM camion_detalles WHERE produccion_id = ? FOR UPDATE",
       [req.params.id]
     );
     if (qtyEntregada < piezasEnviadas) {
+      await connection.rollback();
       return res.status(400).json({ error: `No puedes dividir esta orden a ${qtyEntregada} piezas: ya se enviaron ${piezasEnviadas} piezas en camión para esta orden.` });
     }
 
@@ -2072,17 +2111,17 @@ app.post('/api/produccion/:id/dividir', authenticateToken, async (req, res) => {
     const up = old.es_extra === 1
       ? (old.precio_extra !== null ? parseFloat(old.precio_extra) : 0)
       : (old.unit_price || (old.precio_total / old.cantidad) || 0);
-      
+
     // 1. Update original order
     const subtotalOriginal = qtyEntregada * up;
     let finalPrecioOriginal = subtotalOriginal;
     if (old.ajuste_tipo === 'bono') finalPrecioOriginal += subtotalOriginal * (old.ajuste_porcentaje / 100);
     else if (old.ajuste_tipo === 'descuento') finalPrecioOriginal -= subtotalOriginal * (old.ajuste_porcentaje / 100);
-    
+
     const targetEstado = estado_original || 'Terminado';
     let targetCantidadRecibida = qtyEntregada;
     let targetFechaTerminado = null;
-    
+
     if (targetEstado === 'En proceso') {
       targetCantidadRecibida = null;
       targetFechaTerminado = null;
@@ -2094,10 +2133,10 @@ app.post('/api/produccion/:id/dividir', authenticateToken, async (req, res) => {
       targetCantidadRecibida = qtyEntregada;
       targetFechaTerminado = new Date();
     }
-    
-    await db.query(`
-      UPDATE produccion SET 
-      cantidad = ?, 
+
+    await connection.query(`
+      UPDATE produccion SET
+      cantidad = ?,
       cantidad_recibida = ?,
       precio_total = ?,
       estado = ?,
@@ -2105,28 +2144,43 @@ app.post('/api/produccion/:id/dividir', authenticateToken, async (req, res) => {
       WHERE id = ?
     `, [qtyEntregada, targetCantidadRecibida, finalPrecioOriginal, targetEstado, targetFechaTerminado, req.params.id]);
 
-    await logActivity(req.user.id, 'EDIT', 'PRODUCCION', `Dividió orden ${old.inv_m} (${old.maq_n}): Entregó ${qtyEntregada} pzas (estado: ${targetEstado}), reasignando ${remainingQty}`);
+    await connection.query(
+      "INSERT INTO historial (user_id, action, target, description) VALUES (?, 'EDIT', 'PRODUCCION', ?)",
+      [req.user.id, `Dividió orden ${old.inv_m} (${old.maq_n}): Entregó ${qtyEntregada} pzas (estado: ${targetEstado}), reasignando ${remainingQty}`]
+    );
 
     // 2. Create new order if nuevo_maquilero_id is provided
     if (nuevo_maquilero_id) {
       const subtotalNuevo = remainingQty * up;
-      const [result] = await db.query(`
-        INSERT INTO produccion (maquilero_id, fecha_inicio, fecha_fin, estado, precio_total, inventario_id, cantidad) 
-        VALUES (?, CURRENT_DATE, ?, 'En proceso', ?, ?, ?)
-      `, [nuevo_maquilero_id, old.fecha_fin, subtotalNuevo, old.inventario_id, remainingQty]);
-      
-      const [maqNuevos] = await db.query("SELECT nombre FROM maquileros WHERE id = ?", [nuevo_maquilero_id]);
+      // Preserva es_extra/precio_extra: si la orden original era un "Extra" con precio
+      // manual, la orden nueva debe seguir siéndolo — si no, el próximo recepcion/ajuste
+      // recalcula su precio_total con el precio de inventario en vez del precio_extra
+      // correcto, cambiando el monto a pagar silenciosamente.
+      await connection.query(`
+        INSERT INTO produccion (maquilero_id, fecha_inicio, fecha_fin, estado, precio_total, inventario_id, cantidad, es_extra, precio_extra)
+        VALUES (?, CURRENT_DATE, ?, 'En proceso', ?, ?, ?, ?, ?)
+      `, [nuevo_maquilero_id, old.fecha_fin, subtotalNuevo, old.inventario_id, remainingQty, old.es_extra || 0, old.es_extra === 1 ? old.precio_extra : null]);
+
+      const [maqNuevos] = await connection.query("SELECT nombre FROM maquileros WHERE id = ?", [nuevo_maquilero_id]);
       const maqNuevo = maqNuevos[0];
-      await logActivity(req.user.id, 'ALTA', 'PRODUCCION', `Nueva orden generada por división para ${maqNuevo ? maqNuevo.nombre : 'ID '+nuevo_maquilero_id} (${old.inv_m}): ${remainingQty} pzas`);
+      await connection.query(
+        "INSERT INTO historial (user_id, action, target, description) VALUES (?, 'ALTA', 'PRODUCCION', ?)",
+        [req.user.id, `Nueva orden generada por división para ${maqNuevo ? maqNuevo.nombre : 'ID '+nuevo_maquilero_id} (${old.inv_m}): ${remainingQty} pzas`]
+      );
     }
+
+    await connection.commit();
 
     await checkAndMoveToInventory(req.params.id, req.user.id);
     await autoArchiveOrders();
 
     res.json({ success: true });
   } catch (error) {
+    await connection.rollback();
     console.error("Error en POST produccion/dividir:", error);
     res.status(500).json({ error: error.message });
+  } finally {
+    connection.release();
   }
 });
 
@@ -2151,6 +2205,13 @@ app.delete('/api/produccion/:id', authenticateToken, async (req, res) => {
     const connection = await db.getConnection();
     try {
       await connection.beginTransaction();
+      // Los descuentos personales aplicados a un pago de esta orden referencian ese pago
+      // por FK (sin ON DELETE); hay que desvincularlos primero o el DELETE de pagos falla
+      // con un error de restricción y la orden queda imposible de borrar.
+      await connection.query(
+        "UPDATE descuentos_personales SET aplicado = 0, pago_id = NULL WHERE pago_id IN (SELECT id FROM pagos WHERE produccion_id = ?)",
+        [req.params.id]
+      );
       await connection.query("DELETE FROM pagos WHERE produccion_id = ?", [req.params.id]);
       await connection.query("DELETE FROM produccion WHERE id = ?", [req.params.id]);
       await connection.commit();
@@ -2175,7 +2236,7 @@ app.delete('/api/produccion/:id', authenticateToken, async (req, res) => {
 });
 
 // APIs Pagos
-app.get('/api/pagos/:produccion_id', async (req, res) => {
+app.get('/api/pagos/:produccion_id', authenticateToken, async (req, res) => {
   try {
     const [pagos] = await db.query("SELECT * FROM pagos WHERE produccion_id = ? ORDER BY id DESC", [req.params.produccion_id]);
     res.json(pagos);
@@ -2198,15 +2259,17 @@ app.post('/api/pagos', authenticateToken, async (req, res) => {
     
     // 2. Obtener el Maquilero de la orden
     const [orders] = await connection.query("SELECT maquilero_id, estado FROM produccion WHERE id = ?", [produccion_id]);
+    let descuentosAplicados = 0;
     if (orders.length > 0) {
       const maquileroId = orders[0].maquilero_id;
       const currentStatus = orders[0].estado;
-      
+
       // 3. Vincular y marcar como aplicados los descuentos pendientes de ese maquilero
-      await connection.query(
+      const [descuentosResult] = await connection.query(
         "UPDATE descuentos_personales SET aplicado = 1, pago_id = ? WHERE maquilero_id = ? AND aplicado = 0",
         [pagoId, maquileroId]
       );
+      descuentosAplicados = descuentosResult.affectedRows || 0;
 
       // 3.5. Actualizar el estado de la orden de producción según el tipo de pago
       if (tipo_pago === 'abono' && currentStatus === 'En proceso') {
@@ -2225,7 +2288,7 @@ app.post('/api/pagos', authenticateToken, async (req, res) => {
     const prod = prods[0];
     await connection.query(
       "INSERT INTO historial (user_id, action, target, description) VALUES (?, ?, ?, ?)",
-      [req.user.id, 'ALTA', 'PAGO', `Registró pago de $${monto} para ${prod ? prod.modelo : 'Orden '+produccion_id} (Multas liquidadas)`]
+      [req.user.id, 'ALTA', 'PAGO', `Registró pago de $${monto} para ${prod ? prod.modelo : 'Orden '+produccion_id}${descuentosAplicados > 0 ? ' (Multas liquidadas)' : ''}`]
     );
 
     await connection.commit();
@@ -2258,10 +2321,11 @@ app.delete('/api/pagos/:id', authenticateToken, async (req, res) => {
     }
 
     // 2. Unlink/restore any discounts associated with this payment
-    await connection.query(
+    const [descuentosResult] = await connection.query(
       "UPDATE descuentos_personales SET aplicado = 0, pago_id = NULL WHERE pago_id = ?",
       [pagoId]
     );
+    const descuentosDesvinculados = descuentosResult.affectedRows || 0;
 
     // 3. Delete the payment
     await connection.query("DELETE FROM pagos WHERE id = ?", [pagoId]);
@@ -2284,7 +2348,7 @@ app.delete('/api/pagos/:id', authenticateToken, async (req, res) => {
     const prod = prods[0];
     await connection.query(
       "INSERT INTO historial (user_id, action, target, description) VALUES (?, ?, ?, ?)",
-      [req.user.id, 'BAJA', 'PAGO', `Eliminó pago ID #${pagoId} de $${pago.monto} para ${prod ? prod.modelo : 'Orden '+pago.produccion_id} (Descuentos desvinculados)`]
+      [req.user.id, 'BAJA', 'PAGO', `Eliminó pago ID #${pagoId} de $${pago.monto} para ${prod ? prod.modelo : 'Orden '+pago.produccion_id}${descuentosDesvinculados > 0 ? ' (Descuentos desvinculados)' : ''}`]
     );
 
     await connection.commit();
@@ -2466,7 +2530,11 @@ app.get('/api/pagos/:id/comprobante', authenticateToken, async (req, res) => {
 });
 
 // APIs Reportes
-app.get('/api/reportes/produccion', async (req, res) => {
+app.get('/api/reportes/produccion', authenticateToken, async (req, res) => {
+    const allowedRoles = ['admin', 'produccion1', 'produccion2', 'produccion', 'inventario1', 'inventario', 'maquila'];
+    if (!allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({ error: 'No autorizado para esta sección' });
+    }
     const { start, end, date } = req.query;
     const lang = req.query.lang || 'es';
     const tLabel = (esText, enText) => lang === 'en' ? enText : esText;
@@ -2562,7 +2630,7 @@ app.get('/api/reportes/produccion', async (req, res) => {
           })(),
           cliente: o.producto_cliente || '-',
           orden: o.inventario_orden || '-',
-          piezas: String(o.cantidad || 0),
+          piezas: String((o.cantidad_recibida !== null && o.cantidad_recibida !== undefined ? o.cantidad_recibida : o.cantidad) || 0),
           entrega: formatDateToDMY(o.fecha_fin)
         })),
         options: { padding: 4 }
@@ -2584,7 +2652,7 @@ app.get('/api/reportes/produccion', async (req, res) => {
         }
       });
 
-      const totalPiezas = orders.reduce((sum, o) => sum + (o.cantidad || 0), 0);
+      const totalPiezas = orders.reduce((sum, o) => sum + ((o.cantidad_recibida !== null && o.cantidad_recibida !== undefined ? o.cantidad_recibida : o.cantidad) || 0), 0);
       doc.moveDown();
       doc.fontSize(14).font("Helvetica-Bold").text(`${tLabel('TOTAL DE PIEZAS TERMINADAS', 'TOTAL FINISHED PIECES')}: ${totalPiezas}`, { align: 'right' });
     }
@@ -2595,7 +2663,11 @@ app.get('/api/reportes/produccion', async (req, res) => {
   }
 });
 
-app.get('/api/reportes/inventario', async (req, res) => {
+app.get('/api/reportes/inventario', authenticateToken, async (req, res) => {
+  const allowedRoles = ['admin', 'produccion1', 'produccion2', 'produccion', 'inventario1', 'inventario', 'maquila'];
+  if (!allowedRoles.includes(req.user.role)) {
+    return res.status(403).json({ error: 'No autorizado para esta sección' });
+  }
   const { filter } = req.query;
   const lang = req.query.lang || 'es';
   const tLabel = (esText, enText) => lang === 'en' ? enText : esText;
@@ -2700,7 +2772,11 @@ app.get('/api/reportes/inventario', async (req, res) => {
   }
 });
 
-app.get('/api/reportes/recoleccion', async (req, res) => {
+app.get('/api/reportes/recoleccion', authenticateToken, async (req, res) => {
+  const allowedRoles = ['admin', 'produccion1', 'produccion2', 'produccion', 'inventario1', 'inventario', 'maquila'];
+  if (!allowedRoles.includes(req.user.role)) {
+    return res.status(403).json({ error: 'No autorizado para esta sección' });
+  }
   const { start, end, colors } = req.query;
   const lang = req.query.lang || 'es';
   const tLabel = (esText, enText) => lang === 'en' ? enText : esText;
@@ -2894,7 +2970,11 @@ app.get('/api/reportes/recoleccion', async (req, res) => {
   }
 });
 
-app.get('/api/reportes/pagos', async (req, res) => {
+app.get('/api/reportes/pagos', authenticateToken, async (req, res) => {
+  const allowedRoles = ['admin', 'produccion1', 'produccion2', 'produccion', 'inventario1', 'inventario', 'maquila'];
+  if (!allowedRoles.includes(req.user.role)) {
+    return res.status(403).json({ error: 'No autorizado para esta sección' });
+  }
   const { start, end } = req.query;
   const lang = req.query.lang || 'es';
   const tLabel = (esText, enText) => lang === 'en' ? enText : esText;
@@ -3138,7 +3218,7 @@ app.put('/api/planchadores/:id', authenticateToken, async (req, res) => {
       return res.status(404).json({ error: 'Planchador no encontrado' });
     }
 
-    await logActividad(req.user.id, `Planchador editado: ${nombre} (${telefono || 'Sin tel'})`);
+    await logActivity(req.user.id, 'EDIT', 'PLANCHADORES', `Planchador editado: ${nombre} (${telefono || 'Sin tel'})`);
     res.json({ message: 'Planchador actualizado con éxito' });
   } catch (error) {
     console.error(error);
@@ -3273,8 +3353,11 @@ app.post('/api/plancha/modelos/:id/devolver', authenticateToken, async (req, res
   try {
     await connection.beginTransaction();
 
+    // FOR UPDATE: evita que dos devoluciones casi simultaneas para el mismo modelo
+    // de camion lean el mismo desglose de tallas antes de que ninguna confirme, y
+    // ambas pasen la validacion devolviendo (y descontando) las mismas piezas dos veces.
     const [cdRows] = await connection.query(
-      "SELECT * FROM camion_detalles WHERE id = ?",
+      "SELECT * FROM camion_detalles WHERE id = ? FOR UPDATE",
       [req.params.id]
     );
     const cd = cdRows[0];
@@ -3295,6 +3378,23 @@ app.post('/api/plancha/modelos/:id/devolver', authenticateToken, async (req, res
     const firstVal = Object.values(originalTallas)[0];
     const isNested = (typeof firstVal === 'object' && firstVal !== null);
 
+    // Cuánto de cada talla/color ya se planchó (y por lo tanto ya se pagó al
+    // planchador) para este modelo de camión. Sin esto, se podía "devolver a
+    // Puebla" piezas que en realidad ya se plancharon, contando las mismas
+    // piezas físicas como planchadas Y como devueltas al mismo tiempo.
+    const [ironedRows] = await connection.query(
+      `SELECT talla, COALESCE(color, '') as color, SUM(piezas) as total
+       FROM plancha_trabajos
+       WHERE camion_detalles_id = ? AND estado = 'terminado'
+       GROUP BY talla, color
+       FOR UPDATE`,
+      [req.params.id]
+    );
+    const ironedMap = {};
+    for (const row of ironedRows) {
+      ironedMap[`${row.color}|${row.talla}`] = parseInt(row.total) || 0;
+    }
+
     let totalDevolver = 0;
     const cleanTallasDevolucion = {};
 
@@ -3306,8 +3406,10 @@ app.post('/api/plancha/modelos/:id/devolver', authenticateToken, async (req, res
           if (qtyInt <= 0) return;
 
           const origQty = parseInt(originalTallas[color]?.[talla]) || 0;
-          if (qtyInt > origQty) {
-            throw new Error(`No puedes devolver más piezas de las que existen (Color: ${color}, Talla: ${talla}, Disponible: ${origQty}, Devolución: ${qtyInt})`);
+          const yaPlanchado = ironedMap[`${color}|${talla}`] || 0;
+          const disponibleParaDevolver = Math.max(0, origQty - yaPlanchado);
+          if (qtyInt > disponibleParaDevolver) {
+            throw new Error(`No puedes devolver más piezas de las que quedan sin planchar (Color: ${color}, Talla: ${talla}, Disponible: ${disponibleParaDevolver}, Devolución: ${qtyInt})`);
           }
 
           if (!cleanTallasDevolucion[color]) cleanTallasDevolucion[color] = {};
@@ -3323,8 +3425,10 @@ app.post('/api/plancha/modelos/:id/devolver', authenticateToken, async (req, res
         if (qtyInt <= 0) return;
 
         const origQty = parseInt(originalTallas[talla]) || 0;
-        if (qtyInt > origQty) {
-          throw new Error(`No puedes devolver más piezas de las que existen (Talla: ${talla}, Disponible: ${origQty}, Devolución: ${qtyInt})`);
+        const yaPlanchado = ironedMap[`|${talla}`] || 0;
+        const disponibleParaDevolver = Math.max(0, origQty - yaPlanchado);
+        if (qtyInt > disponibleParaDevolver) {
+          throw new Error(`No puedes devolver más piezas de las que quedan sin planchar (Talla: ${talla}, Disponible: ${disponibleParaDevolver}, Devolución: ${qtyInt})`);
         }
 
         cleanTallasDevolucion[talla] = qtyInt;
@@ -3612,8 +3716,12 @@ app.post('/api/plancha/asignar', authenticateToken, async (req, res) => {
         maxPiezas = tallasOriginales[matchingTallaKey] || 0;
       }
 
+      // FOR UPDATE: bajo REPEATABLE READ, una lectura normal dentro de esta transaccion
+      // reusaria el snapshot tomado antes del FOR UPDATE de arriba y no veria un insert
+      // recien confirmado por otra solicitud que estuvo esperando ese mismo bloqueo —
+      // dejando pasar la misma condicion de doble clic que este bloqueo intenta evitar.
       const [alreadyIroned] = await connection.query(
-        "SELECT COALESCE(SUM(piezas), 0) as total FROM plancha_trabajos WHERE camion_detalles_id = ? AND talla = ? AND (color = ? OR (? = '' AND color IS NULL))",
+        "SELECT COALESCE(SUM(piezas), 0) as total FROM plancha_trabajos WHERE camion_detalles_id = ? AND talla = ? AND (color = ? OR (? = '' AND color IS NULL)) FOR UPDATE",
         [camion_detalles_id, matchingTallaKey, selectedColor, selectedColor]
       );
       const ironedCount = alreadyIroned[0].total || 0;
@@ -4035,7 +4143,11 @@ app.get('/api/planchadores/:id/piezas-rango', authenticateToken, async (req, res
 });
 
 // 10.4 REPORTES DE PAGOS DE PLANCHA EN PDF
-app.get('/api/reportes/plancha/pagos', async (req, res) => {
+app.get('/api/reportes/plancha/pagos', authenticateToken, async (req, res) => {
+  const allowedRoles = ['admin', 'produccion1', 'produccion2', 'plancha', 'inventario1'];
+  if (!allowedRoles.includes(req.user.role)) {
+    return res.status(403).json({ error: 'No autorizado para esta sección' });
+  }
   const { start, end, planchadorId } = req.query;
   const lang = req.query.lang || 'es';
   const tLabel = (esText, enText) => lang === 'en' ? enText : esText;
@@ -4513,7 +4625,11 @@ app.get('/api/reportes/plancha/pagos', async (req, res) => {
 });
 
 // 10.5 REPORTE RESUMEN GENERAL DE PLANCHADORES EN PDF
-app.get('/api/reportes/plancha/resumen', async (req, res) => {
+app.get('/api/reportes/plancha/resumen', authenticateToken, async (req, res) => {
+  const allowedRoles = ['admin', 'produccion1', 'produccion2', 'plancha', 'inventario1'];
+  if (!allowedRoles.includes(req.user.role)) {
+    return res.status(403).json({ error: 'No autorizado para esta sección' });
+  }
   const { start, end, planchadorId } = req.query;
   const lang = req.query.lang || 'es';
   const tLabel = (esText, enText) => lang === 'en' ? enText : esText;

@@ -471,6 +471,7 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
     if (reportEnd) params.append('end', reportEnd);
     if (reportPlanchadorId) params.append('planchadorId', reportPlanchadorId);
     params.append('lang', settings.language || 'es');
+    params.append('token', localStorage.getItem('token'));
     const query = params.toString();
     if (query) url += `?${query}`;
     window.open(url, '_blank');
@@ -482,6 +483,7 @@ export default function PlanchaPagos({ planchadores, fetchModelosDisponibles }) 
     if (reportStart) params.append('start', reportStart);
     if (reportEnd) params.append('end', reportEnd);
     params.append('lang', settings.language || 'es');
+    params.append('token', localStorage.getItem('token'));
     const query = params.toString();
     if (query) url += `?${query}`;
     window.open(url, '_blank');

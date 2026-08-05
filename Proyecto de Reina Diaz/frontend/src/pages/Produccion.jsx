@@ -50,7 +50,9 @@ function Produccion() {
   const [isSplitModalOpen, setIsSplitModalOpen] = useState(false);
   const [splitOrder, setSplitOrder] = useState(null);
   const [splitData, setSplitData] = useState({ cantidad_entregada: '', nuevo_maquilero_id: '' });
-  
+  const [isSubmittingSplit, setIsSubmittingSplit] = useState(false);
+
+
   const [obsModalOpen, setObsModalOpen] = useState(false);
   const [obsText, setObsText] = useState("");
   const [obsOrderId, setObsOrderId] = useState(null);
@@ -362,6 +364,8 @@ function Produccion() {
 
   const handleSplitSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmittingSplit) return;
+    setIsSubmittingSplit(true);
     try {
       await axios.post(`${API}/api/produccion/${splitOrder.id}/dividir`, splitData);
       toast.success('Orden dividida exitosamente.', { theme: 'dark' });
@@ -370,6 +374,8 @@ function Produccion() {
       fetchOrders();
     } catch (e) {
       toast.error('Error al dividir orden: ' + (e.response?.data?.error || e.message), { theme: 'dark' });
+    } finally {
+      setIsSubmittingSplit(false);
     }
   };
 
@@ -1171,8 +1177,8 @@ function Produccion() {
 
               <div className="modal-actions">
                 <button type="button" className="btn btn-secondary" onClick={() => setIsSplitModalOpen(false)}>Cancelar</button>
-                <button type="submit" className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Split size={18} /> Dividir Orden
+                <button type="submit" className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }} disabled={isSubmittingSplit}>
+                  <Split size={18} /> {isSubmittingSplit ? 'Dividiendo...' : 'Dividir Orden'}
                 </button>
               </div>
             </form>

@@ -33,6 +33,7 @@ export default function PlanchaModelos({ modelosCamion, fetchModelosCamion, fetc
   const [isMouseDownDev, setIsMouseDownDev] = useState(false);
   const [editingBlockDev, setEditingBlockDev] = useState(null); // { color, talla }
   const dragActionDevRef = useRef(null); // 'select' | 'deselect'
+  const [submittingDevolucion, setSubmittingDevolucion] = useState(false);
 
   // Reset drag state when mouse is released anywhere on the page
   useEffect(() => {
@@ -145,8 +146,8 @@ export default function PlanchaModelos({ modelosCamion, fetchModelosCamion, fetc
 
   const handleConfirmarDevolucion = async (e) => {
     e.preventDefault();
-    if (!modeloADevolver) return;
-    
+    if (!modeloADevolver || submittingDevolucion) return;
+
     const payload = {};
     const firstVal = Object.values(modeloADevolver.tallas_cantidades)[0];
     const isNested = (typeof firstVal === 'object' && firstVal !== null);
@@ -179,6 +180,7 @@ export default function PlanchaModelos({ modelosCamion, fetchModelosCamion, fetc
       return;
     }
 
+    setSubmittingDevolucion(true);
     try {
       const token = localStorage.getItem('token');
       await axios.post(`${API_URL}/api/plancha/modelos/${modeloADevolver.id}/devolver`, {
@@ -194,6 +196,8 @@ export default function PlanchaModelos({ modelosCamion, fetchModelosCamion, fetc
     } catch (e) {
       console.error(e);
       toast.error(e.response?.data?.error || (isEn ? 'Error registering return' : 'Error al registrar devolución'), { theme: 'dark' });
+    } finally {
+      setSubmittingDevolucion(false);
     }
   };
 
@@ -796,8 +800,8 @@ export default function PlanchaModelos({ modelosCamion, fetchModelosCamion, fetc
                 >
                   {isEn ? 'Cancel' : 'Cancelar'}
                 </button>
-                <button type="submit" className="btn" style={{ flex: 1, background: '#ef4444', color: '#fff' }}>
-                  {isEn ? 'Confirm Return' : 'Confirmar Devolución'}
+                <button type="submit" className="btn" style={{ flex: 1, background: '#ef4444', color: '#fff' }} disabled={submittingDevolucion}>
+                  {submittingDevolucion ? (isEn ? 'Saving...' : 'Guardando...') : (isEn ? 'Confirm Return' : 'Confirmar Devolución')}
                 </button>
               </div>
             </form>

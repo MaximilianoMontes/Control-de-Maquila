@@ -148,7 +148,10 @@ export default function Pagos() {
 
   const fetchPagos = async (ordenId) => {
     try {
-      const res = await axios.get(`${API_URL}/api/pagos/${ordenId}`);
+      const token = localStorage.getItem('token');
+      const res = await axios.get(`${API_URL}/api/pagos/${ordenId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setPagos(res.data);
     } catch (e) { console.error(e); }
   };
