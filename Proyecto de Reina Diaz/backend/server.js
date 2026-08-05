@@ -1473,10 +1473,22 @@ app.post('/api/camiones', authenticateToken, async (req, res) => {
 
 const autoArchiveOrders = async () => {
   try {
+    // Una orden se considera realmente liquidada solo si lo pagado (pagos + descuentos
+    // aplicados) cubre su precio_total. "Terminar Directamente (Sin Pago)" en Producción
+    // pone estado = 'Terminado' sin generar ningún pago — sin esta condición, ese botón
+    // archivaba la orden de inmediato y la desaparecía de Producción, Pagos y Plancha sin
+    // dejar rastro de que seguía debiéndose, con cero forma de volver a encontrarla.
+    const pagadoExpr = `(
+      (SELECT COALESCE(SUM(monto), 0) FROM pagos WHERE produccion_id = p.id) +
+      (SELECT COALESCE(SUM(dp.monto_total), 0) FROM descuentos_personales dp
+       JOIN pagos pg ON dp.pago_id = pg.id WHERE pg.produccion_id = p.id)
+    )`;
+
     // 1. Get orders that should be archived but are not yet (archivado < 2)
-    // Condition: fully loaded/shipped on the truck in the system, and state is 'Terminado' (fully paid/liquidated)
+    // Condition: fully loaded/shipped on the truck in the system, state is 'Terminado', y
+    // lo pagado cubre el precio_total (liquidado de verdad, no solo marcado como terminado).
     const [toArchive] = await db.query(`
-      SELECT p.id 
+      SELECT p.id
       FROM produccion p
       WHERE p.archivado < 2
         AND p.estado = 'Terminado'
@@ -1485,12 +1497,13 @@ const autoArchiveOrders = async () => {
           FROM camion_detalles cd
           WHERE cd.produccion_id = p.id
         ) >= COALESCE(p.cantidad_recibida, p.cantidad)
+        AND ${pagadoExpr} >= COALESCE(p.precio_total, 0)
     `);
 
     // 2. Get orders that are currently auto-archived (archivado = 2) but no longer meet the criteria to be archived
-    // (e.g. they are no longer 'Terminado', or pieces were removed from the truck)
+    // (e.g. they are no longer 'Terminado', pieces were removed from the truck, o dejaron de estar liquidadas)
     const [toUnarchive] = await db.query(`
-      SELECT p.id 
+      SELECT p.id
       FROM produccion p
       WHERE p.archivado = 2
         AND (
@@ -1500,6 +1513,7 @@ const autoArchiveOrders = async () => {
             FROM camion_detalles cd
             WHERE cd.produccion_id = p.id
           ) < COALESCE(p.cantidad_recibida, p.cantidad)
+          OR ${pagadoExpr} < COALESCE(p.precio_total, 0)
         )
     `);
 
