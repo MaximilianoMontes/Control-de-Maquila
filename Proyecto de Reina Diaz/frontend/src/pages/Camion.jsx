@@ -85,6 +85,7 @@ export default function Camion() {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [cargoSearchTerm, setCargoSearchTerm] = useState('');
 
   // Active Truck Load State
   const [cargo, setCargo] = useState([]); // Array of { ...stockItem, piezas: N, tallas_cantidades: { "05": 10, ... } }
@@ -116,6 +117,7 @@ export default function Camion() {
   const [activeProdOrders, setActiveProdOrders] = useState([]);
   const [selectedAdelantadaOrder, setSelectedAdelantadaOrder] = useState(null);
   const [adelantadaTallas, setAdelantadaTallas] = useState({});
+  const [adelantadaSearchTerm, setAdelantadaSearchTerm] = useState('');
 
   const getFolio = (o, list = activeProdOrders) => {
     if (!o) return '';
@@ -132,6 +134,7 @@ export default function Camion() {
       const inProgress = res.data.filter(o => o.estado !== 'Cancelado' && o.estado !== 'Terminado');
       setActiveProdOrders(inProgress);
       setSelectedAdelantadaOrder(null);
+      setAdelantadaSearchTerm('');
       setAdelantadaModalOpen(true);
     } catch (e) {
       console.error(e);
@@ -575,10 +578,17 @@ export default function Camion() {
   };
 
   // Filter Stock List
-  const filteredStock = stock.filter(item => 
+  const filteredStock = stock.filter(item =>
     (item.modelo || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     (item.color || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     (item.no_orden || '').toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Filter Cargo (camión) list
+  const filteredCargo = cargo.filter(item =>
+    (item.modelo || '').toLowerCase().includes(cargoSearchTerm.toLowerCase()) ||
+    (item.color || '').toLowerCase().includes(cargoSearchTerm.toLowerCase()) ||
+    (item.no_orden || '').toLowerCase().includes(cargoSearchTerm.toLowerCase())
   );
 
   return (
@@ -820,6 +830,19 @@ export default function Camion() {
             )}
           </div>
 
+          {cargo.length > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', padding: '0.5rem 0.75rem', border: '1px solid rgba(255,255,255,0.1)' }}>
+              <Search size={18} color="#94a3b8" />
+              <input
+                type="text"
+                placeholder={isEn ? 'Search loaded model, color, order...' : 'Buscar modelo, color u orden cargado...'}
+                value={cargoSearchTerm}
+                onChange={e => setCargoSearchTerm(e.target.value)}
+                style={{ border: 'none', background: 'transparent', color: 'var(--text-primary)', outline: 'none', width: '100%', fontSize: '0.9rem' }}
+              />
+            </div>
+          )}
+
           {/* Active Cargo items list */}
           <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: '0.75rem', overflowY: 'auto', maxHeight: '300px', background: 'rgba(0,0,0,0.1)', borderRadius: '8px', padding: '0.75rem' }}>
             {cargo.length === 0 ? (
@@ -829,10 +852,18 @@ export default function Camion() {
                   {dragOver ? (t('settings.themeSystem') === 'System' ? 'Drop the model here!' : '¡Suelta el modelo aquí!') : t('camion.emptyCargo')}
                 </p>
               </div>
+            ) : filteredCargo.length === 0 ? (
+              <div style={{ margin: 'auto', textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>
+                <p style={{ margin: 0, fontSize: '0.9rem' }}>
+                  {isEn ? 'No loaded models match that search.' : 'No se encontraron modelos cargados con esa búsqueda.'}
+                </p>
+              </div>
             ) : (
-              cargo.map((item, idx) => (
-                <div 
-                  key={`cargo-${item.id}`} 
+              filteredCargo.map((item) => {
+                const idx = cargo.indexOf(item);
+                return (
+                <div
+                  key={`cargo-${item.id}`}
                   className="glass-card" 
                   style={{ 
                     padding: '0.75rem', 
@@ -922,7 +953,8 @@ export default function Camion() {
                     </span>
                   </div>
                 </div>
-              ))
+                );
+              })
             )}
           </div>
 
@@ -1398,13 +1430,36 @@ export default function Camion() {
               <button className="btn-icon" onClick={() => setAdelantadaModalOpen(false)}><X size={22} /></button>
             </div>
 
-            <div style={{ marginTop: '1rem', maxHeight: '420px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {activeProdOrders.length === 0 ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', padding: '0.5rem 0.75rem', border: '1px solid rgba(255,255,255,0.1)', marginTop: '1rem' }}>
+              <Search size={18} color="#94a3b8" />
+              <input
+                type="text"
+                placeholder={isEn ? 'Search model, tailor, order...' : 'Buscar por modelo, maquilero u orden...'}
+                value={adelantadaSearchTerm}
+                onChange={e => setAdelantadaSearchTerm(e.target.value)}
+                style={{ border: 'none', background: 'transparent', color: 'var(--text-primary)', outline: 'none', width: '100%', fontSize: '0.9rem' }}
+              />
+            </div>
+
+            <div style={{ marginTop: '0.75rem', maxHeight: '420px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {activeProdOrders.filter(o => {
+                const term = adelantadaSearchTerm.toLowerCase();
+                return !term ||
+                  (o.producto_modelo || '').toLowerCase().includes(term) ||
+                  (o.maquilero_nombre || '').toLowerCase().includes(term) ||
+                  String(getFolio(o)).toLowerCase().includes(term);
+              }).length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
-                  No hay órdenes activas en proceso.
+                  {activeProdOrders.length === 0 ? 'No hay órdenes activas en proceso.' : 'No se encontraron órdenes con esa búsqueda.'}
                 </div>
               ) : (
-                activeProdOrders.map(o => (
+                activeProdOrders.filter(o => {
+                  const term = adelantadaSearchTerm.toLowerCase();
+                  return !term ||
+                    (o.producto_modelo || '').toLowerCase().includes(term) ||
+                    (o.maquilero_nombre || '').toLowerCase().includes(term) ||
+                    String(getFolio(o)).toLowerCase().includes(term);
+                }).map(o => (
                   <div 
                     key={o.id}
                     className="glass-card"
