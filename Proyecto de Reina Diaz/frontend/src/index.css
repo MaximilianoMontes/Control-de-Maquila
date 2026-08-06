@@ -1,6 +1,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Bangers&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap'); /* Tema Miku: tipografia redondeada J-pop */
+@import url('https://fonts.googleapis.com/css2?family=Bungee&display=swap'); /* Tema Geometry Dash: tipografia bloque geometrica */
+@import url('https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&display=swap'); /* Tema Terraria: tipografia pixel bloque */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&display=swap'); /* Tema Halo: tipografia angular sci-fi/HUD */
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap'); /* Tema Dead by Daylight: tipografia condensada brutal */
 
 :root {
   --bg-dark: #ffffff;
@@ -2369,6 +2374,7 @@ body.theme-miku h5,
 body.theme-miku h6,
 body.theme-miku .logo-text,
 body.theme-miku .kpi-value {
+  font-family: 'Baloo 2', 'Inter', sans-serif !important;
   font-weight: 800 !important;
   letter-spacing: 0.5px !important;
   text-shadow: 0 0 10px rgba(57, 197, 187, 0.65) !important;
@@ -2391,6 +2397,19 @@ body.theme-miku aside {
   backdrop-filter: blur(20px) !important;
   -webkit-backdrop-filter: blur(20px) !important;
   box-shadow: 0 0 20px rgba(57, 197, 187, 0.15), inset 0 0 12px rgba(57, 197, 187, 0.05) !important;
+}
+
+/* Holographic foil sheen sweep on hover (idol-merch foil card effect) */
+body.theme-miku .glass-card {
+  background-image: linear-gradient(135deg, transparent 40%, rgba(57, 197, 187, 0.4) 47%, rgba(255, 46, 122, 0.4) 53%, transparent 60%) !important;
+  background-size: 300% 300% !important;
+  background-position: -60% -60% !important;
+  background-repeat: no-repeat !important;
+  transition: background-position 0.7s ease !important;
+}
+
+body.theme-miku .glass-card:hover {
+  background-position: 160% 160% !important;
 }
 
 body.theme-miku .main-header {
@@ -2448,6 +2467,7 @@ body.theme-miku button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-t
   border: 2px solid #39c5bb !important;
   background: transparent !important;
   color: #39c5bb !important;
+  font-family: 'Baloo 2', 'Inter', sans-serif !important;
   font-weight: 700 !important;
   text-transform: uppercase !important;
   letter-spacing: 0.5px !important;
@@ -2590,6 +2610,20 @@ body.theme-teto::before {
   animation: teto-scanline-sweep 6s linear infinite;
 }
 
+/* Bread easter egg 🍞 - Kasane Teto's meme identity, low-key corner decoration */
+body.theme-teto::after {
+  content: '🍞';
+  position: fixed;
+  bottom: 14px;
+  right: 14px;
+  font-size: 20px;
+  opacity: 0.4;
+  pointer-events: none;
+  z-index: 998;
+  filter: drop-shadow(0 0 4px rgba(255, 77, 106, 0.5));
+  animation: teto-bread-bob 3s ease-in-out infinite;
+}
+
 /* Kasane Teto Premium Overrides */
 body.theme-teto h1,
 body.theme-teto h2,
@@ -2642,9 +2676,10 @@ body.theme-teto .btn::after,
 body.theme-teto button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn)::after {
   content: '🌀';
   position: absolute;
-  right: 12px;
-  top: calc(50% - 8px);
-  font-size: 10px;
+  right: 10px;
+  top: calc(50% - 10px);
+  font-size: 19px;
+  line-height: 1;
   opacity: 0;
   transition: opacity 0.2s ease;
 }
@@ -2928,6 +2963,8 @@ body.theme-ror2 button.actions-dropdown-item.purple:hover {
 }
 
 .ror2-timer {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-variant-numeric: tabular-nums;
   font-size: 1.25rem;
   font-weight: bold;
   color: #ff8c00;
@@ -2936,6 +2973,7 @@ body.theme-ror2 button.actions-dropdown-item.purple:hover {
   text-align: center;
   border-right: 1px solid rgba(255, 140, 0, 0.25);
   padding-right: 10px;
+  letter-spacing: 1px;
 }
 
 .ror2-bar-wrapper {
@@ -3039,6 +3077,16 @@ body.theme-ror2 button.actions-dropdown-item.purple:hover {
   50% { background-color: #000000; }
 }
 
+@keyframes ror2-teleporter-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes ror2-teleporter-pulse {
+  0%, 100% { box-shadow: 0 0 5px rgba(0, 210, 255, 0.5); }
+  50% { box-shadow: 0 0 13px rgba(0, 210, 255, 0.9); }
+}
+
 .ror2-segment.ror2-flash-bg.active {
   animation: ror2-bg-flash 0.5s infinite alternate !important;
   opacity: 1 !important;
@@ -3049,6 +3097,18 @@ body.theme-ror2 button.actions-dropdown-item.purple:hover {
   .ror2-difficulty-bar-container {
     display: none;
   }
+}
+
+/* Teleporter-charging ring: reusable loading/pending indicator (ROR2 teleporter shrine feel) */
+.ror2-teleporter-ring {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 3px solid rgba(0, 210, 255, 0.2);
+  border-top-color: #00d2ff;
+  animation: ror2-teleporter-spin 0.9s linear infinite, ror2-teleporter-pulse 1.6s ease-in-out infinite;
+  vertical-align: middle;
 }
 
 
@@ -3097,7 +3157,7 @@ body.theme-limbus::after {
   bottom: -120px;
   right: -120px;
   font-size: 450px;
-  color: rgba(226, 168, 43, 0.015);
+  color: rgba(226, 168, 43, 0.07);
   pointer-events: none;
   z-index: -1;
   animation: limbus-gear-rotate 60s linear infinite;
@@ -3344,6 +3404,26 @@ body.theme-limbus tr:hover td {
   background: rgba(226, 168, 43, 0.06) !important;
 }
 
+/* Sin affinity accents: Wrath red & Sloth green alternate as row identity stripes */
+body.theme-limbus tr:nth-child(odd) td:first-child {
+  box-shadow: inset 3px 0 0 0 rgba(192, 57, 43, 0.5) !important;
+}
+body.theme-limbus tr:nth-child(even) td:first-child {
+  box-shadow: inset 3px 0 0 0 rgba(39, 174, 96, 0.5) !important;
+}
+
+/* Sin affinity badge variants (alongside existing gold/red badges) */
+body.theme-limbus .badge-wrath {
+  background: rgba(192, 57, 43, 0.22) !important;
+  color: #e0574a !important;
+  border: 1px solid rgba(192, 57, 43, 0.4) !important;
+}
+body.theme-limbus .badge-sloth {
+  background: rgba(39, 174, 96, 0.2) !important;
+  color: #4fd88a !important;
+  border: 1px solid rgba(39, 174, 96, 0.4) !important;
+}
+
 /* Limbus Company Custom Scrollbar */
 body.theme-limbus ::-webkit-scrollbar {
   width: 8px;
@@ -3431,6 +3511,54 @@ body.theme-ruina::after {
   animation-delay: 3s;
 }
 
+/* Extra shooting stars at different screen zones so they don't always streak
+   from the same 2 spots (anchored to persistent, filter/transform-free elements
+   so position:fixed still resolves against the viewport, not a local box) */
+body.theme-ruina .sidebar::before {
+  content: '';
+  position: fixed;
+  top: 58%;
+  left: 6%;
+  width: 2px;
+  height: 22px;
+  background: linear-gradient(180deg, #e5c158, transparent);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 0;
+  animation: ruina-star-shoot 11s linear infinite;
+  animation-delay: 1.5s;
+}
+
+body.theme-ruina .main-content::before {
+  content: '';
+  position: fixed;
+  top: 72%;
+  left: 78%;
+  width: 2px;
+  height: 20px;
+  background: linear-gradient(180deg, #00e5ff, transparent);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 0;
+  animation: ruina-star-shoot-right 15s linear infinite;
+  animation-delay: 6s;
+}
+
+body.theme-ruina .sidebar-logo::after {
+  content: '';
+  position: fixed;
+  top: 38%;
+  left: 42%;
+  width: 2px;
+  height: 18px;
+  background: linear-gradient(180deg, #e5c158, transparent);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 0;
+  animation: ruina-star-shoot 14s linear infinite;
+  animation-delay: 8.5s;
+}
+
 /* Library of Ruina Theme Premium Overrides */
 body.theme-ruina h1,
 body.theme-ruina h2,
@@ -3498,8 +3626,13 @@ body.theme-ruina aside {
 body.theme-ruina .glass-card:hover,
 body.theme-ruina .card:hover {
   border-color: #00e5ff !important; /* glowing library blue */
-  box-shadow: 0 15px 35px rgba(0, 229, 255, 0.15), 
+  box-shadow: 0 15px 35px rgba(0, 229, 255, 0.15),
               inset 0 0 20px rgba(0, 229, 255, 0.05) !important;
+}
+
+/* Fine parchment/paper hatching - sells "library book" over generic cosmic-gold */
+body.theme-ruina .glass-card {
+  background-image: repeating-linear-gradient(135deg, rgba(229, 193, 88, 0.03) 0px, rgba(229, 193, 88, 0.03) 1px, transparent 1px, transparent 6px) !important;
 }
 
 /* Nav links styling for Library of Ruina */
@@ -3709,12 +3842,14 @@ body.theme-minecraft {
   --radius-md: 0px !important;
   --transition: none !important;  /* Snappy instant feel */
   
-  /* Grid background linear gradients */
+  /* Grid background linear gradients + dirt/stone checkerboard block texture */
   background-color: #1a1a1a !important;
-  background-image: 
+  background-image:
     linear-gradient(0deg, rgba(0, 0, 0, 0.25) 2px, transparent 2px),
-    linear-gradient(90deg, rgba(0, 0, 0, 0.25) 2px, transparent 2px) !important;
-  background-size: 16px 16px !important;
+    linear-gradient(90deg, rgba(0, 0, 0, 0.25) 2px, transparent 2px),
+    repeating-conic-gradient(rgba(84, 68, 51, 0.35) 0% 25%, rgba(58, 58, 58, 0.35) 0% 50%) !important;
+  background-size: 16px 16px, 16px 16px, 16px 16px !important;
+  image-rendering: pixelated;
   font-family: 'Inter', sans-serif;
 }
 
@@ -3910,6 +4045,17 @@ body.theme-minecraft .kpi-progress-fill {
   image-rendering: pixelated !important;
 }
 
+/* Enchanted item glow (Minecraft rare-item purple shimmer) for success-type badges */
+body.theme-minecraft .badge-success,
+body.theme-minecraft .badge-bono {
+  animation: minecraft-enchant-glow 2.4s ease-in-out infinite !important;
+}
+
+@keyframes minecraft-enchant-glow {
+  0%, 100% { box-shadow: 0 0 4px rgba(170, 0, 255, 0.4), inset 0 0 2px rgba(170, 0, 255, 0.3); }
+  50% { box-shadow: 0 0 12px rgba(170, 0, 255, 0.9), 0 0 20px rgba(221, 128, 255, 0.5), inset 0 0 4px rgba(221, 128, 255, 0.5); }
+}
+
 /* Inputs and Forms */
 body.theme-minecraft .form-input,
 body.theme-minecraft input:not([type="checkbox"]):not([type="radio"]),
@@ -4030,7 +4176,7 @@ body.theme-geometry h5,
 body.theme-geometry h6,
 body.theme-geometry .logo-text,
 body.theme-geometry .kpi-value {
-  font-family: 'Inter', sans-serif !important;
+  font-family: 'Bungee', 'Inter', sans-serif !important;
   font-weight: 800 !important;
   text-transform: uppercase !important;
   letter-spacing: 1.5px !important;
@@ -4055,7 +4201,24 @@ body.theme-geometry .tab-btn.active::before {
 
 body.theme-geometry .glass-card,
 body.theme-geometry .card {
+  position: relative;
   animation: gd-beat-pulse 3s infinite ease-in-out;
+}
+
+/* Iconic GD spike/triangle accent on the top-left corner of cards */
+body.theme-geometry .glass-card::before,
+body.theme-geometry .card::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0 16px 16px 0;
+  border-color: transparent #1bf259 transparent transparent;
+  filter: drop-shadow(0 0 4px rgba(27, 242, 89, 0.6));
+  pointer-events: none;
 }
 
 body.theme-geometry .btn,
@@ -4073,6 +4236,17 @@ body.theme-geometry button:not(.close-btn):not(.search-clear-btn):not(.mobile-me
   background: #1bf259 !important;
   color: #090a0f !important;
   box-shadow: 0 0 15px #1bf259 !important;
+}
+
+/* "Portal" gravity/color-swap flash on click, GD-style */
+body.theme-geometry .btn-primary,
+body.theme-geometry button.btn-primary {
+  transition: filter 0.25s ease, all 0.15s ease !important;
+}
+
+body.theme-geometry .btn-primary:active,
+body.theme-geometry button.btn-primary:active {
+  filter: hue-rotate(140deg) !important;
 }
 
 body.theme-geometry .actions-dropdown-item,
@@ -4149,7 +4323,7 @@ body.theme-fallout {
   --radius-md: 1px !important;
   
   background-color: #121810 !important;
-  background-image: 
+  background-image:
     repeating-linear-gradient(
       0deg,
       rgba(51, 255, 51, 0.03),
@@ -4157,7 +4331,17 @@ body.theme-fallout {
       transparent 1px,
       transparent 2px
     ) !important;
-  animation: fallout-terminal-flicker 0.15s infinite alternate;
+  animation: fallout-terminal-flicker 6s infinite, fallout-scanline-scroll 10s linear infinite;
+}
+
+/* CRT vignette - darkens toward the viewport edges to sell "looking through a monitor" */
+body.theme-fallout::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9998;
+  background: radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.4) 100%);
 }
 
 body.theme-fallout *,
@@ -4298,8 +4482,8 @@ body.theme-tf2 {
   --radius-md: 0px !important;
   
   background-color: #282421 !important;
-  background-image: radial-gradient(circle, #332d29 10%, transparent 11%) !important;
-  background-size: 20px 20px !important;
+  background-image: radial-gradient(circle, rgba(245, 231, 200, 0.07) 32%, transparent 33%) !important;
+  background-size: 18px 18px !important;
 }
 
 body.theme-tf2 h1,
@@ -4329,6 +4513,30 @@ body.theme-tf2 .settings-modal-card {
   background: #3a322d !important;
   border-radius: 0px !important;
   box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.5) !important;
+  position: relative;
+}
+
+/* Mann Co. crate rivets - beveled metal studs in each corner */
+body.theme-tf2 .glass-card::before,
+body.theme-tf2 .modal-content::before,
+body.theme-tf2 .card::before,
+body.theme-tf2 .settings-modal-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-repeat: no-repeat;
+  background-size: 10px 10px, 10px 10px, 10px 10px, 10px 10px;
+  background-image:
+    radial-gradient(circle at 35% 35%, #cbb896 0%, #8a7a5f 45%, #241f1a 100%),
+    radial-gradient(circle at 35% 35%, #cbb896 0%, #8a7a5f 45%, #241f1a 100%),
+    radial-gradient(circle at 35% 35%, #cbb896 0%, #8a7a5f 45%, #241f1a 100%),
+    radial-gradient(circle at 35% 35%, #cbb896 0%, #8a7a5f 45%, #241f1a 100%);
+  background-position:
+    7px 7px,
+    calc(100% - 17px) 7px,
+    7px calc(100% - 17px),
+    calc(100% - 17px) calc(100% - 17px);
 }
 
 body.theme-tf2 .progress-bar,
@@ -4504,6 +4712,7 @@ body.theme-cyberpunk .kpi-value {
 body.theme-cyberpunk .glass-card:hover,
 body.theme-cyberpunk .card:hover {
   box-shadow: 0 0 15px rgba(0, 240, 255, 0.3), inset 0 0 10px rgba(255, 0, 85, 0.2) !important;
+  animation: cyberpunk-card-rgb-split 0.35s ease-out 1 !important;
 }
 
 body.theme-cyberpunk .glass-card,
@@ -5520,10 +5729,16 @@ body.theme-backrooms {
   --primary-hover: #b0a82e;
   --primary-shadow: rgba(209, 200, 56, 0.4);
   
-  background-image: 
-    linear-gradient(rgba(18, 20, 12, 0.45) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(18, 20, 12, 0.45) 1px, transparent 1px) !important;
-  background-size: 20px 20px !important;
+  /* Damp "wallpaper" stripes in two close sickly-yellow tones - the Backrooms'
+     signature look - instead of a neutral grid, kept low-contrast so text stays legible. */
+  background-image:
+    repeating-linear-gradient(
+      90deg,
+      rgba(216, 208, 96, 0.055) 0px,
+      rgba(216, 208, 96, 0.055) 24px,
+      rgba(188, 180, 68, 0.06) 24px,
+      rgba(188, 180, 68, 0.06) 48px
+    ) !important;
   background-attachment: fixed !important;
   font-family: 'Courier New', Courier, monospace !important;
 }
@@ -5552,20 +5767,22 @@ body.theme-backrooms .glass-card, body.theme-backrooms .modal-content, body.them
   background: #202216 !important;
 }
 
-body.theme-backrooms .btn, 
+body.theme-backrooms .btn,
 body.theme-backrooms button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
   border: 1px solid #e6df45 !important;
   background: #15170f !important;
   color: #e6df45 !important;
   border-radius: 0px !important;
   font-family: 'Courier New', Courier, monospace !important;
+  /* Subtle inset shadow so buttons read as pressed panels, not empty voids */
+  box-shadow: inset 0 1px 0 rgba(230, 223, 184, 0.08), inset 0 -2px 4px rgba(0, 0, 0, 0.5) !important;
 }
 
-body.theme-backrooms .btn:hover, 
+body.theme-backrooms .btn:hover,
 body.theme-backrooms button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
   background: #e6df45 !important;
   color: #15170f !important;
-  box-shadow: 0 0 12px rgba(230, 223, 69, 0.6) !important;
+  box-shadow: 0 0 12px rgba(230, 223, 69, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
 }
 
 body.theme-backrooms .actions-dropdown-item,
@@ -5629,8 +5846,9 @@ body.theme-terraria {
   --primary-color: #875d3e;
   --primary-hover: #a0724f;
   --primary-shadow: rgba(135, 93, 62, 0.4);
-  
-  font-family: 'Courier New', Courier, monospace !important;
+
+  /* Silkscreen: pixel-block font closer to Terraria's in-game look than plain Courier New */
+  font-family: 'Silkscreen', 'Courier New', Courier, monospace !important;
 }
 
 body.theme-terraria h1, body.theme-terraria h2, body.theme-terraria h3, body.theme-terraria .logo-text {
@@ -5642,6 +5860,9 @@ body.theme-terraria .kpi-value {
   color: #81c784 !important;
   text-shadow: 2px 2px 0px #000 !important;
   position: relative;
+  /* Silkscreen is wider per-glyph than the previous Courier New; shrink so long
+     money values (e.g. "$210,259.00") don't overflow the card. */
+  font-size: 1.5rem !important;
 }
 
 body.theme-terraria .kpi-value::before {
@@ -5665,18 +5886,40 @@ body.theme-terraria .glass-card, body.theme-terraria .modal-content, body.theme-
   box-shadow: inset 3px 3px 0px #3c2f25, inset -3px -3px 0px #1a1411, 4px 4px 0px rgba(0,0,0,0.5) !important;
 }
 
+/* Pixelated grass-top strip along the card's top edge, above the dirt-brown
+   body - a couple of jagged "grass blade" tufts via clip-path. */
+body.theme-terraria .glass-card {
+  position: relative;
+}
+body.theme-terraria .glass-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: #5c9e31;
+  clip-path: polygon(
+    0% 100%, 0% 45%, 6% 45%, 9% 0%, 12% 45%,
+    40% 45%, 43% 0%, 46% 45%,
+    75% 45%, 78% 0%, 81% 45%,
+    100% 45%, 100% 100%
+  );
+  pointer-events: none;
+}
+
 body.theme-terraria .btn, 
 body.theme-terraria button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
   border: 2px solid #5c4b3f !important;
   background: linear-gradient(to bottom, #875d3e, #5c3b24) !important;
   color: #ffffff !important;
   border-radius: 4px !important;
-  font-family: 'Courier New', Courier, monospace !important;
+  font-family: 'Silkscreen', 'Courier New', Courier, monospace !important;
   text-shadow: 1px 1px 0px #000 !important;
   box-shadow: 2px 2px 0px rgba(0,0,0,0.3) !important;
 }
 
-body.theme-terraria .btn:hover, 
+body.theme-terraria .btn:hover,
 body.theme-terraria button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
   background: linear-gradient(to bottom, #a0724f, #7c5132) !important;
   border-color: #875d3e !important;
@@ -5696,7 +5939,7 @@ body.theme-terraria button.actions-dropdown-item.purple {
   background: linear-gradient(to bottom, #875d3e, #5c3b24) !important;
   color: #ffffff !important;
   border-radius: 4px !important;
-  font-family: 'Courier New', Courier, monospace !important;
+  font-family: 'Silkscreen', 'Courier New', Courier, monospace !important;
   text-shadow: 1px 1px 0px #000 !important;
   box-shadow: 2px 2px 0px rgba(0,0,0,0.3) !important;
   text-decoration: none !important;
@@ -5769,6 +6012,25 @@ body.theme-castle::before {
   z-index: 99999 !important;
 }
 
+/* Torchlight flicker glowing at the 4 corners of the wood window frame */
+body.theme-castle::after {
+  content: '' !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  pointer-events: none !important;
+  z-index: 99999 !important;
+  background-repeat: no-repeat !important;
+  background-image:
+    radial-gradient(circle at 22px 22px, rgba(255, 176, 74, 0.55) 0%, rgba(255, 130, 30, 0.22) 35%, transparent 62%),
+    radial-gradient(circle at calc(100% - 22px) 22px, rgba(255, 176, 74, 0.55) 0%, rgba(255, 130, 30, 0.22) 35%, transparent 62%),
+    radial-gradient(circle at 22px calc(100% - 22px), rgba(255, 176, 74, 0.55) 0%, rgba(255, 130, 30, 0.22) 35%, transparent 62%),
+    radial-gradient(circle at calc(100% - 22px) calc(100% - 22px), rgba(255, 176, 74, 0.55) 0%, rgba(255, 130, 30, 0.22) 35%, transparent 62%) !important;
+  animation: castle-torch-flicker 2.6s ease-in-out infinite !important;
+}
+
 /* h1 es lo bastante grande para aguantar el stroke/sombra fuerte de Bangers.
    A tamanos de h2/h3 (titulos de seccion, nombres de tarjeta) esa misma sombra
    de 5px hacia que las letras se encimaran entre si y se viera como una mancha
@@ -5815,10 +6077,11 @@ body.theme-castle aside {
   border-radius: 20px !important;
   background: #20222a !important;
   box-shadow: 8px 8px 0 #1a1518 !important;
-  background-image: 
+  background-image:
     linear-gradient(rgba(0, 0, 0, 0.12) 1px, transparent 1px),
-    radial-gradient(circle at 10% 20%, rgba(255, 255, 255, 0.02) 0%, rgba(255, 255, 255, 0) 40%) !important;
-  background-size: 100% 20px, 100% 100% !important;
+    radial-gradient(circle at 10% 20%, rgba(255, 255, 255, 0.02) 0%, rgba(255, 255, 255, 0) 40%),
+    radial-gradient(circle, rgba(255, 255, 255, 0.035) 1px, transparent 1.6px) !important;
+  background-size: 100% 20px, 100% 100%, 9px 9px !important;
 }
 
 body.theme-castle .sidebar .nav-links a {
@@ -6180,6 +6443,56 @@ body.theme-starwars h1, body.theme-starwars h2, body.theme-starwars h3, body.the
   text-shadow: 0 0 12px rgba(0, 240, 255, 0.7) !important;
 }
 
+/* Jedi-console gold accent tier - a second color note at rest, not just cyan */
+body.theme-starwars .badge-warning {
+  background: rgba(229, 193, 88, 0.18) !important;
+  color: #e5c158 !important;
+  border: 1px solid rgba(229, 193, 88, 0.4) !important;
+}
+
+body.theme-starwars th {
+  color: #e5c158 !important;
+  border-bottom: 1px solid rgba(229, 193, 88, 0.35) !important;
+}
+
+/* Active nav item picks up the same per-position lightsaber color as the
+   button hover cycle, so the theme has an idle personality beyond hover-only. */
+body.theme-starwars .nav-link.active,
+body.theme-starwars .sidebar-item.active {
+  border-left: 3px solid #00f0ff !important;
+  background: rgba(0, 240, 255, 0.1) !important;
+  color: #00f0ff !important;
+  box-shadow: inset 0 0 12px rgba(0, 240, 255, 0.15) !important;
+}
+body.theme-starwars .nav-link.active:nth-child(5n+1),
+body.theme-starwars .sidebar-item.active:nth-child(5n+1) {
+  border-left-color: #2eff00 !important;
+  background: rgba(46, 255, 0, 0.1) !important;
+  color: #2eff00 !important;
+  box-shadow: inset 0 0 12px rgba(46, 255, 0, 0.15) !important;
+}
+body.theme-starwars .nav-link.active:nth-child(5n+2),
+body.theme-starwars .sidebar-item.active:nth-child(5n+2) {
+  border-left-color: #ff003c !important;
+  background: rgba(255, 0, 60, 0.1) !important;
+  color: #ff003c !important;
+  box-shadow: inset 0 0 12px rgba(255, 0, 60, 0.15) !important;
+}
+body.theme-starwars .nav-link.active:nth-child(5n+3),
+body.theme-starwars .sidebar-item.active:nth-child(5n+3) {
+  border-left-color: #a900ff !important;
+  background: rgba(169, 0, 255, 0.1) !important;
+  color: #a900ff !important;
+  box-shadow: inset 0 0 12px rgba(169, 0, 255, 0.15) !important;
+}
+body.theme-starwars .nav-link.active:nth-child(5n+4),
+body.theme-starwars .sidebar-item.active:nth-child(5n+4) {
+  border-left-color: #ffe600 !important;
+  background: rgba(255, 230, 0, 0.1) !important;
+  color: #ffe600 !important;
+  box-shadow: inset 0 0 12px rgba(255, 230, 0, 0.15) !important;
+}
+
 body.theme-starwars .glass-card, body.theme-starwars .modal-content, body.theme-starwars .sidebar, body.theme-starwars .plancha-sidebar, body.theme-starwars aside {
   border: 1px solid #00f0ff !important;
   background: #090c15 !important;
@@ -6382,11 +6695,11 @@ body.theme-cod3 {
   --primary-hover: #e06600;
   --primary-shadow: rgba(255, 119, 0, 0.4);
   
-  background-image: 
-    linear-gradient(45deg, rgba(255,119,0,0.02) 25%, transparent 25%),
-    linear-gradient(-45deg, rgba(255,119,0,0.02) 25%, transparent 25%),
-    linear-gradient(45deg, transparent 75%, rgba(255,119,0,0.02) 75%),
-    linear-gradient(-45deg, transparent 75%, rgba(255,119,0,0.02) 75%) !important;
+  background-image:
+    linear-gradient(45deg, rgba(255,119,0,0.06) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(255,119,0,0.06) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, rgba(255,119,0,0.06) 75%),
+    linear-gradient(-45deg, transparent 75%, rgba(255,119,0,0.06) 75%) !important;
   background-size: 30px 30px !important;
 }
 
@@ -6394,7 +6707,7 @@ body.theme-cod3::before {
   content: '';
   position: fixed;
   top: 0; left: 0; width: 100%; height: 100%;
-  background: repeating-linear-gradient(0deg, rgba(255, 119, 0, 0.01), rgba(255, 119, 0, 0.01) 1px, transparent 1px, transparent 4px) !important;
+  background: repeating-linear-gradient(0deg, rgba(255, 119, 0, 0.055), rgba(255, 119, 0, 0.055) 1px, transparent 1px, transparent 4px) !important;
   pointer-events: none;
   z-index: 999;
 }
@@ -6438,6 +6751,31 @@ body.theme-cod3 .glass-card::after, body.theme-cod3 .card::after {
   background: #ff7700;
   opacity: 0.3;
   animation: cod3-dni-sweep 3s linear infinite;
+}
+
+/* HUD target-lock corner brackets on cards */
+body.theme-cod3 .glass-card::before, body.theme-cod3 .card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-repeat: no-repeat !important;
+  background-image:
+    linear-gradient(#ff7700, #ff7700), linear-gradient(#ff7700, #ff7700),
+    linear-gradient(#ff7700, #ff7700), linear-gradient(#ff7700, #ff7700),
+    linear-gradient(#ff7700, #ff7700), linear-gradient(#ff7700, #ff7700),
+    linear-gradient(#ff7700, #ff7700), linear-gradient(#ff7700, #ff7700);
+  background-size:
+    14px 2px, 2px 14px,
+    14px 2px, 2px 14px,
+    14px 2px, 2px 14px,
+    14px 2px, 2px 14px;
+  background-position:
+    6px 6px, 6px 6px,
+    calc(100% - 20px) 6px, calc(100% - 8px) 6px,
+    6px calc(100% - 8px), 6px calc(100% - 20px),
+    calc(100% - 20px) calc(100% - 8px), calc(100% - 8px) calc(100% - 20px);
+  opacity: 0.85;
 }
 
 body.theme-cod3 .btn, 
@@ -6602,6 +6940,34 @@ body.theme-subnautica .glass-card, body.theme-subnautica .modal-content, body.th
   background: rgba(6, 19, 41, 0.85) !important;
   box-shadow: 0 0 20px rgba(0, 210, 255, 0.15) !important;
 }
+
+/* Faint hexagonal PDA/scanner-readout grid behind cards */
+body.theme-subnautica .glass-card {
+  position: relative;
+}
+body.theme-subnautica .glass-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  background-image:
+    linear-gradient(30deg, rgba(0, 210, 255, 0.06) 12%, transparent 12.5%, transparent 87%, rgba(0, 210, 255, 0.06) 87.5%, rgba(0, 210, 255, 0.06)),
+    linear-gradient(150deg, rgba(0, 210, 255, 0.06) 12%, transparent 12.5%, transparent 87%, rgba(0, 210, 255, 0.06) 87.5%, rgba(0, 210, 255, 0.06)),
+    linear-gradient(30deg, rgba(0, 210, 255, 0.06) 12%, transparent 12.5%, transparent 87%, rgba(0, 210, 255, 0.06) 87.5%, rgba(0, 210, 255, 0.06)),
+    linear-gradient(150deg, rgba(0, 210, 255, 0.06) 12%, transparent 12.5%, transparent 87%, rgba(0, 210, 255, 0.06) 87.5%, rgba(0, 210, 255, 0.06)),
+    linear-gradient(60deg, rgba(0, 210, 255, 0.08) 25%, transparent 25.5%, transparent 75%, rgba(0, 210, 255, 0.08) 75%, rgba(0, 210, 255, 0.08)),
+    linear-gradient(60deg, rgba(0, 210, 255, 0.08) 25%, transparent 25.5%, transparent 75%, rgba(0, 210, 255, 0.08) 75%, rgba(0, 210, 255, 0.08));
+  background-size: 20px 35px;
+  background-position: 0 0, 0 0, 10px 18px, 10px 18px, 0 0, 10px 18px;
+}
+
+/* Bioluminescent teal glow on row hover instead of the generic theme tint */
+body.theme-subnautica .data-table tr:hover {
+  background: rgba(0, 210, 255, 0.05) !important;
+  box-shadow: inset 0 0 12px rgba(0, 255, 200, 0.18) !important;
+}
+
 @keyframes sonar-pulse {
   0% { box-shadow: 0 0 0 0 rgba(0, 210, 255, 0.4); }
   70% { box-shadow: 0 0 0 10px rgba(0, 210, 255, 0); }
@@ -6732,6 +7098,8 @@ body.theme-cuphead .glass-card, body.theme-cuphead .modal-content, body.theme-cu
   border: 2px solid #28221d !important;
   border-radius: 4px !important;
   background: #faf1db !important;
+  background-image: radial-gradient(circle, rgba(40, 34, 29, 0.12) 1px, transparent 1.3px) !important;
+  background-size: 5px 5px !important;
   box-shadow: 5px 5px 0 #28221d !important;
   animation: frame-wobble 0.6s step-end infinite;
 }
@@ -6788,6 +7156,33 @@ body.theme-cuphead button.actions-dropdown-item.purple:hover {
   animation: cuphead-squish 0.6s ease-in-out infinite alternate !important;
 }
 
+/* Cuphead-styled status badges: red/cream/gold ink-and-paper palette instead of the shared defaults */
+body.theme-cuphead .badge-success {
+  background: #df9c2c !important;
+  color: #28221d !important;
+  border: 1px solid #28221d !important;
+}
+body.theme-cuphead .badge-warning {
+  background: #e8b23f !important;
+  color: #28221d !important;
+  border: 1px solid #28221d !important;
+}
+body.theme-cuphead .badge-info {
+  background: #faf1db !important;
+  color: #c9362b !important;
+  border: 1px solid #28221d !important;
+}
+body.theme-cuphead .badge-partial {
+  background: rgba(201, 54, 43, 0.15) !important;
+  color: #c9362b !important;
+  border: 1px solid #28221d !important;
+}
+body.theme-cuphead .badge-danger {
+  background: #c9362b !important;
+  color: #faf1db !important;
+  border: 1px solid #28221d !important;
+}
+
 /* 8. Doki Doki Literature Club Theme */
 body.theme-ddlc {
   --bg-dark: #fff2f6;
@@ -6834,6 +7229,26 @@ body.theme-ddlc h1, body.theme-ddlc h2, body.theme-ddlc h3, body.theme-ddlc .log
   font-family: 'Comic Sans MS', sans-serif !important;
   color: #ff4d79 !important;
   text-shadow: 1px 1px 0px #ffffff, 2px 2px 0px #ffb3c6 !important;
+}
+
+/* Rare ambient "corruption" glitch: mostly a calm idle state, the RGB-split
+   flicker only occupies a sliver of the loop (~98%-100% of 18s) so it reads
+   as an infrequent Monika-style hiccup instead of a constant effect. */
+@keyframes ddlc-ambient-glitch {
+  0%, 97% { transform: translate(0, 0); text-shadow: 1px 1px 0px #ffffff, 2px 2px 0px #ffb3c6; filter: none; }
+  97.6% { transform: translate(-2px, 1px) skewX(3deg); text-shadow: 2px -1px 0 #00ffff, -2px 1px 0 #ff00ff; filter: hue-rotate(25deg); }
+  98.2% { transform: translate(2px, -1px) skewX(-3deg); text-shadow: -2px 1px 0 #00ffff, 2px -1px 0 #ff00ff; filter: hue-rotate(-25deg); }
+  98.8% { transform: translate(-1px, 2px) skewX(2deg); text-shadow: 2px 1px 0 #00ffff, -2px -1px 0 #ff00ff; filter: none; }
+  99.3%, 100% { transform: translate(0, 0); text-shadow: 1px 1px 0px #ffffff, 2px 2px 0px #ffb3c6; filter: none; }
+}
+body.theme-ddlc .logo-text,
+body.theme-ddlc .gradient-text {
+  animation: ddlc-ambient-glitch 18s ease-in-out infinite;
+}
+body.theme-ddlc h1,
+body.theme-ddlc h2 {
+  animation: ddlc-ambient-glitch 18s ease-in-out infinite;
+  animation-delay: 5s;
 }
 body.theme-ddlc .glass-card, body.theme-ddlc .modal-content, body.theme-ddlc .sidebar, body.theme-ddlc .plancha-sidebar, body.theme-ddlc aside {
   border-radius: 20px !important;
@@ -7058,6 +7473,43 @@ body.theme-undertale button.actions-dropdown-item:hover::before {
   animation: undertale-soul-pulse 0.6s infinite alternate ease-in-out !important;
 }
 
+/* HP-bar palette status badges: yellow (active HP), red (danger/low HP), white/black (neutral) */
+body.theme-undertale .badge-success {
+  background: #ffff00 !important;
+  color: #000000 !important;
+  border: 2px solid #000000 !important;
+  border-radius: 0px !important;
+  font-family: 'Courier New', Courier, monospace !important;
+  text-transform: uppercase !important;
+}
+body.theme-undertale .badge-warning {
+  background: #ff0000 !important;
+  color: #ffffff !important;
+  border: 2px solid #ffffff !important;
+  border-radius: 0px !important;
+  font-family: 'Courier New', Courier, monospace !important;
+  text-transform: uppercase !important;
+}
+body.theme-undertale .badge-info {
+  background: #000000 !important;
+  color: #ffffff !important;
+  border: 2px solid #ffffff !important;
+  border-radius: 0px !important;
+  font-family: 'Courier New', Courier, monospace !important;
+  text-transform: uppercase !important;
+}
+
+/* Brief white-invert "damage flash" on danger rows/badges, like taking a hit */
+@keyframes undertale-hit-flash {
+  0% { background-color: transparent; filter: invert(0); }
+  25% { background-color: #ffffff; filter: invert(1); }
+  100% { background-color: transparent; filter: invert(0); }
+}
+body.theme-undertale .row-danger:hover,
+body.theme-undertale .badge-danger:hover {
+  animation: undertale-hit-flash 0.4s ease-out !important;
+}
+
 /* 10. Lobotomy Corporation Theme (Golden Warning Control Room style) */
 body.theme-lobotomy {
   --bg-dark: #06080b; /* Deep void black */
@@ -7110,6 +7562,24 @@ body.theme-lobotomy::before {
   z-index: 9999;
 }
 
+/* CRT / monitor-room scanline overlay, low opacity so it reads as an old
+   control-room screen without hurting legibility */
+body.theme-lobotomy::after {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.22) 0px,
+    rgba(0, 0, 0, 0.22) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  opacity: 0.35;
+  pointer-events: none;
+  z-index: 9998;
+}
+
 body.theme-lobotomy h1, body.theme-lobotomy h2, body.theme-lobotomy h3, body.theme-lobotomy .logo-text, body.theme-lobotomy .kpi-value {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
   color: #ca8a04 !important;
@@ -7146,10 +7616,15 @@ body.theme-lobotomy .badge {
   font-weight: bold !important;
 }
 
-/* Meltdown / Breach Flashing warning animation */
+/* Meltdown / Breach Flashing warning animation. Uneven step sizes/dips so the
+   flicker feels like an unstable containment alarm rather than a clean pulse. */
 @keyframes lobotomy-breach {
   0% { border-color: #ff3333 !important; box-shadow: 0 0 5px #ff3333 !important; background: rgba(255, 51, 51, 0.05) !important; }
-  50% { border-color: #ff3333 !important; box-shadow: 0 0 25px #ff3333, inset 0 0 10px rgba(255, 51, 51, 0.2) !important; background: rgba(255, 51, 51, 0.15) !important; }
+  18% { border-color: #ff3333 !important; box-shadow: 0 0 22px #ff3333, inset 0 0 8px rgba(255, 51, 51, 0.18) !important; background: rgba(255, 51, 51, 0.13) !important; }
+  34% { border-color: #ff3333 !important; box-shadow: 0 0 8px #ff3333 !important; background: rgba(255, 51, 51, 0.07) !important; }
+  55% { border-color: #ff3333 !important; box-shadow: 0 0 28px #ff3333, inset 0 0 12px rgba(255, 51, 51, 0.22) !important; background: rgba(255, 51, 51, 0.16) !important; }
+  70% { border-color: #ff3333 !important; box-shadow: 0 0 4px #ff3333 !important; background: rgba(255, 51, 51, 0.04) !important; }
+  85% { border-color: #ff3333 !important; box-shadow: 0 0 18px #ff3333, inset 0 0 6px rgba(255, 51, 51, 0.15) !important; background: rgba(255, 51, 51, 0.11) !important; }
   100% { border-color: #ff3333 !important; box-shadow: 0 0 5px #ff3333 !important; background: rgba(255, 51, 51, 0.05) !important; }
 }
 
@@ -7387,6 +7862,8 @@ body.theme-lobotomy .lobotomy-status-breach {
 }
 @keyframes lobotomy-alert-flash {
   0% { box-shadow: 0 0 2px rgba(239, 68, 68, 0.3); }
+  40% { box-shadow: 0 0 6px rgba(239, 68, 68, 0.5); background: rgba(239, 68, 68, 0.1) !important; }
+  65% { box-shadow: 0 0 3px rgba(239, 68, 68, 0.35); }
   100% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.8); background: rgba(239, 68, 68, 0.18) !important; }
 }
 body.theme-lobotomy .lobotomy-progress-container {
@@ -7422,7 +7899,9 @@ body.theme-papers {
   --bg-card: #2f3230;
   --bg-input: #1d1e1d;
   --text-primary: #c5c9c6;
-  --text-secondary: #828684;
+  /* #828684 gave ~4.1:1 contrast on the #2f3230 card background, a bit thin
+     for secondary copy. Lightened ~18% while keeping the drab olive-grey mood. */
+  --text-secondary: #9aa19e;
   --border-color: #434744;
   --glass-border: 2px solid #434744;
   --glass-shadow: 4px 4px 0px rgba(0,0,0,0.4);
@@ -7514,8 +7993,8 @@ body.theme-papers .btn-danger:hover::after {
   position: absolute;
   top: 50%; left: 50%;
   transform: translate(-50%, -50%) rotate(10deg);
-  color: rgba(230, 96, 96, 0.3) !important;
-  border: 2px dashed rgba(230, 96, 96, 0.3) !important;
+  color: rgba(139, 26, 26, 0.65) !important;
+  border: 2px dashed rgba(139, 26, 26, 0.65) !important;
   font-size: 11px;
   font-weight: bold;
   padding: 1px 4px;
@@ -7591,17 +8070,54 @@ body.theme-plague {
   --primary-color: #ff6200;
   --primary-hover: #e65500;
   --primary-shadow: rgba(255, 98, 0, 0.4);
-  
+
   background-color: #070608 !important;
-  background-image: radial-gradient(circle at 50% 50%, #1a0808 0%, #070608 100%) !important;
+  /* World map of "infection" spread: several fixed soft red blobs at varying
+     opacity/size, some overlapping, sitting under the base vignette gradient.
+     This is the theme's primary visual identity now (see ::after for the
+     2-3 that slowly pulse to suggest active spread). */
+  background-image:
+    radial-gradient(circle at 18% 22%, rgba(230, 0, 0, 0.20) 0px, rgba(230, 0, 0, 0) 160px),
+    radial-gradient(circle at 82% 15%, rgba(230, 0, 0, 0.15) 0px, rgba(230, 0, 0, 0) 130px),
+    radial-gradient(circle at 68% 58%, rgba(230, 0, 0, 0.17) 0px, rgba(230, 0, 0, 0) 150px),
+    radial-gradient(circle at 12% 72%, rgba(230, 0, 0, 0.12) 0px, rgba(230, 0, 0, 0) 120px),
+    radial-gradient(circle at 92% 78%, rgba(230, 0, 0, 0.11) 0px, rgba(230, 0, 0, 0) 110px),
+    radial-gradient(circle at 42% 88%, rgba(255, 98, 0, 0.09) 0px, rgba(255, 98, 0, 0) 130px),
+    radial-gradient(circle at 50% 50%, #1a0808 0%, #070608 100%) !important;
+  background-attachment: fixed !important;
 }
 
-/* Red biohazard radar vertical scanner sweep line */
+/* 2-3 of the infection blobs above slowly grow/pulse (staggered within one
+   loop) to suggest the outbreak is actively spreading, not a static map. */
+body.theme-plague::after {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background-repeat: no-repeat;
+  background-image:
+    radial-gradient(circle at 18% 22%, rgba(255, 30, 30, 0.30) 0%, rgba(255, 30, 30, 0) 100%),
+    radial-gradient(circle at 68% 58%, rgba(255, 70, 0, 0.26) 0%, rgba(255, 70, 0, 0) 100%),
+    radial-gradient(circle at 82% 15%, rgba(255, 30, 30, 0.24) 0%, rgba(255, 30, 30, 0) 100%);
+  background-position: 18% 22%, 68% 58%, 82% 15%;
+  background-size: 140px 140px, 120px 120px, 100px 100px;
+  pointer-events: none;
+  z-index: -1;
+  animation: plague-blob-pulse 11s ease-in-out infinite;
+}
+@keyframes plague-blob-pulse {
+  0%, 100% { background-size: 140px 140px, 120px 120px, 100px 100px; }
+  30% { background-size: 190px 190px, 122px 122px, 102px 102px; }
+  55% { background-size: 145px 145px, 168px 168px, 104px 104px; }
+  80% { background-size: 148px 148px, 128px 128px, 152px 152px; }
+}
+
+/* Red biohazard radar vertical scanner sweep line — kept, but dialed back so
+   it reads as a secondary effect under the infection-blob background */
 body.theme-plague::before {
   content: '';
   position: fixed;
   top: 0; left: 0; width: 100%; height: 100%;
-  background: linear-gradient(to bottom, rgba(230, 0, 0, 0) 95%, rgba(230, 0, 0, 0.12) 98%, rgba(230, 0, 0, 0) 100%);
+  background: linear-gradient(to bottom, rgba(230, 0, 0, 0) 95%, rgba(230, 0, 0, 0.08) 98%, rgba(230, 0, 0, 0) 100%);
   pointer-events: none;
   z-index: 9999;
   animation: plague-laser-sweep 8s linear infinite;
@@ -7683,6 +8199,20 @@ body.theme-plague button.actions-dropdown-item.purple:hover {
   color: #ffffff !important;
   background: #e60000 !important;
   animation: plague-pulse 1.5s infinite;
+}
+
+/* Evolution-point red/orange badges instead of the shared default colors */
+body.theme-plague .badge-warning {
+  background: rgba(255, 98, 0, 0.22) !important;
+  color: #ff8c3d !important;
+  border: 1px solid rgba(255, 98, 0, 0.5) !important;
+  text-shadow: 0 0 6px rgba(255, 98, 0, 0.4) !important;
+}
+body.theme-plague .badge-danger {
+  background: rgba(230, 0, 0, 0.25) !important;
+  color: #ff4d4d !important;
+  border: 1px solid rgba(230, 0, 0, 0.55) !important;
+  text-shadow: 0 0 6px rgba(230, 0, 0, 0.5) !important;
 }
 
 /* 13. Plants vs. Zombies Theme */
@@ -7874,6 +8404,39 @@ body.theme-pvz button.actions-dropdown-item.purple:hover {
   border-color: #ffc107 !important;
   color: #ffffff !important;
   transform: scale(1.03) !important;
+}
+
+/* Green/yellow lawn palette for status badges instead of the shared defaults */
+body.theme-pvz .badge-success {
+  background: rgba(76, 175, 80, 0.25) !important;
+  color: #81c784 !important;
+  border: 1px solid #4caf50 !important;
+}
+body.theme-pvz .badge-warning {
+  background: rgba(255, 193, 7, 0.25) !important;
+  color: #ffc107 !important;
+  border: 1px solid #ffc107 !important;
+}
+body.theme-pvz .badge-info {
+  background: rgba(139, 195, 74, 0.2) !important;
+  color: #c5e1a5 !important;
+  border: 1px solid #8bc34a !important;
+}
+
+/* Small peashooter-inspired accent on primary action buttons */
+body.theme-pvz .btn-primary {
+  position: relative;
+}
+body.theme-pvz .btn-primary::before {
+  content: '';
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 32%, #a5d66a, #4c9a2a 65%, #2e6e1a 100%);
+  border: 1.5px solid #2e4d30;
+  box-shadow: 0 0 3px rgba(0, 0, 0, 0.5);
+  flex-shrink: 0;
 }
 
 /* ==========================================================================
@@ -8204,6 +8767,10 @@ body.theme-pvz .launcher-app-name {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
+@keyframes teto-bread-bob {
+  0%, 100% { transform: translateY(0) rotate(-4deg); }
+  50% { transform: translateY(-6px) rotate(4deg); }
+}
 
 /* 3. Limbus Company Animations */
 @keyframes limbus-gear-rotate {
@@ -8238,13 +8805,25 @@ body.theme-pvz .launcher-app-name {
 }
 @keyframes gd-beat-pulse {
   0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.008); }
+  50% { transform: scale(1.02); }
 }
 
 /* 6. Fallout Terminal Flicker */
 @keyframes fallout-terminal-flicker {
-  0% { opacity: 0.98; }
-  100% { opacity: 1; }
+  0%, 100% { opacity: 1; }
+  8% { opacity: 0.93; }
+  9% { opacity: 1; }
+  32% { opacity: 0.85; }
+  33% { opacity: 1; }
+  62% { opacity: 0.9; }
+  64% { opacity: 1; }
+  78% { opacity: 0.88; }
+  80% { opacity: 1; }
+}
+
+@keyframes fallout-scanline-scroll {
+  0% { background-position: 0 0; }
+  100% { background-position: 0 -40px; }
 }
 
 /* 7. Team Fortress 2 Crit Pop */
@@ -8270,6 +8849,30 @@ body.theme-pvz .launcher-app-name {
   100% { top: 100%; opacity: 0; }
 }
 
+/* Chromatic-aberration flash on .glass-card hover: brief RGB-split double border,
+   same glitch philosophy as cyberpunk-glitch-skew but expressed via box-shadow
+   offsets instead of skew (so it doesn't fight the card's overflow:hidden). */
+@keyframes cyberpunk-card-rgb-split {
+  0% {
+    box-shadow: 0 0 15px rgba(0, 240, 255, 0.3), inset 0 0 10px rgba(255, 0, 85, 0.2);
+  }
+  20% {
+    box-shadow: 0 0 15px rgba(0, 240, 255, 0.3), inset 0 0 10px rgba(255, 0, 85, 0.2),
+      -3px 0 0 0 rgba(255, 0, 85, 0.85), 3px 0 0 0 rgba(0, 240, 255, 0.85);
+  }
+  40% {
+    box-shadow: 0 0 15px rgba(0, 240, 255, 0.3), inset 0 0 10px rgba(255, 0, 85, 0.2),
+      3px 0 0 0 rgba(255, 0, 85, 0.85), -3px 0 0 0 rgba(0, 240, 255, 0.85);
+  }
+  60% {
+    box-shadow: 0 0 15px rgba(0, 240, 255, 0.3), inset 0 0 10px rgba(255, 0, 85, 0.2),
+      -1px 0 0 0 rgba(255, 0, 85, 0.6), 1px 0 0 0 rgba(0, 240, 255, 0.6);
+  }
+  100% {
+    box-shadow: 0 0 15px rgba(0, 240, 255, 0.3), inset 0 0 10px rgba(255, 0, 85, 0.2);
+  }
+}
+
 /* 9. Escape the Backrooms Fluorescent Flicker */
 @keyframes backrooms-flicker {
   0%, 100% { opacity: 1; }
@@ -8279,6 +8882,16 @@ body.theme-pvz .launcher-app-name {
   85% { opacity: 1; }
   86% { opacity: 0.7; }
   87% { opacity: 1; }
+}
+
+/* Castle Crashers: warm torchlight flicker at the wood-frame corners */
+@keyframes castle-torch-flicker {
+  0%, 100% { opacity: 0.85; transform: scale(1); }
+  20% { opacity: 0.6; transform: scale(0.97); }
+  35% { opacity: 1; transform: scale(1.03); }
+  50% { opacity: 0.7; transform: scale(0.98); }
+  65% { opacity: 0.95; transform: scale(1.02); }
+  80% { opacity: 0.55; transform: scale(0.99); }
 }
 
 /* 10. Terraria Animations */
@@ -8572,6 +9185,18 @@ body.theme-isaac .glass-card, body.theme-isaac .card, body.theme-isaac .modal-co
   background: #3a221d !important;
   box-shadow: 6px 6px 0px #000000 !important;
 }
+
+/* Grimy basement floor-tile grid behind the main content area, low opacity
+   so it reads as texture rather than a distracting pattern */
+body.theme-isaac .main-content {
+  background-image:
+    linear-gradient(rgba(0, 0, 0, 0.14) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.14) 1px, transparent 1px),
+    linear-gradient(rgba(183, 28, 28, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(183, 28, 28, 0.05) 1px, transparent 1px) !important;
+  background-size: 32px 32px, 32px 32px, 32px 32px, 32px 32px !important;
+  background-position: 0 0, 0 0, 16px 16px, 16px 16px !important;
+}
 body.theme-isaac .btn, body.theme-isaac button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
   border-radius: 4px !important;
   border: 2px solid #000000 !important;
@@ -8704,7 +9329,7 @@ body.theme-halo {
   background-attachment: fixed !important;
 }
 body.theme-halo h1, body.theme-halo h2, body.theme-halo h3, body.theme-halo h4, body.theme-halo h5, body.theme-halo h6, body.theme-halo .logo-text, body.theme-halo .kpi-value {
-  font-family: 'Trebuchet MS', sans-serif !important;
+  font-family: 'Orbitron', 'Trebuchet MS', sans-serif !important;
   font-weight: 900 !important;
   letter-spacing: 1px !important;
   text-shadow: 0 0 8px rgba(0, 229, 255, 0.6) !important;
@@ -8825,6 +9450,29 @@ body.theme-halo button.actions-dropdown-item.purple:hover {
   color: #ff3333;
 }
 
+/* Radar sweep ping - fixed bottom-right HUD flourish, CSS-only conic-gradient */
+body.theme-halo::after {
+  content: '';
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 229, 255, 0.35);
+  background:
+    repeating-radial-gradient(circle, rgba(0, 229, 255, 0.1) 0px, rgba(0, 229, 255, 0.1) 1px, transparent 1px, transparent 16px),
+    conic-gradient(from 0deg, rgba(0, 229, 255, 0.55), rgba(0, 229, 255, 0) 22%, rgba(0, 229, 255, 0) 100%);
+  opacity: 0.55;
+  pointer-events: none;
+  z-index: 30;
+  animation: halo-radar-sweep 4s linear infinite;
+}
+
+@keyframes halo-radar-sweep {
+  to { transform: rotate(360deg); }
+}
+
 /* 3. BLUE ARCHIVE 🎓 */
 body.theme-bluearchive {
   --bg-dark: #f0f7ff;
@@ -8870,8 +9518,27 @@ body.theme-bluearchive h1, body.theme-bluearchive h2, body.theme-bluearchive h3,
 body.theme-bluearchive .glass-card, body.theme-bluearchive .card, body.theme-bluearchive .modal-content, body.theme-bluearchive .sidebar, body.theme-bluearchive .plancha-sidebar, body.theme-bluearchive aside {
   border-radius: 12px !important;
   border: 1px solid #cbdcf0 !important;
+  border-top: 5px solid #4dabff !important;
   background: #ffffff !important;
-  box-shadow: 0 8px 24px rgba(0, 162, 255, 0.1) !important;
+  box-shadow: 0 10px 26px rgba(0, 162, 255, 0.16), 0 2px 6px rgba(30, 58, 95, 0.06) !important;
+}
+/* "Class card" pin/sticker - pastel circle badge on the top-right corner,
+   evoking Blue Archive's school notice-board UI. */
+body.theme-bluearchive .glass-card, body.theme-bluearchive .card {
+  position: relative !important;
+}
+body.theme-bluearchive .glass-card::after, body.theme-bluearchive .card::after {
+  content: '';
+  position: absolute;
+  top: -8px;
+  right: 18px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ffffff 0%, #ffd9ec 45%, #ff9ecf 100%);
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 5px rgba(30, 58, 95, 0.2);
+  pointer-events: none;
 }
 body.theme-bluearchive .btn, body.theme-bluearchive button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
   border-radius: 20px !important;
@@ -9199,7 +9866,7 @@ body.theme-dbd {
   background-attachment: fixed !important;
 }
 body.theme-dbd h1, body.theme-dbd h2, body.theme-dbd h3, body.theme-dbd h4, body.theme-dbd h5, body.theme-dbd h6, body.theme-dbd .logo-text, body.theme-dbd .kpi-value {
-  font-family: 'Georgia', serif !important;
+  font-family: 'Bebas Neue', 'Georgia', serif !important;
   font-weight: bold !important;
   letter-spacing: 0.5px !important;
   color: #eaeaea !important;
@@ -9210,6 +9877,10 @@ body.theme-dbd .glass-card, body.theme-dbd .card, body.theme-dbd .modal-content,
   border: 1px solid rgba(255, 51, 0, 0.3) !important;
   background: #151515 !important;
   box-shadow: 0 10px 25px rgba(0,0,0,0.8) !important;
+}
+/* Jagged/torn-edge look on cards - subtle irregular corner cuts, grungy horror-survival mood */
+body.theme-dbd .glass-card, body.theme-dbd .card {
+  clip-path: polygon(0% 1.5%, 1.5% 0%, 98.5% 0%, 100% 1.5%, 100% 98.5%, 98.5% 100%, 1.5% 100%, 0% 98.5%) !important;
 }
 body.theme-dbd .btn, body.theme-dbd button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
   border-radius: 2px !important;
@@ -9324,39 +9995,53 @@ body.theme-dbd button.actions-dropdown-item.purple:hover {
 .dbd-outcome-alert.GOOD { color: #00ff66; }
 .dbd-outcome-alert.FAILED { color: #ff3333; }
 
+/* Grungy grain/vignette overlay - darkens toward the edges + faint noise texture */
+body.theme-dbd::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9998;
+  background:
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.015) 0px, rgba(255, 255, 255, 0.015) 1px, transparent 1px, transparent 3px),
+    radial-gradient(ellipse at center, transparent 45%, rgba(0, 0, 0, 0.55) 100%);
+}
+
 /* 6. INCREDIBOX 🎵 */
 body.theme-incredibox {
-  --bg-dark: #121212;
-  --bg-card: #202020;
-  --bg-input: #282828;
-  --text-primary: #e0e0e0;
-  --text-secondary: #888888;
-  --border-color: #333333;
-  --glass-border: 1px solid #444444;
+  --bg-dark: #1a1410;
+  --bg-card: #241c14;
+  --bg-input: #2c2116;
+  --text-primary: #f2e8da;
+  --text-secondary: #e0a458;
+  --border-color: #4a3620;
+  --glass-border: 1px solid #5a4126;
   --glass-shadow: 0 8px 30px rgba(0,0,0,0.85);
-  --bg-hover: rgba(255, 255, 255, 0.05);
-  --bg-th: rgba(255, 255, 255, 0.08);
-  --header-bg: rgba(32, 32, 32, 0.95);
-  --row-normal-bg: rgba(255, 255, 255, 0.02);
-  --row-normal-hover: rgba(255, 255, 255, 0.06);
-  --row-warning-bg: rgba(255, 170, 0, 0.02);
-  --row-warning-hover: rgba(255, 170, 0, 0.06);
-  --row-danger-bg: rgba(255, 85, 85, 0.04);
-  --row-danger-hover: rgba(255, 85, 85, 0.08);
-  --badge-bono-bg: rgba(255, 255, 255, 0.1);
-  --badge-bono-text: #fff;
-  --badge-desc-bg: rgba(255, 85, 85, 0.15);
+  --bg-hover: rgba(255, 183, 3, 0.08);
+  --bg-th: rgba(255, 183, 3, 0.12);
+  --header-bg: rgba(36, 28, 20, 0.95);
+  --row-normal-bg: rgba(255, 183, 3, 0.03);
+  --row-normal-hover: rgba(255, 183, 3, 0.08);
+  --row-warning-bg: rgba(255, 170, 0, 0.04);
+  --row-warning-hover: rgba(255, 170, 0, 0.1);
+  --row-danger-bg: rgba(255, 85, 85, 0.05);
+  --row-danger-hover: rgba(255, 85, 85, 0.1);
+  --badge-bono-bg: rgba(255, 183, 3, 0.18);
+  --badge-bono-text: #ffb703;
+  --badge-desc-bg: rgba(255, 85, 85, 0.18);
   --badge-desc-text: #ff5555;
 
-  --primary-color: #ffffff;
-  --primary-hover: #cccccc;
-  --primary-shadow: rgba(255, 255, 255, 0.2);
+  --primary-color: #ffb703;
+  --primary-hover: #fb8500;
+  --primary-shadow: rgba(255, 183, 3, 0.4);
   --danger-color: #ff5555;
   --danger-hover: #cc4444;
-  --success-color: #ffffff;
+  --success-color: #ffb703;
 
-  background-image: 
-    linear-gradient(to bottom, #161616, #0c0c0c) !important;
+  background-image:
+    radial-gradient(circle at 15% 0%, rgba(255, 183, 3, 0.12) 0%, transparent 55%),
+    radial-gradient(circle at 100% 100%, rgba(251, 133, 0, 0.1) 0%, transparent 55%),
+    linear-gradient(to bottom, #201a10, #12100a) !important;
   background-attachment: fixed !important;
 }
 body.theme-incredibox h1, body.theme-incredibox h2, body.theme-incredibox h3, body.theme-incredibox h4, body.theme-incredibox h5, body.theme-incredibox h6, body.theme-incredibox .logo-text, body.theme-incredibox .kpi-value {
@@ -9364,33 +10049,33 @@ body.theme-incredibox h1, body.theme-incredibox h2, body.theme-incredibox h3, bo
   font-weight: 800 !important;
   text-transform: uppercase !important;
   letter-spacing: 2px !important;
-  color: #ffffff !important;
-  text-shadow: none !important;
+  color: #ffb703 !important;
+  text-shadow: 0 0 10px rgba(255, 183, 3, 0.3) !important;
 }
 body.theme-incredibox .glass-card, body.theme-incredibox .card, body.theme-incredibox .modal-content, body.theme-incredibox .sidebar, body.theme-incredibox .plancha-sidebar, body.theme-incredibox aside {
-  border-radius: 4px !important;
-  border: 1px solid #333333 !important;
-  background: #202020 !important;
+  border-radius: 10px !important;
+  border: 1px solid #4a3620 !important;
+  background: #241c14 !important;
   box-shadow: 0 8px 24px rgba(0,0,0,0.8) !important;
 }
 body.theme-incredibox .btn, body.theme-incredibox button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
-  border-radius: 2px !important;
-  border: 1px solid #888888 !important;
-  background: #282828 !important;
-  color: #ffffff !important;
+  border-radius: 24px !important;
+  border: 1px solid #fb8500 !important;
+  background: #2c2116 !important;
+  color: #ffb703 !important;
   font-family: 'Trebuchet MS', sans-serif !important;
   font-weight: bold !important;
   transition: all 0.2s ease !important;
 }
 body.theme-incredibox .btn:hover, body.theme-incredibox button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn):hover {
-  background: #ffffff !important;
-  color: #121212 !important;
-  border-color: #ffffff !important;
+  background: #ffb703 !important;
+  color: #241c14 !important;
+  border-color: #ffb703 !important;
 }
 body.theme-incredibox .nav-link.active {
-  background: rgba(255, 255, 255, 0.08) !important;
-  color: #ffffff !important;
-  border-left: 4px solid #ffffff !important;
+  background: rgba(255, 183, 3, 0.12) !important;
+  color: #ffb703 !important;
+  border-left: 4px solid #ffb703 !important;
   font-weight: bold !important;
 }
 body.theme-incredibox .actions-dropdown-item,
@@ -9402,10 +10087,10 @@ body.theme-incredibox button.actions-dropdown-item.pink,
 body.theme-incredibox .actions-dropdown-item.purple,
 body.theme-incredibox a.actions-dropdown-item.purple,
 body.theme-incredibox button.actions-dropdown-item.purple {
-  border-radius: 2px !important;
-  border: 1px solid #888888 !important;
-  background: #282828 !important;
-  color: #ffffff !important;
+  border-radius: 24px !important;
+  border: 1px solid #fb8500 !important;
+  background: #2c2116 !important;
+  color: #ffb703 !important;
   font-family: 'Trebuchet MS', sans-serif !important;
   font-weight: bold !important;
 }
@@ -9418,8 +10103,8 @@ body.theme-incredibox button.actions-dropdown-item.pink:hover,
 body.theme-incredibox .actions-dropdown-item.purple:hover,
 body.theme-incredibox a.actions-dropdown-item.purple:hover,
 body.theme-incredibox button.actions-dropdown-item.purple:hover {
-  background: #ffffff !important;
-  color: #121212 !important;
+  background: #ffb703 !important;
+  color: #241c14 !important;
 }
 /* Incredibox Widget styles */
 .incredibox-container {
@@ -9444,7 +10129,7 @@ body.theme-incredibox button.actions-dropdown-item.purple:hover {
 .ib-bar {
   width: 4px;
   height: 4px;
-  background: #ffffff;
+  background: #ffb703;
 }
 @keyframes incredibox-bounce {
   0%, 100% { height: 4px; }
@@ -9459,6 +10144,40 @@ body.theme-incredibox button.actions-dropdown-item.purple:hover {
 .ib-bar-4 { animation-delay: 0.15s; }
 .ib-bar-5 { animation-delay: 0.3s; }
 .ib-bar-6 { animation-delay: 0.2s; }
+
+/* Continuous ambient equalizer bars in the bottom-left corner, so Incredibox's
+   beatbox/character-mixer identity reads passively even away from the header
+   widget - reuses the incredibox-bounce keyframe philosophy. */
+body.theme-incredibox::before {
+  content: '';
+  position: fixed;
+  bottom: 22px;
+  left: 22px;
+  width: 5px;
+  height: 8px;
+  background: #ffb703;
+  box-shadow: 9px 0 0 0 #fb8500;
+  border-radius: 2px 2px 0 0;
+  opacity: 0.5;
+  pointer-events: none;
+  z-index: 30;
+  animation: incredibox-bounce 1s ease-in-out infinite;
+}
+body.theme-incredibox::after {
+  content: '';
+  position: fixed;
+  bottom: 22px;
+  left: 40px;
+  width: 5px;
+  height: 6px;
+  background: #ffd166;
+  border-radius: 2px 2px 0 0;
+  opacity: 0.5;
+  pointer-events: none;
+  z-index: 30;
+  animation: incredibox-bounce 0.75s ease-in-out infinite;
+  animation-delay: 0.3s;
+}
 
 /* 7. DARKEST DUNGEON 💀 */
 body.theme-darkest {
@@ -9510,6 +10229,30 @@ body.theme-darkest .glass-card, body.theme-darkest .card, body.theme-darkest .mo
   border: 2px solid #5a4b3b !important;
   background: #181615 !important;
   box-shadow: 0 10px 25px rgba(0,0,0,0.85), inset 0 0 12px rgba(205,162,80,0.02) !important;
+}
+/* Small ornate corner-flourish on cards, evoking the game's engraved scrollwork */
+body.theme-darkest .glass-card, body.theme-darkest .card {
+  position: relative !important;
+}
+body.theme-darkest .glass-card::before, body.theme-darkest .card::before {
+  content: '✦';
+  position: absolute;
+  top: 4px;
+  left: 6px;
+  font-size: 0.75rem;
+  color: #cda250;
+  opacity: 0.4;
+  pointer-events: none;
+}
+body.theme-darkest .glass-card::after, body.theme-darkest .card::after {
+  content: '✦';
+  position: absolute;
+  bottom: 4px;
+  right: 6px;
+  font-size: 0.75rem;
+  color: #cda250;
+  opacity: 0.4;
+  pointer-events: none;
 }
 body.theme-darkest .btn, body.theme-darkest button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
   border-radius: 2px !important;
@@ -9631,6 +10374,18 @@ body.theme-darkest button.actions-dropdown-item.purple:hover {
   margin-top: 10px;
   text-align: center;
   max-width: 600px;
+}
+
+/* Torchlit vignette + light grain, simulating the game's painted-canvas texture */
+body.theme-darkest::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9998;
+  background:
+    repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.025) 0px, rgba(0, 0, 0, 0.025) 1px, transparent 1px, transparent 3px),
+    radial-gradient(ellipse at center, transparent 40%, rgba(0, 0, 0, 0.6) 100%);
 }
 
 /* 8. DESTINY 2 🔷 */
@@ -9768,6 +10523,7 @@ body.theme-destiny2 button.actions-dropdown-item.purple:hover {
   display: block;
 }
 .destiny-glimmer-text {
+  position: relative;
   font-family: 'Segoe UI', sans-serif;
   font-weight: 600;
   color: #e5a823;
@@ -9775,6 +10531,39 @@ body.theme-destiny2 button.actions-dropdown-item.purple:hover {
   text-transform: uppercase;
   letter-spacing: 1px;
   text-shadow: 0 0 5px rgba(229, 168, 35, 0.3);
+}
+
+/* Ambient glimmer sparkle - a couple of small gold particles drifting upward
+   and fading near the Glimmer counter, staggered so they never sync. */
+.destiny-glimmer-text::before,
+.destiny-glimmer-text::after {
+  content: '';
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #ffe08a;
+  box-shadow: 0 0 4px 1px rgba(255, 224, 138, 0.8);
+  pointer-events: none;
+  opacity: 0;
+  animation: destiny-sparkle-drift 2.6s ease-in infinite;
+}
+.destiny-glimmer-text::before {
+  top: 2px;
+  left: 8%;
+  animation-delay: 0s;
+}
+.destiny-glimmer-text::after {
+  top: 4px;
+  left: 65%;
+  animation-delay: 1.3s;
+}
+
+@keyframes destiny-sparkle-drift {
+  0%   { opacity: 0; transform: translateY(0) scale(0.6); }
+  15%  { opacity: 0.9; }
+  80%  { opacity: 0.4; }
+  100% { opacity: 0; transform: translateY(-14px) scale(1); }
 }
 .ghost-laser-line {
   position: absolute;
@@ -10120,6 +10909,19 @@ body.theme-fnf .nav-link.active {
   background: #ff007f !important;
   color: #ffffff !important;
   border-left: 5px solid #00ffff !important;
+  animation: fnf-beat-flash 0.5s ease-in-out infinite alternate !important;
+}
+/* Passive rhythmic identity for the sidebar - a subtle magenta/cyan pulse at
+   ~120 BPM (0.5s/beat), independent of the header minigame. */
+@keyframes fnf-beat-flash {
+  from {
+    box-shadow: inset 3px 0 0 0 rgba(0, 255, 255, 0.15);
+    border-left-color: #00ffff;
+  }
+  to {
+    box-shadow: inset 3px 0 0 0 rgba(0, 255, 255, 0.55);
+    border-left-color: #ff007f;
+  }
 }
 body.theme-fnf .actions-dropdown-item,
 body.theme-fnf a.actions-dropdown-item,
@@ -10251,8 +11053,8 @@ body.theme-helltaker {
   background-attachment: fixed !important;
 }
 body.theme-helltaker h1, body.theme-helltaker h2, body.theme-helltaker h3, body.theme-helltaker h4, body.theme-helltaker h5, body.theme-helltaker h6, body.theme-helltaker .logo-text, body.theme-helltaker .kpi-value {
-  font-family: Georgia, serif !important;
-  font-weight: 900 !important;
+  font-family: 'Baloo 2', 'Trebuchet MS', sans-serif !important;
+  font-weight: 800 !important;
   text-transform: uppercase !important;
   letter-spacing: 1.5px !important;
   color: #ffffff !important;
@@ -10263,6 +11065,19 @@ body.theme-helltaker .glass-card, body.theme-helltaker .card, body.theme-helltak
   border: 2px solid #ff3333 !important;
   background: #220303 !important;
   box-shadow: 5px 5px 0px #000000 !important;
+}
+/* Small flame accent reinforcing the "hell" setting beyond just red coloring */
+body.theme-helltaker .glass-card, body.theme-helltaker .card {
+  position: relative !important;
+}
+body.theme-helltaker .glass-card::after, body.theme-helltaker .card::after {
+  content: '🔥';
+  position: absolute;
+  bottom: 4px;
+  right: 6px;
+  font-size: 0.9rem;
+  opacity: 0.35;
+  pointer-events: none;
 }
 body.theme-helltaker .btn, body.theme-helltaker button:not(.close-btn):not(.search-clear-btn):not(.mobile-menu-toggle):not(.header-action-btn) {
   border-radius: 0px !important;
