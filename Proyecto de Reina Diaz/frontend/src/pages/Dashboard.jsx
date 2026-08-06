@@ -170,7 +170,7 @@ export default function Dashboard() {
                   {card.icon}
                 </div>
                 <div className="kpi-info">
-                  <h3>{card.value}</h3>
+                  <h3 className="kpi-value">{card.value}</h3>
                   <p>{card.label}</p>
                 </div>
               </div>

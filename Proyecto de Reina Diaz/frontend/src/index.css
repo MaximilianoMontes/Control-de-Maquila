@@ -3772,13 +3772,16 @@ body.theme-minecraft .tab-btn,
 body.theme-minecraft .actions-dropdown-item {
   font-family: 'Press Start 2P', 'Courier New', monospace !important;
   text-transform: uppercase !important;
-  letter-spacing: -0.5px !important;
+  letter-spacing: 0px !important;
 }
 
+/* Press Start 2P es un tipo pixelado ancho: el letter-spacing negativo que tenia
+   antes hacia que los glifos se encimaran entre si (se veia como una mancha de
+   texto ilegible) en textos largos como los botones del pie de la barra lateral. */
 body.theme-minecraft h1 { font-size: 1.1rem !important; line-height: 1.6 !important; }
 body.theme-minecraft h2 { font-size: 0.95rem !important; line-height: 1.5 !important; }
 body.theme-minecraft h3 { font-size: 0.8rem !important; line-height: 1.4 !important; }
-body.theme-minecraft .logo-text { font-size: 0.95rem !important; color: #ffff55 !important; text-shadow: 2px 2px 0px #000 !important; }
+body.theme-minecraft .logo-text { font-size: 0.85rem !important; line-height: 1.3 !important; color: #ffff55 !important; text-shadow: 2px 2px 0px #000 !important; }
 body.theme-minecraft th { font-size: 0.6rem !important; color: #ffff55 !important; background: #3c3c3c !important; }
 body.theme-minecraft td { font-size: 0.85rem !important; }
 
@@ -4492,7 +4495,9 @@ body.theme-cyberpunk .kpi-value {
   font-weight: 900 !important;
   font-style: italic !important;
   text-transform: uppercase !important;
-  letter-spacing: 2px !important;
+  /* letter-spacing mas chico: en 2px, valores largos como los KPI en dinero se
+     salian del ancho de la tarjeta y el overflow:hidden de .glass-card los cortaba */
+  letter-spacing: 0.5px !important;
   text-shadow: 2px 2px 0px #ff0055, -2px -2px 0px #00f0ff !important;
 }
 
@@ -5764,17 +5769,29 @@ body.theme-castle::before {
   z-index: 99999 !important;
 }
 
-body.theme-castle h1, 
-body.theme-castle h2, 
-body.theme-castle h3, 
-body.theme-castle .logo-text, 
-body.theme-castle .kpi-value {
+/* h1 es lo bastante grande para aguantar el stroke/sombra fuerte de Bangers.
+   A tamanos de h2/h3 (titulos de seccion, nombres de tarjeta) esa misma sombra
+   de 5px hacia que las letras se encimaran entre si y se viera como una mancha
+   ilegible - por eso h2/h3/logo/kpi usan una version mas chica abajo. */
+body.theme-castle h1 {
   font-family: 'Bangers', cursive, Impact, sans-serif !important;
   letter-spacing: 1.5px !important;
   text-transform: uppercase !important;
   color: #ffd700 !important; /* Golden/yellow text */
   -webkit-text-stroke: 1.5px #1a1518;
   text-shadow: 3px 3px 0px #d82a35, 5px 5px 0px #1a1518 !important;
+}
+
+body.theme-castle h2,
+body.theme-castle h3,
+body.theme-castle .logo-text,
+body.theme-castle .kpi-value {
+  font-family: 'Bangers', cursive, Impact, sans-serif !important;
+  letter-spacing: 1px !important;
+  text-transform: uppercase !important;
+  color: #ffd700 !important;
+  -webkit-text-stroke: 0.75px #1a1518;
+  text-shadow: 1.5px 1.5px 0px #d82a35, 2.5px 2.5px 0px #1a1518 !important;
 }
 
 body.theme-castle .sidebar-logo span {
@@ -6137,10 +6154,20 @@ body.theme-starwars {
   --danger-color: #ff1a1a;
   --danger-hover: #d30000;
   
-  background-image: 
-    radial-gradient(2px 2px at 20px 30px, #eee, rgba(0,0,0,0)),
+  /* El starfield original solo tenia 3 puntos fijos sin background-size/repeat,
+     asi que pintaba exactamente 3 estrellas cerca de la esquina y nada mas en el
+     resto de la pantalla. Ahora se repite en mosaico para cubrir toda la vista,
+     con dos capas a distinto tamano para dar sensacion de profundidad. */
+  background-image:
+    radial-gradient(1.5px 1.5px at 20px 30px, #eee, rgba(0,0,0,0)),
     radial-gradient(2px 2px at 150px 80px, #fff, rgba(0,0,0,0)),
-    radial-gradient(2px 2px at 80px 220px, #ddd, rgba(0,0,0,0)) !important;
+    radial-gradient(1px 1px at 80px 220px, #ddd, rgba(0,0,0,0)),
+    radial-gradient(1.5px 1.5px at 260px 40px, #fff, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 190px 190px, #ccc, rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 40px 150px, #eee, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 100px 60px, #00f0ff, rgba(0,0,0,0)) !important;
+  background-size: 300px 300px !important;
+  background-repeat: repeat !important;
   background-color: #030408 !important;
 }
 
@@ -6766,8 +6793,11 @@ body.theme-ddlc {
   --bg-dark: #fff2f6;
   --bg-card: #ffffff;
   --bg-input: #fff8fa;
-  --text-primary: #ff4d79;
-  --text-secondary: #ff85a2;
+  /* Los rosas originales (#ff4d79 / #ff85a2) daban muy poco contraste sobre el
+     fondo claro (2.93:1 y 2.30:1, ambos por debajo del minimo de 4.5:1) y el
+     texto costaba trabajo leerlo. Se oscurecen manteniendo el tono rosa/rojo. */
+  --text-primary: #d6265a;
+  --text-secondary: #c2547a;
   --border-color: #ffb3c6;
   --glass-border: 2px solid #ffb3c6;
   --glass-shadow: 0 8px 24px rgba(255, 179, 198, 0.3);
@@ -8232,6 +8262,14 @@ body.theme-pvz .launcher-app-name {
   30% { transform: skewX(0deg); }
 }
 
+/* La linea de "radar" en las tarjetas de Cyberpunk usaba esta animacion pero
+   nunca estuvo definida, asi que la linea se quedaba fija arriba sin moverse. */
+@keyframes radar-sweep {
+  0% { top: 0; opacity: 0.5; }
+  50% { opacity: 0.9; }
+  100% { top: 100%; opacity: 0; }
+}
+
 /* 9. Escape the Backrooms Fluorescent Flicker */
 @keyframes backrooms-flicker {
   0%, 100% { opacity: 1; }
@@ -8488,7 +8526,10 @@ body.theme-isaac {
   --bg-card: #3a221d;
   --bg-input: #4a2c26;
   --text-primary: #f2e3d5;
-  --text-secondary: #b71c1c;
+  /* #b71c1c (rojo sangre) sobre el fondo cafe de las tarjetas daba muy poco
+     contraste (2.24:1, muy por debajo del 4.5:1 recomendado) y el texto
+     secundario era dificil de leer. Se cambia a un tono canela mas claro. */
+  --text-secondary: #c9a389;
   --border-color: #000000;
   --glass-border: 3px solid #000000;
   --glass-shadow: 6px 6px 0px rgba(0,0,0,0.8);
@@ -8580,7 +8621,7 @@ body.theme-isaac .actions-dropdown-item.pink:hover,
 body.theme-isaac a.actions-dropdown-item.pink:hover,
 body.theme-isaac button.actions-dropdown-item.pink:hover,
 body.theme-isaac .actions-dropdown-item.purple:hover,
-body.theme-ruina a.actions-dropdown-item.purple:hover,
+body.theme-isaac a.actions-dropdown-item.purple:hover,
 body.theme-isaac button.actions-dropdown-item.purple:hover {
   background: #b71c1c !important;
 }
@@ -9042,6 +9083,19 @@ body.theme-fnaf button.actions-dropdown-item.purple:hover {
   border: 1px solid #333;
   padding: 4px 12px;
   margin-left: 20px;
+}
+/* Header.jsx agrega esta clase cuando fnafPower llega a 0, pero no tenia
+   ninguna regla asociada - la escalada visual de "se quedaron sin energia"
+   nunca se veia. Ahora el HUD se oscurece y parpadea en rojo. */
+.fnaf-hud-container.blackout {
+  border-color: #ff1a1a;
+  background: rgba(20,0,0,0.9);
+  animation: fnaf-blackout-flicker 0.6s steps(2) infinite;
+}
+.fnaf-hud-container.blackout .fnaf-power-label,
+.fnaf-hud-container.blackout .fnaf-power-value,
+.fnaf-hud-container.blackout .fnaf-time-box {
+  color: #ff1a1a !important;
 }
 .fnaf-status {
   display: flex;
@@ -9693,7 +9747,8 @@ body.theme-destiny2 button.actions-dropdown-item.purple:hover {
   position: relative;
   border-radius: 4px;
   box-shadow: inset 0 0 10px rgba(229,168,35,0.15), 0 4px 15px rgba(0,0,0,0.6);
-  overflow: hidden;
+  /* overflow:hidden cortaba el aviso flotante de "+Glimmer ganado" (que se
+     posiciona arriba del contenedor, fuera de su caja) - nunca se veia. */
 }
 .destiny-ghost-wrapper {
   display: flex;
@@ -10019,13 +10074,24 @@ body.theme-fnf {
     linear-gradient(to bottom, #16002c, #090014) !important;
   background-attachment: fixed !important;
 }
-body.theme-fnf h1, body.theme-fnf h2, body.theme-fnf h3, body.theme-fnf h4, body.theme-fnf h5, body.theme-fnf h6, body.theme-fnf .logo-text, body.theme-fnf .kpi-value {
+/* El offset de sombra de 3px se veia bien en h1/h2 grandes, pero en h3-h6 y
+   texto chico anidado (como "(8 modelos)") la sombra era casi del mismo tamano
+   que las letras y se veia como una mancha rosa/cian ilegible. */
+body.theme-fnf h1, body.theme-fnf h2, body.theme-fnf .logo-text {
   font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif !important;
   font-weight: bold !important;
   text-transform: uppercase !important;
   letter-spacing: 1px !important;
   color: #00ffff !important;
   text-shadow: 3px 3px 0px #ff007f !important;
+}
+body.theme-fnf h3, body.theme-fnf h4, body.theme-fnf h5, body.theme-fnf h6, body.theme-fnf .kpi-value {
+  font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif !important;
+  font-weight: bold !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  color: #00ffff !important;
+  text-shadow: 1px 1px 0px #ff007f !important;
 }
 body.theme-fnf .glass-card, body.theme-fnf .card, body.theme-fnf .modal-content, body.theme-fnf .sidebar, body.theme-fnf .plancha-sidebar, body.theme-fnf aside {
   border-radius: 8px !important;
@@ -10489,6 +10555,11 @@ body.theme-helltaker button.actions-dropdown-item.purple:hover {
 @keyframes fnaf-blink {
   0%, 100% { opacity: 1; }
   50% { opacity: 0; }
+}
+
+@keyframes fnaf-blackout-flicker {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
 }
 
 @keyframes fnaf-jumpscare-shake {
