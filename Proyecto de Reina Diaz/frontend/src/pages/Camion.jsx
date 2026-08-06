@@ -216,7 +216,7 @@ export default function Camion() {
       modelo: order.producto_modelo,
       color: order.producto_color,
       cliente: order.cliente || 'GENERAL',
-      no_orden: order.no_orden || order.id,
+      no_orden: order.no_orden || String(order.id),
       precio: order.precio_unitario || 0,
       piezas: maxQty,
       imagen: order.producto_imagen,
@@ -579,16 +579,16 @@ export default function Camion() {
 
   // Filter Stock List
   const filteredStock = stock.filter(item =>
-    (item.modelo || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (item.color || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (item.no_orden || '').toLowerCase().includes(searchTerm.toLowerCase())
+    String(item.modelo || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    String(item.color || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    String(item.no_orden || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Filter Cargo (camión) list
   const filteredCargo = cargo.filter(item =>
-    (item.modelo || '').toLowerCase().includes(cargoSearchTerm.toLowerCase()) ||
-    (item.color || '').toLowerCase().includes(cargoSearchTerm.toLowerCase()) ||
-    (item.no_orden || '').toLowerCase().includes(cargoSearchTerm.toLowerCase())
+    String(item.modelo || '').toLowerCase().includes(cargoSearchTerm.toLowerCase()) ||
+    String(item.color || '').toLowerCase().includes(cargoSearchTerm.toLowerCase()) ||
+    String(item.no_orden || '').toLowerCase().includes(cargoSearchTerm.toLowerCase())
   );
 
   return (
@@ -1445,8 +1445,8 @@ export default function Camion() {
               {activeProdOrders.filter(o => {
                 const term = adelantadaSearchTerm.toLowerCase();
                 return !term ||
-                  (o.producto_modelo || '').toLowerCase().includes(term) ||
-                  (o.maquilero_nombre || '').toLowerCase().includes(term) ||
+                  String(o.producto_modelo || '').toLowerCase().includes(term) ||
+                  String(o.maquilero_nombre || '').toLowerCase().includes(term) ||
                   String(getFolio(o)).toLowerCase().includes(term);
               }).length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
@@ -1456,8 +1456,8 @@ export default function Camion() {
                 activeProdOrders.filter(o => {
                   const term = adelantadaSearchTerm.toLowerCase();
                   return !term ||
-                    (o.producto_modelo || '').toLowerCase().includes(term) ||
-                    (o.maquilero_nombre || '').toLowerCase().includes(term) ||
+                    String(o.producto_modelo || '').toLowerCase().includes(term) ||
+                    String(o.maquilero_nombre || '').toLowerCase().includes(term) ||
                     String(getFolio(o)).toLowerCase().includes(term);
                 }).map(o => (
                   <div 
