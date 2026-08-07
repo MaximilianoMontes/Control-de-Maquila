@@ -2391,7 +2391,7 @@ app.get('/api/pagos/:id/comprobante', authenticateToken, async (req, res) => {
     const [pagos] = await db.query(`
       SELECT pg.*, p.id as orden_id, p.maquilero_id, p.inventario_id, p.estado as orden_estado,
              p.cantidad, p.cantidad_recibida, p.ajuste_tipo, p.ajuste_porcentaje, p.ajuste_monto,
-             p.es_extra, p.precio_extra,
+             p.es_extra, p.precio_extra, p.precio_total,
              m.nombre as maquilero_nombre,
              i.modelo as producto_modelo, i.precio as precio_unitario, i.no_orden as no_orden
       FROM pagos pg
@@ -2479,11 +2479,17 @@ app.get('/api/pagos/:id/comprobante', authenticateToken, async (req, res) => {
     doc.text(`${tLabel('Número de Pago', 'Payment Number')}: ${nroPago} ${tLabel('de', 'of')} ${todosLosPagos.length}`);
 
     // Piezas a las que equivale este pago en particular (no el total de la orden):
-    // monto base (sin IVA) entre el precio por pieza. En abonos es una referencia de
-    // a cuantas piezas equivale ese pago especifico, no un conteo real ya entregado.
+    // proporción del monto base (sin IVA) sobre el precio_total de la orden, aplicada
+    // a la cantidad real maquilada. Antes se dividía el monto entre el precio por pieza,
+    // pero el monto incluye el bono/descuento — con un bono del 10% eso "inventaba"
+    // piezas de más (p.ej. 60 piezas reales con bono terminaban mostrando 66 piezas
+    // cobradas), cuando el bono es dinero extra, no piezas extra.
     const montoBasePago = (pago.con_iva === 1 || pago.con_iva) ? Number(pago.monto) / 1.16 : Number(pago.monto);
     const precioUnitarioCobro = (pago.es_extra === 1) ? (Number(pago.precio_extra) || 0) : (Number(pago.precio_unitario) || 0);
-    const piezasCobradas = precioUnitarioCobro > 0 ? Math.round(montoBasePago / precioUnitarioCobro) : null;
+    const precioTotalOrdenPago = Number(pago.precio_total) || 0;
+    const piezasCobradas = precioTotalOrdenPago > 0
+      ? Math.round((montoBasePago / precioTotalOrdenPago) * cantFinal)
+      : (precioUnitarioCobro > 0 ? Math.round(montoBasePago / precioUnitarioCobro) : null);
     if (piezasCobradas !== null) {
       doc.text(`${tLabel('Piezas Cobradas', 'Pieces Charged')}: ${piezasCobradas} ${tLabel('piezas', 'pieces')}`);
     }
@@ -2985,7 +2991,8 @@ app.get('/api/reportes/pagos', authenticateToken, async (req, res) => {
   try {
     let query = `
       SELECT pg.*, m.nombre as maquilero_nombre, i.modelo as producto_modelo,
-             p.es_extra, p.precio_extra, i.precio as precio_inventario
+             p.es_extra, p.precio_extra, i.precio as precio_inventario,
+             p.precio_total, p.cantidad, p.cantidad_recibida
       FROM pagos pg
       JOIN produccion p ON pg.produccion_id = p.id
       JOIN maquileros m ON p.maquilero_id = m.id
@@ -3056,12 +3063,18 @@ app.get('/api/reportes/pagos', authenticateToken, async (req, res) => {
           const ivaVal = hasIva ? Number(r.monto) - base : 0;
 
           // Piezas equivalentes al monto pagado (igual que en el comprobante individual):
-          // monto base entre el precio por pieza. En abonos no es un total exacto de piezas
-          // ya recibidas, es una referencia de a cuántas piezas equivale ese pago.
+          // proporción del monto base sobre el precio_total de la orden, aplicada a la
+          // cantidad real maquilada. No se divide el monto entre el precio por pieza
+          // directamente porque el monto incluye el bono/descuento — eso "inventaba"
+          // piezas de más cuando la orden tenía un bono (dinero extra, no piezas extra).
           const precioUnitario = (r.es_extra === 1)
             ? Number(r.precio_extra) || 0
             : Number(r.precio_inventario) || 0;
-          const piezasEquivalentes = precioUnitario > 0 ? Math.round(base / precioUnitario) : null;
+          const cantFinalFila = (r.cantidad_recibida !== null && r.cantidad_recibida !== undefined) ? r.cantidad_recibida : r.cantidad;
+          const precioTotalOrden = Number(r.precio_total) || 0;
+          const piezasEquivalentes = precioTotalOrden > 0 && cantFinalFila
+            ? Math.round((base / precioTotalOrden) * cantFinalFila)
+            : (precioUnitario > 0 ? Math.round(base / precioUnitario) : null);
 
           return {
             fecha: formatDateToDMY(r.fecha),
