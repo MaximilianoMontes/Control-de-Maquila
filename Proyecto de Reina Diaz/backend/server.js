@@ -3022,7 +3022,7 @@ app.get('/api/reportes/pagos', authenticateToken, async (req, res) => {
       subtitleDate = tLabel(`hasta ${formatDateToDMY(end)}`, `until ${formatDateToDMY(end)}`);
     }
     
-    query += ` ORDER BY pg.fecha ASC, pg.id ASC`;
+    query += ` ORDER BY m.nombre ASC, pg.fecha ASC, pg.id ASC`;
     const [rows] = await db.query(query, params);
 
     const doc = new PDFDocument({ margins: { top: 30, bottom: 50, left: 30, right: 30 }, size: 'A4', layout: 'portrait' });
