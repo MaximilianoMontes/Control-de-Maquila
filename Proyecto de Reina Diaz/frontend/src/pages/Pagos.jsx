@@ -3,12 +3,16 @@ import axios from 'axios';
 import { useSearchParams } from 'react-router-dom';
 import { Printer, AlertCircle, History as HistoryIcon, Trash2 } from 'lucide-react';
 import { useSettings } from '../context/SettingsContext';
+import { useAuth } from '../context/AuthContext';
 import API_URL from '../config';
 import { toast, Swal } from '../utils/themeNotifications';
 import SearchableSelect from '../components/SearchableSelect';
 
 export default function Pagos() {
   const { settings, t, formatCurrency } = useSettings();
+  const { user } = useAuth();
+  const userRole = (user?.role || user?.rol || '').toString().toLowerCase().trim();
+  const isAdmin = userRole === 'admin';
   const [searchParams] = useSearchParams();
   const initialOrdenId = searchParams.get('orden') || '';
   const initialTipoPago = searchParams.get('tipo') === 'completo' ? 'completo' : 'abono';
@@ -33,6 +37,7 @@ export default function Pagos() {
   const [pagos, setPagos] = useState([]);
   const [selectedOrden, setSelectedOrden] = useState(initialOrdenId);
   const [monto, setMonto] = useState('');
+  const [piezasAPagar, setPiezasAPagar] = useState('');
   const [tipoPago, setTipoPago] = useState(initialTipoPago);
   const [pendingDiscount, setPendingDiscount] = useState(0);
   const [lastPrefilledOrden, setLastPrefilledOrden] = useState('');
@@ -80,6 +85,7 @@ export default function Pagos() {
             const restante = orden.precio_total - totalPagado;
             const suggested = Math.max(0, restante - discount);
             setMonto(suggested > 0 ? suggested.toFixed(2) : '');
+            setPiezasAPagar('');
             setLastPrefilledOrden(selectedOrden);
             
             const urlTipo = searchParams.get('tipo');
@@ -98,6 +104,7 @@ export default function Pagos() {
       setPagos([]);
       setPendingDiscount(0);
       setMonto('');
+      setPiezasAPagar('');
       setLastPrefilledOrden('');
       setAplicarIva(false);
     }
@@ -116,6 +123,16 @@ export default function Pagos() {
       setMonto(suggested > 0 ? suggested.toFixed(2) : '');
     }
   }, [aplicarIva]);
+
+  // Calcula el monto automáticamente a partir de las piezas a pagar (piezas * precio unitario)
+  useEffect(() => {
+    if (!ordenActual) return;
+    if (piezasAPagar === '') return;
+    const piezas = parseFloat(piezasAPagar) || 0;
+    const precioUnitario = parseFloat(ordenActual.precio_unitario) || 0;
+    const calculado = piezas * precioUnitario * (aplicarIva ? 1.16 : 1);
+    setMonto(calculado > 0 ? calculado.toFixed(2) : '0.00');
+  }, [piezasAPagar, aplicarIva]);
 
   useEffect(() => {
     if (selectedMaquilero) {
@@ -428,6 +445,20 @@ export default function Pagos() {
               </div>
 
               <div className="form-group">
+                <label className="form-label">{settings.language === 'en' ? 'Pieces to Pay' : 'Piezas a Pagar'}</label>
+                <input
+                  type="number"
+                  step="1"
+                  min="0"
+                  className="form-input"
+                  value={piezasAPagar}
+                  onChange={e => setPiezasAPagar(e.target.value)}
+                  disabled={!selectedOrden}
+                  placeholder={ordenActual ? `${settings.language === 'en' ? 'Price per piece' : 'Precio por pieza'}: ${formatCurrency(ordenActual.precio_unitario)}` : ''}
+                />
+              </div>
+
+              <div className="form-group">
               <label className="form-label">{t('pay.amount')}</label>
               <input
                 type="number"
@@ -435,6 +466,9 @@ export default function Pagos() {
                 max={restanteConIva}
                 required
                 className="form-input"
+                readOnly={!isAdmin}
+                style={!isAdmin ? { cursor: 'not-allowed', opacity: 0.85 } : undefined}
+                title={!isAdmin ? (settings.language === 'en' ? 'Only admins can type a custom amount — use Pieces to Pay instead' : 'Solo los admins pueden escribir un monto libre — usa Piezas a Pagar') : undefined}
                 value={monto}
                 onChange={e => setMonto(e.target.value)}
                 disabled={!selectedOrden}

@@ -1,10 +1,10 @@
 import React, { Component, useState, useEffect } from 'react';
 import { 
   Plus, Search, Pencil, Trash2, CheckCircle, XCircle, 
-  Archive, ArchiveRestore, Image as ImageIcon, AlertTriangle, AlertCircle, Calendar, X, Sparkles,
+  Archive, ArchiveRestore, Image as ImageIcon, AlertTriangle, AlertCircle, Calendar, X,
   MinusCircle, MessageSquare, Split, ChevronDown
 } from 'lucide-react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import axios from 'axios';
@@ -610,6 +610,13 @@ function Produccion() {
       (o.maquilero_nombre || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (o.producto_modelo || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
+  }).sort((a, b) => {
+    // Fecha de entrega estimada más antigua primero, para que las órdenes más
+    // atrasadas (semáforo rojo) queden arriba, luego las amarillas y al final
+    // las que van a tiempo — sin fecha_fin siempre van al final.
+    if (!a.fecha_fin) return 1;
+    if (!b.fecha_fin) return -1;
+    return new Date(a.fecha_fin) - new Date(b.fecha_fin);
   });
 
   // Folio = posición dentro de la lista visible, ordenada del más antiguo al más nuevo
@@ -887,9 +894,6 @@ function Produccion() {
                                       <button className="actions-dropdown-item danger" onClick={() => { setActiveDropdownId(null); handleCancelar(o.id); }}>
                                         <XCircle size={16} /> {isEn ? 'Cancel Order' : 'Cancelar Orden'}
                                       </button>
-                                      <Link to={`/extras?newExtra=true&inventario_id=${o.inventario_id}&cantidad=${o.cantidad}&fecha_inicio=${formatDate(o.fecha_inicio)}&fecha_fin=${formatDate(o.fecha_fin)}`} className="actions-dropdown-item pink" onClick={() => setActiveDropdownId(null)}>
-                                        <Sparkles size={16} /> {isEn ? 'Create Extra' : 'Crear Extra'}
-                                      </Link>
                                       <button className="actions-dropdown-item blue" onClick={() => { setActiveDropdownId(null); openSplit(o); }}>
                                         <Split size={16} /> {isEn ? 'Split Order' : 'Dividir / Devolución'}
                                       </button>

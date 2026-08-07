@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { Plus, X, UploadCloud, Search, Image as ImageIcon, Pencil, Trash2, RefreshCw, MessageSquare, PlusCircle, ChevronDown } from 'lucide-react';
+import { Plus, X, UploadCloud, Search, Image as ImageIcon, Pencil, Trash2, RefreshCw, MessageSquare, PlusCircle, ChevronDown, Scissors } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
@@ -224,14 +224,18 @@ export default function Cortes() {
     }
   };
 
-  const filteredItems = items
-    .filter(item => (item.piezas_en_proceso > 0 ? item.total_asignado < item.piezas_en_proceso : item.producciones_count === 0))
+  const activeItems = items
+    .filter(item => (item.piezas_en_proceso > 0 ? item.total_asignado < item.piezas_en_proceso : item.producciones_count === 0));
+
+  const filteredItems = activeItems
     .filter(item =>
       (item.modelo || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (item.cliente || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (item.no_orden || '').toLowerCase().includes(searchTerm.toLowerCase())
     )
     .sort((a, b) => (a.modelo || '').localeCompare(b.modelo || '', undefined, { numeric: true }));
+
+  const totalPiezasCorte = activeItems.reduce((sum, item) => sum + (parseInt(item.piezas_en_proceso) || 0), 0);
 
   return (
     <div>
@@ -243,6 +247,44 @@ export default function Cortes() {
               <Plus size={20} /> {t('cortes.new')}
             </button>
           )}
+        </div>
+      </div>
+
+      <div className="glass-card" style={{
+        marginBottom: '2rem',
+        padding: '1.5rem 2rem',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: '1.5rem',
+        flexWrap: 'wrap',
+        background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.14), rgba(59, 130, 246, 0.08))',
+        border: '1px solid rgba(139, 92, 246, 0.25)'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{
+            width: 56,
+            height: 56,
+            borderRadius: '14px',
+            background: 'rgba(139, 92, 246, 0.18)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0
+          }}>
+            <Scissors size={28} color="#a78bfa" />
+          </div>
+          <div>
+            <div style={{ fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>
+              {isEn ? 'Total Pieces in Cuts' : 'Total de Piezas en Corte'}
+            </div>
+            <div style={{ fontSize: '2.5rem', fontWeight: 800, lineHeight: 1.1, color: 'var(--text-primary)' }}>
+              {totalPiezasCorte.toLocaleString()}
+            </div>
+          </div>
+        </div>
+        <div className="badge badge-info" style={{ fontWeight: 700, fontSize: '0.85rem', padding: '6px 14px' }}>
+          {activeItems.length} {isEn ? 'active models' : 'modelos activos'}
         </div>
       </div>
 
