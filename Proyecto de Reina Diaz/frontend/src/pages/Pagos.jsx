@@ -335,6 +335,14 @@ export default function Pagos() {
   const totalPagado = ordenActual ? parseFloat(ordenActual.pagado || 0) : 0;
   const totalConIva = aplicarIva && ordenActual ? (ordenActual.precio_total * 1.16) : (ordenActual ? ordenActual.precio_total : 0);
   const restanteConIva = ordenActual ? (totalConIva - totalPagado) : 0;
+  // Piezas que en verdad quedan por pagar de esta orden: lo que resta en dinero entre el
+  // precio por pieza. Es el mismo candado que ya existe para el Monto (max=restanteConIva)
+  // pero expresado en piezas, para que nadie pueda cobrar mas piezas de las que en realidad
+  // faltan por liquidar (evita que alguien "estire" el numero de piezas de mala fe).
+  const precioUnitarioActual = ordenActual ? (parseFloat(ordenActual.precio_unitario) || 0) : 0;
+  const piezasRestantes = ordenActual && precioUnitarioActual > 0
+    ? Math.max(0, Math.floor((restanteConIva / precioUnitarioActual) + 1e-6))
+    : 0;
 
   const modeloCodigo = (o) => o.producto_modelo ? `${o.producto_modelo} - ` : '';
 
@@ -445,15 +453,34 @@ export default function Pagos() {
               </div>
 
               <div className="form-group">
-                <label className="form-label">{settings.language === 'en' ? 'Pieces to Pay' : 'Piezas a Pagar'}</label>
+                <label className="form-label">
+                  {settings.language === 'en' ? 'Pieces to Pay' : 'Piezas a Pagar'}
+                  {ordenActual && (
+                    <span style={{ fontWeight: 400, color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
+                      {' '}({settings.language === 'en' ? 'remaining' : 'quedan'}: {piezasRestantes} pz)
+                    </span>
+                  )}
+                </label>
                 <input
                   type="number"
                   step="1"
                   min="0"
+                  max={piezasRestantes}
                   className="form-input"
                   value={piezasAPagar}
-                  onChange={e => setPiezasAPagar(e.target.value)}
-                  disabled={!selectedOrden}
+                  onChange={e => {
+                    const raw = e.target.value;
+                    if (raw === '') { setPiezasAPagar(''); return; }
+                    let val = parseInt(raw, 10);
+                    if (isNaN(val)) { setPiezasAPagar(''); return; }
+                    if (val < 0) val = 0;
+                    if (val > piezasRestantes) {
+                      val = piezasRestantes;
+                      toast.warning(settings.language === 'en' ? `Only ${piezasRestantes} pieces remain on this order` : `Solo quedan ${piezasRestantes} piezas por pagar de esta orden`);
+                    }
+                    setPiezasAPagar(String(val));
+                  }}
+                  disabled={!selectedOrden || piezasRestantes <= 0}
                   placeholder={ordenActual ? `${settings.language === 'en' ? 'Price per piece' : 'Precio por pieza'}: ${formatCurrency(ordenActual.precio_unitario)}` : ''}
                 />
               </div>
