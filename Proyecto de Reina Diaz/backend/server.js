@@ -1622,8 +1622,9 @@ app.get('/api/produccion', async (req, res) => {
       (SELECT COALESCE(SUM(dp.monto_total), 0) FROM descuentos_personales dp 
        JOIN pagos pg ON dp.pago_id = pg.id 
        WHERE pg.produccion_id = p.id) as pagado,
-      (SELECT COALESCE(SUM(cd.piezas), 0) FROM camion_detalles cd WHERE cd.produccion_id = p.id) as piezas_enviadas
-      FROM produccion p 
+      (SELECT COALESCE(SUM(cd.piezas), 0) FROM camion_detalles cd WHERE cd.produccion_id = p.id) as piezas_enviadas,
+      (SELECT COUNT(*) FROM produccion_entregas_log el WHERE el.produccion_id = p.id) as entregas_log_count
+      FROM produccion p
       JOIN maquileros m ON p.maquilero_id = m.id
       LEFT JOIN inventario i ON p.inventario_id = i.id
       WHERE ${whereArchivado} ${whereExtra}
@@ -1876,6 +1877,61 @@ app.put('/api/produccion/:id/archivo', authenticateToken, async (req, res) => {
 app.put('/api/produccion/:id/observaciones', authenticateToken, async (req, res) => {
   try {
     await db.query("UPDATE produccion SET observaciones = ? WHERE id = ?", [req.body.observaciones || null, req.params.id]);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Bitácora de entregas: registros manuales de "llegó algo hoy" (fecha + nota opcional),
+// independientes de cantidad_recibida, para poder ver despues si una orden cumplio con
+// su fecha estimada aunque ya este Terminada y archivada.
+app.get('/api/produccion/:id/entregas-log', authenticateToken, async (req, res) => {
+  try {
+    const [rows] = await db.query(`
+      SELECT l.*, u.username
+      FROM produccion_entregas_log l
+      LEFT JOIN users u ON l.user_id = u.id
+      WHERE l.produccion_id = ?
+      ORDER BY l.fecha ASC, l.id ASC
+    `, [req.params.id]);
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/produccion/:id/entregas-log', authenticateToken, async (req, res) => {
+  const { fecha, nota } = req.body;
+  if (!fecha) return res.status(400).json({ error: 'La fecha es requerida' });
+  try {
+    const [olds] = await db.query(`
+      SELECT p.id, i.modelo, m.nombre as maquilero_nombre
+      FROM produccion p
+      LEFT JOIN inventario i ON p.inventario_id = i.id
+      LEFT JOIN maquileros m ON p.maquilero_id = m.id
+      WHERE p.id = ?
+    `, [req.params.id]);
+    const old = olds[0];
+    if (!old) return res.status(404).json({ error: 'Orden no encontrada' });
+
+    const [result] = await db.query(
+      "INSERT INTO produccion_entregas_log (produccion_id, fecha, nota, user_id) VALUES (?, ?, ?, ?)",
+      [req.params.id, fecha, nota || null, req.user.id]
+    );
+    await logActivity(req.user.id, 'ALTA', 'PRODUCCION', `Registró entrega del ${formatDateToDMY(fecha)} para ${old.modelo || 'ID '+req.params.id} (${old.maquilero_nombre || 'maquilero'})`);
+    res.json({ id: result.insertId, success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/api/produccion/entregas-log/:logId', authenticateToken, async (req, res) => {
+  try {
+    const [rows] = await db.query("SELECT * FROM produccion_entregas_log WHERE id = ?", [req.params.logId]);
+    if (!rows[0]) return res.status(404).json({ error: 'Registro no encontrado' });
+    await db.query("DELETE FROM produccion_entregas_log WHERE id = ?", [req.params.logId]);
+    await logActivity(req.user.id, 'BAJA', 'PRODUCCION', `Eliminó un registro de entrega (orden ID ${rows[0].produccion_id})`);
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -2213,6 +2269,7 @@ app.delete('/api/produccion/:id', authenticateToken, async (req, res) => {
         [req.params.id]
       );
       await connection.query("DELETE FROM pagos WHERE produccion_id = ?", [req.params.id]);
+      await connection.query("DELETE FROM produccion_entregas_log WHERE produccion_id = ?", [req.params.id]);
       await connection.query("DELETE FROM produccion WHERE id = ?", [req.params.id]);
       await connection.commit();
     } catch (error) {

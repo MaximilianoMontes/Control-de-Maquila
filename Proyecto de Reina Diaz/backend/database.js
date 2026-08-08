@@ -1792,6 +1792,24 @@ async function initializeDatabase() {
     }
 
     try {
+      await connection.query(`
+        CREATE TABLE IF NOT EXISTS produccion_entregas_log (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          produccion_id INT NOT NULL,
+          fecha DATE NOT NULL,
+          nota VARCHAR(255) DEFAULT NULL,
+          user_id INT NOT NULL,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY(produccion_id) REFERENCES produccion(id),
+          FOREIGN KEY(user_id) REFERENCES users(id)
+        )
+      `);
+      console.log('Tabla produccion_entregas_log lista.');
+    } catch (e) {
+      console.error('Error creating produccion_entregas_log:', e);
+    }
+
+    try {
       const fs = require('fs');
       const path = require('path');
       const uploadsDir = path.join(__dirname, 'uploads');
