@@ -80,7 +80,7 @@ const guides_es = {
           <p>El sistema cuenta con niveles de seguridad basados en roles para proteger la información financiera y operacional:</p>
           <ul>
             <li><strong>Admin (Administrador):</strong> Acceso total sin restricciones a todos los módulos, incluyendo la creación, edición y eliminación de datos, visualización del historial de auditoría, generación de reportes globales y control total de nóminas y pagos.</li>
-            <li><strong>Producción (produccion1, produccion2):</strong> Tienen permitido gestionar maquileros, cortes, órdenes de producción, registrar piezas recibidas y realizar el control de pagos/abonos. No tienen acceso a la eliminación crítica ni a reportes financieros de auditoría completa.</li>
+            <li><strong>Producción (produccion1, produccion2):</strong> Tienen permitido gestionar maquileros y órdenes de producción, registrar piezas recibidas y realizar el control de pagos/abonos. En <strong>Cortes</strong> solo pueden ver las observaciones e iniciar producción de un corte disponible — no pueden editar, eliminar ni subir/cambiar la foto de un corte (reservado para Admin e Inventario). Tampoco tienen acceso a la eliminación crítica ni a reportes financieros de auditoría completa.</li>
             <li><strong>Inventario (inventario1):</strong> Encargado de registrar los cortes de prendas y sus variantes de color/cantidad, así como consultar y administrar la salida del stock final en el inventario real. No tienen acceso a nóminas, pagos ni reportes financieros.</li>
             <li><strong>Operadores generales:</strong> Pueden visualizar inventarios y estatus de producción pero con restricciones de eliminación y edición de flujos financieros directos para resguardar la seguridad del negocio.</li>
           </ul>
@@ -244,6 +244,18 @@ const guides_es = {
         </div>
       ),
       keywords: 'estados corte disponible asignado reprogramacion reprogramar corrida produccion'
+    },
+    {
+      title: 'Contador de Piezas Totales y Permisos de Edición por Rol',
+      content: (
+        <div>
+          <p>Al entrar a <strong>Cortes</strong> verás, como primer elemento de la pantalla, una tarjeta destacada con el <strong>Total de Piezas en Corte</strong> (la suma de todas las piezas disponibles de los modelos activos) y el número de modelos activos — así puedes ver de un vistazo cuánto material tienes pendiente de asignar, sin sumarlo a mano.</p>
+          <div className="step-alert">
+            <strong>💡 Permisos según tu rol:</strong> Los usuarios de <strong>Producción (produccion1, produccion2)</strong> solo pueden <strong>ver las Observaciones</strong> de un corte y usar el botón <strong>Iniciar Producción</strong>. No pueden editar los datos del corte, eliminarlo ni subir/cambiar su foto — esas acciones están reservadas para <strong>Admin</strong> e <strong>Inventario</strong>, para evitar cambios accidentales al precio, piezas o colores de un corte ya en uso.
+          </div>
+        </div>
+      ),
+      keywords: 'contador total piezas corte permisos roles produccion editar restriccion observaciones iniciar produccion'
     }
   ],
   produccion: [
@@ -314,6 +326,30 @@ const guides_es = {
         </div>
       ),
       keywords: 'pago parcial flujo pagos abonos entregas parciales camion costura inline recibidas'
+    },
+    {
+      title: 'Ordenar por Fecha y Registro de Entregas (Semáforo de Puntualidad)',
+      content: (
+        <div>
+          <p>Las 3 pestañas de Producción (En Proceso, Recepción, Terminadas) se ordenan automáticamente por <strong>fecha de entrega estimada</strong>, mostrando primero las órdenes más atrasadas:</p>
+          <ul>
+            <li><strong>🔴 Rojo:</strong> 4 días o más de retraso sobre la fecha estimada.</li>
+            <li><strong>🟡 Amarillo:</strong> Entre 1 y 3 días de retraso.</li>
+            <li><strong>🟢 Verde/Normal:</strong> A tiempo o sin fecha vencida todavía.</li>
+          </ul>
+          <p>Además, en la columna <strong>Registro de Entregas</strong> puedes llevar un historial manual de cuándo llegaron piezas de esa orden en la realidad:</p>
+          <ol>
+            <li>Haz clic en el botón de esa columna (muestra "Sin registros" o el número de registros ya guardados).</li>
+            <li>En la ventana emergente, agrega una <strong>fecha</strong> (y una nota opcional, ej. "entregó 30 pzs") por cada entrega real que recibas.</li>
+            <li>El sistema compara automáticamente esa fecha contra la fecha de entrega estimada y la marca como <strong>"A tiempo"</strong> o <strong>"Tarde (X días)"</strong>.</li>
+            <li>Puedes agregar varios registros para la misma orden (entregas parciales en distintas fechas) y eliminar los que te hayas equivocado al capturar.</li>
+          </ol>
+          <div className="step-alert">
+            <strong>💡 ¿Para qué sirve?</strong> A diferencia de la fecha de entrega estimada (que solo compara contra "hoy"), este registro queda guardado permanentemente — incluso después de que la orden se archive — para que puedas evaluar objetivamente qué tan puntual es cada maquilero con el tiempo. Esta misma columna también está disponible en <strong>Extras</strong>.
+          </div>
+        </div>
+      ),
+      keywords: 'registro de entregas fecha semaforo puntualidad atrasado retraso a tiempo tarde bitacora orden'
     }
   ],
   pagos: [
@@ -359,6 +395,20 @@ const guides_es = {
         </div>
       ),
       keywords: 'descuentos personales prendas defectuosas multas piezas malas motivo cargo saldo'
+    },
+    {
+      title: 'Campo "Piezas a Pagar" y candado del Monto',
+      content: (
+        <div>
+          <p>Entre el <strong>Tipo de Pago</strong> y el <strong>Monto</strong> encontrarás el campo <strong>Piezas a Pagar</strong>:</p>
+          <ul>
+            <li>Al escribir un número de piezas, el <strong>Monto</strong> se calcula solo (piezas × precio por pieza) — ya no necesitas sacar la cuenta a mano.</li>
+            <li>El campo muestra cuántas piezas <strong>quedan realmente pendientes</strong> de pago en esa orden ("quedan: X pz"), y si intentas poner un número mayor, el sistema lo recorta automáticamente a lo que en verdad se puede pagar — así se evita registrar un pago por más piezas de las que en realidad faltan.</li>
+            <li><strong>El campo Monto ya no se puede escribir libremente</strong>, salvo para el rol <strong>Admin</strong>, que sí puede editarlo directamente para casos especiales (ajustes, correcciones).</li>
+          </ul>
+        </div>
+      ),
+      keywords: 'piezas a pagar monto candado bloqueo admin calculo automatico'
     }
   ],
   extras: [
@@ -383,20 +433,28 @@ const guides_es = {
       keywords: 'extras que son cuando usar trabajo extra tareas auxiliares botones etiquetas planchado empaquetado inventario mano de obra'
     },
     {
-      title: 'Crear Trabajos Extras desde Producción (Atajo de Sparkles/Destello)',
+      title: 'Crear un Trabajo Extra',
       content: (
         <div>
-          <p>Para agilizar el flujo de trabajo, puedes iniciar la creación de un extra directamente desde el panel principal de Producción activa:</p>
+          <p>Para registrar un trabajo extra, hazlo directamente desde la sección de <strong>Extras</strong>:</p>
           <ol>
-            <li>Ve al panel de <strong>Producción</strong> y localiza la orden en proceso correspondiente en la tabla.</li>
-            <li>En la columna de acciones de esa fila, haz clic en el icono premium de <strong>Destello (Sparkles)</strong> con un degradado rosa-violeta.</li>
-            <li>El ERP te redirigirá automáticamente a la pantalla de <strong>Extras</strong> y abrirá el formulario de <strong>+ Nueva Orden Extra</strong> de forma automática.</li>
-            <li>Notarás que el <strong>Producto del Inventario</strong>, la <strong>Cantidad de Piezas</strong>, el <strong>Cliente</strong> y las <strong>Fechas de entrega</strong> ya estarán preseleccionados y bloqueados (en modo de solo lectura) para evitar errores manuales, garantizando que el extra se asocie exactamente al lote correcto.</li>
-            <li>Solo tendrás que seleccionar al nuevo maquilero encargado del extra y capturar el costo por pieza en el campo de precio.</li>
+            <li>Ve al panel de <strong>Extras</strong> en el menú lateral.</li>
+            <li>Haz clic en <strong>+ Nueva Orden</strong>.</li>
+            <li>Selecciona el <strong>Maquilero</strong>, el <strong>Producto del Inventario</strong> asociado, la cantidad de piezas y las fechas.</li>
+            <li>Captura el <strong>Precio Extra ($)</strong> por pieza para esta tarea auxiliar.</li>
           </ol>
         </div>
       ),
-      keywords: 'atajo sparkles destello crear extra produccion autollenado automatizar preseleccionado bloqueado'
+      keywords: 'crear nuevo trabajo extra orden maquilero producto precio'
+    },
+    {
+      title: 'Registro de Entregas en Extras',
+      content: (
+        <div>
+          <p>Al igual que en <strong>Producción</strong>, cada orden de Extras tiene su propia columna de <strong>Registro de Entregas</strong>: puedes anotar la fecha real (y una nota opcional) de cada entrega, y el sistema la marca automáticamente como "A tiempo" o "Tarde" comparándola contra la fecha estimada.</p>
+        </div>
+      ),
+      keywords: 'registro entregas extras fecha bitacora a tiempo tarde'
     },
     {
       title: 'Llenado Manual de Precios y Liquidación de Extras en Pagos',
@@ -449,6 +507,33 @@ const guides_es = {
         </div>
       ),
       keywords: 'historial camiones bitacora desglose tallas auditoria consulta'
+    },
+    {
+      title: 'Entrega Adelantada y Buscadores en Camión',
+      content: (
+        <div>
+          <p>Si un maquilero entrega piezas de una orden que <strong>todavía está en proceso</strong> (antes de terminar todo el lote), puedes registrarlo sin esperar a que la orden se marque como Terminada:</p>
+          <ol>
+            <li>Haz clic en <strong>+ Entrega Adelantada</strong>, junto a la lista de modelos disponibles.</li>
+            <li>Busca y selecciona la orden activa correspondiente (puedes usar el buscador dentro de la ventana para encontrarla por modelo, maquilero u orden).</li>
+            <li>Distribuye las piezas entregadas por talla, igual que en una carga normal.</li>
+          </ol>
+          <p>Además, tanto la lista de <strong>modelos disponibles</strong> como el <strong>panel del camión</strong> (una vez que ya cargaste algo) cuentan con su propio buscador, para encontrar rápido un modelo, color u orden específica sin tener que hacer scroll por toda la lista.</p>
+        </div>
+      ),
+      keywords: 'entrega adelantada buscador buscar camion modelos disponibles panel'
+    },
+    {
+      title: 'Generar el Reporte de Camión (PDF)',
+      content: (
+        <div>
+          <p>Desde la sección de <strong>Reportes</strong>, la tarjeta <strong>Reporte de Camión</strong> genera un PDF con la misma lista de "Modelos Terminados en Maquila" que ves en la pantalla de Camión: modelo, maquilero, orden, cliente, colores disponibles con su cantidad exacta, precio y piezas disponibles — además del total de lotes y piezas.</p>
+          <div className="step-alert">
+            <strong>💡 Filtro de Entregas Adelantadas:</strong> Marca la casilla <strong>"Incluir también órdenes aptas para Entrega Adelantada"</strong> para agregar, en una sección aparte y claramente marcada, las órdenes que todavía están en proceso pero podrían recibir una entrega adelantada — así distingues cuáles ya estaban listas de cuáles serían entregas anticipadas.
+          </div>
+        </div>
+      ),
+      keywords: 'reporte camion pdf reportes entregas adelantadas lotes piezas disponibles'
     }
   ],
   plancha: [
@@ -614,7 +699,7 @@ const guides_en = {
           <p>The system has role-based security levels to protect financial and operational information:</p>
           <ul>
             <li><strong>Admin (Administrator):</strong> Total unrestricted access to all modules, including creating, editing, and deleting data, viewing audit logs, global financial reports, and complete control over payroll, payments, and discounts.</li>
-            <li><strong>Production (produccion1, produccion2):</strong> Allowed to manage tailors, cuts, production orders, record received pieces, and manage payments/deposits. They do not have access to critical deletions or full financial audit logs.</li>
+            <li><strong>Production (produccion1, produccion2):</strong> Allowed to manage tailors and production orders, record received pieces, and manage payments/deposits. In <strong>Cuts</strong> they can only view notes and start production for an available cut — they cannot edit, delete, or upload/change a cut's photo (reserved for Admin and Inventory). They also do not have access to critical deletions or full financial audit logs.</li>
             <li><strong>Inventory (inventario1):</strong> Responsible for registering garment cuts and color/quantity variants, as well as consulting and managing finished physical stock outputs in the real inventory. No access to payroll, payments, or financial reports.</li>
             <li><strong>General Operators:</strong> Can view inventory and production status but with restrictions on deleting and editing direct financial flows to safeguard the business.</li>
           </ul>
@@ -743,6 +828,18 @@ const guides_en = {
         </div>
       ),
       keywords: 'cut states available assigned reprogramming reprogram production run'
+    },
+    {
+      title: 'Total Pieces Counter and Role-Based Edit Permissions',
+      content: (
+        <div>
+          <p>When you open <strong>Cuts</strong>, the first thing you'll see is a highlighted card showing the <strong>Total Pieces in Cuts</strong> (the sum of all available pieces across active models) and the number of active models — a quick snapshot of how much material is still waiting to be assigned, without adding it up by hand.</p>
+          <div className="step-alert">
+            <strong>💡 Permissions by role:</strong> <strong>Production users (produccion1, produccion2)</strong> can only <strong>view Notes</strong> on a cut and use the <strong>Start Production</strong> button. They cannot edit a cut's data, delete it, or upload/change its photo — those actions are reserved for <strong>Admin</strong> and <strong>Inventory</strong>, to prevent accidental changes to a cut's price, pieces, or colors while it's already in use.
+          </div>
+        </div>
+      ),
+      keywords: 'total pieces counter cut permissions roles production edit restriction notes start production'
     }
   ],
   produccion: [
@@ -794,6 +891,30 @@ const guides_en = {
         </div>
       ),
       keywords: 'partially finished flow payments partial deliveries truck sewing inline received'
+    },
+    {
+      title: 'Sorting by Date and the Delivery Log (Punctuality Traffic Light)',
+      content: (
+        <div>
+          <p>The 3 Production tabs (In Process, Received, Finished) automatically sort by <strong>estimated delivery date</strong>, showing the most overdue orders first:</p>
+          <ul>
+            <li><strong>🔴 Red:</strong> 4 or more days late versus the estimated date.</li>
+            <li><strong>🟡 Yellow:</strong> Between 1 and 3 days late.</li>
+            <li><strong>🟢 Green/Normal:</strong> On time or not yet due.</li>
+          </ul>
+          <p>Also, in the <strong>Delivery Log</strong> column you can keep a manual history of when pieces from that order actually arrived:</p>
+          <ol>
+            <li>Click that column's button (shows "No records" or the number of records already saved).</li>
+            <li>In the popup, add a <strong>date</strong> (and an optional note, e.g. "delivered 30 pcs") for each real delivery you receive.</li>
+            <li>The system automatically compares that date against the estimated delivery date and marks it as <strong>"On time"</strong> or <strong>"Late (X days)"</strong>.</li>
+            <li>You can add several records for the same order (partial deliveries on different dates) and delete any you entered by mistake.</li>
+          </ol>
+          <div className="step-alert">
+            <strong>💡 What is it for?</strong> Unlike the estimated delivery date (which only compares against "today"), this log is permanently saved — even after the order is archived — so you can objectively evaluate how punctual each tailor is over time. This same column is also available in <strong>Extras</strong>.
+          </div>
+        </div>
+      ),
+      keywords: 'delivery log date traffic light punctuality overdue delay on time late history order'
     }
   ],
   pagos: [
@@ -839,6 +960,20 @@ const guides_en = {
         </div>
       ),
       keywords: 'personal discounts defective garments fines bad pieces reason charge balance'
+    },
+    {
+      title: '"Pieces to Pay" Field and the Amount Lock',
+      content: (
+        <div>
+          <p>Between <strong>Payment Type</strong> and <strong>Amount</strong> you'll find the <strong>Pieces to Pay</strong> field:</p>
+          <ul>
+            <li>Type in a number of pieces and the <strong>Amount</strong> is calculated for you (pieces × price per piece) — no more manual math.</li>
+            <li>The field shows how many pieces are <strong>actually still pending</strong> on that order ("remaining: X pcs"), and if you try to enter a higher number, the system automatically caps it to what can really be paid — preventing a payment for more pieces than are actually owed.</li>
+            <li><strong>The Amount field can no longer be typed freely</strong>, except for the <strong>Admin</strong> role, who can still edit it directly for special cases (adjustments, corrections).</li>
+          </ul>
+        </div>
+      ),
+      keywords: 'pieces to pay amount lock admin automatic calculation'
     }
   ],
   extras: [
@@ -863,20 +998,28 @@ const guides_en = {
       keywords: 'extras what are when to use extra work auxiliary tasks buttons labels ironing packaging inventory labor'
     },
     {
-      title: 'Creating Extras from Production (Sparkles Shortcut)',
+      title: 'Creating an Extra Job',
       content: (
         <div>
-          <p>To speed up your workflow, you can launch an extra order directly from the active Production panel:</p>
+          <p>To register an extra job, do it directly from the <strong>Extras</strong> section:</p>
           <ol>
-            <li>Go to the <strong>Production</strong> board and find the in-progress order in the table.</li>
-            <li>In the actions column of that row, click the premium <strong>Sparkles</strong> icon with a pink-violet gradient.</li>
-            <li>The ERP will automatically redirect you to the <strong>Extras</strong> screen and open the <strong>+ New Extra Order</strong> modal.</li>
-            <li>You will notice that the <strong>Inventory Product</strong>, <strong>Piece Count</strong>, <strong>Client</strong>, and <strong>Dates</strong> are already pre-filled and locked (read-only) to prevent manual input errors, ensuring the extra is correctly linked.</li>
-            <li>You only need to select the tailor responsible for the extra and enter the unit cost in the price field.</li>
+            <li>Go to the <strong>Extras</strong> panel in the sidebar.</li>
+            <li>Click <strong>+ New Order</strong>.</li>
+            <li>Select the <strong>Tailor</strong>, the associated <strong>Inventory Product</strong>, the piece count, and the dates.</li>
+            <li>Enter the <strong>Extra Price ($)</strong> per piece for this auxiliary task.</li>
           </ol>
         </div>
       ),
-      keywords: 'shortcut sparkles launch create extra production prefilled read only lock'
+      keywords: 'create new extra job order tailor product price'
+    },
+    {
+      title: 'Delivery Log in Extras',
+      content: (
+        <div>
+          <p>Just like in <strong>Production</strong>, every Extras order has its own <strong>Delivery Log</strong> column: you can note the real date (and an optional note) for each delivery, and the system automatically marks it as "On time" or "Late" compared to the estimated date.</p>
+        </div>
+      ),
+      keywords: 'delivery log extras date history on time late'
     },
     {
       title: 'Manual Pricing and Settling Extras in Payments',
@@ -929,6 +1072,33 @@ const guides_en = {
         </div>
       ),
       keywords: 'trucks history log sizes breakdown audit query'
+    },
+    {
+      title: 'Early Delivery and Search Bars in Truck',
+      content: (
+        <div>
+          <p>If a tailor delivers pieces from an order that is <strong>still in process</strong> (before the full lot is finished), you can register it without waiting for the order to be marked Finished:</p>
+          <ol>
+            <li>Click <strong>+ Early Delivery</strong>, next to the list of available models.</li>
+            <li>Search for and select the matching active order (use the search box inside the window to find it by model, tailor, or order).</li>
+            <li>Distribute the delivered pieces by size, just like a normal load.</li>
+          </ol>
+          <p>Also, both the <strong>available models list</strong> and the <strong>truck cargo panel</strong> (once you've loaded something) have their own search box, so you can quickly find a specific model, color, or order without scrolling through the whole list.</p>
+        </div>
+      ),
+      keywords: 'early delivery search bar truck available models cargo panel'
+    },
+    {
+      title: 'Generating the Truck Report (PDF)',
+      content: (
+        <div>
+          <p>From the <strong>Reports</strong> section, the <strong>Truck Report</strong> card generates a PDF with the same "Finished Models in Maquila" list you see on the Truck screen: model, tailor, order, client, available colors with exact quantities, price, and available pieces — plus the total batch and piece counts.</p>
+          <div className="step-alert">
+            <strong>💡 Early Delivery Filter:</strong> Check <strong>"Also include orders eligible for Early Delivery"</strong> to add, in a separate, clearly marked section, the orders still in process that could receive an early delivery — so you can tell which ones were already ready versus which would be early deliveries.
+          </div>
+        </div>
+      ),
+      keywords: 'truck report pdf reports early deliveries batches available pieces'
     }
   ],
   plancha: [

@@ -34,7 +34,9 @@ import {
   LayoutGrid,
   Flame,
   Layers,
-  Calendar
+  Calendar,
+  Sparkles,
+  Truck
 } from 'lucide-react';
 
 export default function Header({ onToggleSidebar }) {
@@ -1244,6 +1246,14 @@ export default function Header({ onToggleSidebar }) {
                     <Link to="/ayuda?tab=pagos" className="profile-dropdown-item" onClick={() => setShowHelp(false)}>
                       <Wallet size={16} />
                       <span>{t('header.paymentsAcum')}</span>
+                    </Link>
+                    <Link to="/ayuda?tab=extras" className="profile-dropdown-item" onClick={() => setShowHelp(false)}>
+                      <Sparkles size={16} />
+                      <span>{settings.language === 'en' ? 'Extras Guide' : 'Guía de Extras'}</span>
+                    </Link>
+                    <Link to="/ayuda?tab=camion" className="profile-dropdown-item" onClick={() => setShowHelp(false)}>
+                      <Truck size={16} />
+                      <span>{settings.language === 'en' ? 'Truck Shipping Guide' : 'Guía de Camión'}</span>
                     </Link>
                   </>
                 )}
