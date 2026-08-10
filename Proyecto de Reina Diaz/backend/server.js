@@ -692,6 +692,10 @@ app.get('/api/inventario', async (req, res) => {
 });
 
 app.post('/api/inventario', authenticateToken, upload.single('imagenBtn'), async (req, res) => {
+  const cortesEditRoles = ['admin', 'inventario1'];
+  if (!cortesEditRoles.includes(req.user.role)) {
+    return res.status(403).json({ error: 'No autorizado para editar Cortes' });
+  }
   let { numero, modelo, precio, color, cliente, no_orden, piezas_en_proceso, imagenUrl, observaciones, es_reprogramacion, precio_plancha } = req.body;
   const finalImageUrl = req.file ? await processImage(req.file) : (imagenUrl || null);
   const isReprog = (es_reprogramacion === 'true' || es_reprogramacion === true || es_reprogramacion === 1) ? 1 : 0;
@@ -805,6 +809,10 @@ app.post('/api/inventario', authenticateToken, upload.single('imagenBtn'), async
 });
 
 app.put('/api/inventario/:id/imagen', authenticateToken, upload.single('imagenBtn'), async (req, res) => {
+  const cortesEditRoles = ['admin', 'inventario1'];
+  if (!cortesEditRoles.includes(req.user.role)) {
+    return res.status(403).json({ error: 'No autorizado para editar Cortes' });
+  }
   const { imagenUrl } = req.body;
   const finalImageUrl = req.file ? await processImage(req.file) : (imagenUrl || null);
   try {
@@ -819,6 +827,10 @@ app.put('/api/inventario/:id/imagen', authenticateToken, upload.single('imagenBt
 });
 
 app.put('/api/inventario/:id', authenticateToken, upload.single('imagenBtn'), async (req, res) => {
+  const cortesEditRoles = ['admin', 'inventario1'];
+  if (!cortesEditRoles.includes(req.user.role)) {
+    return res.status(403).json({ error: 'No autorizado para editar Cortes' });
+  }
   let { numero, modelo, precio, color, cliente, no_orden, piezas_en_proceso, imagenUrl, imagen_actual, observaciones, precio_plancha } = req.body;
   const imagen = req.file ? await processImage(req.file) : (imagenUrl || imagen_actual || null);
   
@@ -927,6 +939,10 @@ app.put('/api/inventario/:id', authenticateToken, upload.single('imagenBtn'), as
 });
 
 app.delete('/api/inventario/:id', authenticateToken, async (req, res) => {
+  const cortesEditRoles = ['admin', 'inventario1'];
+  if (!cortesEditRoles.includes(req.user.role)) {
+    return res.status(403).json({ error: 'No autorizado para editar Cortes' });
+  }
   try {
     const [olds] = await db.query("SELECT modelo, no_orden, es_reprogramacion FROM inventario WHERE id = ?", [req.params.id]);
     const old = olds[0];
@@ -1648,10 +1664,11 @@ app.get('/api/extras', async (req, res) => {
       COALESCE(p.precio_extra, i.precio) as precio_unitario,
       (SELECT COALESCE(SUM(monto), 0) FROM pagos WHERE produccion_id = p.id) as pagado_efectivo,
       (SELECT COALESCE(SUM(monto), 0) FROM pagos WHERE produccion_id = p.id) + 
-      (SELECT COALESCE(SUM(dp.monto_total), 0) FROM descuentos_personales dp 
-       JOIN pagos pg ON dp.pago_id = pg.id 
-       WHERE pg.produccion_id = p.id) as pagado
-      FROM produccion p 
+      (SELECT COALESCE(SUM(dp.monto_total), 0) FROM descuentos_personales dp
+       JOIN pagos pg ON dp.pago_id = pg.id
+       WHERE pg.produccion_id = p.id) as pagado,
+      (SELECT COUNT(*) FROM produccion_entregas_log el WHERE el.produccion_id = p.id) as entregas_log_count
+      FROM produccion p
       JOIN maquileros m ON p.maquilero_id = m.id
       LEFT JOIN inventario i ON p.inventario_id = i.id
       WHERE ${whereArchivado} AND p.es_extra = 1
@@ -2722,6 +2739,228 @@ app.get('/api/reportes/produccion', authenticateToken, async (req, res) => {
       const totalPiezas = orders.reduce((sum, o) => sum + ((o.cantidad_recibida !== null && o.cantidad_recibida !== undefined ? o.cantidad_recibida : o.cantidad) || 0), 0);
       doc.moveDown();
       doc.fontSize(14).font("Helvetica-Bold").text(`${tLabel('TOTAL DE PIEZAS TERMINADAS', 'TOTAL FINISHED PIECES')}: ${totalPiezas}`, { align: 'right' });
+    }
+
+    doc.end();
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Reporte de Camión: copia exacta de la lista "Modelos Terminados en Maquila" que se ve
+// en la pantalla de Camión (misma consulta que /api/camiones/disponibles), más una
+// sección opcional con las órdenes activas aptas para "Entrega Adelantada" (las que
+// aparecen en ese modal), para poder distinguir cuáles ya estaban listas de cuáles serían
+// entregas adelantadas.
+const formatColoresPdf = (colorStr) => {
+  if (!colorStr) return 'N/A';
+  const trimmed = String(colorStr).trim();
+  if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) {
+        return parsed.map(c => `${c.color || c.Color || c.name || c} (${c.cantidad || c.Cantidad || 0} pzs)`).join(', ');
+      }
+    } catch (e) { /* no era JSON, se deja tal cual */ }
+  }
+  return trimmed;
+};
+
+app.get('/api/reportes/camion', authenticateToken, async (req, res) => {
+  const allowedRoles = ['admin', 'produccion1', 'produccion2', 'produccion', 'inventario1', 'inventario', 'maquila'];
+  if (!allowedRoles.includes(req.user.role)) {
+    return res.status(403).json({ error: 'No autorizado para esta sección' });
+  }
+  const lang = req.query.lang || 'es';
+  const tLabel = (esText, enText) => lang === 'en' ? enText : esText;
+  const incluirAdelantadas = req.query.incluirAdelantadas === 'true';
+
+  try {
+    await autoArchiveOrders();
+
+    const [rows] = await db.query(`
+      SELECT p.id as id, p.id as produccion_id, p.cantidad, p.cantidad_recibida, p.estado,
+             m.nombre as maquilero_nombre,
+             i.modelo, i.color, i.cliente, i.no_orden, i.precio,
+             (
+               SELECT COALESCE(SUM(cd.piezas), 0)
+               FROM camion_detalles cd
+               WHERE cd.produccion_id = p.id
+             ) as piezas_enviadas
+      FROM produccion p
+      JOIN maquileros m ON p.maquilero_id = m.id
+      JOIN inventario i ON p.inventario_id = i.id
+      WHERE p.estado != 'Cancelado' AND p.archivado = 0 AND (p.es_extra = 0 OR p.es_extra IS NULL)
+    `);
+
+    const [shippedDetails] = await db.query(
+      `SELECT produccion_id, color, tallas_cantidades FROM camion_detalles WHERE produccion_id IS NOT NULL`
+    );
+    const shippedByProdColor = {};
+    for (const d of shippedDetails) {
+      let tallas = {};
+      try { tallas = d.tallas_cantidades ? JSON.parse(d.tallas_cantidades) : {}; } catch (e) { tallas = {}; }
+      const firstVal = Object.values(tallas)[0];
+      const isNested = typeof firstVal === 'object' && firstVal !== null;
+      if (isNested) {
+        for (const [color, tallasObj] of Object.entries(tallas)) {
+          const sum = Object.values(tallasObj).reduce((s, q) => s + (parseInt(q) || 0), 0);
+          const key = `${d.produccion_id}|${color}`;
+          shippedByProdColor[key] = (shippedByProdColor[key] || 0) + sum;
+        }
+      } else {
+        const sum = Object.values(tallas).reduce((s, q) => s + (parseInt(q) || 0), 0);
+        const key = `${d.produccion_id}|${d.color || ''}`;
+        shippedByProdColor[key] = (shippedByProdColor[key] || 0) + sum;
+      }
+    }
+
+    const stockRows = rows.map(r => {
+      let piezas_producidas = 0;
+      if (r.estado === 'Terminado') {
+        piezas_producidas = (r.cantidad_recibida !== null && r.cantidad_recibida !== undefined) ? r.cantidad_recibida : r.cantidad;
+      } else {
+        piezas_producidas = (r.cantidad_recibida !== null && r.cantidad_recibida !== undefined && r.cantidad_recibida > 0) ? r.cantidad_recibida : 0;
+      }
+      const piezas_disponibles = piezas_producidas - r.piezas_enviadas;
+
+      let colorRestante = r.color;
+      try {
+        const colorArr = JSON.parse(r.color);
+        if (Array.isArray(colorArr)) {
+          const restante = colorArr
+            .map(item => {
+              const enviado = shippedByProdColor[`${r.produccion_id}|${item.color}`] || 0;
+              const qty = Math.max(0, (parseInt(item.cantidad) || 0) - enviado);
+              return { color: item.color, cantidad: String(qty) };
+            })
+            .filter(item => parseInt(item.cantidad) > 0);
+          colorRestante = JSON.stringify(restante);
+        }
+      } catch (e) { /* color no es un arreglo JSON (variante única) */ }
+
+      return { ...r, color: colorRestante, piezas: piezas_disponibles };
+    }).filter(item => item.piezas > 0);
+
+    let adelantadaRows = [];
+    if (incluirAdelantadas) {
+      const [activeRows] = await db.query(`
+        SELECT p.id, p.cantidad, p.cantidad_recibida,
+               m.nombre as maquilero_nombre,
+               i.modelo, i.color, i.cliente, i.no_orden, i.precio
+        FROM produccion p
+        JOIN maquileros m ON p.maquilero_id = m.id
+        JOIN inventario i ON p.inventario_id = i.id
+        WHERE p.estado NOT IN ('Cancelado', 'Terminado') AND p.archivado = 0 AND (p.es_extra = 0 OR p.es_extra IS NULL)
+      `);
+      adelantadaRows = activeRows;
+    }
+
+    const doc = new PDFDocument({ margins: { top: 30, bottom: 50, left: 30, right: 30 }, size: 'A4', layout: 'landscape' });
+    res.setHeader('Content-disposition', 'attachment; filename="Reporte_Camion.pdf"');
+    res.setHeader('Content-type', 'application/pdf');
+    doc.pipe(res);
+
+    try {
+      const logoPath = path.join(__dirname, '..', 'frontend', 'public', 'logo.png');
+      if (fs.existsSync(logoPath)) {
+        doc.image(logoPath, 25, 20, { width: 85 });
+      }
+    } catch (e) {}
+
+    doc.y = 110;
+    doc.fontSize(20).text(tLabel('Reporte de Camión', 'Truck Report'), { align: 'center' });
+    doc.fontSize(11).fillColor('#64748b').text(
+      tLabel('Modelos terminados en maquila, listos para cargar', 'Finished models in maquila, ready to load'),
+      { align: 'center' }
+    );
+    doc.fillColor('black');
+    doc.moveDown(1.5);
+
+    if (stockRows.length === 0) {
+      doc.fontSize(12).text(tLabel('No hay modelos disponibles en este momento.', 'No models available right now.'), { align: 'center' });
+    } else {
+      const totalLotes = stockRows.length;
+      const totalPiezas = stockRows.reduce((sum, r) => sum + r.piezas, 0);
+      doc.fontSize(12).font('Helvetica-Bold').text(
+        `${tLabel('LOTES', 'BATCHES')}: ${totalLotes}    |    ${tLabel('PIEZAS TOTALES', 'TOTAL PIECES')}: ${totalPiezas}`,
+        { align: 'center' }
+      );
+      doc.font('Helvetica');
+      doc.moveDown(1);
+
+      const tableConfig = {
+        headers: [
+          { label: tLabel("MODELO", "MODEL"), property: "modelo", width: 75 },
+          { label: tLabel("MAQUILERO", "TAILOR"), property: "maquilero", width: 130 },
+          { label: tLabel("ORDEN", "ORDER"), property: "orden", width: 65 },
+          { label: tLabel("CLIENTE", "CLIENT"), property: "cliente", width: 120 },
+          { label: tLabel("COLORES DISPONIBLES", "AVAILABLE COLORS"), property: "colores", width: 200 },
+          { label: tLabel("PRECIO", "PRICE"), property: "precio", width: 60 },
+          { label: tLabel("DISPONIBLE", "AVAILABLE"), property: "disponible", width: 70 }
+        ],
+        datas: stockRows.map(r => ({
+          modelo: r.modelo || '-',
+          maquilero: (r.maquilero_nombre || '').toUpperCase(),
+          orden: r.no_orden || '-',
+          cliente: r.cliente || '-',
+          colores: formatColoresPdf(r.color),
+          precio: '$' + (Number(r.precio) || 0).toFixed(2),
+          disponible: String(r.piezas)
+        })),
+        options: { padding: 4 }
+      };
+
+      await doc.table(tableConfig, {
+        prepareHeader: () => doc.font("Helvetica-Bold").fontSize(9),
+        prepareRow: () => doc.font("Helvetica").fontSize(9)
+      });
+    }
+
+    if (incluirAdelantadas) {
+      doc.moveDown(2);
+      doc.fontSize(16).font('Helvetica-Bold').fillColor('#c2410c').text(
+        tLabel('Órdenes Activas — Aptas para Entrega Adelantada', 'Active Orders — Eligible for Early Delivery'),
+        { align: 'center' }
+      );
+      doc.fillColor('black').font('Helvetica');
+      doc.fontSize(10).fillColor('#64748b').text(
+        tLabel('Todavía no están en la lista de arriba: son órdenes en proceso que el maquilero podría entregar antes de tiempo.', 'Not yet in the list above: orders still in process that the tailor could deliver early.'),
+        { align: 'center' }
+      );
+      doc.fillColor('black');
+      doc.moveDown(1);
+
+      if (adelantadaRows.length === 0) {
+        doc.fontSize(11).text(tLabel('No hay órdenes activas en este momento.', 'No active orders right now.'), { align: 'center' });
+      } else {
+        const tableConfig2 = {
+          headers: [
+            { label: tLabel("MODELO", "MODEL"), property: "modelo", width: 75 },
+            { label: tLabel("MAQUILERO", "TAILOR"), property: "maquilero", width: 130 },
+            { label: tLabel("ORDEN", "ORDER"), property: "orden", width: 65 },
+            { label: tLabel("CLIENTE", "CLIENT"), property: "cliente", width: 120 },
+            { label: tLabel("COLORES", "COLORS"), property: "colores", width: 160 },
+            { label: tLabel("PEDIDAS", "ORDERED"), property: "pedidas", width: 60 },
+            { label: tLabel("YA RECOLECTADAS", "ALREADY COLLECTED"), property: "recolectadas", width: 90 }
+          ],
+          datas: adelantadaRows.map(r => ({
+            modelo: r.modelo || '-',
+            maquilero: (r.maquilero_nombre || '').toUpperCase(),
+            orden: r.no_orden || '-',
+            cliente: r.cliente || '-',
+            colores: formatColoresPdf(r.color),
+            pedidas: String(r.cantidad || 0),
+            recolectadas: String(r.cantidad_recibida || 0)
+          })),
+          options: { padding: 4 }
+        };
+
+        await doc.table(tableConfig2, {
+          prepareHeader: () => doc.font("Helvetica-Bold").fontSize(9).fillColor('#c2410c'),
+          prepareRow: () => doc.font("Helvetica").fontSize(9).fillColor('black')
+        });
+      }
     }
 
     doc.end();

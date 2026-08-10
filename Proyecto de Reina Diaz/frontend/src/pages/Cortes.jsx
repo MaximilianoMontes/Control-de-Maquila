@@ -437,18 +437,19 @@ export default function Cortes() {
                                   </button>
                                 )}
 
-                                <div style={{ height: '1px', background: 'var(--border-color)', margin: '4px 0' }}></div>
-
-                                {/* Editar / Ver Detalles */}
-                                <button className="actions-dropdown-item" onClick={(e) => { setActiveDropdownId(null); openEdit(item, e); }}>
-                                  <Pencil size={16} /> {canEdit ? (isEn ? 'Edit' : 'Editar') : (isEn ? 'View Details' : 'Ver Detalles')}
-                                </button>
-
-                                {/* Eliminar (Solo Editores) */}
+                                {/* Editar y Eliminar (Solo Editores): produccion1/produccion2 solo deben ver
+                                    Observaciones e Iniciar Producción, nada más — sin acceso a los datos
+                                    del corte (precio, piezas, colores, etc.) */}
                                 {canEdit && (
-                                  <button className="actions-dropdown-item danger" onClick={(e) => { setActiveDropdownId(null); handleDelete(item.id, e); }}>
-                                    <Trash2 size={16} /> {isEn ? 'Delete' : 'Eliminar'}
-                                  </button>
+                                  <>
+                                    <div style={{ height: '1px', background: 'var(--border-color)', margin: '4px 0' }}></div>
+                                    <button className="actions-dropdown-item" onClick={(e) => { setActiveDropdownId(null); openEdit(item, e); }}>
+                                      <Pencil size={16} /> {isEn ? 'Edit' : 'Editar'}
+                                    </button>
+                                    <button className="actions-dropdown-item danger" onClick={(e) => { setActiveDropdownId(null); handleDelete(item.id, e); }}>
+                                      <Trash2 size={16} /> {isEn ? 'Delete' : 'Eliminar'}
+                                    </button>
+                                  </>
                                 )}
                               </div>
                             )}

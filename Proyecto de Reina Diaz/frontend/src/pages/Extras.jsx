@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { 
   Plus, Search, Pencil, Trash2, CheckCircle, XCircle, 
   Archive, ArchiveRestore, Image as ImageIcon, AlertTriangle, AlertCircle, Calendar, X, Sparkles,
-  MinusCircle, ChevronDown
+  MinusCircle, ChevronDown, ClipboardList
 } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -63,6 +63,67 @@ export default function Extras() {
   
   const [isShortcutMode, setIsShortcutMode] = useState(false);
   const [editingOrder, setEditingOrder] = useState(null);
+
+  // Bitácora de entregas: mismo registro de fecha (+ nota opcional) que en Producción,
+  // reusa los mismos endpoints porque los extras tambien son filas de "produccion".
+  const [entregasLogModalOpen, setEntregasLogModalOpen] = useState(false);
+  const [entregasLogOrder, setEntregasLogOrder] = useState(null);
+  const [entregasLogList, setEntregasLogList] = useState([]);
+  const [entregasLogLoading, setEntregasLogLoading] = useState(false);
+  const [nuevaEntregaFecha, setNuevaEntregaFecha] = useState('');
+  const [nuevaEntregaNota, setNuevaEntregaNota] = useState('');
+
+  const fetchEntregasLog = async (ordenId) => {
+    setEntregasLogLoading(true);
+    try {
+      const res = await axios.get(`${API}/api/produccion/${ordenId}/entregas-log`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      setEntregasLogList(res.data);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setEntregasLogLoading(false);
+    }
+  };
+
+  const handleOpenEntregasLog = (o) => {
+    setEntregasLogOrder(o);
+    setNuevaEntregaFecha(new Date().toISOString().split('T')[0]);
+    setNuevaEntregaNota('');
+    setEntregasLogModalOpen(true);
+    fetchEntregasLog(o.id);
+  };
+
+  const handleAddEntregaLog = async () => {
+    if (!entregasLogOrder || !nuevaEntregaFecha) return;
+    try {
+      await axios.post(`${API}/api/produccion/${entregasLogOrder.id}/entregas-log`, {
+        fecha: nuevaEntregaFecha,
+        nota: nuevaEntregaNota || null
+      }, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+      setNuevaEntregaNota('');
+      await fetchEntregasLog(entregasLogOrder.id);
+      fetchOrders();
+      toast.success(isEn ? 'Delivery record added' : 'Registro de entrega agregado', { theme: 'dark' });
+    } catch (e) {
+      console.error(e);
+      toast.error(isEn ? 'Error adding record' : 'Error al agregar el registro', { theme: 'dark' });
+    }
+  };
+
+  const handleDeleteEntregaLog = async (logId) => {
+    try {
+      await axios.delete(`${API}/api/produccion/entregas-log/${logId}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      await fetchEntregasLog(entregasLogOrder.id);
+      fetchOrders();
+    } catch (e) {
+      console.error(e);
+      toast.error(isEn ? 'Error deleting record' : 'Error al eliminar el registro', { theme: 'dark' });
+    }
+  };
 
   useEffect(() => {
     fetchOrders();
@@ -413,6 +474,7 @@ export default function Extras() {
                 <th>{t('prod.pieces')} ({t('dash.status') === 'Status' ? 'Sent' : 'Env.'})</th>
                 <th>{t('prod.pieces')} ({t('dash.status') === 'Status' ? 'Recv.' : 'Rec.'})</th>
                 <th>{t('prod.startDate')} / {t('prod.endDate')}</th>
+                <th>{isEn ? 'Delivery Log' : 'Registro de Entregas'}</th>
                 <th>Costo Extra Unit.</th>
                 <th>Pago Total Extra</th>
                 <th>{t('prod.paid')}</th>
@@ -422,7 +484,7 @@ export default function Extras() {
             </thead>
             <tbody>
               {filteredOrders.length === 0 ? (
-                <tr><td colSpan="11" style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>{t('prod.noResults')}</td></tr>
+                <tr><td colSpan="12" style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>{t('prod.noResults')}</td></tr>
               ) : (
                 filteredOrders.map((o, index) => {
                   const pagado = o.pagado || 0;
@@ -494,6 +556,19 @@ export default function Extras() {
                             {delayIcon}
                           </div>
                         </div>
+                      </td>
+                      <td style={{ textAlign: 'center' }}>
+                        <button
+                          type="button"
+                          className="btn btn-secondary"
+                          style={{ padding: '4px 10px', fontSize: '11px', borderRadius: '6px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                          onClick={() => handleOpenEntregasLog(o)}
+                        >
+                          <ClipboardList size={14} />
+                          {o.entregas_log_count > 0
+                            ? `${o.entregas_log_count} ${isEn ? (o.entregas_log_count === 1 ? 'record' : 'records') : (o.entregas_log_count === 1 ? 'registro' : 'registros')}`
+                            : (isEn ? 'No records' : 'Sin registros')}
+                        </button>
                       </td>
                       <td style={{ textAlign: 'center', fontWeight: 600 }}>{formatCurrency(o.precio_unitario)}</td>
                       <td style={{ minWidth: '130px' }}>
@@ -729,6 +804,101 @@ export default function Extras() {
                 </div>
               )}
             </form>
+          </div>
+        </div>
+      )}
+
+      {entregasLogModalOpen && entregasLogOrder && (
+        <div className="modal-overlay" style={{ zIndex: 1950 }} onClick={() => setEntregasLogModalOpen(false)}>
+          <div className="modal-content glass-card" style={{ maxWidth: '560px', width: '95%' }} onClick={e => e.stopPropagation()}>
+            <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.75rem' }}>
+              <div>
+                <h2 style={{ fontSize: '1.25rem', margin: 0, fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <ClipboardList size={20} /> {isEn ? 'Delivery Log' : 'Registro de Entregas'}
+                </h2>
+                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                  {isEn ? 'Model' : 'Modelo'}: <strong>{entregasLogOrder.producto_modelo}</strong> ({entregasLogOrder.maquilero_nombre})
+                  {' · '}{isEn ? 'Estimated:' : 'Estimado:'} <strong>{displayDate(entregasLogOrder.fecha_fin)}</strong>
+                </div>
+              </div>
+              <button className="btn-icon" onClick={() => setEntregasLogModalOpen(false)}><X size={22} /></button>
+            </div>
+
+            <div style={{ margin: '1rem 0', maxHeight: '280px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+              {entregasLogLoading ? (
+                <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '1rem' }}>
+                  {isEn ? 'Loading...' : 'Cargando...'}
+                </div>
+              ) : entregasLogList.length === 0 ? (
+                <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '1rem', fontSize: '0.9rem' }}>
+                  {isEn ? 'No delivery records yet.' : 'Todavía no hay registros de entrega.'}
+                </div>
+              ) : (
+                entregasLogList.map(entry => {
+                  const entryDate = Date.UTC(...entry.fecha.slice(0, 10).split('-').map((v, i) => i === 1 ? parseInt(v) - 1 : parseInt(v)));
+                  let isLate = false;
+                  let diffDays = 0;
+                  if (entregasLogOrder.fecha_fin) {
+                    const fDate = new Date(entregasLogOrder.fecha_fin);
+                    const limitDate = Date.UTC(fDate.getUTCFullYear(), fDate.getUTCMonth(), fDate.getUTCDate());
+                    diffDays = Math.round((entryDate - limitDate) / (1000 * 60 * 60 * 24));
+                    isLate = diffDays > 0;
+                  }
+                  return (
+                    <div key={entry.id} className="glass-card" style={{ padding: '0.65rem 0.85rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.03)', borderRadius: '8px' }}>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <strong style={{ fontSize: '0.9rem' }}>{displayDate(entry.fecha)}</strong>
+                          <span className={`badge ${isLate ? 'badge-danger' : 'badge-success'}`} style={{ fontSize: '10px', padding: '2px 6px', fontWeight: 700 }}>
+                            {isLate ? `${isEn ? 'Late' : 'Tarde'} (${diffDays}d)` : (isEn ? 'On time' : 'A tiempo')}
+                          </span>
+                        </div>
+                        {entry.nota && (
+                          <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '2px' }}>{entry.nota}</div>
+                        )}
+                        {entry.username && (
+                          <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '2px', opacity: 0.7 }}>
+                            {isEn ? 'by' : 'por'} {entry.username}
+                          </div>
+                        )}
+                      </div>
+                      {canEdit && (
+                        <button type="button" className="btn btn-danger" style={{ padding: '4px 8px' }} onClick={() => handleDeleteEntregaLog(entry.id)}>
+                          <Trash2 size={14} />
+                        </button>
+                      )}
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {canEdit && (
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '1rem', flexWrap: 'wrap' }}>
+                <div className="form-group" style={{ margin: 0, flex: '1 1 140px' }}>
+                  <label className="form-label" style={{ fontSize: '0.75rem' }}>{isEn ? 'Date' : 'Fecha'}</label>
+                  <input
+                    type="date"
+                    className="form-input"
+                    value={nuevaEntregaFecha}
+                    onChange={e => setNuevaEntregaFecha(e.target.value)}
+                  />
+                </div>
+                <div className="form-group" style={{ margin: 0, flex: '2 1 180px' }}>
+                  <label className="form-label" style={{ fontSize: '0.75rem' }}>{isEn ? 'Note (optional)' : 'Nota (opcional)'}</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    value={nuevaEntregaNota}
+                    onChange={e => setNuevaEntregaNota(e.target.value)}
+                    placeholder={isEn ? 'e.g. delivered 30 pcs' : 'ej. entregó 30 pzs'}
+                  />
+                </div>
+                <button type="button" className="btn btn-primary" style={{ padding: '0.55rem 1rem' }} onClick={handleAddEntregaLog} disabled={!nuevaEntregaFecha}>
+                  <Plus size={16} /> {isEn ? 'Add' : 'Agregar'}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

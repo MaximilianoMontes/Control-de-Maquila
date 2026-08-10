@@ -1,4 +1,4 @@
-import { FileText, Download, PackageSearch, CalendarRange, DollarSign } from 'lucide-react';
+import { Truck, Download, PackageSearch, CalendarRange, DollarSign } from 'lucide-react';
 import { useState } from 'react';
 import { useSettings } from '../context/SettingsContext';
 import API_URL from '../config';
@@ -9,22 +9,20 @@ export default function Reportes() {
   const [recVerde, setRecVerde] = useState(true);
   const [recAmarillo, setRecAmarillo] = useState(true);
   const [recRojo, setRecRojo] = useState(true);
-  const [prodStart, setProdStart] = useState('');
-  const [prodEnd, setProdEnd] = useState('');
+  const [incluirAdelantadas, setIncluirAdelantadas] = useState(false);
   const [payStart, setPayStart] = useState('');
   const [payEnd, setPayEnd] = useState('');
   const { settings, t } = useSettings();
   const lang = settings.language || 'es';
-  
-  const handleDownloadProduccion = () => {
-    let url = `${API_URL}/api/reportes/produccion`;
+  const isEn = lang === 'en';
+
+  const handleDownloadCamion = () => {
+    let url = `${API_URL}/api/reportes/camion`;
     const params = new URLSearchParams();
-    if (prodStart) params.append('start', prodStart);
-    if (prodEnd) params.append('end', prodEnd);
+    params.append('incluirAdelantadas', incluirAdelantadas ? 'true' : 'false');
     params.append('lang', lang);
     params.append('token', localStorage.getItem('token'));
-    const query = params.toString();
-    if (query) url += `?${query}`;
+    url += `?${params.toString()}`;
     window.open(url, '_blank');
   };
 
@@ -80,34 +78,28 @@ export default function Reportes() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
         <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '3rem 2rem' }}>
           <div style={{ padding: '1.5rem', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '50%', color: '#60a5fa', marginBottom: '1.5rem' }}>
-             <FileText size={48} />
+             <Truck size={48} />
           </div>
-          <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>{t('rep.prodTitle')}</h2>
-          <p style={{ color: '#94a3b8', marginBottom: '1.5rem' }}>{t('rep.prodDesc')}</p>
-          
+          <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>{isEn ? 'Truck Report' : 'Reporte de Camión'}</h2>
+          <p style={{ color: '#94a3b8', marginBottom: '1.5rem' }}>
+            {isEn
+              ? 'Generates a PDF with the exact list of finished models ready to load onto the truck: model, tailor, order, colors and available pieces.'
+              : 'Genera un PDF con la lista exacta de modelos terminados listos para camión: modelo, maquilero, orden, colores y piezas disponibles.'}
+          </p>
+
           <div style={{ width: '100%', marginBottom: '1.5rem', textAlign: 'left' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-              <div style={{ minWidth: 0 }}>
-                <label className="form-label" style={{ fontSize: '0.75rem' }}>{t('rep.from')}</label>
-                <input type="date" className="form-input" value={prodStart} onChange={e => setProdStart(e.target.value)} />
-              </div>
-              <div style={{ minWidth: 0 }}>
-                <label className="form-label" style={{ fontSize: '0.75rem' }}>{t('rep.to')}</label>
-                <input type="date" className="form-input" value={prodEnd} onChange={e => setProdEnd(e.target.value)} />
-              </div>
-            </div>
-            
-            {(prodStart || prodEnd) && (
-              <button 
-                onClick={() => { setProdStart(''); setProdEnd(''); }}
-                style={{ background: 'none', border: 'none', color: '#64748b', fontSize: '0.75rem', marginTop: '1rem', cursor: 'pointer', textDecoration: 'underline' }}
-              >
-                {t('rep.cleanDates')}
-              </button>
-            )}
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: '0.85rem', cursor: 'pointer', color: 'var(--text-primary)', fontWeight: 600 }}>
+              <input
+                type="checkbox"
+                checked={incluirAdelantadas}
+                onChange={e => setIncluirAdelantadas(e.target.checked)}
+                style={{ accentColor: '#2563eb', width: '16px', height: '16px', cursor: 'pointer' }}
+              />
+              {isEn ? 'Also include orders eligible for Early Delivery' : 'Incluir también órdenes aptas para Entrega Adelantada'}
+            </label>
           </div>
 
-          <button className="btn btn-primary" onClick={handleDownloadProduccion} style={{ width: '100%', background: 'linear-gradient(135deg, #2563eb, #1d4ed8)', marginTop: 'auto' }}>
+          <button className="btn btn-primary" onClick={handleDownloadCamion} style={{ width: '100%', background: 'linear-gradient(135deg, #2563eb, #1d4ed8)', marginTop: 'auto' }}>
             <Download size={20} /> {t('rep.download')}
           </button>
         </div>
