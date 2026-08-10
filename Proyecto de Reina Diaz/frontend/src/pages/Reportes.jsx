@@ -95,7 +95,7 @@ export default function Reportes() {
                 onChange={e => setIncluirAdelantadas(e.target.checked)}
                 style={{ accentColor: '#2563eb', width: '16px', height: '16px', cursor: 'pointer' }}
               />
-              {isEn ? 'Also include orders eligible for Early Delivery' : 'Incluir también órdenes aptas para Entrega Adelantada'}
+              {isEn ? 'Also include models with Early Delivery already applied' : 'Incluir también modelos con Entrega Adelantada ya aplicada'}
             </label>
           </div>
 

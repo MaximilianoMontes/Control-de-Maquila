@@ -2883,14 +2883,26 @@ app.get('/api/reportes/camion', authenticateToken, async (req, res) => {
 
     let adelantadaRows = [];
     if (incluirAdelantadas) {
+      // "Aplicaron Entrega Adelantada" no es lo mismo que "podrían aplicarla": no existe una
+      // bandera guardada que diga si se usó específicamente el botón de Entrega Adelantada
+      // (esa acción termina llamando al mismo endpoint de recepción que se usa siempre), así
+      // que se identifica por el resultado real: la orden YA tiene piezas físicamente subidas
+      // a un camión (piezas_enviadas > 0) pero su estado todavía no es "Terminado" — es decir,
+      // se entregó al camión antes de que la orden se diera por concluida.
       const [activeRows] = await db.query(`
         SELECT p.id, p.id as produccion_id, p.cantidad, p.cantidad_recibida, p.tallas_recibidas,
                i.id as inventario_id, m.nombre as maquilero_nombre,
-               i.modelo, i.color, i.cliente, i.no_orden, i.precio
+               i.modelo, i.color, i.cliente, i.no_orden, i.precio,
+               (
+                 SELECT COALESCE(SUM(cd.piezas), 0)
+                 FROM camion_detalles cd
+                 WHERE cd.produccion_id = p.id
+               ) as piezas_enviadas
         FROM produccion p
         JOIN maquileros m ON p.maquilero_id = m.id
         JOIN inventario i ON p.inventario_id = i.id
         WHERE p.estado NOT IN ('Cancelado', 'Terminado') AND p.archivado = 0 AND (p.es_extra = 0 OR p.es_extra IS NULL)
+        HAVING piezas_enviadas > 0
       `);
       adelantadaRows = activeRows;
     }
@@ -2914,9 +2926,18 @@ app.get('/api/reportes/camion', authenticateToken, async (req, res) => {
       };
     }).filter(item => item.piezas > 0);
 
+    // Aquí sí interesa mostrar los colores que YA se enviaron (no lo que queda disponible,
+    // que para estas órdenes puede ser 0 si se mandó todo lo recibido hasta ahora).
+    const formatShippedColoresPdf = (produccionId) => {
+      const entries = Object.entries(shippedByProdColor)
+        .filter(([key, qty]) => key.startsWith(`${produccionId}|`) && qty > 0)
+        .map(([key, qty]) => `${key.split('|')[1] || 'N/A'} (${qty} pzs)`);
+      return entries.length > 0 ? entries.join(', ') : 'N/A';
+    };
+
     adelantadaRows = adelantadaRows.map(r => ({
       ...r,
-      color: computeColorRestante(r, claimedByInvColor, shippedByProdColor)
+      colorEnviado: formatShippedColoresPdf(r.produccion_id)
     }));
 
     const doc = new PDFDocument({ margins: { top: 30, bottom: 50, left: 30, right: 30 }, size: 'A4', layout: 'landscape' });
@@ -2988,19 +3009,19 @@ app.get('/api/reportes/camion', authenticateToken, async (req, res) => {
       doc.addPage({ margins: doc.page.margins, size: 'A4', layout: 'landscape' });
       doc.y = 40;
       doc.fontSize(16).font('Helvetica-Bold').fillColor('#c2410c').text(
-        tLabel('Órdenes Activas — Aptas para Entrega Adelantada', 'Active Orders — Eligible for Early Delivery'),
+        tLabel('Modelos con Entrega Adelantada', 'Models with Early Delivery'),
         { align: 'center' }
       );
       doc.fillColor('black').font('Helvetica');
       doc.fontSize(10).fillColor('#64748b').text(
-        tLabel('Todavía no están en la lista de arriba: son órdenes en proceso que el maquilero podría entregar antes de tiempo.', 'Not yet in the list above: orders still in process that the tailor could deliver early.'),
+        tLabel('Modelos que ya se subieron al camión antes de que su orden de producción estuviera Terminada.', 'Models that were already loaded onto the truck before their production order was Finished.'),
         { align: 'center' }
       );
       doc.fillColor('black');
       doc.moveDown(1);
 
       if (adelantadaRows.length === 0) {
-        doc.fontSize(11).text(tLabel('No hay órdenes activas en este momento.', 'No active orders right now.'), { align: 'center' });
+        doc.fontSize(11).text(tLabel('No se ha usado Entrega Adelantada en ningún modelo por ahora.', 'Early Delivery has not been used on any model yet.'), { align: 'center' });
       } else {
         const tableConfig2 = {
           headers: [
@@ -3008,18 +3029,18 @@ app.get('/api/reportes/camion', authenticateToken, async (req, res) => {
             { label: tLabel("MAQUILERO", "TAILOR"), property: "maquilero", width: 130 },
             { label: tLabel("ORDEN", "ORDER"), property: "orden", width: 65 },
             { label: tLabel("CLIENTE", "CLIENT"), property: "cliente", width: 120 },
-            { label: tLabel("COLORES", "COLORS"), property: "colores", width: 160 },
-            { label: tLabel("PEDIDAS", "ORDERED"), property: "pedidas", width: 60 },
-            { label: tLabel("YA RECOLECTADAS", "ALREADY COLLECTED"), property: "recolectadas", width: 90 }
+            { label: tLabel("COLORES ENVIADOS", "SHIPPED COLORS"), property: "colores", width: 160 },
+            { label: tLabel("PIEZAS ENVIADAS", "PIECES SHIPPED"), property: "enviadas", width: 70 },
+            { label: tLabel("TOTAL DE LA ORDEN", "ORDER TOTAL"), property: "total", width: 80 }
           ],
           datas: adelantadaRows.map(r => ({
             modelo: r.modelo || '-',
             maquilero: truncatePdf((r.maquilero_nombre || '').toUpperCase(), 26),
             orden: r.no_orden || '-',
             cliente: truncatePdf(r.cliente, 24),
-            colores: formatColoresPdf(r.color),
-            pedidas: String(r.cantidad || 0),
-            recolectadas: String(r.cantidad_recibida || 0)
+            colores: r.colorEnviado,
+            enviadas: String(r.piezas_enviadas || 0),
+            total: String(r.cantidad_recibida || r.cantidad || 0)
           })),
           options: { padding: 4 }
         };
