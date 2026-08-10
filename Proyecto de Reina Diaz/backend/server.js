@@ -293,6 +293,78 @@ const formatDateToDMY = (dateVal) => {
   return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
 };
 
+// Suma piezas por color a partir de un tallas_recibidas/tallas_cantidades guardado, que puede
+// venir en dos formas: plana {"COLOR":{"CANTIDAD":n}} o desglosada por talla
+// {"COLOR":{"05":n,"07":m,...}} — en ambos casos basta sumar los valores numéricos del objeto.
+const sumTallasPorColor = (tallasJson) => {
+  if (!tallasJson) return {};
+  let tallas;
+  try { tallas = typeof tallasJson === 'string' ? JSON.parse(tallasJson) : tallasJson; } catch (e) { return {}; }
+  if (!tallas || typeof tallas !== 'object') return {};
+  const result = {};
+  for (const [color, val] of Object.entries(tallas)) {
+    const sum = (val && typeof val === 'object')
+      ? Object.values(val).reduce((s, q) => s + (parseInt(q) || 0), 0)
+      : (parseInt(val) || 0);
+    if (sum > 0) result[color] = sum;
+  }
+  return result;
+};
+
+// Un mismo corte (inventario_id) puede repartirse entre varias órdenes de producción (vía
+// "Dividir"). i.color trae el desglose por color del corte COMPLETO, no de una orden en
+// particular — usarlo tal cual para cada orden hace que dos órdenes distintas del mismo corte
+// muestren el MISMO desglose de colores aunque cada una solo tenga una parte de las piezas
+// (p.ej. una orden con 45 piezas mostrando "70+35+45=150 pzs" repartidas en 3 colores).
+// Esta función calcula, por color, cuánto de i.color ya "reclamó" cada orden vía su propio
+// tallas_recibidas — así una orden sin desglose propio puede inferir el suyo por descarte.
+const buildClaimedColorsByInventario = async (db, inventarioIds) => {
+  const claimed = {};
+  if (!inventarioIds.length) return claimed;
+  const [siblingRows] = await db.query(
+    `SELECT inventario_id, tallas_recibidas FROM produccion WHERE inventario_id IN (?) AND tallas_recibidas IS NOT NULL`,
+    [inventarioIds]
+  );
+  for (const s of siblingRows) {
+    const perColor = sumTallasPorColor(s.tallas_recibidas);
+    if (!claimed[s.inventario_id]) claimed[s.inventario_id] = {};
+    for (const [color, qty] of Object.entries(perColor)) {
+      claimed[s.inventario_id][color] = (claimed[s.inventario_id][color] || 0) + qty;
+    }
+  }
+  return claimed;
+};
+
+// Calcula el desglose de colores realmente disponible de una orden: prioriza su propio
+// tallas_recibidas si lo tiene; si no, infiere por descarte (total del corte menos lo que
+// otras órdenes del mismo corte ya reclamaron); y siempre resta lo que esa orden ya envió
+// por color (shippedByProdColor). El resultado siempre suma exactamente lo disponible real.
+const computeColorRestante = (r, claimedByInvColor, shippedByProdColor) => {
+  let colorRestante = r.color;
+  try {
+    const colorArr = JSON.parse(r.color);
+    if (!Array.isArray(colorArr)) return colorRestante;
+
+    const ownTallas = sumTallasPorColor(r.tallas_recibidas);
+    const hasOwnBreakdown = Object.keys(ownTallas).length > 0;
+    const claimedBySiblings = claimedByInvColor[r.inventario_id] || {};
+
+    const restante = colorArr
+      .map(item => {
+        const total = parseInt(item.cantidad) || 0;
+        const base = hasOwnBreakdown
+          ? (ownTallas[item.color] || 0)
+          : Math.max(0, total - (claimedBySiblings[item.color] || 0));
+        const enviado = shippedByProdColor[`${r.produccion_id}|${item.color}`] || 0;
+        const qty = Math.max(0, base - enviado);
+        return { color: item.color, cantidad: String(qty) };
+      })
+      .filter(item => parseInt(item.cantidad) > 0);
+    colorRestante = JSON.stringify(restante);
+  } catch (e) { /* color no es un arreglo JSON (variante única) */ }
+  return colorRestante;
+};
+
 // Helper: obtiene la fecha actual en la zona horaria America/Mexico_City (CDT/CST)
 // El servidor corre en UTC (Railway). Un pago a las 6 PM MX = 12 AM UTC del día siguiente.
 // Esta función devuelve SIEMPRE el día real en México, ej: "2026-07-29"
@@ -1184,6 +1256,8 @@ app.get('/api/camiones/disponibles', authenticateToken, async (req, res) => {
       }
     }
 
+    const claimedByInvColor = await buildClaimedColorsByInventario(db, [...new Set(rows.map(r => r.inventario_id))]);
+
     const available = rows.map(r => {
       let piezas_producidas = 0;
       if (r.estado === 'Terminado') {
@@ -1193,26 +1267,9 @@ app.get('/api/camiones/disponibles', authenticateToken, async (req, res) => {
       }
       const piezas_disponibles = piezas_producidas - r.piezas_enviadas;
 
-      let colorRestante = r.color;
-      try {
-        const colorArr = JSON.parse(r.color);
-        if (Array.isArray(colorArr)) {
-          const restante = colorArr
-            .map(item => {
-              const enviado = shippedByProdColor[`${r.produccion_id}|${item.color}`] || 0;
-              const qty = Math.max(0, (parseInt(item.cantidad) || 0) - enviado);
-              return { color: item.color, cantidad: String(qty) };
-            })
-            .filter(item => parseInt(item.cantidad) > 0);
-          colorRestante = JSON.stringify(restante);
-        }
-      } catch (e) {
-        // color no es un arreglo JSON (variante única) — se deja tal cual.
-      }
-
       return {
         ...r,
-        color: colorRestante,
+        color: computeColorRestante(r, claimedByInvColor, shippedByProdColor),
         piezas_producidas,
         piezas: piezas_disponibles
       };
@@ -2766,6 +2823,15 @@ const formatColoresPdf = (colorStr) => {
   return trimmed;
 };
 
+// Evita que MAQUILERO/CLIENTE envuelvan a 2+ líneas en la tabla del PDF: pdfkit-table calcula
+// mal la altura de fila cuando una celda se envuelve justo cerca del borde inferior de la
+// página, partiendo la fila entre dos páginas y dejando una casi en blanco. Truncar mantiene
+// cada celda en una sola línea, evitando ese bug de paginación.
+const truncatePdf = (text, max) => {
+  const str = String(text || '').trim();
+  return str.length > max ? str.slice(0, max - 1).trimEnd() + '…' : str;
+};
+
 app.get('/api/reportes/camion', authenticateToken, async (req, res) => {
   const allowedRoles = ['admin', 'produccion1', 'produccion2', 'produccion', 'inventario1', 'inventario', 'maquila'];
   if (!allowedRoles.includes(req.user.role)) {
@@ -2779,9 +2845,9 @@ app.get('/api/reportes/camion', authenticateToken, async (req, res) => {
     await autoArchiveOrders();
 
     const [rows] = await db.query(`
-      SELECT p.id as id, p.id as produccion_id, p.cantidad, p.cantidad_recibida, p.estado,
+      SELECT p.id as id, p.id as produccion_id, p.cantidad, p.cantidad_recibida, p.tallas_recibidas, p.estado,
              m.nombre as maquilero_nombre,
-             i.modelo, i.color, i.cliente, i.no_orden, i.precio,
+             i.id as inventario_id, i.modelo, i.color, i.cliente, i.no_orden, i.precio,
              (
                SELECT COALESCE(SUM(cd.piezas), 0)
                FROM camion_detalles cd
@@ -2815,6 +2881,23 @@ app.get('/api/reportes/camion', authenticateToken, async (req, res) => {
       }
     }
 
+    let adelantadaRows = [];
+    if (incluirAdelantadas) {
+      const [activeRows] = await db.query(`
+        SELECT p.id, p.id as produccion_id, p.cantidad, p.cantidad_recibida, p.tallas_recibidas,
+               i.id as inventario_id, m.nombre as maquilero_nombre,
+               i.modelo, i.color, i.cliente, i.no_orden, i.precio
+        FROM produccion p
+        JOIN maquileros m ON p.maquilero_id = m.id
+        JOIN inventario i ON p.inventario_id = i.id
+        WHERE p.estado NOT IN ('Cancelado', 'Terminado') AND p.archivado = 0 AND (p.es_extra = 0 OR p.es_extra IS NULL)
+      `);
+      adelantadaRows = activeRows;
+    }
+
+    const allInventarioIds = [...new Set([...rows, ...adelantadaRows].map(r => r.inventario_id))];
+    const claimedByInvColor = await buildClaimedColorsByInventario(db, allInventarioIds);
+
     const stockRows = rows.map(r => {
       let piezas_producidas = 0;
       if (r.estado === 'Terminado') {
@@ -2824,37 +2907,17 @@ app.get('/api/reportes/camion', authenticateToken, async (req, res) => {
       }
       const piezas_disponibles = piezas_producidas - r.piezas_enviadas;
 
-      let colorRestante = r.color;
-      try {
-        const colorArr = JSON.parse(r.color);
-        if (Array.isArray(colorArr)) {
-          const restante = colorArr
-            .map(item => {
-              const enviado = shippedByProdColor[`${r.produccion_id}|${item.color}`] || 0;
-              const qty = Math.max(0, (parseInt(item.cantidad) || 0) - enviado);
-              return { color: item.color, cantidad: String(qty) };
-            })
-            .filter(item => parseInt(item.cantidad) > 0);
-          colorRestante = JSON.stringify(restante);
-        }
-      } catch (e) { /* color no es un arreglo JSON (variante única) */ }
-
-      return { ...r, color: colorRestante, piezas: piezas_disponibles };
+      return {
+        ...r,
+        color: computeColorRestante(r, claimedByInvColor, shippedByProdColor),
+        piezas: piezas_disponibles
+      };
     }).filter(item => item.piezas > 0);
 
-    let adelantadaRows = [];
-    if (incluirAdelantadas) {
-      const [activeRows] = await db.query(`
-        SELECT p.id, p.cantidad, p.cantidad_recibida,
-               m.nombre as maquilero_nombre,
-               i.modelo, i.color, i.cliente, i.no_orden, i.precio
-        FROM produccion p
-        JOIN maquileros m ON p.maquilero_id = m.id
-        JOIN inventario i ON p.inventario_id = i.id
-        WHERE p.estado NOT IN ('Cancelado', 'Terminado') AND p.archivado = 0 AND (p.es_extra = 0 OR p.es_extra IS NULL)
-      `);
-      adelantadaRows = activeRows;
-    }
+    adelantadaRows = adelantadaRows.map(r => ({
+      ...r,
+      color: computeColorRestante(r, claimedByInvColor, shippedByProdColor)
+    }));
 
     const doc = new PDFDocument({ margins: { top: 30, bottom: 50, left: 30, right: 30 }, size: 'A4', layout: 'landscape' });
     res.setHeader('Content-disposition', 'attachment; filename="Reporte_Camion.pdf"');
@@ -2901,9 +2964,9 @@ app.get('/api/reportes/camion', authenticateToken, async (req, res) => {
         ],
         datas: stockRows.map(r => ({
           modelo: r.modelo || '-',
-          maquilero: (r.maquilero_nombre || '').toUpperCase(),
+          maquilero: truncatePdf((r.maquilero_nombre || '').toUpperCase(), 26),
           orden: r.no_orden || '-',
-          cliente: r.cliente || '-',
+          cliente: truncatePdf(r.cliente, 24),
           colores: formatColoresPdf(r.color),
           precio: '$' + (Number(r.precio) || 0).toFixed(2),
           disponible: String(r.piezas)
@@ -2918,7 +2981,12 @@ app.get('/api/reportes/camion', authenticateToken, async (req, res) => {
     }
 
     if (incluirAdelantadas) {
-      doc.moveDown(2);
+      // Salto de página explícito en vez de moveDown: la posición Y que deja doc.table() al
+      // terminar no siempre es confiable para calcular cuánto espacio real queda, y confiar
+      // en el flujo automático producía texto encimado entre el final de la primera tabla y
+      // el título de esta sección.
+      doc.addPage({ margins: doc.page.margins, size: 'A4', layout: 'landscape' });
+      doc.y = 40;
       doc.fontSize(16).font('Helvetica-Bold').fillColor('#c2410c').text(
         tLabel('Órdenes Activas — Aptas para Entrega Adelantada', 'Active Orders — Eligible for Early Delivery'),
         { align: 'center' }
@@ -2946,9 +3014,9 @@ app.get('/api/reportes/camion', authenticateToken, async (req, res) => {
           ],
           datas: adelantadaRows.map(r => ({
             modelo: r.modelo || '-',
-            maquilero: (r.maquilero_nombre || '').toUpperCase(),
+            maquilero: truncatePdf((r.maquilero_nombre || '').toUpperCase(), 26),
             orden: r.no_orden || '-',
-            cliente: r.cliente || '-',
+            cliente: truncatePdf(r.cliente, 24),
             colores: formatColoresPdf(r.color),
             pedidas: String(r.cantidad || 0),
             recolectadas: String(r.cantidad_recibida || 0)
