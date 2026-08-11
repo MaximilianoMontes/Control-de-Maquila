@@ -3093,6 +3093,118 @@ app.get('/api/reportes/camion', authenticateToken, async (req, res) => {
   }
 });
 
+const formatTallasPdf = (tallasJson) => {
+  let tallas = {};
+  try { tallas = typeof tallasJson === 'string' ? JSON.parse(tallasJson) : (tallasJson || {}); } catch (e) { tallas = {}; }
+  const firstVal = Object.values(tallas)[0];
+  const isNested = typeof firstVal === 'object' && firstVal !== null;
+  if (isNested) {
+    return Object.entries(tallas)
+      .map(([color, sizesObj]) => {
+        const parts = Object.entries(sizesObj)
+          .filter(([, q]) => parseInt(q) > 0)
+          .map(([sz, q]) => `T${sz}:${q}`)
+          .join(', ');
+        return parts ? `${color}: ${parts}` : null;
+      })
+      .filter(Boolean)
+      .join(' | ') || 'N/A';
+  }
+  return Object.entries(tallas)
+    .filter(([, q]) => parseInt(q) > 0)
+    .map(([sz, q]) => `T${sz}:${q}`)
+    .join(', ') || 'N/A';
+};
+
+// Manifiesto en PDF de un camión ya despachado (para imprimir/archivar el envío puntual,
+// distinto del Reporte de Camión de arriba que muestra el stock disponible para cargar).
+app.get('/api/reportes/camion/:id', authenticateToken, async (req, res) => {
+  const allowedRoles = ['admin', 'produccion1', 'produccion2', 'produccion', 'inventario1', 'inventario', 'maquila'];
+  if (!allowedRoles.includes(req.user.role)) {
+    return res.status(403).json({ error: 'No autorizado para esta sección' });
+  }
+  const lang = req.query.lang || 'es';
+  const tLabel = (esText, enText) => lang === 'en' ? enText : esText;
+
+  try {
+    const [camionRows] = await db.query("SELECT * FROM camiones WHERE id = ?", [req.params.id]);
+    const camion = camionRows[0];
+    if (!camion) {
+      return res.status(404).json({ error: tLabel('Camión no encontrado', 'Truck not found') });
+    }
+
+    const [items] = await db.query(
+      "SELECT * FROM camion_detalles WHERE camion_id = ? ORDER BY id ASC",
+      [req.params.id]
+    );
+
+    const doc = new PDFDocument({ margins: { top: 30, bottom: 50, left: 30, right: 30 }, size: 'A4', layout: 'landscape' });
+    res.setHeader('Content-disposition', `attachment; filename="Camion_${camion.id}.pdf"`);
+    res.setHeader('Content-type', 'application/pdf');
+    doc.pipe(res);
+
+    try {
+      const logoPath = path.join(__dirname, '..', 'frontend', 'public', 'logo.png');
+      if (fs.existsSync(logoPath)) {
+        doc.image(logoPath, 25, 20, { width: 85 });
+      }
+    } catch (e) {}
+
+    doc.y = 110;
+    doc.fontSize(20).text(tLabel(`Camión #${camion.id}`, `Truck #${camion.id}`), { align: 'center' });
+    doc.fontSize(11).fillColor('#64748b').text(
+      `${tLabel('Enviado el', 'Shipped on')}: ${formatDateToDMY(camion.fecha_envio)}`,
+      { align: 'center' }
+    );
+    if (camion.observaciones) {
+      doc.fontSize(10).text(`"${camion.observaciones}"`, { align: 'center' });
+    }
+    doc.fillColor('black');
+    doc.moveDown(1.5);
+
+    if (items.length === 0) {
+      doc.fontSize(12).text(tLabel('Este camión no tiene modelos registrados.', 'This truck has no models registered.'), { align: 'center' });
+    } else {
+      const totalPiezas = items.reduce((sum, it) => sum + (parseInt(it.piezas) || 0), 0);
+      doc.fontSize(12).font('Helvetica-Bold').text(
+        `${tLabel('MODELOS', 'MODELS')}: ${items.length}    |    ${tLabel('PIEZAS TOTALES', 'TOTAL PIECES')}: ${totalPiezas}`,
+        { align: 'center' }
+      );
+      doc.font('Helvetica');
+      doc.moveDown(1);
+
+      const tableConfig = {
+        headers: [
+          { label: tLabel("MODELO", "MODEL"), property: "modelo", width: 75 },
+          { label: tLabel("ORDEN", "ORDER"), property: "orden", width: 65 },
+          { label: tLabel("CLIENTE", "CLIENT"), property: "cliente", width: 120 },
+          { label: tLabel("COLORES", "COLORS"), property: "colores", width: 190 },
+          { label: tLabel("PIEZAS", "PIECES"), property: "piezas", width: 55 },
+          { label: tLabel("DISTRIBUCIÓN DE TALLAS", "SIZE BREAKDOWN"), property: "tallas", width: 260 }
+        ],
+        datas: items.map(it => ({
+          modelo: it.modelo || '-',
+          orden: it.no_orden || '-',
+          cliente: truncatePdf(it.cliente, 24),
+          colores: formatColoresPdf(it.color),
+          piezas: String(it.piezas),
+          tallas: formatTallasPdf(it.tallas_cantidades)
+        })),
+        options: { padding: 4 }
+      };
+
+      await doc.table(tableConfig, {
+        prepareHeader: () => doc.font("Helvetica-Bold").fontSize(8),
+        prepareRow: () => doc.font("Helvetica").fontSize(8)
+      });
+    }
+
+    doc.end();
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.get('/api/reportes/inventario', authenticateToken, async (req, res) => {
   const allowedRoles = ['admin', 'produccion1', 'produccion2', 'produccion', 'inventario1', 'inventario', 'maquila'];
   if (!allowedRoles.includes(req.user.role)) {

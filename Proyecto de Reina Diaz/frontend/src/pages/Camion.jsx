@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { 
-  Truck, ArrowRight, Trash2, Calendar, Edit3, Plus, 
-  ChevronDown, ChevronUp, AlertCircle, CheckCircle, Info, Search, XCircle, X, RefreshCw
+import {
+  Truck, ArrowRight, Trash2, Calendar, Edit3, Plus,
+  ChevronDown, ChevronUp, AlertCircle, CheckCircle, Info, Search, XCircle, X, RefreshCw, Download
 } from 'lucide-react';
 import { useSettings } from '../context/SettingsContext';
 import { useAuth } from '../context/AuthContext';
@@ -583,6 +583,13 @@ export default function Camion() {
     setExpandedTruckId(expandedTruckId === id ? null : id);
   };
 
+  const handleDownloadCamionPdf = (e, truckId) => {
+    e.stopPropagation();
+    const token = localStorage.getItem('token');
+    const params = new URLSearchParams({ lang: isEn ? 'en' : 'es', token });
+    window.open(`${API}/api/reportes/camion/${truckId}?${params.toString()}`, '_blank');
+  };
+
   // Piezas ya metidas en el borrador (todavía sin enviar de verdad). Sin esto, un modelo de
   // Entrega Adelantada o una Devolución que ya está en el camión virtual seguía apareciendo
   // como disponible en la lista izquierda con el mismo total original — porque el backend
@@ -1091,6 +1098,14 @@ export default function Camion() {
                       <span className="badge badge-info" style={{ fontWeight: 700 }}>
                         {totalPzs} {t('camion.piecesShipped') || 'Piezas enviadas'}
                       </span>
+                      <button
+                        className="btn btn-secondary"
+                        style={{ padding: '0.4rem 0.6rem', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem' }}
+                        onClick={(e) => handleDownloadCamionPdf(e, truck.id)}
+                        title={isEn ? 'Download PDF' : 'Descargar PDF'}
+                      >
+                        <Download size={14} /> PDF
+                      </button>
                       {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                     </div>
                   </div>
