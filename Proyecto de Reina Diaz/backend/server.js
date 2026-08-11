@@ -1702,12 +1702,12 @@ app.get('/api/produccion', async (req, res) => {
 
     const [orders] = await db.query(`
       SELECT p.*, m.nombre as maquilero_nombre,
-      i.modelo as producto_modelo, i.imagen as producto_imagen, i.color as producto_color,
+      i.modelo as producto_modelo, i.imagen as producto_imagen, i.color as producto_color, i.no_orden as no_orden,
       COALESCE(p.precio_extra, i.precio) as precio_unitario,
       (SELECT COALESCE(SUM(monto), 0) FROM pagos WHERE produccion_id = p.id) as pagado_efectivo,
-      (SELECT COALESCE(SUM(monto), 0) FROM pagos WHERE produccion_id = p.id) + 
-      (SELECT COALESCE(SUM(dp.monto_total), 0) FROM descuentos_personales dp 
-       JOIN pagos pg ON dp.pago_id = pg.id 
+      (SELECT COALESCE(SUM(monto), 0) FROM pagos WHERE produccion_id = p.id) +
+      (SELECT COALESCE(SUM(dp.monto_total), 0) FROM descuentos_personales dp
+       JOIN pagos pg ON dp.pago_id = pg.id
        WHERE pg.produccion_id = p.id) as pagado,
       (SELECT COALESCE(SUM(cd.piezas), 0) FROM camion_detalles cd WHERE cd.produccion_id = p.id) as piezas_enviadas,
       (SELECT COUNT(*) FROM produccion_entregas_log el WHERE el.produccion_id = p.id) as entregas_log_count
