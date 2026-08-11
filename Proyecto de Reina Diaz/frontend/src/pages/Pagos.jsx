@@ -124,13 +124,17 @@ export default function Pagos() {
     }
   }, [aplicarIva]);
 
-  // Calcula el monto automáticamente a partir de las piezas a pagar (piezas * precio unitario)
+  // Calcula el monto automáticamente a partir de las piezas a pagar. Usa precio_total / piezas
+  // totales (no el precio unitario plano) para que el bono/descuento de la orden sí se refleje
+  // en el monto sugerido — de lo contrario, con una orden con bono, pagar "todas las piezas"
+  // sugería un monto por debajo del precio_total real (le faltaba el bono).
   useEffect(() => {
     if (!ordenActual) return;
     if (piezasAPagar === '') return;
     const piezas = parseFloat(piezasAPagar) || 0;
-    const precioUnitario = parseFloat(ordenActual.precio_unitario) || 0;
-    const calculado = piezas * precioUnitario * (aplicarIva ? 1.16 : 1);
+    const cantFinal = (ordenActual.cantidad_recibida !== null && ordenActual.cantidad_recibida !== undefined) ? ordenActual.cantidad_recibida : ordenActual.cantidad;
+    const precioPorPieza = cantFinal > 0 ? (parseFloat(ordenActual.precio_total) || 0) / cantFinal : (parseFloat(ordenActual.precio_unitario) || 0);
+    const calculado = piezas * precioPorPieza * (aplicarIva ? 1.16 : 1);
     setMonto(calculado > 0 ? calculado.toFixed(2) : '0.00');
   }, [piezasAPagar, aplicarIva]);
 
@@ -339,9 +343,17 @@ export default function Pagos() {
   // precio por pieza. Es el mismo candado que ya existe para el Monto (max=restanteConIva)
   // pero expresado en piezas, para que nadie pueda cobrar mas piezas de las que en realidad
   // faltan por liquidar (evita que alguien "estire" el numero de piezas de mala fe).
-  const precioUnitarioActual = ordenActual ? (parseFloat(ordenActual.precio_unitario) || 0) : 0;
-  const piezasRestantes = ordenActual && precioUnitarioActual > 0
-    ? Math.max(0, Math.floor((restanteConIva / precioUnitarioActual) + 1e-6))
+  // Importante: se usa precio_total / piezas totales (no el precio unitario plano) para que
+  // el bono/descuento (que ya viene incluido en precio_total) no infle ni desinfle las
+  // piezas restantes — el bono es dinero extra por buen trabajo, no piezas extra.
+  const cantFinalActual = ordenActual
+    ? ((ordenActual.cantidad_recibida !== null && ordenActual.cantidad_recibida !== undefined) ? ordenActual.cantidad_recibida : ordenActual.cantidad)
+    : 0;
+  const precioEfectivoPorPieza = ordenActual && cantFinalActual > 0
+    ? (parseFloat(ordenActual.precio_total) || 0) / cantFinalActual
+    : 0;
+  const piezasRestantes = ordenActual && precioEfectivoPorPieza > 0
+    ? Math.max(0, Math.floor((restanteConIva / precioEfectivoPorPieza) + 1e-6))
     : 0;
 
   const modeloCodigo = (o) => o.producto_modelo ? `${o.producto_modelo} - ` : '';
