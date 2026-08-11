@@ -216,7 +216,10 @@ export default function Camion() {
       modelo: order.producto_modelo,
       color: order.producto_color,
       cliente: order.cliente || 'GENERAL',
-      no_orden: order.no_orden || String(order.id),
+      // Antes caía en el ID interno de la orden (un número corto que parece un No. de
+      // Orden real y puede pasar desapercibido) cuando el dato venía vacío. Ahora se deja
+      // vacío a propósito para que se note de inmediato si algún día vuelve a faltar.
+      no_orden: order.no_orden || '',
       precio: order.precio_unitario || 0,
       piezas: maxQty,
       imagen: order.producto_imagen,
