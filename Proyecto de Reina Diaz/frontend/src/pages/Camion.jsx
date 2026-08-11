@@ -582,23 +582,26 @@ export default function Camion() {
   // como disponible en la lista izquierda con el mismo total original — porque el backend
   // solo resta lo que ya se envió en camiones reales (camion_detalles), no lo que está en el
   // borrador — dejando subirlo otra vez y duplicar el registro.
+  // Se compara primero por "id" (dev_X / prod_X / el id normal), que siempre está presente
+  // porque React lo usa como key — devolucion_id/produccion_id pueden faltar en renglones
+  // viejos del borrador guardados antes de que existieran esos campos. produccion_id queda
+  // como respaldo para el caso de Entrega Adelantada, donde el id del borrador (prod_X) es
+  // distinto al id con el que la misma orden reaparece en la lista de disponibles (el id
+  // normal de producción, sin el prefijo).
+  const reservedById = {};
   const reservedByProdId = {};
-  const reservedByDevId = {};
   cargo.forEach(c => {
     const qty = parseInt(c.piezas) || 0;
-    if (c.is_devolucion || c.devolucion_id) {
-      reservedByDevId[c.devolucion_id] = (reservedByDevId[c.devolucion_id] || 0) + qty;
-    } else if (c.produccion_id) {
-      reservedByProdId[c.produccion_id] = (reservedByProdId[c.produccion_id] || 0) + qty;
-    }
+    if (c.id) reservedById[c.id] = (reservedById[c.id] || 0) + qty;
+    if (c.produccion_id) reservedByProdId[c.produccion_id] = (reservedByProdId[c.produccion_id] || 0) + qty;
   });
 
   const availableStock = stock.map(item => {
     let reserved = 0;
-    if (item.is_devolucion || item.devolucion_id) {
-      reserved = reservedByDevId[item.devolucion_id] || 0;
-    } else if (item.produccion_id) {
-      reserved = reservedByProdId[item.produccion_id] || 0;
+    if (item.id && reservedById[item.id]) {
+      reserved = reservedById[item.id];
+    } else if (item.produccion_id && reservedByProdId[item.produccion_id]) {
+      reserved = reservedByProdId[item.produccion_id];
     }
     return { ...item, piezas: Math.max(0, (parseInt(item.piezas) || 0) - reserved) };
   }).filter(item => item.piezas > 0);
