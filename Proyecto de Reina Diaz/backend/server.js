@@ -3093,6 +3093,15 @@ app.get('/api/reportes/camion', authenticateToken, async (req, res) => {
   }
 });
 
+// Ordena las tallas de menor a mayor (05, 07, 09... hasta la más grande) en vez del
+// orden en que quedaron guardadas en el JSON, que no sigue ningún orden garantizado.
+const sortTallasEntries = (entries) => entries.sort((a, b) => {
+  const numA = parseInt(a[0].replace(/[^\d]/g, ''), 10);
+  const numB = parseInt(b[0].replace(/[^\d]/g, ''), 10);
+  if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+  return a[0].localeCompare(b[0], undefined, { numeric: true });
+});
+
 const formatTallasPdf = (tallasJson) => {
   let tallas = {};
   try { tallas = typeof tallasJson === 'string' ? JSON.parse(tallasJson) : (tallasJson || {}); } catch (e) { tallas = {}; }
@@ -3101,7 +3110,7 @@ const formatTallasPdf = (tallasJson) => {
   if (isNested) {
     return Object.entries(tallas)
       .map(([color, sizesObj]) => {
-        const parts = Object.entries(sizesObj)
+        const parts = sortTallasEntries(Object.entries(sizesObj))
           .filter(([, q]) => parseInt(q) > 0)
           .map(([sz, q]) => `T${sz}:${q}`)
           .join(', ');
@@ -3110,10 +3119,20 @@ const formatTallasPdf = (tallasJson) => {
       .filter(Boolean)
       .join(' | ') || 'N/A';
   }
-  return Object.entries(tallas)
+  return sortTallasEntries(Object.entries(tallas))
     .filter(([, q]) => parseInt(q) > 0)
     .map(([sz, q]) => `T${sz}:${q}`)
     .join(', ') || 'N/A';
+};
+
+// Orden natural para el No. de Orden (menor a mayor) aunque tenga letras mezcladas
+// con números (p.ej. "E04256") — un orden alfabético simple ya funciona para ese
+// formato de largo fijo, pero esto también cubre formatos de largo variable.
+const compareOrdenAsc = (a, b) => {
+  const numA = parseInt(String(a || '').replace(/[^\d]/g, ''), 10);
+  const numB = parseInt(String(b || '').replace(/[^\d]/g, ''), 10);
+  if (!isNaN(numA) && !isNaN(numB) && numA !== numB) return numA - numB;
+  return String(a || '').localeCompare(String(b || ''), undefined, { numeric: true });
 };
 
 // Manifiesto en PDF de un camión ya despachado (para imprimir/archivar el envío puntual,
@@ -3133,10 +3152,12 @@ app.get('/api/reportes/camion/:id', authenticateToken, async (req, res) => {
       return res.status(404).json({ error: tLabel('Camión no encontrado', 'Truck not found') });
     }
 
-    const [items] = await db.query(
-      "SELECT * FROM camion_detalles WHERE camion_id = ? ORDER BY id ASC",
+    const [itemsRaw] = await db.query(
+      `SELECT cd.*, (SELECT imagen FROM inventario WHERE modelo = cd.modelo LIMIT 1) as imagen
+       FROM camion_detalles cd WHERE cd.camion_id = ?`,
       [req.params.id]
     );
+    const items = itemsRaw.sort((a, b) => compareOrdenAsc(a.no_orden, b.no_orden));
 
     const doc = new PDFDocument({ margins: { top: 30, bottom: 50, left: 30, right: 30 }, size: 'A4', layout: 'landscape' });
     res.setHeader('Content-disposition', `attachment; filename="Camion_${camion.id}.pdf"`);
@@ -3175,14 +3196,16 @@ app.get('/api/reportes/camion/:id', authenticateToken, async (req, res) => {
 
       const tableConfig = {
         headers: [
-          { label: tLabel("MODELO", "MODEL"), property: "modelo", width: 75 },
-          { label: tLabel("ORDEN", "ORDER"), property: "orden", width: 65 },
-          { label: tLabel("CLIENTE", "CLIENT"), property: "cliente", width: 120 },
-          { label: tLabel("COLORES", "COLORS"), property: "colores", width: 190 },
-          { label: tLabel("PIEZAS", "PIECES"), property: "piezas", width: 55 },
-          { label: tLabel("DISTRIBUCIÓN DE TALLAS", "SIZE BREAKDOWN"), property: "tallas", width: 260 }
+          { label: tLabel("IMAGEN", "IMAGE"), property: "imagen", width: 70 },
+          { label: tLabel("MODELO", "MODEL"), property: "modelo", width: 65 },
+          { label: tLabel("ORDEN", "ORDER"), property: "orden", width: 60 },
+          { label: tLabel("CLIENTE", "CLIENT"), property: "cliente", width: 110 },
+          { label: tLabel("COLORES", "COLORS"), property: "colores", width: 175 },
+          { label: tLabel("PIEZAS", "PIECES"), property: "piezas", width: 50 },
+          { label: tLabel("DISTRIBUCIÓN DE TALLAS", "SIZE BREAKDOWN"), property: "tallas", width: 235 }
         ],
         datas: items.map(it => ({
+          imagen: '\n\n\n\n\n\n',
           modelo: it.modelo || '-',
           orden: it.no_orden || '-',
           cliente: truncatePdf(it.cliente, 24),
@@ -3195,7 +3218,18 @@ app.get('/api/reportes/camion/:id', authenticateToken, async (req, res) => {
 
       await doc.table(tableConfig, {
         prepareHeader: () => doc.font("Helvetica-Bold").fontSize(8),
-        prepareRow: () => doc.font("Helvetica").fontSize(8)
+        prepareRow: (row, indexColumn, indexRow, rectRow) => {
+          doc.font("Helvetica").fontSize(8);
+          try {
+            const item = items[indexRow];
+            if (indexColumn === 0 && item && item.imagen) {
+              const imgPath = path.join(__dirname, item.imagen);
+              if (fs.existsSync(imgPath)) {
+                doc.image(imgPath, rectRow.x + 5, rectRow.y + 5, { fit: [55, 55] });
+              }
+            }
+          } catch (e) {}
+        }
       });
     }
 
