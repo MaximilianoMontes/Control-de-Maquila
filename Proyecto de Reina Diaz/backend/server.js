@@ -2926,6 +2926,27 @@ app.get('/api/reportes/camion', authenticateToken, async (req, res) => {
       };
     }).filter(item => item.piezas > 0);
 
+    // Las devoluciones arregladas también son stock listo para subir al camión — sin esto,
+    // el total de "PIEZAS TOTALES" del reporte no cuadraba con el que se ve en la página de
+    // Camión (que sí las incluye vía /api/camiones/disponibles).
+    const [devRowsReport] = await db.query(`
+      SELECT d.*, m.nombre as maquilero_nombre
+      FROM plancha_devoluciones d
+      LEFT JOIN produccion p ON d.produccion_id = p.id
+      LEFT JOIN maquileros m ON p.maquilero_id = m.id
+      WHERE d.estado = 'arreglado'
+    `);
+    const devStockRows = devRowsReport.map(d => ({
+      modelo: d.modelo || '-',
+      maquilero_nombre: d.maquilero_nombre ? `${tLabel('Devolución', 'Return')} - ${d.maquilero_nombre}` : tLabel('Devolución', 'Return'),
+      no_orden: d.no_orden,
+      cliente: d.cliente,
+      color: d.color,
+      precio: d.precio,
+      piezas: d.piezas
+    }));
+    stockRows.push(...devStockRows);
+
     // Aquí sí interesa mostrar los colores que YA se enviaron (no lo que queda disponible,
     // que para estas órdenes puede ser 0 si se mandó todo lo recibido hasta ahora).
     const formatShippedColoresPdf = (produccionId) => {

@@ -577,8 +577,34 @@ export default function Camion() {
     setExpandedTruckId(expandedTruckId === id ? null : id);
   };
 
+  // Piezas ya metidas en el borrador (todavía sin enviar de verdad). Sin esto, un modelo de
+  // Entrega Adelantada o una Devolución que ya está en el camión virtual seguía apareciendo
+  // como disponible en la lista izquierda con el mismo total original — porque el backend
+  // solo resta lo que ya se envió en camiones reales (camion_detalles), no lo que está en el
+  // borrador — dejando subirlo otra vez y duplicar el registro.
+  const reservedByProdId = {};
+  const reservedByDevId = {};
+  cargo.forEach(c => {
+    const qty = parseInt(c.piezas) || 0;
+    if (c.is_devolucion || c.devolucion_id) {
+      reservedByDevId[c.devolucion_id] = (reservedByDevId[c.devolucion_id] || 0) + qty;
+    } else if (c.produccion_id) {
+      reservedByProdId[c.produccion_id] = (reservedByProdId[c.produccion_id] || 0) + qty;
+    }
+  });
+
+  const availableStock = stock.map(item => {
+    let reserved = 0;
+    if (item.is_devolucion || item.devolucion_id) {
+      reserved = reservedByDevId[item.devolucion_id] || 0;
+    } else if (item.produccion_id) {
+      reserved = reservedByProdId[item.produccion_id] || 0;
+    }
+    return { ...item, piezas: Math.max(0, (parseInt(item.piezas) || 0) - reserved) };
+  }).filter(item => item.piezas > 0);
+
   // Filter Stock List
-  const filteredStock = stock.filter(item =>
+  const filteredStock = availableStock.filter(item =>
     String(item.modelo || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     String(item.color || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     String(item.no_orden || '').toLowerCase().includes(searchTerm.toLowerCase())
@@ -702,7 +728,9 @@ export default function Camion() {
             ) : (
               filteredStock.map(item => {
                 const img = getImgSrc(item.imagen);
-                const isLoaded = cargo.some(c => c.id === item.id);
+                const isLoaded = cargo.some(c => c.id === item.id
+                  || (item.devolucion_id && c.devolucion_id === item.devolucion_id)
+                  || (item.produccion_id && c.produccion_id === item.produccion_id));
                 return (
                   <div 
                     key={item.id} 
