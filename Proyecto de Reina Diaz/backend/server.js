@@ -1419,9 +1419,23 @@ app.post('/api/camiones', authenticateToken, async (req, res) => {
       }
 
       // Check stock in produccion order (fallback to item.id if item.produccion_id is not provided)
-      const isDev = item.is_devolucion === true || item.is_devolucion === 'true';
-      const devId = item.devolucion_id;
-      
+      let isDev = item.is_devolucion === true || item.is_devolucion === 'true';
+      let devId = item.devolucion_id || null;
+
+      // El id (dev_X) lo genera siempre el servidor y es más confiable que las banderas
+      // is_devolucion/devolucion_id que manda el navegador — un renglón del borrador
+      // guardado antes de que esas banderas existieran (o corrompido por cualquier otra
+      // razón) se procesaba como orden normal, y la devolución original nunca se marcaba
+      // como 'enviado': seguía reapareciendo como disponible para siempre aunque ya se
+      // hubiera despachado de verdad. Con esto, el id manda sobre las banderas.
+      if (!isDev && typeof item.id === 'string' && item.id.startsWith('dev_')) {
+        const parsedDevId = parseInt(item.id.slice(4), 10);
+        if (!isNaN(parsedDevId)) {
+          isDev = true;
+          devId = parsedDevId;
+        }
+      }
+
       let precioPlancha = 0.00;
       let prodId = item.produccion_id || item.id;
 

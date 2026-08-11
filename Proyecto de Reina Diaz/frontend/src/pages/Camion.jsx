@@ -531,21 +531,27 @@ export default function Camion() {
           const payload = {
             fecha_envio: fechaEnvio,
             observaciones,
-            items: cargo.map(c => ({
-              id: c.id,
-              produccion_id: c.produccion_id || c.id,
-              numero: c.numero,
-              temporada: c.temporada,
-              modelo: c.modelo,
-              precio: c.precio,
-              color: c.color,
-              cliente: c.cliente,
-              no_orden: c.no_orden,
-              piezas: c.piezas,
-              tallas_cantidades: c.tallas_cantidades,
-              is_devolucion: c.is_devolucion || false,
-              devolucion_id: c.devolucion_id || null
-            }))
+            items: cargo.map(c => {
+              // El id (dev_X) es la fuente de verdad más confiable para saber si es una
+              // devolución — respaldo por si is_devolucion/devolucion_id faltan en algún
+              // renglón viejo del borrador (el backend también valida esto por su cuenta).
+              const isDevById = typeof c.id === 'string' && c.id.startsWith('dev_');
+              return {
+                id: c.id,
+                produccion_id: c.produccion_id || c.id,
+                numero: c.numero,
+                temporada: c.temporada,
+                modelo: c.modelo,
+                precio: c.precio,
+                color: c.color,
+                cliente: c.cliente,
+                no_orden: c.no_orden,
+                piezas: c.piezas,
+                tallas_cantidades: c.tallas_cantidades,
+                is_devolucion: c.is_devolucion || isDevById,
+                devolucion_id: c.devolucion_id || (isDevById ? parseInt(c.id.slice(4), 10) : null)
+              };
+            })
           };
 
           await axios.post(`${API}/api/camiones`, payload, { headers });
