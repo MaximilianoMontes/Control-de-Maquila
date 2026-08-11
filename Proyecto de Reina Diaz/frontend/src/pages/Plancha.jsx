@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import API_URL from '../config';
 import PlanchaSidebar from '../components/PlanchaSidebar';
 import Header from '../components/Header';
+import TrainingBanner from '../components/TrainingBanner';
 
 // Subcomponents
 import PlanchaPlanchadores from '../components/plancha/PlanchaPlanchadores';
@@ -264,6 +265,7 @@ export default function Plancha() {
       </div>
       
       <div className="main-container">
+        <TrainingBanner />
         <Header onToggleSidebar={toggleSidebar} />
 
         <main className="main-content" style={{ padding: '2rem' }}>

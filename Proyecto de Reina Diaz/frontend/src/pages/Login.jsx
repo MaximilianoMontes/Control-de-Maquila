@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import { Factory } from 'lucide-react';
+import TrainingBanner from '../components/TrainingBanner';
 
 export default function Login() {
   const [username, setUsername] = useState('');
@@ -21,7 +22,9 @@ export default function Login() {
   };
 
   return (
-    <div className="auth-layout">
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <TrainingBanner />
+    <div className="auth-layout" style={{ flex: 1 }}>
       <div className="auth-card glass-card">
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <img src="/logo.png" alt="Logo" style={{ width: '100%', maxWidth: '200px', margin: '0 auto', display: 'block', borderRadius: '8px' }} />
@@ -61,6 +64,7 @@ export default function Login() {
           </button>
         </form>
       </div>
+    </div>
     </div>
   );
 }

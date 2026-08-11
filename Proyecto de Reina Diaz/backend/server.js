@@ -5773,6 +5773,30 @@ app.post('/api/corte/semanas/cerrar', authenticateToken, async (req, res) => {
   }
 });
 
+// Ambiente de práctica/capacitación: expone si este servicio corre en modo entrenamiento
+// (para que el frontend muestre el aviso correspondiente) y un botón de reinicio de datos.
+// TRAINING_MODE solo debe estar en "true" en el servicio de Railway dedicado a práctica —
+// nunca en producción. Sin esa variable, /training/reset se niega sin importar el rol.
+app.get('/api/training/status', (req, res) => {
+  res.json({ trainingMode: process.env.TRAINING_MODE === 'true' });
+});
+
+app.post('/api/training/reset', authenticateToken, async (req, res) => {
+  if (process.env.TRAINING_MODE !== 'true') {
+    return res.status(403).json({ error: 'Este servicio no está configurado como ambiente de práctica.' });
+  }
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Solo un administrador puede reiniciar los datos de práctica.' });
+  }
+  try {
+    const { resetTrainingData } = require('./seed_training_data');
+    await resetTrainingData();
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 if (require.main === module) {
   app.listen(PORT, '0.0.0.0', async () => {
     console.log(`Server running on http://0.0.0.0:${PORT}`);

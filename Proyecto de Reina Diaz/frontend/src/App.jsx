@@ -23,6 +23,7 @@ import Camion from './pages/Camion';
 import TallerCorte from './pages/TallerCorte';
 import KillFeed from './components/KillFeed';
 import ThemeEffects from './components/ThemeEffects';
+import TrainingBanner from './components/TrainingBanner';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { motion } from 'framer-motion';
@@ -52,6 +53,7 @@ function MainLayout({ children }) {
       
       <KillFeed />
       <div className="main-container">
+        <TrainingBanner />
         <Header onToggleSidebar={toggleSidebar} />
         <main className="main-content">
           <motion.div
