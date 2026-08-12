@@ -613,16 +613,19 @@ export default function Maquileros() {
                         {doc.label}
                       </label>
                       {doc.key === 'pagare' && (
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          className="form-input"
-                          placeholder="Monto $"
-                          style={{ padding: '0.25rem 0.5rem', fontSize: '0.85rem', width: '110px' }}
-                          value={formData.documentos.pagare_monto}
-                          onChange={e => setFormData({ ...formData, documentos: { ...formData.documentos, pagare_monto: e.target.value } })}
-                        />
+                        <div style={{ position: 'relative', width: '110px' }}>
+                          <span style={{ position: 'absolute', left: '0.5rem', top: '50%', transform: 'translateY(-50%)', fontSize: '0.85rem', color: 'var(--text-secondary, #64748b)', pointerEvents: 'none' }}>$</span>
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            className="form-input"
+                            placeholder="0.00"
+                            style={{ padding: '0.25rem 0.5rem 0.25rem 1.25rem', fontSize: '0.85rem', width: '100%' }}
+                            value={formData.documentos.pagare_monto}
+                            onChange={e => setFormData({ ...formData, documentos: { ...formData.documentos, pagare_monto: e.target.value } })}
+                          />
+                        </div>
                       )}
                     </div>
                   ))}
