@@ -3102,6 +3102,11 @@ const sortTallasEntries = (entries) => entries.sort((a, b) => {
   return a[0].localeCompare(b[0], undefined, { numeric: true });
 });
 
+// Cada color en su propio renglón (salto de línea real, no " | ") — antes todo iba en una
+// sola línea larga que pdfkit envolvía donde le tocara, a veces justo a la mitad de un color,
+// dando la impresión de que unas tallas eran de otro color. Con renglones separados y un
+// marcador al inicio de cada uno, no hay forma de confundir dónde termina un color y empieza
+// el siguiente.
 const formatTallasPdf = (tallasJson) => {
   let tallas = {};
   try { tallas = typeof tallasJson === 'string' ? JSON.parse(tallasJson) : (tallasJson || {}); } catch (e) { tallas = {}; }
@@ -3114,15 +3119,16 @@ const formatTallasPdf = (tallasJson) => {
           .filter(([, q]) => parseInt(q) > 0)
           .map(([sz, q]) => `T${sz}:${q}`)
           .join(', ');
-        return parts ? `${color}: ${parts}` : null;
+        return parts ? `- ${String(color).toUpperCase()}: ${parts}` : null;
       })
       .filter(Boolean)
-      .join(' | ') || 'N/A';
+      .join('\n') || 'N/A';
   }
-  return sortTallasEntries(Object.entries(tallas))
+  const parts = sortTallasEntries(Object.entries(tallas))
     .filter(([, q]) => parseInt(q) > 0)
     .map(([sz, q]) => `T${sz}:${q}`)
-    .join(', ') || 'N/A';
+    .join(', ');
+  return parts ? `- ${parts}` : 'N/A';
 };
 
 // Orden natural para el No. de Orden (menor a mayor) aunque tenga letras mezcladas
