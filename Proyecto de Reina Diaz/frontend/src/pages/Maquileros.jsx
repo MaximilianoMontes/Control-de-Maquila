@@ -19,7 +19,7 @@ const DOCUMENTOS_MAQUILERO = [
   { key: 'clabe_interbancaria', label: 'CLABE Interbancaria' },
 ];
 
-const emptyDocumentos = DOCUMENTOS_MAQUILERO.reduce((acc, d) => ({ ...acc, [d.key]: false }), {});
+const emptyDocumentos = { ...DOCUMENTOS_MAQUILERO.reduce((acc, d) => ({ ...acc, [d.key]: false }), {}), pagare_monto: '' };
 
 const emptyForm = { nombre: '', maquinaria: '', personal: '', domicilio: '', colonia: '', poblacion: '', codigo_postal: '', telefono: '', documentos: emptyDocumentos };
 
@@ -603,14 +603,28 @@ export default function Maquileros() {
                 <label className="form-label">Documentos del Maquilero Adquiridos</label>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem 1rem', padding: '0.75rem', border: '1px solid var(--border-color, #e2e8f0)', borderRadius: '8px' }}>
                   {DOCUMENTOS_MAQUILERO.map(doc => (
-                    <label key={doc.key} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem' }}>
-                      <input
-                        type="checkbox"
-                        checked={!!formData.documentos[doc.key]}
-                        onChange={e => setFormData({ ...formData, documentos: { ...formData.documentos, [doc.key]: e.target.checked } })}
-                      />
-                      {doc.label}
-                    </label>
+                    <div key={doc.key} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem' }}>
+                        <input
+                          type="checkbox"
+                          checked={!!formData.documentos[doc.key]}
+                          onChange={e => setFormData({ ...formData, documentos: { ...formData.documentos, [doc.key]: e.target.checked } })}
+                        />
+                        {doc.label}
+                      </label>
+                      {doc.key === 'pagare' && (
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          className="form-input"
+                          placeholder="Monto $"
+                          style={{ padding: '0.25rem 0.5rem', fontSize: '0.85rem', width: '110px' }}
+                          value={formData.documentos.pagare_monto}
+                          onChange={e => setFormData({ ...formData, documentos: { ...formData.documentos, pagare_monto: e.target.value } })}
+                        />
+                      )}
+                    </div>
                   ))}
                 </div>
               </div>
