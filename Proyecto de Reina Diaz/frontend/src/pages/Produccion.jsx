@@ -789,6 +789,7 @@ function Produccion() {
                 <th>{isEn ? 'Collected Pieces' : 'Piezas Recolectadas'}</th>
                 <th>{t('prod.startDate')} / {t('prod.endDate')}</th>
                 <th>{isEn ? 'Delivery Log' : 'Registro de Entregas'}</th>
+                <th>{isEn ? 'Cut Notes' : 'Observaciones de Corte'}</th>
                 <th>{t('prod.maquilaCost')}</th>
                 <th>Costo Est.</th>
                 <th>{t('prod.paid')}</th>
@@ -798,7 +799,7 @@ function Produccion() {
             </thead>
             <tbody>
               {filteredOrders.length === 0 ? (
-                <tr><td colSpan="12" style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>{t('prod.noResults')}</td></tr>
+                <tr><td colSpan="13" style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>{t('prod.noResults')}</td></tr>
               ) : (
                 filteredOrders.map((o, index) => {
                   const pagado = o.pagado || 0;
@@ -896,6 +897,9 @@ function Produccion() {
                             ? `${o.entregas_log_count} ${isEn ? (o.entregas_log_count === 1 ? 'record' : 'records') : (o.entregas_log_count === 1 ? 'registro' : 'registros')}`
                             : (isEn ? 'No records' : 'Sin registros')}
                         </button>
+                      </td>
+                      <td style={{ maxWidth: '180px', fontSize: '0.8rem', color: 'var(--text-secondary)', whiteSpace: 'pre-wrap' }}>
+                        {o.corte_observaciones ? o.corte_observaciones : '—'}
                       </td>
                       <td style={{ textAlign: 'center', fontWeight: 600 }}>{formatCurrency(o.precio_unitario)}</td>
                       <td style={{ minWidth: '130px' }}>
