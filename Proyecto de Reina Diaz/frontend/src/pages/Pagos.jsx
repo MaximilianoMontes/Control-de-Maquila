@@ -124,17 +124,25 @@ export default function Pagos() {
     }
   }, [aplicarIva]);
 
-  // Calcula el monto automáticamente a partir de las piezas a pagar. Usa precio_total / piezas
-  // totales (no el precio unitario plano) para que el bono/descuento de la orden sí se refleje
-  // en el monto sugerido — de lo contrario, con una orden con bono, pagar "todas las piezas"
-  // sugería un monto por debajo del precio_total real (le faltaba el bono).
+  // Calcula el monto automáticamente a partir de las piezas a pagar. Las piezas parciales se
+  // cobran al precio unitario base (mismo criterio que piezasRestantes, ver abajo). Si se están
+  // pagando TODAS las piezas restantes (liquidación), se usa el dinero real que falta en vez de
+  // piezas x precio — así el bono/descuento de la orden sí queda incluido al liquidar, sin que
+  // eso afecte el conteo de piezas.
   useEffect(() => {
     if (!ordenActual) return;
     if (piezasAPagar === '') return;
     const piezas = parseFloat(piezasAPagar) || 0;
     const cantFinal = (ordenActual.cantidad_recibida !== null && ordenActual.cantidad_recibida !== undefined) ? ordenActual.cantidad_recibida : ordenActual.cantidad;
-    const precioPorPieza = cantFinal > 0 ? (parseFloat(ordenActual.precio_total) || 0) / cantFinal : (parseFloat(ordenActual.precio_unitario) || 0);
-    const calculado = piezas * precioPorPieza * (aplicarIva ? 1.16 : 1);
+    const precioUnitarioBase = parseFloat(ordenActual.precio_unitario) || 0;
+    const piezasYaCobradas = precioUnitarioBase > 0 ? Math.round(totalPagado / precioUnitarioBase) : 0;
+    const piezasRestantesCalc = Math.max(0, cantFinal - piezasYaCobradas);
+    const totalConIvaCalc = aplicarIva ? (ordenActual.precio_total * 1.16) : ordenActual.precio_total;
+    const restanteConIvaCalc = totalConIvaCalc - totalPagado;
+
+    const calculado = (piezasRestantesCalc > 0 && piezas >= piezasRestantesCalc)
+      ? restanteConIvaCalc
+      : piezas * precioUnitarioBase * (aplicarIva ? 1.16 : 1);
     setMonto(calculado > 0 ? calculado.toFixed(2) : '0.00');
   }, [piezasAPagar, aplicarIva]);
 
@@ -339,22 +347,19 @@ export default function Pagos() {
   const totalPagado = ordenActual ? parseFloat(ordenActual.pagado || 0) : 0;
   const totalConIva = aplicarIva && ordenActual ? (ordenActual.precio_total * 1.16) : (ordenActual ? ordenActual.precio_total : 0);
   const restanteConIva = ordenActual ? (totalConIva - totalPagado) : 0;
-  // Piezas que en verdad quedan por pagar de esta orden: lo que resta en dinero entre el
-  // precio por pieza. Es el mismo candado que ya existe para el Monto (max=restanteConIva)
-  // pero expresado en piezas, para que nadie pueda cobrar mas piezas de las que en realidad
-  // faltan por liquidar (evita que alguien "estire" el numero de piezas de mala fe).
-  // Importante: se usa precio_total / piezas totales (no el precio unitario plano) para que
-  // el bono/descuento (que ya viene incluido en precio_total) no infle ni desinfle las
-  // piezas restantes — el bono es dinero extra por buen trabajo, no piezas extra.
+  // Piezas que en verdad quedan por pagar de esta orden. Se cuentan SIEMPRE contra el precio
+  // unitario base (nunca contra precio_total, que ya trae el bono/descuento mezclado) — de lo
+  // contrario, poner o quitar un bono/descuento en una orden con pagos previos hacia que las
+  // piezas restantes subieran o bajaran solas, aunque no se hubiera cobrado ni una pieza más o
+  // menos. El bono/descuento es dinero extra o penalización, nunca debe mover el conteo físico
+  // de piezas — solo cuánto dinero falta por esas mismas piezas (eso sí usa precio_total, ver
+  // restanteConIva arriba, y es correcto que cambie con el bono/descuento).
   const cantFinalActual = ordenActual
     ? ((ordenActual.cantidad_recibida !== null && ordenActual.cantidad_recibida !== undefined) ? ordenActual.cantidad_recibida : ordenActual.cantidad)
     : 0;
-  const precioEfectivoPorPieza = ordenActual && cantFinalActual > 0
-    ? (parseFloat(ordenActual.precio_total) || 0) / cantFinalActual
-    : 0;
-  const piezasRestantes = ordenActual && precioEfectivoPorPieza > 0
-    ? Math.max(0, Math.floor((restanteConIva / precioEfectivoPorPieza) + 1e-6))
-    : 0;
+  const precioUnitarioBase = ordenActual ? (parseFloat(ordenActual.precio_unitario) || 0) : 0;
+  const piezasYaCobradas = precioUnitarioBase > 0 ? Math.round(totalPagado / precioUnitarioBase) : 0;
+  const piezasRestantes = ordenActual ? Math.max(0, cantFinalActual - piezasYaCobradas) : 0;
 
   const modeloCodigo = (o) => o.producto_modelo ? `${o.producto_modelo} - ` : '';
 
