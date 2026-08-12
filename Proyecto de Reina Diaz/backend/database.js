@@ -36,11 +36,25 @@ async function initializeDatabase() {
         personal INT,
         domicilio TEXT,
         colonia VARCHAR(255),
+        poblacion VARCHAR(255),
         codigo_postal VARCHAR(20),
         telefono VARCHAR(50),
-        imagen TEXT
+        imagen TEXT,
+        documentos TEXT
       );
     `);
+
+    try {
+      await connection.query("ALTER TABLE maquileros ADD COLUMN poblacion VARCHAR(255) DEFAULT NULL");
+    } catch (e) {
+      // Column may already exist
+    }
+
+    try {
+      await connection.query("ALTER TABLE maquileros ADD COLUMN documentos TEXT DEFAULT NULL");
+    } catch (e) {
+      // Column may already exist
+    }
 
     await connection.query(`
       CREATE TABLE IF NOT EXISTS inventario (

@@ -675,7 +675,7 @@ app.get('/api/historial', authenticateToken, async (req, res) => {
 
 app.get('/api/maquileros', authenticateToken, async (req, res) => {
   try {
-    const [maquileros] = await db.query("SELECT * FROM maquileros");
+    const [maquileros] = await db.query("SELECT * FROM maquileros ORDER BY nombre ASC");
     res.json(maquileros);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -731,13 +731,13 @@ app.get('/api/maquileros/:id', authenticateToken, async (req, res) => {
 });
 
 app.post('/api/maquileros', authenticateToken, upload.single('imagenBtn'), async (req, res) => {
-  const { nombre, maquinaria, personal, domicilio, colonia, codigo_postal, telefono } = req.body;
+  const { nombre, maquinaria, personal, domicilio, colonia, poblacion, codigo_postal, telefono, documentos } = req.body;
   const imagen = await processImage(req.file);
   const numPersonal = parseInt(personal) || null;
-  
+
   try {
-    const [result] = await db.query("INSERT INTO maquileros (nombre, maquinaria, personal, domicilio, colonia, codigo_postal, telefono, imagen) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", 
-      [nombre, maquinaria, numPersonal, domicilio, colonia, codigo_postal, telefono, imagen]);
+    const [result] = await db.query("INSERT INTO maquileros (nombre, maquinaria, personal, domicilio, colonia, poblacion, codigo_postal, telefono, imagen, documentos) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      [nombre, maquinaria, numPersonal, domicilio, colonia, poblacion || null, codigo_postal, telefono, imagen, documentos || null]);
     
     await logActivity(req.user.id, 'ALTA', 'MAQUILERO', `Se registró al maquilero: ${nombre}`);
     
@@ -759,7 +759,7 @@ app.put('/api/maquileros/:id/imagen', authenticateToken, upload.single('imagenBt
 });
 
 app.put('/api/maquileros/:id', authenticateToken, upload.single('imagenBtn'), async (req, res) => {
-  const { nombre, maquinaria, personal, domicilio, colonia, codigo_postal, telefono } = req.body;
+  const { nombre, maquinaria, personal, domicilio, colonia, poblacion, codigo_postal, telefono, documentos } = req.body;
   const imagen = req.file ? await processImage(req.file) : (req.body.imagen_actual || null);
   const numPersonal = parseInt(personal) || null;
 
@@ -768,8 +768,8 @@ app.put('/api/maquileros/:id', authenticateToken, upload.single('imagenBtn'), as
     const old = olds[0];
     if (!old) return res.status(404).json({ error: 'Maquilero no encontrado' });
 
-    await db.query("UPDATE maquileros SET nombre=?, maquinaria=?, personal=?, domicilio=?, colonia=?, codigo_postal=?, telefono=?, imagen=? WHERE id=?",
-      [nombre, maquinaria, numPersonal, domicilio, colonia, codigo_postal, telefono, imagen, req.params.id]);
+    await db.query("UPDATE maquileros SET nombre=?, maquinaria=?, personal=?, domicilio=?, colonia=?, poblacion=?, codigo_postal=?, telefono=?, imagen=?, documentos=? WHERE id=?",
+      [nombre, maquinaria, numPersonal, domicilio, colonia, poblacion || null, codigo_postal, telefono, imagen, documentos || null, req.params.id]);
 
     let changes = [];
     if (old.nombre !== nombre) changes.push(`Nombre: ${old.nombre} -> ${nombre}`);

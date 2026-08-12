@@ -8,7 +8,28 @@ import { toast, Swal } from '../utils/themeNotifications';
 
 const API = API_URL;
 
-const emptyForm = { nombre: '', maquinaria: '', personal: '', domicilio: '', colonia: '', codigo_postal: '', telefono: '' };
+const DOCUMENTOS_MAQUILERO = [
+  { key: 'contrato_vigente', label: 'Contrato Vigente' },
+  { key: 'reglamento', label: 'Reglamento' },
+  { key: 'pagare', label: 'Pagaré' },
+  { key: 'ine', label: 'INE' },
+  { key: 'acta_nacimiento', label: 'Acta de Nacimiento' },
+  { key: 'curp', label: 'CURP' },
+  { key: 'comprobante_domicilio', label: 'Comprobante de domicilio' },
+  { key: 'clabe_interbancaria', label: 'CLABE Interbancaria' },
+];
+
+const emptyDocumentos = DOCUMENTOS_MAQUILERO.reduce((acc, d) => ({ ...acc, [d.key]: false }), {});
+
+const emptyForm = { nombre: '', maquinaria: '', personal: '', domicilio: '', colonia: '', poblacion: '', codigo_postal: '', telefono: '', documentos: emptyDocumentos };
+
+const parseDocumentos = (raw) => {
+  let parsed = {};
+  if (raw) {
+    try { parsed = JSON.parse(raw); } catch { parsed = {}; }
+  }
+  return { ...emptyDocumentos, ...parsed };
+};
 
 const getImgSrc = (img) => img ? (img.startsWith('http') ? img : `${API}${img}`) : null;
 
@@ -36,7 +57,7 @@ export default function Maquileros() {
   const fetchMaquileros = async () => {
     try {
       const res = await axios.get(`${API}/api/maquileros`);
-      const sorted = res.data.sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''));
+      const sorted = res.data.sort((a, b) => (a.nombre || '').localeCompare(b.nombre || '', 'es', { sensitivity: 'base' }));
       setMaquileros(sorted);
     } catch (e) { console.error(e); }
   };
@@ -53,7 +74,7 @@ export default function Maquileros() {
     e.stopPropagation();
     setEditMode(true);
     setEditingId(m.id);
-    setFormData({ nombre: m.nombre || '', maquinaria: m.maquinaria || '', personal: m.personal || '', domicilio: m.domicilio || '', colonia: m.colonia || '', codigo_postal: m.codigo_postal || '', telefono: m.telefono || '' });
+    setFormData({ nombre: m.nombre || '', maquinaria: m.maquinaria || '', personal: m.personal || '', domicilio: m.domicilio || '', colonia: m.colonia || '', poblacion: m.poblacion || '', codigo_postal: m.codigo_postal || '', telefono: m.telefono || '', documentos: parseDocumentos(m.documentos) });
     setImagenFile(null);
     setIsModalOpen(true);
   };
@@ -139,7 +160,11 @@ export default function Maquileros() {
     e.preventDefault();
     try {
       const data = new FormData();
-      Object.keys(formData).forEach(k => data.append(k, formData[k]));
+      Object.keys(formData).forEach(k => {
+        if (k === 'documentos') return;
+        data.append(k, formData[k]);
+      });
+      data.append('documentos', JSON.stringify(formData.documentos));
       if (imagenFile) data.append('imagenBtn', imagenFile);
 
       if (editMode) {
@@ -363,7 +388,7 @@ export default function Maquileros() {
                   </div>
                   <div className="profile-detail-item">
                     <strong>{t('maq.domicilio')}:</strong>
-                    <span>{selectedMaquilero.domicilio || 'N/A'}, {t('maq.colonia')}: {selectedMaquilero.colonia || 'N/A'}, {t('maq.cp')}: {selectedMaquilero.codigo_postal || 'N/A'}</span>
+                    <span>{selectedMaquilero.domicilio || 'N/A'}, {t('maq.colonia')}: {selectedMaquilero.colonia || 'N/A'}, Población: {selectedMaquilero.poblacion || 'N/A'}, {t('maq.cp')}: {selectedMaquilero.codigo_postal || 'N/A'}</span>
                   </div>
                 </div>
 
@@ -558,6 +583,11 @@ export default function Maquileros() {
                 <input type="text" className="form-input" value={formData.domicilio} onChange={e => setFormData({...formData, domicilio: e.target.value})} />
               </div>
 
+              <div className="form-group">
+                <label className="form-label">Población</label>
+                <input type="text" className="form-input" value={formData.poblacion} onChange={e => setFormData({...formData, poblacion: e.target.value})} />
+              </div>
+
               <div style={{ display: 'grid', gridTemplateColumns: '3fr 1fr', gap: '1rem' }}>
                 <div className="form-group">
                   <label className="form-label">{t('maq.coloniaLabel')}</label>
@@ -566,6 +596,22 @@ export default function Maquileros() {
                 <div className="form-group">
                   <label className="form-label">{t('maq.cp')}</label>
                   <input type="text" className="form-input" value={formData.codigo_postal} onChange={e => setFormData({...formData, codigo_postal: e.target.value})} />
+                </div>
+              </div>
+
+              <div className="form-group" style={{ marginTop: '0.5rem' }}>
+                <label className="form-label">Documentos del Maquilero Adquiridos</label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem 1rem', padding: '0.75rem', border: '1px solid var(--border-color, #e2e8f0)', borderRadius: '8px' }}>
+                  {DOCUMENTOS_MAQUILERO.map(doc => (
+                    <label key={doc.key} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem' }}>
+                      <input
+                        type="checkbox"
+                        checked={!!formData.documentos[doc.key]}
+                        onChange={e => setFormData({ ...formData, documentos: { ...formData.documentos, [doc.key]: e.target.checked } })}
+                      />
+                      {doc.label}
+                    </label>
+                  ))}
                 </div>
               </div>
 
