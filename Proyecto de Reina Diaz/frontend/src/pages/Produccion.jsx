@@ -82,6 +82,9 @@ function Produccion() {
   const [recepcionModalOpen, setRecepcionModalOpen] = useState(false);
   const [recepcionOrder, setRecepcionOrder] = useState(null);
   const [recepcionTallas, setRecepcionTallas] = useState({});
+  // Máximo real por color/talla (viene del corte), para no dejar capturar más piezas
+  // recepcionadas de las que en verdad existen en ese color/talla.
+  const [recepcionMaxGrid, setRecepcionMaxGrid] = useState({});
 
   // Bitácora de entregas: registros de fecha (+ nota opcional) de cuando en realidad
   // llegaron piezas de una orden, para poder comparar contra la fecha estimada.
@@ -241,6 +244,7 @@ function Produccion() {
     });
 
     setRecepcionTallas(initialGrid);
+    setRecepcionMaxGrid(maxGrid);
     setRecepcionModalOpen(true);
   };
 
@@ -1312,14 +1316,20 @@ function Produccion() {
                           <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
                             {(szKey === 'CANTIDAD' || szKey === 'TOTAL') ? 'Cantidad' : (szKey.toLowerCase().startsWith('talla') ? szKey : `Talla ${szKey}`)}
                           </label>
-                          <input 
-                            type="number" 
+                          <input
+                            type="number"
                             min="0"
-                            className="form-input" 
+                            max={recepcionMaxGrid[colorKey]?.[szKey] ?? undefined}
+                            className="form-input"
                             style={{ padding: '0.25rem 0.5rem', textAlign: 'center', fontSize: '0.9rem', fontWeight: 700 }}
                             value={val ?? 0}
                             onChange={(e) => {
-                              const newQty = parseInt(e.target.value) || 0;
+                              let newQty = parseInt(e.target.value) || 0;
+                              const maxQty = recepcionMaxGrid[colorKey]?.[szKey];
+                              if (maxQty !== undefined && newQty > maxQty) {
+                                newQty = maxQty;
+                                toast.warning(isEn ? `This color/size only has ${maxQty} pieces in the cut` : `Este color/talla solo tiene ${maxQty} piezas en el corte`, { theme: 'dark' });
+                              }
                               setRecepcionTallas(prev => ({
                                 ...prev,
                                 [colorKey]: {
@@ -1334,14 +1344,20 @@ function Produccion() {
                     ) : (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                         <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Cantidad</label>
-                        <input 
-                          type="number" 
+                        <input
+                          type="number"
                           min="0"
-                          className="form-input" 
+                          max={recepcionMaxGrid[colorKey] ?? undefined}
+                          className="form-input"
                           style={{ padding: '0.25rem 0.5rem', textAlign: 'center', fontSize: '0.9rem', fontWeight: 700 }}
                           value={tallasObj ?? 0}
                           onChange={(e) => {
-                            const newQty = parseInt(e.target.value) || 0;
+                            let newQty = parseInt(e.target.value) || 0;
+                            const maxQty = recepcionMaxGrid[colorKey];
+                            if (typeof maxQty === 'number' && newQty > maxQty) {
+                              newQty = maxQty;
+                              toast.warning(isEn ? `This color only has ${maxQty} pieces in the cut` : `Este color solo tiene ${maxQty} piezas en el corte`, { theme: 'dark' });
+                            }
                             setRecepcionTallas(prev => ({ ...prev, [colorKey]: newQty }));
                           }}
                         />

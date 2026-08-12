@@ -311,6 +311,59 @@ const sumTallasPorColor = (tallasJson) => {
   return result;
 };
 
+// Construye el máximo real de piezas por color/talla a partir del JSON de color del corte
+// (i.color), para poder rechazar recepciones que pidan más piezas de las que en verdad
+// existen en ese color/talla. Espejo de parseColorAndTallasStructure en el frontend
+// (Produccion.jsx) — debe interpretar el mismo formato de la misma forma en ambos lados.
+const buildMaxGridFromColor = (rawColor, defaultQty = 0) => {
+  if (!rawColor) return { 'GENERAL': { 'TOTAL': defaultQty } };
+  let parsed = rawColor;
+  if (typeof rawColor === 'string') {
+    try { parsed = JSON.parse(rawColor); }
+    catch (e) { return { [rawColor.trim() || 'GENERAL']: { 'TOTAL': defaultQty } }; }
+  }
+  const grid = {};
+  if (Array.isArray(parsed)) {
+    parsed.forEach((item, index) => {
+      if (typeof item === 'object' && item !== null) {
+        const colorName = item.color || item.nombre_color || item.name || `Color ${index + 1}`;
+        grid[colorName] = {};
+        const tallasObj = item.tallas || item.variantes || item.tallas_cantidades;
+        if (tallasObj && typeof tallasObj === 'object' && !Array.isArray(tallasObj)) {
+          Object.entries(tallasObj).forEach(([sz, qty]) => { grid[colorName][sz] = parseInt(qty) || 0; });
+        } else {
+          grid[colorName]['CANTIDAD'] = parseInt(item.cantidad ?? item.piezas ?? item.total ?? defaultQty) || 0;
+        }
+      } else if (typeof item === 'string' || typeof item === 'number') {
+        grid[String(item)] = { 'CANTIDAD': defaultQty };
+      }
+    });
+  } else if (typeof parsed === 'object' && parsed !== null) {
+    const entries = Object.entries(parsed);
+    if (entries.length === 0) return { 'GENERAL': { 'TOTAL': defaultQty } };
+    const isNested = entries.some(([, val]) => typeof val === 'object' && val !== null && !Array.isArray(val));
+    if (isNested) {
+      entries.forEach(([col, tallasObj]) => {
+        grid[col] = {};
+        if (typeof tallasObj === 'object' && tallasObj !== null && !Array.isArray(tallasObj)) {
+          Object.entries(tallasObj).forEach(([sz, qty]) => { grid[col][sz] = parseInt(qty) || 0; });
+        } else {
+          grid[col]['CANTIDAD'] = parseInt(tallasObj) || 0;
+        }
+      });
+    } else {
+      const isSizeKeys = entries.every(([k]) => /^\d+$|^(XS|S|M|L|XL|2XL|3XL|4XL|XXL|EG|CH|G|MED|GDE)$/i.test(k.trim()));
+      if (isSizeKeys) {
+        grid['GENERAL'] = {};
+        entries.forEach(([sz, qty]) => { grid['GENERAL'][sz] = parseInt(qty) || 0; });
+      } else {
+        entries.forEach(([col, qty]) => { grid[col] = { 'CANTIDAD': parseInt(qty) || 0 }; });
+      }
+    }
+  }
+  return Object.keys(grid).length > 0 ? grid : { 'GENERAL': { 'TOTAL': defaultQty } };
+};
+
 // Un mismo corte (inventario_id) puede repartirse entre varias órdenes de producción (vía
 // "Dividir"). i.color trae el desglose por color del corte COMPLETO, no de una orden en
 // particular — usarlo tal cual para cada orden hace que dos órdenes distintas del mismo corte
@@ -1823,7 +1876,7 @@ app.put('/api/produccion/:id/recepcion', authenticateToken, async (req, res) => 
   const { cantidad_recibida, tallas_recibidas } = req.body;
   try {
     const [olds] = await db.query(`
-      SELECT p.*, i.precio as unit_price, i.modelo as inv_m, m.nombre as maq_n
+      SELECT p.*, i.precio as unit_price, i.modelo as inv_m, m.nombre as maq_n, i.color as inv_color
       FROM produccion p
       LEFT JOIN inventario i ON p.inventario_id = i.id
       LEFT JOIN maquileros m ON p.maquilero_id = m.id
@@ -1840,7 +1893,40 @@ app.put('/api/produccion/:id/recepcion', authenticateToken, async (req, res) => 
       qty = null;
     }
 
+    // Nunca se puede recepcionar más piezas de las que tiene la orden, ni más piezas de un
+    // color/talla en particular de las que en verdad existen en el corte — sin esto, el
+    // formulario dejaba capturar cualquier número, sin comparar contra el corte real.
+    if (qty !== null && qty > old.cantidad) {
+      return res.status(400).json({ error: `No puedes recepcionar ${qty} piezas: la orden es de ${old.cantidad} piezas en total.` });
+    }
+
     const tallasJsonStr = tallas_recibidas ? (typeof tallas_recibidas === 'string' ? tallas_recibidas : JSON.stringify(tallas_recibidas)) : old.tallas_recibidas;
+
+    if (tallas_recibidas) {
+      let tallasObjCheck = null;
+      try { tallasObjCheck = typeof tallas_recibidas === 'string' ? JSON.parse(tallas_recibidas) : tallas_recibidas; } catch (e) { tallasObjCheck = null; }
+      if (tallasObjCheck && typeof tallasObjCheck === 'object') {
+        const maxGrid = buildMaxGridFromColor(old.inv_color, old.cantidad);
+        for (const [colorKey, tallas] of Object.entries(tallasObjCheck)) {
+          const maxForColor = maxGrid[colorKey];
+          if (typeof tallas === 'object' && tallas !== null) {
+            for (const [szKey, val] of Object.entries(tallas)) {
+              const maxVal = maxForColor ? maxForColor[szKey] : undefined;
+              const receivedVal = parseInt(val) || 0;
+              if (maxVal !== undefined && receivedVal > maxVal) {
+                return res.status(400).json({ error: `El color ${colorKey} (talla ${szKey}) solo tiene ${maxVal} piezas en el corte — se intentó recepcionar ${receivedVal}.` });
+              }
+            }
+          } else {
+            const maxVal = maxForColor ? Object.values(maxForColor).reduce((s, v) => s + (parseInt(v) || 0), 0) : undefined;
+            const receivedVal = parseInt(tallas) || 0;
+            if (maxVal !== undefined && receivedVal > maxVal) {
+              return res.status(400).json({ error: `El color ${colorKey} solo tiene ${maxVal} piezas en el corte — se intentó recepcionar ${receivedVal}.` });
+            }
+          }
+        }
+      }
+    }
 
     const fullQty = old.cantidad || 1;
     const effectiveQty = (qty !== null && qty !== undefined && qty > 0) ? qty : fullQty;
