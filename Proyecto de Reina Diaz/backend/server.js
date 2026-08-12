@@ -703,15 +703,42 @@ app.get('/api/maquileros/:id', authenticateToken, async (req, res) => {
       ORDER BY p.id DESC
     `, [req.params.id]);
 
+    // Bitácora de entregas (fechas exactas registradas en Producción) de cada orden,
+    // para anexarla al historial y usarla como fuente más precisa de puntualidad.
+    let entregasByOrder = {};
+    if (historial.length > 0) {
+      const [entregasRows] = await db.query(
+        `SELECT * FROM produccion_entregas_log WHERE produccion_id IN (?) ORDER BY fecha ASC, id ASC`,
+        [historial.map(h => h.id)]
+      );
+      entregasRows.forEach(e => {
+        if (!entregasByOrder[e.produccion_id]) entregasByOrder[e.produccion_id] = [];
+        entregasByOrder[e.produccion_id].push(e);
+      });
+    }
+
     let totalEntregadas = 0;
     let totalEnviadas = 0;
     let totalRetrasos = 0;
     let numOrdenes = historial.length;
 
     historial.forEach(h => {
+      h.entregas_log = entregasByOrder[h.id] || [];
       totalEnviadas += h.cantidad || 0;
       totalEntregadas += (h.cantidad_recibida !== null ? h.cantidad_recibida : h.cantidad) || 0;
-      totalRetrasos += h.retrasos || 0;
+
+      if (h.entregas_log.length > 0 && h.fecha_fin) {
+        // Con registros exactos: se compara la última entrega registrada contra la fecha
+        // estimada para saber si esa orden en particular se cumplió a tiempo.
+        const limite = new Date(h.fecha_fin);
+        const ultimaEntrega = new Date(h.entregas_log[h.entregas_log.length - 1].fecha);
+        h.entrega_a_tiempo = ultimaEntrega <= limite;
+        totalRetrasos += h.entrega_a_tiempo ? 0 : 1;
+      } else {
+        // Sin bitácora: se conserva el comportamiento anterior basado en el contador manual.
+        h.entrega_a_tiempo = null;
+        totalRetrasos += h.retrasos || 0;
+      }
     });
 
     let scoreFulfillment = totalEnviadas > 0 ? (totalEntregadas / totalEnviadas) * 100 : 0;

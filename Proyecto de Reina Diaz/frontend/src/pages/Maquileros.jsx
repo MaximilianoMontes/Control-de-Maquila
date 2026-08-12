@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Plus, X, Pencil, Trash2, User, AlertTriangle, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, X, Pencil, Trash2, User, AlertTriangle, Search, ChevronLeft, ChevronRight, ClipboardList } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import API_URL from '../config';
@@ -35,7 +35,8 @@ const getImgSrc = (img) => img ? (img.startsWith('http') ? img : `${API}${img}`)
 
 export default function Maquileros() {
   const { user } = useAuth();
-  const { t } = useSettings();
+  const { t, settings } = useSettings();
+  const isEn = settings?.language === 'en';
   const userRole = (user?.role || user?.rol || '').toString().toLowerCase().trim();
   const canEdit = userRole === 'admin' || userRole === 'produccion1' || userRole === 'produccion2';
   const [maquileros, setMaquileros] = useState([]);
@@ -47,6 +48,7 @@ export default function Maquileros() {
   const [formData, setFormData] = useState(emptyForm);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
+  const [entregasDetailOrder, setEntregasDetailOrder] = useState(null);
 
   useEffect(() => {
     fetchMaquileros();
@@ -420,17 +422,19 @@ export default function Maquileros() {
                         <th>{t('maq.tableNeto')}</th>
                         <th>{t('maq.tableEntrega')}</th>
                         <th>{t('maq.tableCalidad')}</th>
+                        <th>{t('maq.tableEntregasLog')}</th>
                         <th>{t('maq.tableObservaciones')}</th>
                       </tr>
                     </thead>
                     <tbody>
                       {(!selectedMaquilero.historial || selectedMaquilero.historial.length === 0) ? (
-                        <tr><td colSpan="9" style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>{t('maq.noHistory')}</td></tr>
+                        <tr><td colSpan="10" style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>{t('maq.noHistory')}</td></tr>
                       ) : (
                         selectedMaquilero.historial.map(h => {
                           const pImg = h.producto_imagen ? (h.producto_imagen.startsWith('http') ? h.producto_imagen : `${API}${h.producto_imagen}`) : null;
-                          const esPuntual = h.retrasos === 0;
+                          const esPuntual = h.entrega_a_tiempo !== null && h.entrega_a_tiempo !== undefined ? h.entrega_a_tiempo : h.retrasos === 0;
                           const esCompleto = (h.cantidad_recibida || h.cantidad) >= h.cantidad;
+                          const entregasLog = h.entregas_log || [];
 
                           return (
                             <tr key={h.id}>
@@ -468,6 +472,28 @@ export default function Maquileros() {
                                   <div style={{ width: 12, height: 12, borderRadius: '50%', background: esPuntual ? '#10b981' : '#f59e0b' }} title={esPuntual ? t('maq.ontimeTitle') : t('maq.delayedTitle')}></div>
                                   <div style={{ width: 12, height: 12, borderRadius: '50%', background: esCompleto ? '#10b981' : '#dc2626' }} title={esCompleto ? t('maq.completeTitle') : t('maq.incompleteTitle')}></div>
                                 </div>
+                              </td>
+                              <td>
+                                <button
+                                  type="button"
+                                  className="btn btn-secondary"
+                                  style={{ padding: '0.3rem 0.55rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.35rem', whiteSpace: 'nowrap' }}
+                                  onClick={() => setEntregasDetailOrder(h)}
+                                  title={t('maq.tableEntregasLog')}
+                                >
+                                  <ClipboardList size={13} />
+                                  {entregasLog.length > 0
+                                    ? `${entregasLog.length} ${entregasLog.length === 1 ? (isEn ? 'record' : 'registro') : (isEn ? 'records' : 'registros')}`
+                                    : t('maq.noEntregasLog')}
+                                </button>
+                                {entregasLog.length > 0 && (
+                                  <span
+                                    className={`badge ${esPuntual ? 'badge-success' : 'badge-danger'}`}
+                                    style={{ display: 'inline-block', marginTop: '0.3rem', fontSize: '10px', fontWeight: 700, padding: '2px 6px' }}
+                                  >
+                                    {esPuntual ? t('maq.ontimeTitle') : t('maq.delayedTitle')}
+                                  </span>
+                                )}
                               </td>
                               <td style={{ minWidth: '220px', maxWidth: '350px' }}>
                                 {h.observaciones ? (
@@ -650,11 +676,67 @@ export default function Maquileros() {
             >
               <X size={24} />
             </button>
-            <img 
-              src={selectedImage} 
-              alt="Zoom" 
-              style={{ width: '100%', height: '100%', borderRadius: '12px', objectFit: 'contain', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' }} 
+            <img
+              src={selectedImage}
+              alt="Zoom"
+              style={{ width: '100%', height: '100%', borderRadius: '12px', objectFit: 'contain', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' }}
             />
+          </div>
+        </div>
+      )}
+      {/* Modal Detalle de Registro de Entregas (solo lectura) */}
+      {entregasDetailOrder && (
+        <div className="modal-overlay" style={{ zIndex: 3000 }} onClick={() => setEntregasDetailOrder(null)}>
+          <div className="modal-content glass-card" style={{ maxWidth: '520px', width: '95%' }} onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <div>
+                <h2 style={{ fontSize: '1.15rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <ClipboardList size={19} /> {t('maq.tableEntregasLog')}
+                </h2>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                  {t('maq.tableModel')}: <strong>{entregasDetailOrder.producto_modelo}</strong>
+                  {' · '}{t('maq.tableEntrega')}: <strong>{entregasDetailOrder.fecha_fin ? new Date(entregasDetailOrder.fecha_fin).toLocaleDateString() : 'N/A'}</strong>
+                </div>
+              </div>
+              <button className="btn-icon" onClick={() => setEntregasDetailOrder(null)}><X size={22} /></button>
+            </div>
+            <div style={{ margin: '1rem 0', maxHeight: '320px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {(!entregasDetailOrder.entregas_log || entregasDetailOrder.entregas_log.length === 0) ? (
+                <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '1rem', fontSize: '0.9rem' }}>
+                  {t('maq.noEntregasLog')}
+                </div>
+              ) : (
+                entregasDetailOrder.entregas_log.map(entry => {
+                  const entryDate = Date.UTC(...entry.fecha.slice(0, 10).split('-').map((v, i) => i === 1 ? parseInt(v) - 1 : parseInt(v)));
+                  let isLate = false;
+                  let diffDays = 0;
+                  if (entregasDetailOrder.fecha_fin) {
+                    const fDate = new Date(entregasDetailOrder.fecha_fin);
+                    const limitDate = Date.UTC(fDate.getUTCFullYear(), fDate.getUTCMonth(), fDate.getUTCDate());
+                    diffDays = Math.round((entryDate - limitDate) / (1000 * 60 * 60 * 24));
+                    isLate = diffDays > 0;
+                  }
+                  return (
+                    <div key={entry.id} className="glass-card" style={{ padding: '0.6rem 0.8rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <strong style={{ fontSize: '0.9rem' }}>{new Date(entry.fecha).toLocaleDateString()}</strong>
+                        <span className={`badge ${isLate ? 'badge-danger' : 'badge-success'}`} style={{ fontSize: '10px', padding: '2px 6px', fontWeight: 700 }}>
+                          {isLate ? `${isEn ? 'Late' : 'Tarde'} (${diffDays}d)` : (isEn ? 'On time' : 'A tiempo')}
+                        </span>
+                      </div>
+                      {entry.nota && (
+                        <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '2px' }}>{entry.nota}</div>
+                      )}
+                      {entry.username && (
+                        <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '2px', opacity: 0.7 }}>
+                          {isEn ? 'by' : 'por'} {entry.username}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
+              )}
+            </div>
           </div>
         </div>
       )}
