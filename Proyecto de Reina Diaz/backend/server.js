@@ -1907,9 +1907,46 @@ app.put('/api/produccion/:id/recepcion', authenticateToken, async (req, res) => 
       try { tallasObjCheck = typeof tallas_recibidas === 'string' ? JSON.parse(tallas_recibidas) : tallas_recibidas; } catch (e) { tallasObjCheck = null; }
       if (tallasObjCheck && typeof tallasObjCheck === 'object') {
         const maxGrid = buildMaxGridFromColor(old.inv_color, old.cantidad);
+
+        // Si el mismo corte (inventario_id) se dividió entre varias órdenes (vía "Dividir"),
+        // i.color trae el total del corte COMPLETO, no de esta orden — hay que restarle lo
+        // que las demás órdenes hermanas ya reclamaron con su propio tallas_recibidas. El
+        // resto del sistema (Camión) ya rastrea esto, pero solo a nivel color (no por talla),
+        // así que cuando hay hermanas la validación baja a ese mismo nivel de detalle.
+        let maxPorColorConHermanas = null;
+        if (old.inventario_id) {
+          const [siblingRows] = await db.query(
+            `SELECT tallas_recibidas FROM produccion WHERE inventario_id = ? AND id != ? AND tallas_recibidas IS NOT NULL`,
+            [old.inventario_id, old.id]
+          );
+          if (siblingRows.length > 0) {
+            const claimedByColor = {};
+            for (const s of siblingRows) {
+              const perColor = sumTallasPorColor(s.tallas_recibidas);
+              for (const [color, qty] of Object.entries(perColor)) {
+                claimedByColor[color] = (claimedByColor[color] || 0) + qty;
+              }
+            }
+            maxPorColorConHermanas = {};
+            for (const [color, sizes] of Object.entries(maxGrid)) {
+              const totalColor = Object.values(sizes).reduce((s, v) => s + (parseInt(v) || 0), 0);
+              maxPorColorConHermanas[color] = Math.max(0, totalColor - (claimedByColor[color] || 0));
+            }
+          }
+        }
+
         for (const [colorKey, tallas] of Object.entries(tallasObjCheck)) {
-          const maxForColor = maxGrid[colorKey];
-          if (typeof tallas === 'object' && tallas !== null) {
+          const receivedForColor = (typeof tallas === 'object' && tallas !== null)
+            ? Object.values(tallas).reduce((s, v) => s + (parseInt(v) || 0), 0)
+            : (parseInt(tallas) || 0);
+
+          if (maxPorColorConHermanas) {
+            const maxVal = maxPorColorConHermanas[colorKey];
+            if (maxVal !== undefined && receivedForColor > maxVal) {
+              return res.status(400).json({ error: `El color ${colorKey} solo tiene ${maxVal} piezas disponibles para esta orden (el corte está dividido con otras órdenes) — se intentó recepcionar ${receivedForColor}.` });
+            }
+          } else if (typeof tallas === 'object' && tallas !== null) {
+            const maxForColor = maxGrid[colorKey];
             for (const [szKey, val] of Object.entries(tallas)) {
               const maxVal = maxForColor ? maxForColor[szKey] : undefined;
               const receivedVal = parseInt(val) || 0;
@@ -1918,10 +1955,10 @@ app.put('/api/produccion/:id/recepcion', authenticateToken, async (req, res) => 
               }
             }
           } else {
+            const maxForColor = maxGrid[colorKey];
             const maxVal = maxForColor ? Object.values(maxForColor).reduce((s, v) => s + (parseInt(v) || 0), 0) : undefined;
-            const receivedVal = parseInt(tallas) || 0;
-            if (maxVal !== undefined && receivedVal > maxVal) {
-              return res.status(400).json({ error: `El color ${colorKey} solo tiene ${maxVal} piezas en el corte — se intentó recepcionar ${receivedVal}.` });
+            if (maxVal !== undefined && receivedForColor > maxVal) {
+              return res.status(400).json({ error: `El color ${colorKey} solo tiene ${maxVal} piezas en el corte — se intentó recepcionar ${receivedForColor}.` });
             }
           }
         }
