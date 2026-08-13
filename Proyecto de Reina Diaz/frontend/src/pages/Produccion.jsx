@@ -786,7 +786,6 @@ function Produccion() {
           <table className="data-table">
             <thead>
               <tr>
-                <th>{t('prod.folio')}</th>
                 <th>{t('prod.tailor')}</th>
                 <th>{t('prod.model')}</th>
                 <th>{t('prod.pieces')} ({t('dash.status') === 'Status' ? 'Sent' : 'Env.'})</th>
@@ -803,7 +802,7 @@ function Produccion() {
             </thead>
             <tbody>
               {filteredOrders.length === 0 ? (
-                <tr><td colSpan="13" style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>{t('prod.noResults')}</td></tr>
+                <tr><td colSpan="12" style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>{t('prod.noResults')}</td></tr>
               ) : (
                 filteredOrders.map((o, index) => {
                   const pagado = o.pagado || 0;
@@ -838,7 +837,6 @@ function Produccion() {
                   
                   return (
                     <tr key={o.id} className={rowClass} style={{ opacity: isCancelado ? 0.6 : 1 }}>
-                      <td>#{getFolio(o)}</td>
                       <td style={{ fontWeight: 600 }}>{o.maquilero_nombre}</td>
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
