@@ -265,18 +265,24 @@ export default function PlanchaModelos({ modelosCamion, fetchModelosCamion, fetc
                     id: m.id,
                     modelo: m.modelo,
                     imagen: m.imagen,
-                    verificado: m.verificado,
                     precio_plancha: m.precio_plancha,
                     entries: []
                   });
                 }
                 const record = modelMap.get(m.modelo);
                 record.entries.push(m);
-                if (m.verificado) record.verificado = 1;
                 if (m.precio_plancha) record.precio_plancha = m.precio_plancha;
                 if (!record.imagen && m.imagen) record.imagen = m.imagen;
               });
-              g.modelosConsolidados = Array.from(modelMap.values());
+              // Un modelo solo cuenta como verificado/desbloqueado cuando TODAS sus entradas
+              // (puede haber una por color/lote, p.ej. MAR y HUE del mismo modelo) lo están.
+              // Antes bastaba con que UNA sola entrada estuviera verificada para marcar todo
+              // el modelo como "Desbloqueado", lo que escondía el boton de "Verificar" de las
+              // demas variantes y esas piezas nunca aparecian como disponibles en Plancha.
+              g.modelosConsolidados = Array.from(modelMap.values()).map(record => ({
+                ...record,
+                verificado: record.entries.every(e => e.verificado)
+              }));
             });
 
             return grupos.map((grupo) => (
@@ -376,27 +382,33 @@ export default function PlanchaModelos({ modelosCamion, fetchModelosCamion, fetc
                                 {isEn ? 'Pending Verification' : 'Pendiente de Verificación'}
                               </div>
                             ) : (
-                              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                <button 
-                                  className="btn btn-primary" 
-                                  style={{ flex: 1, padding: '8px', fontSize: '0.85rem' }}
-                                  onClick={() => handleAbrirVerificacion(primaryEntry)}
-                                >
-                                  {isEn ? 'Verify' : 'Verificar'}
-                                </button>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                {/* Un boton "Verificar" por cada entrada (color/lote) todavia pendiente:
+                                    si solo una variante ya fue verificada, las demas seguian sin poder
+                                    verificarse porque este boton apuntaba siempre a la primera entrada. */}
+                                {m.entries.filter(e => !e.verificado).map(e => (
+                                  <button
+                                    key={e.id}
+                                    className="btn btn-primary"
+                                    style={{ width: '100%', padding: '8px', fontSize: '0.85rem' }}
+                                    onClick={() => handleAbrirVerificacion(e)}
+                                  >
+                                    {isEn ? 'Verify' : 'Verificar'}{m.entries.length > 1 ? ` ${formatColorLabel(e.color)}` : ''}
+                                  </button>
+                                ))}
                                 {m.modelo === '723131' ? (
-                                  <button 
-                                    className="btn" 
-                                    style={{ flex: 1, padding: '8px', fontSize: '0.85rem', background: 'rgba(255, 255, 255, 0.05)', color: 'var(--text-muted)', border: '1px solid rgba(255, 255, 255, 0.1)', cursor: 'not-allowed' }}
+                                  <button
+                                    className="btn"
+                                    style={{ width: '100%', padding: '8px', fontSize: '0.85rem', background: 'rgba(255, 255, 255, 0.05)', color: 'var(--text-muted)', border: '1px solid rgba(255, 255, 255, 0.1)', cursor: 'not-allowed' }}
                                     disabled
                                     title={isEn ? 'Returns not allowed for this model' : 'No se permiten devoluciones para este modelo'}
                                   >
                                     {isEn ? 'No Return' : 'Sin Devolución'}
                                   </button>
                                 ) : (
-                                  <button 
-                                    className="btn" 
-                                    style={{ flex: 1, padding: '8px', fontSize: '0.85rem', background: 'rgba(239, 68, 68, 0.15)', color: '#f87171', border: '1px solid rgba(239, 68, 68, 0.3)' }}
+                                  <button
+                                    className="btn"
+                                    style={{ width: '100%', padding: '8px', fontSize: '0.85rem', background: 'rgba(239, 68, 68, 0.15)', color: '#f87171', border: '1px solid rgba(239, 68, 68, 0.3)' }}
                                     onClick={() => handleAbrirDevolucion(primaryEntry)}
                                   >
                                     {isEn ? 'Return' : 'Devolución'}
