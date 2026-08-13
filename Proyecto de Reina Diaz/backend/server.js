@@ -58,6 +58,18 @@ const uploadSpreadsheet = multer({
   }
 });
 
+const ALLOWED_REPORTE_MIMES = new Set([...ALLOWED_IMAGE_MIMES, 'application/pdf']);
+const uploadReporte = multer({
+  storage: storage,
+  limits: { fileSize: 8 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (!ALLOWED_REPORTE_MIMES.has(file.mimetype)) {
+      return cb(new Error('Tipo de archivo no permitido. Solo se aceptan imágenes o PDF.'));
+    }
+    cb(null, true);
+  }
+});
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 const SECRET_KEY = process.env.SECRET_KEY;
@@ -2194,6 +2206,99 @@ app.delete('/api/produccion/entregas-log/:logId', authenticateToken, async (req,
     if (!rows[0]) return res.status(404).json({ error: 'Registro no encontrado' });
     await db.query("DELETE FROM produccion_entregas_log WHERE id = ?", [req.params.logId]);
     await logActivity(req.user.id, 'BAJA', 'PRODUCCION', `Eliminó un registro de entrega (orden ID ${rows[0].produccion_id})`);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// --- FASE 1: BUZÓN DE REPORTES DE SOPORTE ---
+// Cualquier usuario reporta un problema desde donde esté (mensaje + adjuntos opcionales);
+// solo el admin puede verlos y gestionarlos. Sin IA ni Discord todavía (fases futuras).
+
+app.post('/api/soporte/reportes', authenticateToken, uploadReporte.array('archivos', 5), async (req, res) => {
+  const { mensaje, pantalla } = req.body;
+  if (!mensaje || !mensaje.trim()) {
+    return res.status(400).json({ error: 'El mensaje es requerido' });
+  }
+  const connection = await db.getConnection();
+  try {
+    await connection.beginTransaction();
+    const [result] = await connection.query(
+      "INSERT INTO soporte_reportes (user_id, rol, pantalla, mensaje) VALUES (?, ?, ?, ?)",
+      [req.user.id, req.user.role, pantalla || null, mensaje.trim()]
+    );
+    const reporteId = result.insertId;
+    const files = req.files || [];
+    for (const file of files) {
+      await connection.query(
+        "INSERT INTO soporte_reportes_adjuntos (reporte_id, archivo, nombre_original) VALUES (?, ?, ?)",
+        [reporteId, `/uploads/${file.filename}`, file.originalname]
+      );
+    }
+    await connection.commit();
+    await logActivity(req.user.id, 'ALTA', 'SOPORTE', `Nuevo reporte de soporte desde ${pantalla || 'el sistema'}`);
+    res.json({ success: true, id: reporteId });
+  } catch (error) {
+    await connection.rollback();
+    res.status(500).json({ error: error.message });
+  } finally {
+    connection.release();
+  }
+});
+
+app.get('/api/soporte/reportes', authenticateToken, async (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'No autorizado para esta sección' });
+  }
+  try {
+    let query = `
+      SELECT sr.*, u.username
+      FROM soporte_reportes sr
+      LEFT JOIN users u ON sr.user_id = u.id
+    `;
+    const params = [];
+    if (req.query.estado) {
+      query += ' WHERE sr.estado = ?';
+      params.push(req.query.estado);
+    }
+    query += ' ORDER BY sr.fecha_creacion DESC';
+    const [reportes] = await db.query(query, params);
+
+    if (reportes.length > 0) {
+      const [adjuntos] = await db.query(
+        "SELECT * FROM soporte_reportes_adjuntos WHERE reporte_id IN (?)",
+        [reportes.map(r => r.id)]
+      );
+      const adjuntosPorReporte = {};
+      for (const a of adjuntos) {
+        if (!adjuntosPorReporte[a.reporte_id]) adjuntosPorReporte[a.reporte_id] = [];
+        adjuntosPorReporte[a.reporte_id].push(a);
+      }
+      reportes.forEach(r => { r.adjuntos = adjuntosPorReporte[r.id] || []; });
+    }
+
+    res.json(reportes);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.put('/api/soporte/reportes/:id', authenticateToken, async (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'No autorizado para esta sección' });
+  }
+  const { estado, respuesta } = req.body;
+  try {
+    const fields = [];
+    const params = [];
+    if (estado !== undefined) { fields.push('estado = ?'); params.push(estado); }
+    if (respuesta !== undefined) { fields.push('respuesta = ?'); params.push(respuesta); }
+    if (fields.length === 0) {
+      return res.status(400).json({ error: 'Nada que actualizar' });
+    }
+    params.push(req.params.id);
+    await db.query(`UPDATE soporte_reportes SET ${fields.join(', ')} WHERE id = ?`, params);
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });

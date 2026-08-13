@@ -7,6 +7,7 @@ import API_URL from '../config';
 import PlanchaSidebar from '../components/PlanchaSidebar';
 import Header from '../components/Header';
 import TrainingBanner from '../components/TrainingBanner';
+import SupportChatWidget from '../components/SupportChatWidget';
 
 // Subcomponents
 import PlanchaPlanchadores from '../components/plancha/PlanchaPlanchadores';
@@ -264,6 +265,7 @@ export default function Plancha() {
         <PlanchaSidebar activeTab={activeTab} setActiveTab={setActiveTab} onClose={closeSidebar} />
       </div>
       
+      <SupportChatWidget />
       <div className="main-container">
         <TrainingBanner />
         <Header onToggleSidebar={toggleSidebar} />

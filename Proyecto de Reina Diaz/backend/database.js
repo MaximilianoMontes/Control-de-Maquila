@@ -1841,6 +1841,37 @@ async function initializeDatabase() {
       console.error('Error creating produccion_entregas_log:', e);
     }
 
+    // Fase 1 del buzón de reportes de soporte: captura de reportes desde cualquier
+    // pantalla del sistema (sin IA ni Discord todavía, eso viene en fases futuras).
+    try {
+      await connection.query(`
+        CREATE TABLE IF NOT EXISTS soporte_reportes (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          user_id INT NOT NULL,
+          rol VARCHAR(50) NOT NULL,
+          pantalla VARCHAR(150) DEFAULT NULL,
+          mensaje TEXT NOT NULL,
+          estado VARCHAR(20) DEFAULT 'nuevo',
+          respuesta TEXT DEFAULT NULL,
+          fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          FOREIGN KEY(user_id) REFERENCES users(id)
+        )
+      `);
+      await connection.query(`
+        CREATE TABLE IF NOT EXISTS soporte_reportes_adjuntos (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          reporte_id INT NOT NULL,
+          archivo VARCHAR(255) NOT NULL,
+          nombre_original VARCHAR(255) DEFAULT NULL,
+          FOREIGN KEY(reporte_id) REFERENCES soporte_reportes(id) ON DELETE CASCADE
+        )
+      `);
+      console.log('Tablas soporte_reportes y soporte_reportes_adjuntos listas.');
+    } catch (e) {
+      console.error('Error creating soporte_reportes:', e);
+    }
+
     try {
       const fs = require('fs');
       const path = require('path');
