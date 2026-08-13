@@ -56,6 +56,10 @@ export default function Maquileros() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
   const [entregasDetailOrder, setEntregasDetailOrder] = useState(null);
+  // Alta/baja de registros de entrega directo desde el Historial de Maquilero — usa el mismo
+  // endpoint que Producción, así que un registro agregado aquí también aparece allá y viceversa.
+  const [nuevaEntregaFecha, setNuevaEntregaFecha] = useState('');
+  const [nuevaEntregaNota, setNuevaEntregaNota] = useState('');
   const [activeTab, setActiveTab] = useState('activos');
 
   useEffect(() => {
@@ -172,6 +176,45 @@ export default function Maquileros() {
       const res = await axios.get(`${API}/api/maquileros/${id}`);
       setSelectedMaquilero(res.data);
     } catch (e) { console.error(e); }
+  };
+
+  const handleOpenEntregasDetail = (h) => {
+    setNuevaEntregaFecha(new Date().toISOString().split('T')[0]);
+    setNuevaEntregaNota('');
+    setEntregasDetailOrder(h);
+  };
+
+  const handleAddEntregaLogMaq = async () => {
+    if (!entregasDetailOrder || !nuevaEntregaFecha || !selectedMaquilero) return;
+    try {
+      await axios.post(`${API}/api/produccion/${entregasDetailOrder.id}/entregas-log`, {
+        fecha: nuevaEntregaFecha,
+        nota: nuevaEntregaNota || null
+      }, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+      setNuevaEntregaNota('');
+      const res = await axios.get(`${API}/api/maquileros/${selectedMaquilero.id}`);
+      setSelectedMaquilero(res.data);
+      setEntregasDetailOrder(res.data.historial.find(item => item.id === entregasDetailOrder.id) || null);
+      toast.success(isEn ? 'Delivery record added' : 'Registro de entrega agregado', { theme: 'dark' });
+    } catch (e) {
+      console.error(e);
+      toast.error(isEn ? 'Error adding record' : 'Error al agregar el registro', { theme: 'dark' });
+    }
+  };
+
+  const handleDeleteEntregaLogMaq = async (logId) => {
+    if (!entregasDetailOrder || !selectedMaquilero) return;
+    try {
+      await axios.delete(`${API}/api/produccion/entregas-log/${logId}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      const res = await axios.get(`${API}/api/maquileros/${selectedMaquilero.id}`);
+      setSelectedMaquilero(res.data);
+      setEntregasDetailOrder(res.data.historial.find(item => item.id === entregasDetailOrder.id) || null);
+    } catch (e) {
+      console.error(e);
+      toast.error(isEn ? 'Error deleting record' : 'Error al eliminar el registro', { theme: 'dark' });
+    }
   };
 
   const navigateMaquilero = (direction) => {
@@ -598,7 +641,7 @@ export default function Maquileros() {
                                   type="button"
                                   className="btn btn-secondary"
                                   style={{ padding: '0.3rem 0.55rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.35rem', whiteSpace: 'nowrap' }}
-                                  onClick={() => setEntregasDetailOrder(h)}
+                                  onClick={() => handleOpenEntregasDetail(h)}
                                   title={t('maq.tableEntregasLog')}
                                 >
                                   <ClipboardList size={13} />
@@ -808,7 +851,8 @@ export default function Maquileros() {
           </div>
         </div>
       )}
-      {/* Modal Detalle de Registro de Entregas (solo lectura) */}
+      {/* Modal Detalle de Registro de Entregas — se puede agregar/eliminar desde aquí, usa el
+          mismo endpoint que Producción, así que ambas vistas quedan siempre sincronizadas. */}
       {entregasDetailOrder && (
         <div className="modal-overlay" style={{ zIndex: 3000 }} onClick={() => setEntregasDetailOrder(null)}>
           <div className="modal-content glass-card" style={{ maxWidth: '520px', width: '95%' }} onClick={e => e.stopPropagation()}>
@@ -824,7 +868,7 @@ export default function Maquileros() {
               </div>
               <button className="btn-icon" onClick={() => setEntregasDetailOrder(null)}><X size={22} /></button>
             </div>
-            <div style={{ margin: '1rem 0', maxHeight: '320px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <div style={{ margin: '1rem 0', maxHeight: '280px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               {(!entregasDetailOrder.entregas_log || entregasDetailOrder.entregas_log.length === 0) ? (
                 <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '1rem', fontSize: '0.9rem' }}>
                   {t('maq.noEntregasLog')}
@@ -841,26 +885,60 @@ export default function Maquileros() {
                     isLate = diffDays > 0;
                   }
                   return (
-                    <div key={entry.id} className="glass-card" style={{ padding: '0.6rem 0.8rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <strong style={{ fontSize: '0.9rem' }}>{new Date(entry.fecha).toLocaleDateString()}</strong>
-                        <span className={`badge ${isLate ? 'badge-danger' : 'badge-success'}`} style={{ fontSize: '10px', padding: '2px 6px', fontWeight: 700 }}>
-                          {isLate ? `${isEn ? 'Late' : 'Tarde'} (${diffDays}d)` : (isEn ? 'On time' : 'A tiempo')}
-                        </span>
-                      </div>
-                      {entry.nota && (
-                        <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '2px' }}>{entry.nota}</div>
-                      )}
-                      {entry.username && (
-                        <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '2px', opacity: 0.7 }}>
-                          {isEn ? 'by' : 'por'} {entry.username}
+                    <div key={entry.id} className="glass-card" style={{ padding: '0.6rem 0.8rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.03)', borderRadius: '8px' }}>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <strong style={{ fontSize: '0.9rem' }}>{new Date(entry.fecha).toLocaleDateString()}</strong>
+                          <span className={`badge ${isLate ? 'badge-danger' : 'badge-success'}`} style={{ fontSize: '10px', padding: '2px 6px', fontWeight: 700 }}>
+                            {isLate ? `${isEn ? 'Late' : 'Tarde'} (${diffDays}d)` : (isEn ? 'On time' : 'A tiempo')}
+                          </span>
                         </div>
+                        {entry.nota && (
+                          <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '2px' }}>{entry.nota}</div>
+                        )}
+                        {entry.username && (
+                          <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '2px', opacity: 0.7 }}>
+                            {isEn ? 'by' : 'por'} {entry.username}
+                          </div>
+                        )}
+                      </div>
+                      {canEdit && (
+                        <button type="button" className="btn btn-danger" style={{ padding: '4px 8px' }} onClick={() => handleDeleteEntregaLogMaq(entry.id)}>
+                          <Trash2 size={14} />
+                        </button>
                       )}
                     </div>
                   );
                 })
               )}
             </div>
+
+            {canEdit && (
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '1rem', flexWrap: 'wrap' }}>
+                <div className="form-group" style={{ margin: 0, flex: '1 1 140px' }}>
+                  <label className="form-label" style={{ fontSize: '0.75rem' }}>{isEn ? 'Date' : 'Fecha'}</label>
+                  <input
+                    type="date"
+                    className="form-input"
+                    value={nuevaEntregaFecha}
+                    onChange={e => setNuevaEntregaFecha(e.target.value)}
+                  />
+                </div>
+                <div className="form-group" style={{ margin: 0, flex: '2 1 180px' }}>
+                  <label className="form-label" style={{ fontSize: '0.75rem' }}>{isEn ? 'Note (optional)' : 'Nota (opcional)'}</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    value={nuevaEntregaNota}
+                    onChange={e => setNuevaEntregaNota(e.target.value)}
+                    placeholder={isEn ? 'e.g. delivered 30 pcs' : 'ej. entregó 30 pzs'}
+                  />
+                </div>
+                <button type="button" className="btn btn-primary" style={{ padding: '0.55rem 1rem' }} onClick={handleAddEntregaLogMaq} disabled={!nuevaEntregaFecha}>
+                  <Plus size={16} /> {isEn ? 'Add' : 'Agregar'}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

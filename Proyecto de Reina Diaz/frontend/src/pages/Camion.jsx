@@ -871,9 +871,14 @@ export default function Camion() {
               )}
             </h2>
             {cargo.length > 0 && (
-              <span className="badge badge-success" style={{ fontWeight: 700 }}>
-                {cargo.reduce((sum, item) => sum + item.piezas, 0)} {t('camion.totalPieces') || 'Piezas en total'}
-              </span>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <span className="badge badge-info" style={{ fontWeight: 700 }}>
+                  {cargo.length} {t('camion.lots') || 'Lotes'}
+                </span>
+                <span className="badge badge-success" style={{ fontWeight: 700 }}>
+                  {cargo.reduce((sum, item) => sum + item.piezas, 0)} {t('camion.totalPieces') || 'Piezas en total'}
+                </span>
+              </div>
             )}
           </div>
 
