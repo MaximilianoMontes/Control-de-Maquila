@@ -3404,12 +3404,27 @@ body.theme-limbus tr:hover td {
   background: rgba(226, 168, 43, 0.06) !important;
 }
 
-/* Sin affinity accents: Wrath red & Sloth green alternate as row identity stripes */
-body.theme-limbus tr:nth-child(odd) td:first-child {
-  box-shadow: inset 3px 0 0 0 rgba(192, 57, 43, 0.5) !important;
+/* Sin affinity accents: las 7 afinidades de pecado ciclan como franjas de identidad por fila */
+body.theme-limbus tr:nth-child(7n+1) td:first-child {
+  box-shadow: inset 3px 0 0 0 rgba(192, 57, 43, 0.5) !important; /* Wrath - rojo */
 }
-body.theme-limbus tr:nth-child(even) td:first-child {
-  box-shadow: inset 3px 0 0 0 rgba(39, 174, 96, 0.5) !important;
+body.theme-limbus tr:nth-child(7n+2) td:first-child {
+  box-shadow: inset 3px 0 0 0 rgba(230, 126, 34, 0.5) !important; /* Lust - naranja */
+}
+body.theme-limbus tr:nth-child(7n+3) td:first-child {
+  box-shadow: inset 3px 0 0 0 rgba(244, 208, 63, 0.5) !important; /* Sloth - amarillo */
+}
+body.theme-limbus tr:nth-child(7n+4) td:first-child {
+  box-shadow: inset 3px 0 0 0 rgba(39, 174, 96, 0.5) !important; /* Gluttony - verde/teal */
+}
+body.theme-limbus tr:nth-child(7n+5) td:first-child {
+  box-shadow: inset 3px 0 0 0 rgba(0, 188, 212, 0.5) !important; /* Gloom - cyan */
+}
+body.theme-limbus tr:nth-child(7n+6) td:first-child {
+  box-shadow: inset 3px 0 0 0 rgba(41, 128, 185, 0.5) !important; /* Pride - azul */
+}
+body.theme-limbus tr:nth-child(7n) td:first-child {
+  box-shadow: inset 3px 0 0 0 rgba(142, 68, 173, 0.5) !important; /* Envy - morado */
 }
 
 /* Sin affinity badge variants (alongside existing gold/red badges) */
@@ -3418,10 +3433,35 @@ body.theme-limbus .badge-wrath {
   color: #e0574a !important;
   border: 1px solid rgba(192, 57, 43, 0.4) !important;
 }
+body.theme-limbus .badge-lust {
+  background: rgba(230, 126, 34, 0.22) !important;
+  color: #f0954d !important;
+  border: 1px solid rgba(230, 126, 34, 0.4) !important;
+}
 body.theme-limbus .badge-sloth {
+  background: rgba(244, 208, 63, 0.2) !important;
+  color: #f7dc6f !important;
+  border: 1px solid rgba(244, 208, 63, 0.4) !important;
+}
+body.theme-limbus .badge-gluttony {
   background: rgba(39, 174, 96, 0.2) !important;
   color: #4fd88a !important;
   border: 1px solid rgba(39, 174, 96, 0.4) !important;
+}
+body.theme-limbus .badge-gloom {
+  background: rgba(0, 188, 212, 0.2) !important;
+  color: #4dd0e1 !important;
+  border: 1px solid rgba(0, 188, 212, 0.4) !important;
+}
+body.theme-limbus .badge-pride {
+  background: rgba(41, 128, 185, 0.2) !important;
+  color: #5dade2 !important;
+  border: 1px solid rgba(41, 128, 185, 0.4) !important;
+}
+body.theme-limbus .badge-envy {
+  background: rgba(142, 68, 173, 0.2) !important;
+  color: #bb8fce !important;
+  border: 1px solid rgba(142, 68, 173, 0.4) !important;
 }
 
 /* Limbus Company Custom Scrollbar */
