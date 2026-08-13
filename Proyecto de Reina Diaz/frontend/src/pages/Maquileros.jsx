@@ -33,6 +33,13 @@ const parseDocumentos = (raw) => {
 
 const getImgSrc = (img) => img ? (img.startsWith('http') ? img : `${API}${img}`) : null;
 
+const formatMontoDisplay = (val) => {
+  if (val === '' || val === null || val === undefined) return '';
+  const parts = val.toString().split('.');
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return parts.join('.');
+};
+
 export default function Maquileros() {
   const { user } = useAuth();
   const { t, settings } = useSettings();
@@ -752,17 +759,21 @@ export default function Maquileros() {
                         {doc.label}
                       </label>
                       {doc.key === 'pagare' && (
-                        <div style={{ position: 'relative', width: '110px' }}>
+                        <div style={{ position: 'relative', width: '130px' }}>
                           <span style={{ position: 'absolute', left: '0.5rem', top: '50%', transform: 'translateY(-50%)', fontSize: '0.85rem', color: 'var(--text-secondary, #64748b)', pointerEvents: 'none' }}>$</span>
                           <input
-                            type="number"
-                            min="0"
-                            step="0.01"
+                            type="text"
+                            inputMode="decimal"
                             className="form-input"
                             placeholder="0.00"
                             style={{ padding: '0.25rem 0.5rem 0.25rem 1.25rem', fontSize: '0.85rem', width: '100%' }}
-                            value={formData.documentos.pagare_monto}
-                            onChange={e => setFormData({ ...formData, documentos: { ...formData.documentos, pagare_monto: e.target.value } })}
+                            value={formatMontoDisplay(formData.documentos.pagare_monto)}
+                            onChange={e => {
+                              const raw = e.target.value.replace(/,/g, '');
+                              if (raw === '' || /^\d*\.?\d{0,2}$/.test(raw)) {
+                                setFormData({ ...formData, documentos: { ...formData.documentos, pagare_monto: raw } });
+                              }
+                            }}
                           />
                         </div>
                       )}
