@@ -826,6 +826,29 @@ app.delete('/api/maquileros/:id', authenticateToken, async (req, res) => {
   }
 });
 
+// Marca a un maquilero como inactivo (con motivo obligatorio) o lo reactiva.
+app.put('/api/maquileros/:id/estado', authenticateToken, async (req, res) => {
+  const { activo, nota } = req.body;
+  try {
+    const [olds] = await db.query("SELECT nombre FROM maquileros WHERE id = ?", [req.params.id]);
+    const old = olds[0];
+    if (!old) return res.status(404).json({ error: 'Maquilero no encontrado' });
+
+    if (activo === false || activo === 0 || activo === '0') {
+      if (!nota || !nota.trim()) return res.status(400).json({ error: 'El motivo es requerido' });
+      await db.query("UPDATE maquileros SET activo = 0, inactivo_nota = ?, inactivo_fecha = NOW() WHERE id = ?", [nota.trim(), req.params.id]);
+      await logActivity(req.user.id, 'EDIT', 'MAQUILERO', `Marcó como inactivo a ${old.nombre}: ${nota.trim()}`);
+    } else {
+      await db.query("UPDATE maquileros SET activo = 1, inactivo_nota = NULL, inactivo_fecha = NULL WHERE id = ?", [req.params.id]);
+      await logActivity(req.user.id, 'EDIT', 'MAQUILERO', `Reactivó a ${old.nombre}`);
+    }
+
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // APIs Inventario
 app.get('/api/inventario', async (req, res) => {
   try {

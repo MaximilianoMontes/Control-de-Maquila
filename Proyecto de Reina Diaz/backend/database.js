@@ -56,6 +56,24 @@ async function initializeDatabase() {
       // Column may already exist
     }
 
+    try {
+      await connection.query("ALTER TABLE maquileros ADD COLUMN activo TINYINT(1) NOT NULL DEFAULT 1");
+    } catch (e) {
+      // Column may already exist
+    }
+
+    try {
+      await connection.query("ALTER TABLE maquileros ADD COLUMN inactivo_nota TEXT DEFAULT NULL");
+    } catch (e) {
+      // Column may already exist
+    }
+
+    try {
+      await connection.query("ALTER TABLE maquileros ADD COLUMN inactivo_fecha DATETIME DEFAULT NULL");
+    } catch (e) {
+      // Column may already exist
+    }
+
     await connection.query(`
       CREATE TABLE IF NOT EXISTS inventario (
         id INT AUTO_INCREMENT PRIMARY KEY,

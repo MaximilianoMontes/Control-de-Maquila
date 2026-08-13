@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Plus, X, Pencil, Trash2, User, AlertTriangle, Search, ChevronLeft, ChevronRight, ClipboardList } from 'lucide-react';
+import { Plus, X, Pencil, Trash2, User, AlertTriangle, Search, ChevronLeft, ChevronRight, ClipboardList, UserX, UserCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import API_URL from '../config';
@@ -49,6 +49,7 @@ export default function Maquileros() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
   const [entregasDetailOrder, setEntregasDetailOrder] = useState(null);
+  const [activeTab, setActiveTab] = useState('activos');
 
   useEffect(() => {
     fetchMaquileros();
@@ -102,6 +103,58 @@ export default function Maquileros() {
           fetchMaquileros();
         } catch (e) { 
           toast.error(e.response?.data?.error || 'Error al eliminar', { theme: 'dark' }); 
+        }
+      }
+    });
+  };
+
+  const handleMarkInactive = async (m, e) => {
+    e.stopPropagation();
+    const { value: nota, isConfirmed } = await Swal.fire({
+      title: t('maq.inactiveReasonTitle'),
+      input: 'textarea',
+      inputPlaceholder: t('maq.inactiveReasonPlaceholder'),
+      showCancelButton: true,
+      confirmButtonText: t('maq.markInactive'),
+      cancelButtonText: t('maq.cancel'),
+      background: '#1e293b',
+      color: '#f8fafc',
+      confirmButtonColor: '#f59e0b',
+      inputValidator: (value) => !value || !value.trim() ? t('maq.inactiveReasonRequired') : undefined
+    });
+
+    if (isConfirmed) {
+      try {
+        await axios.put(`${API}/api/maquileros/${m.id}/estado`, { activo: false, nota });
+        toast.success(t('maq.markedInactiveSuccess'), { theme: 'dark' });
+        fetchMaquileros();
+      } catch (err) {
+        toast.error(err.response?.data?.error || 'Error', { theme: 'dark' });
+      }
+    }
+  };
+
+  const handleReactivate = async (m, e) => {
+    e.stopPropagation();
+    Swal.fire({
+      title: t('maq.reactivateConfirmTitle'),
+      text: t('maq.reactivateConfirmText'),
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#10b981',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: t('maq.reactivate'),
+      cancelButtonText: t('maq.cancel'),
+      background: '#1e293b',
+      color: '#f8fafc'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await axios.put(`${API}/api/maquileros/${m.id}/estado`, { activo: true });
+          toast.success(t('maq.reactivatedSuccess'), { theme: 'dark' });
+          fetchMaquileros();
+        } catch (err) {
+          toast.error(err.response?.data?.error || 'Error', { theme: 'dark' });
         }
       }
     });
@@ -213,10 +266,13 @@ export default function Maquileros() {
     return !m.telefono || !m.domicilio || !m.colonia || !m.maquinaria || !m.personal || !m.codigo_postal;
   };
 
-  const filteredMaquileros = maquileros.filter(m => 
-    (m.nombre || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+  const isActivo = (m) => !(m.activo === 0 || m.activo === false || m.activo === '0');
+
+  const filteredMaquileros = maquileros.filter(m =>
+    (activeTab === 'activos' ? isActivo(m) : !isActivo(m)) &&
+    ((m.nombre || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     (m.telefono || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (m.colonia || '').toLowerCase().includes(searchTerm.toLowerCase())
+    (m.colonia || '').toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   return (
@@ -228,6 +284,41 @@ export default function Maquileros() {
             <Plus size={20} /> {t('maq.new')}
           </button>
         )}
+      </div>
+
+      <div style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '0.5rem', marginBottom: '1rem' }}>
+        <button
+          onClick={() => setActiveTab('activos')}
+          style={{
+            padding: '10px 20px',
+            background: activeTab === 'activos' ? 'rgba(59, 130, 246, 0.12)' : 'transparent',
+            border: 'none',
+            borderBottom: activeTab === 'activos' ? '2px solid var(--primary-color)' : 'none',
+            color: activeTab === 'activos' ? '#fff' : 'var(--text-secondary)',
+            fontWeight: 600,
+            borderRadius: '8px 8px 0 0',
+            cursor: 'pointer',
+            transition: 'all 0.2s'
+          }}
+        >
+          {t('maq.tabActive')}
+        </button>
+        <button
+          onClick={() => setActiveTab('inactivos')}
+          style={{
+            padding: '10px 20px',
+            background: activeTab === 'inactivos' ? 'rgba(59, 130, 246, 0.12)' : 'transparent',
+            border: 'none',
+            borderBottom: activeTab === 'inactivos' ? '2px solid var(--primary-color)' : 'none',
+            color: activeTab === 'inactivos' ? '#fff' : 'var(--text-secondary)',
+            fontWeight: 600,
+            borderRadius: '8px 8px 0 0',
+            cursor: 'pointer',
+            transition: 'all 0.2s'
+          }}
+        >
+          {t('maq.tabInactive')}
+        </button>
       </div>
 
       <div className="glass-card" style={{ marginBottom: '2rem', padding: '1rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -247,12 +338,13 @@ export default function Maquileros() {
                 <th>{t('maq.name')}</th>
                 <th>{t('maq.phone')}</th>
                 <th>{t('maq.colonia')}</th>
+                {activeTab === 'inactivos' && <th>{t('maq.motivo')}</th>}
                 <th>{t('maq.actions')}</th>
               </tr>
             </thead>
             <tbody>
               {filteredMaquileros.length === 0 ? (
-                <tr><td colSpan="6" style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>{t('maq.noResults')}</td></tr>
+                <tr><td colSpan={activeTab === 'inactivos' ? 7 : 6} style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>{t('maq.noResults')}</td></tr>
               ) : (
                 filteredMaquileros.map((m, index) => (
                   <tr key={m.id} onClick={() => handleRowClick(m.id)} style={{ cursor: 'pointer' }}>
@@ -262,9 +354,9 @@ export default function Maquileros() {
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <span>{m.nombre}</span>
                         {isDataIncomplete(m) && (
-                          <AlertTriangle 
-                            size={16} 
-                            color="#f59e0b" 
+                          <AlertTriangle
+                            size={16}
+                            color="#f59e0b"
                             title="Información incompleta (Faltan datos de contacto, dirección o maquinaria)"
                           />
                         )}
@@ -272,6 +364,18 @@ export default function Maquileros() {
                     </td>
                     <td>{m.telefono || '-'}</td>
                     <td>{m.colonia || '-'}</td>
+                    {activeTab === 'inactivos' && (
+                      <td style={{ maxWidth: '260px' }}>
+                        <div style={{ fontSize: '0.85rem' }} title={m.inactivo_nota || ''}>
+                          {m.inactivo_nota || '-'}
+                        </div>
+                        {m.inactivo_fecha && (
+                          <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                            {t('maq.inactiveSince')}: {new Date(m.inactivo_fecha).toLocaleDateString()}
+                          </div>
+                        )}
+                      </td>
+                    )}
                     <td>
                       <div style={{ display: 'flex', gap: '0.5rem' }} onClick={e => e.stopPropagation()}>
                         {canEdit ? (
@@ -279,6 +383,15 @@ export default function Maquileros() {
                             <button className="btn btn-secondary" style={{ padding: '0.35rem 0.6rem' }} onClick={(e) => openEdit(m, e)} title="Editar">
                               <Pencil size={15} />
                             </button>
+                            {activeTab === 'activos' ? (
+                              <button className="btn btn-secondary" style={{ padding: '0.35rem 0.6rem', color: '#f59e0b' }} onClick={(e) => handleMarkInactive(m, e)} title={t('maq.markInactive')}>
+                                <UserX size={15} />
+                              </button>
+                            ) : (
+                              <button className="btn btn-secondary" style={{ padding: '0.35rem 0.6rem', color: '#10b981' }} onClick={(e) => handleReactivate(m, e)} title={t('maq.reactivate')}>
+                                <UserCheck size={15} />
+                              </button>
+                            )}
                             <button className="btn btn-secondary" style={{ padding: '0.35rem 0.6rem', color: '#ef4444' }} onClick={(e) => handleDelete(m.id, e)} title="Eliminar">
                               <Trash2 size={15} />
                             </button>
