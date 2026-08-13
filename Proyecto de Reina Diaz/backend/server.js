@@ -455,6 +455,23 @@ const logActivity = async (userId, action, target, description) => {
   }
 };
 
+// Fase 2 del buzón de soporte: aviso a Discord. Se lee de una variable de entorno (nunca
+// se guarda en el código); si no está configurada (p.ej. en prácticas) simplemente no
+// manda nada. Nunca debe tumbar la petición principal si Discord está caído o lento.
+const notifyDiscord = async (content) => {
+  const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
+  if (!webhookUrl) return;
+  try {
+    await fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content })
+    });
+  } catch (error) {
+    console.error('Error enviando notificación a Discord:', error.message);
+  }
+};
+
 // Fuente única de verdad para lo que un planchador tiene pendiente de cobrar en un rango de fechas.
 // Usada tanto para mostrar el pendiente (GET) como para calcular el monto real de un pago (POST),
 // de forma que ambos nunca puedan desalinearse entre sí.
@@ -2238,6 +2255,7 @@ app.post('/api/soporte/reportes', authenticateToken, uploadReporte.array('archiv
     }
     await connection.commit();
     await logActivity(req.user.id, 'ALTA', 'SOPORTE', `Nuevo reporte de soporte desde ${pantalla || 'el sistema'}`);
+    notifyDiscord(`🆕 **Nuevo reporte de soporte**\n👤 ${req.user.username} (${req.user.role}) — desde \`${pantalla || 'el sistema'}\`\n💬 ${mensaje.trim()}`);
     res.json({ success: true, id: reporteId });
   } catch (error) {
     await connection.rollback();
@@ -2391,6 +2409,12 @@ app.post('/api/soporte/reportes/:id/mensajes', authenticateToken, async (req, re
       "UPDATE soporte_reportes SET fecha_actualizacion = CURRENT_TIMESTAMP, estado = ? WHERE id = ?",
       [nuevoEstado, req.params.id]
     );
+
+    // Solo avisa por Discord cuando quien escribe NO es admin (un mensaje del equipo) —
+    // si el admin responde manualmente, ya sabe que lo mandó, no hace falta avisarle de sí mismo.
+    if (req.user.role !== 'admin') {
+      notifyDiscord(`💬 **Nuevo mensaje** en el reporte #${req.params.id} (${reporte.pantalla || 'el sistema'})\n👤 ${req.user.username} (${req.user.role})\n${mensaje.trim()}`);
+    }
 
     res.json({ success: true, estado: nuevoEstado });
   } catch (error) {
