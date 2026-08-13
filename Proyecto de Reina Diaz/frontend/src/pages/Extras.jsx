@@ -413,10 +413,6 @@ export default function Extras() {
     (o.producto_modelo || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Folio = posición dentro de la lista visible, ordenada del más antiguo al más nuevo
-  const filteredAsc = [...filteredOrders].sort((a, b) => a.id - b.id);
-  const getFolio = (o) => filteredAsc.findIndex(item => item.id === o.id) + 1;
-
   const cantValue = parseFloat(formData.cantidad) || 0;
   const priceValue = parseFloat(formData.precio_extra) || 0;
   const calculatedTotal = cantValue * priceValue;
@@ -468,7 +464,6 @@ export default function Extras() {
           <table className="data-table">
             <thead>
               <tr>
-                <th>{t('prod.folio')}</th>
                 <th>{t('prod.tailor')}</th>
                 <th>{t('prod.model')}</th>
                 <th>{t('prod.pieces')} ({t('dash.status') === 'Status' ? 'Sent' : 'Env.'})</th>
@@ -484,7 +479,7 @@ export default function Extras() {
             </thead>
             <tbody>
               {filteredOrders.length === 0 ? (
-                <tr><td colSpan="12" style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>{t('prod.noResults')}</td></tr>
+                <tr><td colSpan="11" style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>{t('prod.noResults')}</td></tr>
               ) : (
                 filteredOrders.map((o, index) => {
                   const pagado = o.pagado || 0;
@@ -517,7 +512,6 @@ export default function Extras() {
                   
                   return (
                     <tr key={o.id} className={rowClass} style={{ opacity: isCancelado ? 0.6 : 1 }}>
-                      <td>#{getFolio(o)}</td>
                       <td style={{ fontWeight: 600 }}>{o.maquilero_nombre}</td>
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
