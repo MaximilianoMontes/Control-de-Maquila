@@ -72,6 +72,37 @@ export default function PlanchaBurros({
     return str;
   };
 
+  // Busca una variante de color con stock disponible para una talla dada. Si se pasa
+  // preferredColor (p.ej. el color que decodificó el escáner) y tiene stock, se usa esa;
+  // si no tiene stock (o no se pasó ninguno) se recorren las demás variantes de color del
+  // modelo, saltando las que ya están agregadas a este burro. Esto evita que, al agotarse
+  // el color detectado, se muestre el aviso de "todas las variantes ya fueron agregadas"
+  // cuando en realidad otro color de esa misma talla sí sigue disponible.
+  const findAvailableColorForTalla = (model, talla, burroModelos, preferredColor) => {
+    const tallasColores = model.tallas_colores_disponibles;
+    if (!tallasColores) return { color: preferredColor || "", stock: 0 };
+
+    const normTalla = normalizeTalla(talla);
+    const stockFor = (color) => {
+      const tallasObj = tallasColores[color] || {};
+      const key = Object.keys(tallasObj).find(k => normalizeTalla(k) === normTalla);
+      return key ? (tallasObj[key] || 0) : 0;
+    };
+    const isAssigned = (color) => (burroModelos || []).some(
+      m => m.id === model.id && m.color === color && m.talla === talla
+    );
+
+    if (preferredColor) {
+      const stock = stockFor(preferredColor);
+      if (stock > 0) return { color: preferredColor, stock };
+    }
+
+    const fallbackColor = Object.keys(tallasColores).find(color => stockFor(color) > 0 && !isAssigned(color));
+    if (fallbackColor) return { color: fallbackColor, stock: stockFor(fallbackColor) };
+
+    return { color: preferredColor || "", stock: 0 };
+  };
+
   const displayTalla = (talla) => {
     if (!talla) return "";
     // Always normalize first to get a clean numeric or letter string
@@ -401,26 +432,12 @@ export default function PlanchaBurros({
     const newBurros = [...burrosStateRef.current];
 
     if (selectedTalla) {
-      const normTalla = normalizeTalla(selectedTalla);
-      
-      if (!selectedColor && modeloMatch.tallas_colores_disponibles) {
-        const foundColorEntry = Object.entries(modeloMatch.tallas_colores_disponibles).find(
-          ([color, tallasObj]) => {
-            const matchingColorTallaKey = Object.keys(tallasObj || {}).find(k => normalizeTalla(k) === normTalla);
-            const stockVal = matchingColorTallaKey ? (tallasObj[matchingColorTallaKey] || 0) : 0;
-            return stockVal > 0;
-          }
-        );
-        if (foundColorEntry) {
-          selectedColor = foundColorEntry[0];
-        }
-      }
-
-      if (selectedColor && modeloMatch.tallas_colores_disponibles) {
-        const colorTallasObj = modeloMatch.tallas_colores_disponibles[selectedColor] || {};
-        const matchingKey = Object.keys(colorTallasObj).find(k => normalizeTalla(k) === normTalla);
-        stockDeEseColorYTalla = matchingKey ? colorTallasObj[matchingKey] : 0;
+      if (modeloMatch.tallas_colores_disponibles) {
+        const found = findAvailableColorForTalla(modeloMatch, selectedTalla, newBurros[burroIdx].modelos, selectedColor);
+        selectedColor = found.color;
+        stockDeEseColorYTalla = found.stock;
       } else {
+        const normTalla = normalizeTalla(selectedTalla);
         const availableTallas = modeloMatch.tallas_disponibles || {};
         const matchingKey = Object.keys(availableTallas).find(k => normalizeTalla(k) === normTalla);
         stockDeEseColorYTalla = matchingKey ? availableTallas[matchingKey] : 0;
@@ -468,29 +485,10 @@ export default function PlanchaBurros({
         return;
       }
 
-      const normTalla = normalizeTalla(selectedTalla);
-
       if (modeloMatch.tallas_colores_disponibles) {
-        const foundColorEntry = Object.entries(modeloMatch.tallas_colores_disponibles).find(
-          ([color, tallasObj]) => {
-            const matchingColorTallaKey = Object.keys(tallasObj || {}).find(
-              k => normalizeTalla(k) === normTalla
-            );
-            const stockVal = matchingColorTallaKey ? (tallasObj[matchingColorTallaKey] || 0) : 0;
-            const alreadyAssigned = newBurros[burroIdx].modelos.some(
-              m => m.id === modeloMatch.id && m.color === color && m.talla === selectedTalla
-            );
-            return stockVal > 0 && !alreadyAssigned;
-          }
-        );
-        if (foundColorEntry) {
-          selectedColor = foundColorEntry[0];
-          const colorTallasObj = foundColorEntry[1];
-          const matchingColorTallaKey = Object.keys(colorTallasObj || {}).find(
-            k => normalizeTalla(k) === normTalla
-          );
-          stockDeEseColorYTalla = matchingColorTallaKey ? (colorTallasObj[matchingColorTallaKey] || 0) : 0;
-        }
+        const found = findAvailableColorForTalla(modeloMatch, selectedTalla, newBurros[burroIdx].modelos, selectedColor);
+        selectedColor = found.color;
+        stockDeEseColorYTalla = found.stock;
       }
     }
 
