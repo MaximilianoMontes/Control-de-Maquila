@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { MessageCircle, FileText, X } from 'lucide-react';
+import { MessageCircle, FileText, X, Send } from 'lucide-react';
 import { useSettings } from '../context/SettingsContext';
 import API_URL from '../config';
 import { toast } from '../utils/themeNotifications';
@@ -30,8 +30,14 @@ export default function SoporteReportes() {
   const [reportes, setReportes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filtroEstado, setFiltroEstado] = useState('todos');
-  const [respuestas, setRespuestas] = useState({});
-  const [selectedImage, setSelectedImage] = useState(null);
+
+  const [activeReporte, setActiveReporte] = useState(null);
+  const [mensajes, setMensajes] = useState([]);
+  const [adjuntosHilo, setAdjuntosHilo] = useState([]);
+  const [loadingThread, setLoadingThread] = useState(false);
+  const [replyText, setReplyText] = useState('');
+  const [sendingReply, setSendingReply] = useState(false);
+  const scrollRef = useRef(null);
 
   const fetchReportes = async () => {
     setLoading(true);
@@ -52,22 +58,52 @@ export default function SoporteReportes() {
     try {
       await axios.put(`${API}/api/soporte/reportes/${id}`, { estado });
       setReportes(prev => prev.map(r => r.id === id ? { ...r, estado } : r));
+      if (activeReporte?.id === id) setActiveReporte(prev => ({ ...prev, estado }));
     } catch (e) {
       console.error(e);
       toast.error(isEn ? 'Error updating status' : 'Error al actualizar el estado', { theme: 'dark' });
     }
   };
 
-  const handleSaveRespuesta = async (id) => {
-    const respuesta = respuestas[id];
-    if (respuesta === undefined) return;
+  const openThread = async (reporte) => {
+    setActiveReporte(reporte);
+    setLoadingThread(true);
     try {
-      await axios.put(`${API}/api/soporte/reportes/${id}`, { respuesta });
-      setReportes(prev => prev.map(r => r.id === id ? { ...r, respuesta } : r));
-      toast.success(isEn ? 'Reply saved' : 'Respuesta guardada', { theme: 'dark' });
+      const res = await axios.get(`${API}/api/soporte/reportes/${reporte.id}/mensajes`);
+      setMensajes(res.data.mensajes);
+      setAdjuntosHilo(res.data.adjuntos || []);
     } catch (e) {
       console.error(e);
-      toast.error(isEn ? 'Error saving reply' : 'Error al guardar la respuesta', { theme: 'dark' });
+      toast.error(isEn ? 'Error loading conversation' : 'Error al cargar la conversación', { theme: 'dark' });
+    } finally {
+      setLoadingThread(false);
+      setTimeout(() => { if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight; }, 50);
+    }
+  };
+
+  const closeThread = () => {
+    setActiveReporte(null);
+    setMensajes([]);
+    setAdjuntosHilo([]);
+    setReplyText('');
+    fetchReportes();
+  };
+
+  const handleSendReply = async (e) => {
+    e.preventDefault();
+    if (!replyText.trim() || sendingReply || !activeReporte) return;
+    setSendingReply(true);
+    try {
+      await axios.post(`${API}/api/soporte/reportes/${activeReporte.id}/mensajes`, { mensaje: replyText.trim() });
+      setReplyText('');
+      const res = await axios.get(`${API}/api/soporte/reportes/${activeReporte.id}/mensajes`);
+      setMensajes(res.data.mensajes);
+      setTimeout(() => { if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight; }, 50);
+    } catch (err) {
+      console.error(err);
+      toast.error(isEn ? 'Error sending message' : 'Error al enviar el mensaje', { theme: 'dark' });
+    } finally {
+      setSendingReply(false);
     }
   };
 
@@ -109,101 +145,125 @@ export default function SoporteReportes() {
           {isEn ? 'No reports here.' : 'No hay reportes aquí.'}
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           {filteredReportes.map(r => (
-            <div key={r.id} className="glass-card" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem' }}>
-                <div>
-                  <div style={{ fontWeight: 700 }}>
-                    {r.username || (isEn ? 'Unknown user' : 'Usuario desconocido')}
-                    <span className="badge badge-partial" style={{ marginLeft: '0.5rem', fontSize: '10px', padding: '2px 6px', fontWeight: 600 }}>
-                      {r.rol}
-                    </span>
-                  </div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
-                    {new Date(r.fecha_creacion).toLocaleString()} · {isEn ? 'from' : 'desde'} <strong>{r.pantalla || 'N/A'}</strong>
-                  </div>
+            <div
+              key={r.id}
+              className="glass-card"
+              onClick={() => openThread(r)}
+              style={{ padding: '1rem 1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', cursor: 'pointer' }}
+            >
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  {r.username || (isEn ? 'Unknown user' : 'Usuario desconocido')}
+                  <span className="badge badge-partial" style={{ fontSize: '10px', padding: '2px 6px', fontWeight: 600 }}>{r.rol}</span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 400 }}>
+                    {isEn ? 'from' : 'desde'} {r.pantalla || 'N/A'}
+                  </span>
                 </div>
-                <span className={`badge ${badgeClassFor(r.estado)}`} style={{ fontWeight: 700 }}>
-                  {labelFor(r.estado, isEn)}
-                </span>
-              </div>
-
-              <div style={{ fontSize: '0.95rem', whiteSpace: 'pre-wrap' }}>{r.mensaje}</div>
-
-              {r.adjuntos && r.adjuntos.length > 0 && (
-                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                  {r.adjuntos.map(a => {
-                    const src = getFileSrc(a.archivo);
-                    const isImage = /\.(jpe?g|png|webp|gif)$/i.test(a.archivo);
-                    return isImage ? (
-                      <img
-                        key={a.id}
-                        src={src}
-                        alt={a.nombre_original || 'adjunto'}
-                        style={{ width: 70, height: 70, borderRadius: 8, objectFit: 'cover', cursor: 'zoom-in', border: '1px solid var(--border-color)' }}
-                        onClick={() => setSelectedImage(src)}
-                      />
-                    ) : (
-                      <a
-                        key={a.id}
-                        href={src}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="btn btn-secondary"
-                        style={{ fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
-                      >
-                        <FileText size={14} /> {a.nombre_original || 'PDF'}
-                      </a>
-                    );
-                  })}
+                <div style={{ fontSize: '0.85rem', marginTop: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {r.mensaje}
                 </div>
-              )}
-
-              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', borderTop: '1px solid var(--border-color)', paddingTop: '0.75rem' }}>
-                <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
-                  {isEn ? 'Status' : 'Estado'}:
-                </label>
-                <select
-                  className="form-input"
-                  style={{ width: 'auto', padding: '4px 8px', fontSize: '0.85rem' }}
-                  value={r.estado}
-                  onChange={e => handleEstadoChange(r.id, e.target.value)}
-                >
-                  {ESTADOS.map(e => (
-                    <option key={e} value={e}>{labelFor(e, isEn)}</option>
-                  ))}
-                </select>
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                  {new Date(r.fecha_actualizacion).toLocaleString()}
+                </div>
               </div>
-
-              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
-                <input
-                  type="text"
-                  className="form-input"
-                  style={{ flex: '1 1 220px' }}
-                  placeholder={isEn ? 'Write a reply / note (optional)' : 'Escribe una respuesta / nota (opcional)'}
-                  value={respuestas[r.id] !== undefined ? respuestas[r.id] : (r.respuesta || '')}
-                  onChange={e => setRespuestas(prev => ({ ...prev, [r.id]: e.target.value }))}
-                />
-                <button type="button" className="btn btn-primary" style={{ fontSize: '0.8rem' }} onClick={() => handleSaveRespuesta(r.id)}>
-                  {isEn ? 'Save' : 'Guardar'}
-                </button>
-              </div>
+              <span className={`badge ${badgeClassFor(r.estado)}`} style={{ fontWeight: 700, flexShrink: 0 }}>
+                {labelFor(r.estado, isEn)}
+              </span>
             </div>
           ))}
         </div>
       )}
 
-      {selectedImage && (
-        <div className="modal-overlay" style={{ zIndex: 5000 }} onClick={() => setSelectedImage(null)}>
-          <div style={{ position: 'relative', maxWidth: '90vw', maxHeight: '90vh' }} onClick={e => e.stopPropagation()}>
-            <button
-              onClick={() => setSelectedImage(null)}
-              style={{ position: 'absolute', top: '-40px', right: '-40px', background: 'white', border: 'none', borderRadius: '50%', padding: '8px', cursor: 'pointer', display: 'flex' }}
-            >
-              <X size={24} />
-            </button>
-            <img src={selectedImage} alt="Zoom" style={{ width: '100%', height: '100%', borderRadius: '12px', objectFit: 'contain', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' }} />
+      {activeReporte && (
+        <div className="modal-overlay" style={{ zIndex: 3500 }} onClick={closeThread}>
+          <div className="modal-content glass-card" style={{ maxWidth: '560px', width: '95%', height: '600px', maxHeight: '85vh', display: 'flex', flexDirection: 'column' }} onClick={e => e.stopPropagation()}>
+            <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div>
+                <h2 style={{ fontSize: '1.1rem', margin: 0, fontWeight: 700 }}>
+                  {activeReporte.username} <span className="badge badge-partial" style={{ fontSize: '10px', padding: '2px 6px', fontWeight: 600 }}>{activeReporte.rol}</span>
+                </h2>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                  {isEn ? 'from' : 'desde'} {activeReporte.pantalla}
+                </div>
+              </div>
+              <button className="btn-icon" onClick={closeThread}><X size={22} /></button>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0.75rem 0' }}>
+              <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+                {isEn ? 'Status' : 'Estado'}:
+              </label>
+              <select
+                className="form-input"
+                style={{ width: 'auto', padding: '4px 8px', fontSize: '0.85rem' }}
+                value={activeReporte.estado}
+                onChange={e => handleEstadoChange(activeReporte.id, e.target.value)}
+              >
+                {ESTADOS.map(e => <option key={e} value={e}>{labelFor(e, isEn)}</option>)}
+              </select>
+            </div>
+
+            <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.6rem', padding: '0.5rem', background: 'rgba(0,0,0,0.1)', borderRadius: '8px' }}>
+              {loadingThread ? (
+                <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '1rem' }}>
+                  {isEn ? 'Loading...' : 'Cargando...'}
+                </div>
+              ) : (
+                <>
+                  {mensajes.map((m, idx) => {
+                    const isAdminMsg = m.role === 'admin';
+                    return (
+                      <div key={idx} style={{ alignSelf: isAdminMsg ? 'flex-end' : 'flex-start', maxWidth: '80%' }}>
+                        <div style={{
+                          background: isAdminMsg ? 'linear-gradient(135deg, #7c3aed, #4f46e5)' : 'rgba(255,255,255,0.06)',
+                          color: isAdminMsg ? 'white' : 'var(--text-primary)',
+                          padding: '0.5rem 0.7rem',
+                          borderRadius: '10px',
+                          fontSize: '0.85rem',
+                          whiteSpace: 'pre-wrap'
+                        }}>
+                          {m.mensaje}
+                        </div>
+                        <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginTop: '2px', textAlign: isAdminMsg ? 'right' : 'left' }}>
+                          {isAdminMsg ? (m.username ? m.username : (isEn ? 'Support' : 'Soporte')) : m.username} · {new Date(m.fecha_creacion).toLocaleString()}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {adjuntosHilo.length > 0 && (
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      {adjuntosHilo.map(a => {
+                        const src = getFileSrc(a.archivo);
+                        const isImage = /\.(jpe?g|png|webp|gif)$/i.test(a.archivo);
+                        return isImage ? (
+                          <img key={a.id} src={src} alt={a.nombre_original || 'adjunto'} style={{ width: 70, height: 70, borderRadius: 8, objectFit: 'cover', border: '1px solid var(--border-color)' }} />
+                        ) : (
+                          <a key={a.id} href={src} target="_blank" rel="noopener noreferrer" className="btn btn-secondary" style={{ fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                            <FileText size={14} /> {a.nombre_original || 'PDF'}
+                          </a>
+                        );
+                      })}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+            <form onSubmit={handleSendReply} style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem' }}>
+              <input
+                type="text"
+                className="form-input"
+                style={{ flex: 1 }}
+                placeholder={isEn ? 'Write a reply...' : 'Escribe una respuesta...'}
+                value={replyText}
+                onChange={e => setReplyText(e.target.value)}
+              />
+              <button type="submit" className="btn btn-primary" disabled={sendingReply || !replyText.trim()}>
+                <Send size={16} />
+              </button>
+            </form>
           </div>
         </div>
       )}

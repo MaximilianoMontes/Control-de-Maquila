@@ -2305,6 +2305,99 @@ app.put('/api/soporte/reportes/:id', authenticateToken, async (req, res) => {
   }
 });
 
+// Mis propios reportes (cualquier rol) — para que quien reportó pueda ver sus hilos y
+// seguir la conversación, no solo mandar un mensaje y perderlo de vista.
+app.get('/api/soporte/reportes/mias', authenticateToken, async (req, res) => {
+  try {
+    const [reportes] = await db.query(`
+      SELECT sr.*,
+        (SELECT sm.user_id FROM soporte_reportes_mensajes sm WHERE sm.reporte_id = sr.id ORDER BY sm.fecha_creacion DESC, sm.id DESC LIMIT 1) as ultimo_mensaje_user_id
+      FROM soporte_reportes sr
+      WHERE sr.user_id = ?
+      ORDER BY sr.fecha_actualizacion DESC
+    `, [req.user.id]);
+    res.json(reportes);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Historial completo de mensajes de un hilo: el mensaje inicial (soporte_reportes.mensaje),
+// la respuesta vieja de la Fase 1 si existe (compatibilidad con reportes ya creados antes
+// de este cambio), y todos los mensajes nuevos — todo combinado y ordenado por fecha.
+app.get('/api/soporte/reportes/:id/mensajes', authenticateToken, async (req, res) => {
+  try {
+    const [reportesRows] = await db.query("SELECT * FROM soporte_reportes WHERE id = ?", [req.params.id]);
+    const reporte = reportesRows[0];
+    if (!reporte) return res.status(404).json({ error: 'Reporte no encontrado' });
+    if (req.user.role !== 'admin' && req.user.id !== reporte.user_id) {
+      return res.status(403).json({ error: 'No autorizado' });
+    }
+
+    const [mensajes] = await db.query(`
+      SELECT 0 as id, sr.user_id, sr.mensaje, sr.fecha_creacion, u.username, u.role
+      FROM soporte_reportes sr JOIN users u ON sr.user_id = u.id
+      WHERE sr.id = ?
+
+      UNION ALL
+
+      SELECT -1 as id, NULL as user_id, sr.respuesta as mensaje, sr.fecha_actualizacion as fecha_creacion, NULL as username, 'admin' as role
+      FROM soporte_reportes sr
+      WHERE sr.id = ? AND sr.respuesta IS NOT NULL AND sr.respuesta != ''
+
+      UNION ALL
+
+      SELECT sm.id, sm.user_id, sm.mensaje, sm.fecha_creacion, u2.username, u2.role
+      FROM soporte_reportes_mensajes sm JOIN users u2 ON sm.user_id = u2.id
+      WHERE sm.reporte_id = ?
+
+      ORDER BY fecha_creacion ASC, id ASC
+    `, [req.params.id, req.params.id, req.params.id]);
+
+    const [adjuntos] = await db.query("SELECT * FROM soporte_reportes_adjuntos WHERE reporte_id = ?", [req.params.id]);
+
+    res.json({ reporte, mensajes, adjuntos });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/soporte/reportes/:id/mensajes', authenticateToken, async (req, res) => {
+  const { mensaje } = req.body;
+  if (!mensaje || !mensaje.trim()) {
+    return res.status(400).json({ error: 'El mensaje es requerido' });
+  }
+  try {
+    const [reportesRows] = await db.query("SELECT * FROM soporte_reportes WHERE id = ?", [req.params.id]);
+    const reporte = reportesRows[0];
+    if (!reporte) return res.status(404).json({ error: 'Reporte no encontrado' });
+    const esDueno = req.user.id === reporte.user_id;
+    if (req.user.role !== 'admin' && !esDueno) {
+      return res.status(403).json({ error: 'No autorizado' });
+    }
+
+    await db.query(
+      "INSERT INTO soporte_reportes_mensajes (reporte_id, user_id, mensaje) VALUES (?, ?, ?)",
+      [req.params.id, req.user.id, mensaje.trim()]
+    );
+
+    // Si quien reportó le sigue escribiendo a un hilo ya marcado como resuelto, se reabre
+    // solo — evita que un mensaje nuevo se pierda en un hilo que el admin ya dio por cerrado.
+    let nuevoEstado = reporte.estado;
+    if (esDueno && reporte.estado === 'resuelto') {
+      nuevoEstado = 'en_revision';
+    }
+    await db.query(
+      "UPDATE soporte_reportes SET fecha_actualizacion = CURRENT_TIMESTAMP, estado = ? WHERE id = ?",
+      [nuevoEstado, req.params.id]
+    );
+
+    res.json({ success: true, estado: nuevoEstado });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.put('/api/produccion/:id', authenticateToken, async (req, res) => {
   const { maquilero_id, inventario_id, fecha_inicio, fecha_fin, estado, precio_total, cantidad, cantidad_recibida, retrasos, ajuste_tipo, ajuste_porcentaje, precio_extra, observaciones, precio_unitario } = req.body;
   try {

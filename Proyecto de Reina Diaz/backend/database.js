@@ -1867,7 +1867,21 @@ async function initializeDatabase() {
           FOREIGN KEY(reporte_id) REFERENCES soporte_reportes(id) ON DELETE CASCADE
         )
       `);
-      console.log('Tablas soporte_reportes y soporte_reportes_adjuntos listas.');
+      // Conversación real: cada reporte es un hilo, y aquí van todos los mensajes
+      // posteriores al mensaje inicial (de cualquiera de los dos lados, admin o quien
+      // reportó). El mensaje inicial se queda en soporte_reportes.mensaje tal cual.
+      await connection.query(`
+        CREATE TABLE IF NOT EXISTS soporte_reportes_mensajes (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          reporte_id INT NOT NULL,
+          user_id INT NOT NULL,
+          mensaje TEXT NOT NULL,
+          fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY(reporte_id) REFERENCES soporte_reportes(id) ON DELETE CASCADE,
+          FOREIGN KEY(user_id) REFERENCES users(id)
+        )
+      `);
+      console.log('Tablas soporte_reportes, soporte_reportes_adjuntos y soporte_reportes_mensajes listas.');
     } catch (e) {
       console.error('Error creating soporte_reportes:', e);
     }
