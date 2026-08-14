@@ -1801,7 +1801,15 @@ app.post('/api/camiones', authenticateToken, async (req, res) => {
   }
 });
 
+// Esta función se dispara desde más de una docena de rutas, y varias pantallas se
+// refrescan solas cada 2 segundos — sin este candado, dos ejecuciones podían solaparse
+// (cada una con su propia lectura de archivado/precio_total) y pisarse la una a la otra,
+// dejando un modelo parpadeando entre "completado" y "activo" en Cortes cada vez que
+// alguien tenía dos pestañas abiertas o varias personas navegaban el sistema a la vez.
+let autoArchiveRunning = false;
 const autoArchiveOrders = async () => {
+  if (autoArchiveRunning) return;
+  autoArchiveRunning = true;
   try {
     // Una orden se considera realmente liquidada solo si lo pagado (pagos + descuentos
     // aplicados) cubre su precio_total. "Terminar Directamente (Sin Pago)" en Producción
@@ -1892,6 +1900,8 @@ const autoArchiveOrders = async () => {
     }
   } catch (error) {
     console.error("Error running auto-archive:", error);
+  } finally {
+    autoArchiveRunning = false;
   }
 };
 
