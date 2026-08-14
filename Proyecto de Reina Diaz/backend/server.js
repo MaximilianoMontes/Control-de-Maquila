@@ -608,15 +608,29 @@ const checkAndMoveToInventory = async (produccionId, userId) => {
     const archivedOrders = Number(ordersStatus[0].archived_orders) || 0;
     const shouldBeInInventory = totalOrders > 0 && totalOrders === archivedOrders;
 
+    // Segunda capa de protección además del candado de autoArchiveOrders: si por cualquier
+    // motivo futuro este estado llegara a alternar rápido otra vez, no se vuelve a repetir el
+    // mismo mensaje en el historial más de una vez cada 10 minutos. El cambio de estado real
+    // (en_inventario) siempre se aplica igual — esto solo evita el spam en el registro.
+    const wasLoggedRecently = async (desc) => {
+      const [recent] = await connection.query(
+        "SELECT id FROM historial WHERE description = ? AND timestamp >= (NOW() - INTERVAL 10 MINUTE) LIMIT 1",
+        [desc]
+      );
+      return recent.length > 0;
+    };
+
     if (shouldBeInInventory) {
       if (prod.en_inventario !== 1) {
         await connection.query("UPDATE inventario SET en_inventario = 1 WHERE id = ?", [prod.cut_id]);
-        
+
         const desc = `Marcó el modelo ${prod.modelo} como completado (oculto en Cortes) por liquidación de todas sus órdenes`;
-        await connection.query(
-          "INSERT INTO historial (user_id, action, target, description) VALUES (?, 'EDIT', 'INVENTARIO', ?)",
-          [userId || 1, desc]
-        );
+        if (!(await wasLoggedRecently(desc))) {
+          await connection.query(
+            "INSERT INTO historial (user_id, action, target, description) VALUES (?, 'EDIT', 'INVENTARIO', ?)",
+            [userId || 1, desc]
+          );
+        }
       }
     } else {
       // If there are active production orders, we make the cut visible in Cortes
@@ -624,10 +638,12 @@ const checkAndMoveToInventory = async (produccionId, userId) => {
         await connection.query("UPDATE inventario SET en_inventario = 0 WHERE id = ?", [prod.cut_id]);
 
         const desc = `Restauró el modelo ${prod.modelo} a Cortes debido a que tiene órdenes de producción activas`;
-        await connection.query(
-          "INSERT INTO historial (user_id, action, target, description) VALUES (?, 'EDIT', 'INVENTARIO', ?)",
-          [userId || 1, desc]
-        );
+        if (!(await wasLoggedRecently(desc))) {
+          await connection.query(
+            "INSERT INTO historial (user_id, action, target, description) VALUES (?, 'EDIT', 'INVENTARIO', ?)",
+            [userId || 1, desc]
+          );
+        }
       }
     }
 
@@ -981,12 +997,18 @@ app.put('/api/maquileros/:id/estado', authenticateToken, async (req, res) => {
 // APIs Inventario
 app.get('/api/inventario', async (req, res) => {
   try {
+    // Un corte se oculta de la lista normal en cuanto queda 100% recibido, enviado y pagado
+    // (en_inventario = 1, ver checkAndMoveToInventory). Sin este parámetro no había forma de
+    // volver a encontrar esos modelos ya "graduados" desde la pantalla de Cortes.
+    const whereClause = req.query.completados === 'true'
+      ? 'i.en_inventario = 1'
+      : 'i.en_inventario = 0 OR i.en_inventario IS NULL';
     const [items] = await db.query(`
-      SELECT i.*, 
+      SELECT i.*,
         (SELECT COUNT(id) FROM produccion WHERE inventario_id = i.id AND estado != 'Cancelado' AND (es_extra = 0 OR es_extra IS NULL)) as producciones_count,
         (SELECT COALESCE(SUM(cantidad), 0) FROM produccion WHERE inventario_id = i.id AND estado != 'Cancelado' AND (es_extra = 0 OR es_extra IS NULL)) as total_asignado
       FROM inventario i
-      WHERE i.en_inventario = 0 OR i.en_inventario IS NULL
+      WHERE ${whereClause}
       ORDER BY i.id DESC
     `);
     res.json(items);

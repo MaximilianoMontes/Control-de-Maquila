@@ -35,12 +35,13 @@ export default function Cortes() {
   const [selectedImage, setSelectedImage] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [activeDropdownId, setActiveDropdownId] = useState(null);
+  const [verCompletados, setVerCompletados] = useState(false);
 
   useEffect(() => {
     fetchItems();
     const interval = setInterval(fetchItems, 2000); // Auto-refresca cada 2 segundos en segundo plano
     return () => clearInterval(interval);
-  }, []);
+  }, [verCompletados]);
 
   useEffect(() => {
     const handleOutsideClick = (e) => {
@@ -63,7 +64,7 @@ export default function Cortes() {
 
   const fetchItems = async () => {
     try {
-      const res = await axios.get(`${API}/api/inventario`);
+      const res = await axios.get(`${API}/api/inventario${verCompletados ? '?completados=true' : ''}`);
       setItems(res.data);
     } catch (e) { console.error(e); }
   };
@@ -224,8 +225,11 @@ export default function Cortes() {
     }
   };
 
-  const activeItems = items
-    .filter(item => (item.piezas_en_proceso > 0 ? item.total_asignado < item.piezas_en_proceso : item.producciones_count === 0));
+  // En modo "completados" el backend ya filtra por en_inventario = 1 — el filtro de
+  // piezas/asignaciones abajo es para decidir qué corte sigue "activo" y no aplica aquí.
+  const activeItems = verCompletados
+    ? items
+    : items.filter(item => (item.piezas_en_proceso > 0 ? item.total_asignado < item.piezas_en_proceso : item.producciones_count === 0));
 
   const filteredItems = activeItems
     .filter(item =>
@@ -242,6 +246,15 @@ export default function Cortes() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', gap: '1rem', flexWrap: 'wrap' }}>
         <h1 className="gradient-text" style={{ fontSize: '2.5rem', margin: 0 }}>{t('cortes.title')}</h1>
         <div style={{ display: 'flex', gap: '1rem' }}>
+          <button
+            className={`btn ${verCompletados ? 'btn-primary' : 'btn-secondary'}`}
+            onClick={() => setVerCompletados(prev => !prev)}
+            title={isEn ? 'Cuts that are fully received, shipped and paid are hidden here automatically' : 'Los cortes ya 100% recibidos, enviados y pagados se ocultan aquí automáticamente'}
+          >
+            {verCompletados
+              ? (isEn ? 'View Active' : 'Ver Activos')
+              : (isEn ? 'View Completed' : 'Ver Completados')}
+          </button>
           {canEdit && (
             <button className="btn btn-primary" onClick={openNew}>
               <Plus size={20} /> {t('cortes.new')}
@@ -276,7 +289,9 @@ export default function Cortes() {
           </div>
           <div>
             <div style={{ fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>
-              {isEn ? 'Total Pieces in Cuts' : 'Total de Piezas en Corte'}
+              {verCompletados
+                ? (isEn ? 'Total Pieces Completed' : 'Total de Piezas Completadas')
+                : (isEn ? 'Total Pieces in Cuts' : 'Total de Piezas en Corte')}
             </div>
             <div style={{ fontSize: '2.5rem', fontWeight: 800, lineHeight: 1.1, color: 'var(--text-primary)' }}>
               {totalPiezasCorte.toLocaleString()}
@@ -284,7 +299,7 @@ export default function Cortes() {
           </div>
         </div>
         <div className="badge badge-info" style={{ fontWeight: 700, fontSize: '0.85rem', padding: '6px 14px' }}>
-          {activeItems.length} {isEn ? 'active models' : 'modelos activos'}
+          {activeItems.length} {verCompletados ? (isEn ? 'completed models' : 'modelos completados') : (isEn ? 'active models' : 'modelos activos')}
         </div>
       </div>
 
