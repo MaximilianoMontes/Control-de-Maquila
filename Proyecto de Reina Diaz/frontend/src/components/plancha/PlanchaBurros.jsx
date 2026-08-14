@@ -22,6 +22,8 @@ export default function PlanchaBurros({
   modelosCamion,
   asistenciasHoy,
   fetchAsistenciasHoy,
+  piezasHoy,
+  fetchPiezasHoy,
   fetchPlanchadores,
   activeTab,
   setActiveTab
@@ -812,6 +814,7 @@ export default function PlanchaBurros({
       setBurrosState(newBurros);
 
       fetchModelosDisponibles();
+      if (fetchPiezasHoy) fetchPiezasHoy();
       playBeep('success');
       toast.success(isEn ? 'Ironing job registered and finalized successfully!' : '¡Trabajo de planchado registrado y finalizado con éxito!', { theme: 'dark' });
     } catch (e) {
@@ -1244,7 +1247,7 @@ export default function PlanchaBurros({
         </div>
       )}
 
-        {/* Third Column: Detalle y Carga Operario */}
+        {/* Third Column: Detalle y Piezas Planchadas Hoy */}
         {(!isMobile || mobileSubTab === 'detalle') && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
           {/* Detalle de Asignación */}
@@ -1501,24 +1504,28 @@ export default function PlanchaBurros({
             </div>
           </div>
 
-          {/* Carga Operario */}
+          {/* Piezas Planchadas Hoy */}
           <div style={{ background: 'var(--bg-card, #fff)', borderRadius: '16px', border: '1px solid var(--border-color, #e2e8f0)', padding: '1.5rem' }}>
-            <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', color: 'var(--text-primary)' }}>Carga Operario</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
-              {planchadores.slice(0, 8).map(p => {
-                let piezasAsignadas = 0;
-                burrosState.forEach(b => {
-                  if (b.planchador && b.planchador.id === p.id) {
-                    b.modelos.forEach(m => piezasAsignadas += (parseInt(m.piezas)||0));
-                  }
-                });
-                return (
-                  <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.8rem', background: 'var(--bg-input)', borderRadius: '8px', border: '1px solid var(--border-color, #e2e8f0)' }}>
-                    <span style={{ fontSize: '0.9rem', color: 'var(--text-primary)', fontWeight: '500' }}>{p.nombre}</span>
-                    <span style={{ fontSize: '0.85rem', color: '#10b981', fontWeight: 'bold', background: 'rgba(16, 185, 129, 0.1)', padding: '2px 8px', borderRadius: '12px' }}>{piezasAsignadas} pzas</span>
-                  </div>
-                );
-              })}
+            <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', color: 'var(--text-primary)' }}>{isEn ? 'Pieces Ironed Today' : 'Piezas Planchadas Hoy'}</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+              {[...planchadores]
+                .sort((a, b) => ((piezasHoy?.[b.id] || 0) - (piezasHoy?.[a.id] || 0)))
+                .slice(0, 8)
+                .map(p => {
+                  const piezas = piezasHoy?.[p.id] || 0;
+                  const sinActividad = piezas === 0 && !asistenciasHoy.includes(p.id);
+                  return (
+                    <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.7rem 0.8rem', background: 'var(--bg-input)', borderRadius: '8px', border: '1px solid var(--border-color, #e2e8f0)', opacity: sinActividad ? 0.6 : 1 }}>
+                      <span style={{ fontSize: '0.9rem', color: 'var(--text-primary)', fontWeight: '500' }}>{p.nombre}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        {sinActividad && (
+                          <span style={{ fontSize: '0.65rem', color: '#ef4444', background: 'rgba(239, 68, 68, 0.1)', padding: '2px 6px', borderRadius: '10px', fontWeight: '600' }}>{isEn ? 'No activity' : 'Sin actividad'}</span>
+                        )}
+                        <span style={{ fontSize: '0.85rem', color: piezas > 0 ? '#10b981' : 'var(--text-secondary)', fontWeight: 'bold', background: piezas > 0 ? 'rgba(16, 185, 129, 0.1)' : 'var(--bg-card)', padding: '2px 8px', borderRadius: '12px' }}>{piezas} pzas</span>
+                      </div>
+                    </div>
+                  );
+                })}
             </div>
           </div>
         </div>

@@ -57,6 +57,7 @@ export default function Plancha() {
   const [modelosDisponibles, setModelosDisponibles] = useState([]);
   const [historialGeneral, setHistorialGeneral] = useState([]);
   const [asistenciasHoy, setAsistenciasHoy] = useState([]);
+  const [piezasHoy, setPiezasHoy] = useState({});
 
   const [burrosState, setBurrosState] = useState(
     Array.from({ length: 12 }, (_, i) => ({
@@ -77,6 +78,18 @@ export default function Plancha() {
       setAsistenciasHoy(res.data);
     } catch (e) {
       console.error('Error fetching asistencias hoy', e);
+    }
+  };
+
+  const fetchPiezasHoy = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.get(`${API_URL}/api/plancha/piezas-hoy`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setPiezasHoy(res.data);
+    } catch (e) {
+      console.error('Error fetching piezas hoy', e);
     }
   };
 
@@ -195,6 +208,7 @@ export default function Plancha() {
   useEffect(() => {
     if (activeTab === 'plancha') {
       fetchAsistenciasHoy();
+      fetchPiezasHoy();
     }
   }, [activeTab]);
 
@@ -297,6 +311,8 @@ export default function Plancha() {
               modelosCamion={modelosCamion} 
               asistenciasHoy={asistenciasHoy}
               fetchAsistenciasHoy={fetchAsistenciasHoy}
+              piezasHoy={piezasHoy}
+              fetchPiezasHoy={fetchPiezasHoy}
               fetchPlanchadores={fetchPlanchadores}
               activeTab={activeTab}
               setActiveTab={setActiveTab}

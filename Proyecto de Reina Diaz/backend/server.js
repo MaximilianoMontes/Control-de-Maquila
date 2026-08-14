@@ -4968,6 +4968,24 @@ app.get('/api/plancha/asistencias/hoy', authenticateToken, async (req, res) => {
   }
 });
 
+// 10.1.1.1 OBTENER PIEZAS PLANCHADAS HOY POR OPERARIO
+app.get('/api/plancha/piezas-hoy', authenticateToken, async (req, res) => {
+  try {
+    const todayMX = localDateMX();
+    const [rows] = await db.query(`
+      SELECT planchador_id, COALESCE(SUM(piezas), 0) as piezas
+      FROM plancha_trabajos
+      WHERE estado = 'terminado' AND talla != 'AJUSTE' AND DATE(fecha_terminado) = ?
+      GROUP BY planchador_id
+    `, [todayMX]);
+    const piezasPorOperario = {};
+    rows.forEach(r => { piezasPorOperario[r.planchador_id] = Number(r.piezas) || 0; });
+    res.json(piezasPorOperario);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // 10.1.2 OBTENER HISTORIAL DE ASISTENCIAS DE UN PLANCHADOR
 app.get('/api/planchadores/:id/asistencias', authenticateToken, async (req, res) => {
   try {
