@@ -1577,26 +1577,6 @@ export default function Header({ onToggleSidebar }) {
                   </button>
                 </div>
               </div>
-
-              {/* Auto Archive */}
-              <div className="settings-item">
-                <span className="settings-item-label">{t('settings.autoArchiveLabel')}</span>
-                <span className="settings-item-desc">{t('settings.autoArchiveDesc')}</span>
-                <div className="settings-options-row">
-                  <button 
-                    className={`settings-option-btn ${settings.autoArchive === 'enabled' ? 'active' : ''}`}
-                    onClick={() => toggleSetting('autoArchive', 'enabled')}
-                  >
-                    {settings.autoArchive === 'enabled' && <Check size={14} />} {t('settings.autoArchiveEnabled')}
-                  </button>
-                  <button 
-                    className={`settings-option-btn ${settings.autoArchive === 'disabled' ? 'active' : ''}`}
-                    onClick={() => toggleSetting('autoArchive', 'disabled')}
-                  >
-                    {settings.autoArchive === 'disabled' && <Check size={14} />} {t('settings.autoArchiveDisabled')}
-                  </button>
-                </div>
-              </div>
             </div>
 
             <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>

@@ -172,10 +172,6 @@ const translations = {
     'settings.exchangeRateSyncError': 'Error al conectar con la API. Verifica el enlace o conexión.',
     'settings.exchangeRateOnlyAdmin': '⚠️ Solo los administradores pueden modificar la configuración cambiaria.',
     'settings.exchangeRateVerify': 'Verificar tipo de cambio oficial:',
-    'settings.autoArchiveLabel': 'Auto-Archivado de Órdenes',
-    'settings.autoArchiveDesc': 'Archiva automáticamente órdenes de producción terminadas y 100% pagadas.',
-    'settings.autoArchiveEnabled': 'Habilitado',
-    'settings.autoArchiveDisabled': 'Deshabilitado',
     'settings.save': 'Listo, Guardar Cambios',
 
     // Dashboard
@@ -664,10 +660,6 @@ const translations = {
     'settings.exchangeRateSyncError': 'Error connecting to API. Verify link or connection.',
     'settings.exchangeRateOnlyAdmin': '⚠️ Only administrators can modify exchange rate settings.',
     'settings.exchangeRateVerify': 'Verify official exchange rate:',
-    'settings.autoArchiveLabel': 'Auto-Archive Orders',
-    'settings.autoArchiveDesc': 'Automatically archive finished and 100% paid production orders.',
-    'settings.autoArchiveEnabled': 'Enabled',
-    'settings.autoArchiveDisabled': 'Disabled',
     'settings.save': 'Done, Save Changes',
 
     // Dashboard
@@ -999,7 +991,6 @@ export const SettingsProvider = ({ children }) => {
       language: 'es',
       theme: 'light',
       accentColor: 'blue',
-      autoArchive: 'disabled',
       currency: 'mxn',
       exchangeRate: 20,
       exchangeRateApiUrl: 'https://open.er-api.com/v6/latest/USD'
