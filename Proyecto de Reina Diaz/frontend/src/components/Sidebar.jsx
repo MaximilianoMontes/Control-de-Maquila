@@ -16,7 +16,8 @@ import {
   Home,
   Calendar,
   Layers,
-  MessageCircle
+  MessageCircle,
+  UserCog
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
@@ -36,6 +37,7 @@ export default function Sidebar({ onClose }) {
   const puedeVerCamion = ['admin', 'produccion1', 'produccion2', 'produccion', 'inventario1'].includes(userRole);
   // Reportes de soporte: solo admin (Fase 1 del buzón de reportes)
   const puedeVerSoporte = userRole === 'admin';
+  const puedeVerUsuarios = userRole === 'admin';
 
   const [reportesNuevos, setReportesNuevos] = useState(0);
   useEffect(() => {
@@ -57,6 +59,7 @@ export default function Sidebar({ onClose }) {
     ...(puedeVerPagos ? [{ path: '/pagos', name: t('nav.pagos'), icon: <Wallet size={20} /> }] : []),
     { path: '/historial',  name: t('nav.historial'),   icon: <History size={20} /> },
     ...(puedeVerSoporte ? [{ path: '/soporte', name: t('nav.soporte'), icon: <MessageCircle size={20} />, badge: reportesNuevos }] : []),
+    ...(puedeVerUsuarios ? [{ path: '/usuarios', name: t('nav.usuarios'), icon: <UserCog size={20} /> }] : []),
   ];
 
   const allowedNavItems = navItems;

@@ -982,6 +982,14 @@ async function initializeDatabase() {
         // Ignorar si ya existe
       }
 
+      // Añadir columna activo a users para poder desactivar cuentas sin borrarlas
+      try {
+        await connection.query("ALTER TABLE users ADD COLUMN activo TINYINT(1) DEFAULT 1");
+        console.log("Migration: activo column added to users");
+      } catch (e) {
+        // Ignorar si ya existe
+      }
+
       // 8. Tabla plancha_borrador
       await connection.query(`
         CREATE TABLE IF NOT EXISTS plancha_borrador (

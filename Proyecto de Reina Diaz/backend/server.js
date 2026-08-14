@@ -652,15 +652,115 @@ app.post('/api/login', loginRateLimiter, async (req, res) => {
     const [users] = await db.query("SELECT * FROM users WHERE username = ?", [username]);
     const user = users[0];
 
-    // Mensaje genérico en ambos casos (usuario inexistente o contraseña incorrecta) para no
-    // permitir que alguien averigüe qué nombres de usuario existen probando uno por uno.
-    if (!user || !bcrypt.compareSync(password, user.password)) {
+    // Mensaje genérico en todos los casos (usuario inexistente, contraseña incorrecta o cuenta
+    // desactivada) para no permitir que alguien averigüe qué nombres de usuario existen o cuáles
+    // están desactivados probando uno por uno.
+    if (!user || user.activo === 0 || !bcrypt.compareSync(password, user.password)) {
       return res.status(401).json({ error: 'Usuario o contraseña incorrectos' });
     }
 
     loginRateLimiter.reset(req);
     const token = jwt.sign({ id: user.id, username: user.username, role: user.role }, SECRET_KEY, { expiresIn: '12h' });
     res.json({ token, user: { id: user.id, username: user.username, role: user.role } });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Gestión de Usuarios (solo admin) — roles asignables desde esta pantalla
+const ASSIGNABLE_ROLES = ['admin', 'produccion1', 'produccion2', 'inventario1', 'plancha'];
+
+// GET LISTA DE USUARIOS
+app.get('/api/users', authenticateToken, async (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'No tienes permiso para ver esta información' });
+  }
+  try {
+    const [users] = await db.query("SELECT id, username, role, activo FROM users ORDER BY username ASC");
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// CREAR USUARIO
+app.post('/api/users', authenticateToken, async (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'No tienes permiso para hacer esto' });
+  }
+  const { username, password, role } = req.body;
+  if (!username || !username.trim() || !password || password.length < 6) {
+    return res.status(400).json({ error: 'Usuario requerido y contraseña de al menos 6 caracteres' });
+  }
+  if (!ASSIGNABLE_ROLES.includes(role)) {
+    return res.status(400).json({ error: 'Rol inválido' });
+  }
+  try {
+    const [existing] = await db.query("SELECT id FROM users WHERE username = ?", [username.trim()]);
+    if (existing.length > 0) {
+      return res.status(400).json({ error: 'Ya existe un usuario con ese nombre' });
+    }
+    const hash = bcrypt.hashSync(password, 10);
+    const [result] = await db.query(
+      "INSERT INTO users (username, password, role, activo) VALUES (?, ?, ?, 1)",
+      [username.trim(), hash, role]
+    );
+    await logActivity(req.user.id, 'ADD', 'USUARIO', `Creó el usuario ${username.trim()} con rol ${role}`);
+    res.json({ id: result.insertId, username: username.trim(), role, activo: 1 });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// EDITAR ROL / ACTIVO DE USUARIO
+app.put('/api/users/:id', authenticateToken, async (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'No tienes permiso para hacer esto' });
+  }
+  const targetId = parseInt(req.params.id, 10);
+  const { role, activo } = req.body;
+  if (!ASSIGNABLE_ROLES.includes(role)) {
+    return res.status(400).json({ error: 'Rol inválido' });
+  }
+  const activoFinal = activo ? 1 : 0;
+
+  // Autoprotección: un admin no puede desactivarse ni quitarse el rol de admin a sí mismo
+  if (targetId === req.user.id && (activoFinal === 0 || role !== 'admin')) {
+    return res.status(400).json({ error: 'No puedes desactivarte ni quitarte el rol de admin a ti mismo' });
+  }
+
+  try {
+    const [existing] = await db.query("SELECT username FROM users WHERE id = ?", [targetId]);
+    if (existing.length === 0) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+    await db.query("UPDATE users SET role = ?, activo = ? WHERE id = ?", [role, activoFinal, targetId]);
+    await logActivity(req.user.id, 'UPDATE', 'USUARIO', `Actualizó al usuario ${existing[0].username}: rol=${role}, activo=${activoFinal}`);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// RESETEAR CONTRASEÑA DE USUARIO
+app.put('/api/users/:id/password', authenticateToken, async (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'No tienes permiso para hacer esto' });
+  }
+  const targetId = parseInt(req.params.id, 10);
+  const { password } = req.body;
+  if (!password || password.length < 6) {
+    return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres' });
+  }
+  try {
+    const [existing] = await db.query("SELECT username FROM users WHERE id = ?", [targetId]);
+    if (existing.length === 0) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+    const hash = bcrypt.hashSync(password, 10);
+    await db.query("UPDATE users SET password = ? WHERE id = ?", [hash, targetId]);
+    await logActivity(req.user.id, 'UPDATE', 'USUARIO', `Reseteó la contraseña del usuario ${existing[0].username}`);
+    res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
