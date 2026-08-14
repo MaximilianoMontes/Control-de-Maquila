@@ -25,8 +25,7 @@ import KillFeed from './components/KillFeed';
 import ThemeEffects from './components/ThemeEffects';
 import TrainingBanner from './components/TrainingBanner';
 import SupportChatWidget from './components/SupportChatWidget';
-import SoporteReportes from './pages/SoporteReportes';
-import Usuarios from './pages/Usuarios';
+import Administracion from './pages/Administracion';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { motion } from 'framer-motion';
@@ -121,8 +120,7 @@ function App() {
         <Route path="/calendario" element={<ProtectedRoute><MainLayout><Calendario /></MainLayout></ProtectedRoute>} />
         <Route path="/historial" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2', 'produccion', 'inventario1']}><MainLayout><Historial /></MainLayout></ProtectedRoute>} />
         <Route path="/ayuda" element={<ProtectedRoute><MainLayout><Ayuda /></MainLayout></ProtectedRoute>} />
-        <Route path="/soporte" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><SoporteReportes /></MainLayout></ProtectedRoute>} />
-        <Route path="/usuarios" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><Usuarios /></MainLayout></ProtectedRoute>} />
+        <Route path="/admin" element={<ProtectedRoute allowedRoles={['admin']}><Administracion /></ProtectedRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover theme={toastTheme} />

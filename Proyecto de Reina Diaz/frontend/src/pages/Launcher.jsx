@@ -71,12 +71,29 @@ const CorteIcon = () => (
   </svg>
 );
 
+const AdminIcon = () => (
+  <svg width="86" height="86" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="gradAdmin" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#f59e0b" />
+        <stop offset="100%" stopColor="#d97706" />
+      </linearGradient>
+      <filter id="shadowAdmin" x="-10%" y="-10%" width="120%" height="120%">
+        <feDropShadow dx="0" dy="4" stdDeviation="4" floodOpacity="0.15" />
+      </filter>
+    </defs>
+    <rect width="64" height="64" rx="20" fill="url(#gradAdmin)" filter="url(#shadowAdmin)" />
+    <path d="M32 15L46 20V30C46 39 40 45.5 32 49C24 45.5 18 39 18 30V20L32 15Z" stroke="white" strokeWidth="3" strokeLinejoin="round" />
+    <path d="M25.5 31.5L30 36L39 26" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
 export default function Launcher() {
   const { user, logout } = useAuth();
   const { settings, updateSetting } = useSettings();
   const navigate = useNavigate();
   
-  const [appsOrder, setAppsOrder] = useState(['maquila', 'plancha', 'corte']);
+  const [appsOrder, setAppsOrder] = useState(['maquila', 'plancha', 'corte', 'admin']);
   const [draggedApp, setDraggedApp] = useState(null);
   const isDraggingRef = useRef(false);
 
@@ -86,7 +103,7 @@ export default function Launcher() {
       try {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          const allKeys = ['maquila', 'plancha', 'corte'];
+          const allKeys = ['maquila', 'plancha', 'corte', 'admin'];
           const merged = [...parsed];
           allKeys.forEach(k => {
             if (!merged.includes(k)) {
@@ -153,6 +170,7 @@ export default function Launcher() {
     maquila: "Maquila ERP",
     plancha: "Pressing Module",
     corte: "Cutting Room",
+    admin: "Admin Panel",
     soon: "Coming soon",
     logout: "Log Out",
     theme: "Toggle Theme"
@@ -161,6 +179,7 @@ export default function Launcher() {
     maquila: "Maquila ERP",
     plancha: "Módulo de Plancha",
     corte: "Taller de Corte",
+    admin: "Panel de Administración",
     soon: "Próximamente",
     logout: "Cerrar Sesión",
     theme: "Cambiar Tema"
@@ -169,7 +188,8 @@ export default function Launcher() {
   const availableApps = {
     maquila: { id: 'maquila', name: text.maquila, to: '/dashboard', Icon: MaquilaIcon, visible: userRole !== 'plancha' },
     plancha: { id: 'plancha', name: text.plancha, to: '/plancha', Icon: PlanchaIcon, visible: true },
-    corte: { id: 'corte', name: text.corte, to: '/taller-corte', Icon: CorteIcon, visible: userRole !== 'plancha' }
+    corte: { id: 'corte', name: text.corte, to: '/taller-corte', Icon: CorteIcon, visible: userRole !== 'plancha' },
+    admin: { id: 'admin', name: text.admin, to: '/admin', Icon: AdminIcon, visible: userRole === 'admin' }
   };
 
   const renderedApps = appsOrder
