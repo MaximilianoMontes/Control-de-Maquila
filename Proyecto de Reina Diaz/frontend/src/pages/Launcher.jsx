@@ -1,13 +1,9 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
-import API_URL from '../config';
-import { 
-  Calendar, 
-  Bell, 
-  Settings, 
+import {
+  Settings,
   LogOut,
   Moon,
   Sun
@@ -80,20 +76,11 @@ export default function Launcher() {
   const { settings, updateSetting } = useSettings();
   const navigate = useNavigate();
   
-  const [upcomingEvents, setUpcomingEvents] = useState(0);
   const [appsOrder, setAppsOrder] = useState(['maquila', 'plancha', 'corte']);
   const [draggedApp, setDraggedApp] = useState(null);
   const isDraggingRef = useRef(false);
 
   useEffect(() => {
-    const fetchUpcoming = async () => {
-      try {
-        const res = await axios.get(`${API_URL}/api/calendario/upcoming`);
-        setUpcomingEvents(res.data.length);
-      } catch (e) { console.error('Error fetching calendar alerts:', e); }
-    };
-    fetchUpcoming();
-
     const saved = localStorage.getItem('launcher_apps_order');
     if (saved) {
       try {
@@ -196,16 +183,6 @@ export default function Launcher() {
         <div className="launcher-header-left">
           {/* Status Indicator pulse */}
           <div className="launcher-status-dot" title="Servicios del ERP Activos"></div>
-          
-          {/* Action Quick Icons */}
-          <button className="launcher-header-btn" title="Calendario / Citas" onClick={() => navigate('/calendario')}>
-            <Calendar size={48} />
-            {upcomingEvents > 0 && <span className="launcher-header-badge">{upcomingEvents}</span>}
-          </button>
-          
-          <button className="launcher-header-btn" title="Notificaciones">
-            <Bell size={48} />
-          </button>
         </div>
 
         <div className="launcher-header-right">
