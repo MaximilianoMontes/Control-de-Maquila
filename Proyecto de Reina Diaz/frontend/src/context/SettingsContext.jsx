@@ -1135,7 +1135,6 @@ export const SettingsProvider = ({ children }) => {
     '/reportes': { code: 'CAM 09', name: 'Reportes' },
     '/historial': { code: 'CAM 10', name: 'Historial' },
     '/ayuda': { code: 'CAM 11', name: 'Ayuda' },
-    '/calendario': { code: 'CAM 12', name: 'Calendario' },
   };
 
   const currentRoom = roomMap[location.pathname] || { code: 'CAM 01', name: 'Dashboard' };

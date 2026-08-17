@@ -34,7 +34,6 @@ import {
   LayoutGrid,
   Flame,
   Layers,
-  Calendar,
   Sparkles,
   Truck
 } from 'lucide-react';
@@ -95,28 +94,8 @@ export default function Header({ onToggleSidebar }) {
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
-        const [histRes, calRes] = await Promise.all([
-          axios.get(`${API_URL}/api/historial?limit=15`),
-          axios.get(`${API_URL}/api/calendario/upcoming`).catch(() => ({ data: [] }))
-        ]);
-        
-        let mergedLogs = [];
-        if (histRes.data && Array.isArray(histRes.data)) {
-          mergedLogs = [...histRes.data];
-        }
-        
-        if (calRes.data && Array.isArray(calRes.data)) {
-          const calEvents = calRes.data.map(ev => ({
-            id: `cal-${ev.id}`,
-            action: 'CALENDAR_ALERT',
-            target: 'CALENDARIO',
-            timestamp: ev.fecha_inicio,
-            user_name: ev.usuario,
-            description: `${ev.titulo}: ${ev.descripcion || ''}`
-          }));
-          mergedLogs = [...calEvents, ...mergedLogs];
-        }
-        
+        const histRes = await axios.get(`${API_URL}/api/historial?limit=15`);
+        const mergedLogs = (histRes.data && Array.isArray(histRes.data)) ? [...histRes.data] : [];
         mergedLogs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
         setLogs(mergedLogs);
       } catch (e) {
@@ -1160,10 +1139,6 @@ export default function Header({ onToggleSidebar }) {
                       IconComponent = Trash2;
                       iconColor = 'var(--danger-color)';
                       bgColor = 'rgba(239, 68, 68, 0.1)';
-                    } else if (actionLower === 'calendar_alert') {
-                      IconComponent = Calendar;
-                      iconColor = '#c084fc'; // a nice purple
-                      bgColor = 'rgba(192, 132, 252, 0.1)';
                     } else if (actionLower === 'recepcion') {
                       IconComponent = Package;
                       iconColor = '#0ea5e9';
