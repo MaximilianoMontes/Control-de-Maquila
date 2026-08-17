@@ -5,7 +5,6 @@ const db = require('./database');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
-const xlsx = require('xlsx');
 const PDFDocument = require('pdfkit-table');
 const fs = require('fs');
 const path = require('path');
@@ -30,29 +29,6 @@ const upload = multer({
   fileFilter: (req, file, cb) => {
     if (!ALLOWED_IMAGE_MIMES.has(file.mimetype)) {
       return cb(new Error('Tipo de archivo no permitido. Solo se aceptan imágenes (JPG, PNG, WEBP, GIF).'));
-    }
-    cb(null, true);
-  }
-});
-
-const ALLOWED_SPREADSHEET_MIMES = new Set([
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  'application/vnd.ms-excel',
-  'application/zip', // .xlsx es un zip; algunos navegadores/SO lo reportan así
-  'application/octet-stream', // fallback genérico que mandan varios navegadores/SO para .xlsx/.xls
-  'text/csv',
-  'text/plain' // algunos exportan .csv como texto plano
-]);
-const ALLOWED_SPREADSHEET_EXTENSIONS = new Set(['.xlsx', '.xls', '.csv']);
-const uploadSpreadsheet = multer({
-  storage: storage,
-  limits: { fileSize: 15 * 1024 * 1024 },
-  fileFilter: (req, file, cb) => {
-    // El tipo MIME que reportan los navegadores para hojas de cálculo es poco confiable
-    // (varía por SO/navegador), así que se acepta si el MIME o la extensión coinciden.
-    const ext = path.extname(file.originalname || '').toLowerCase();
-    if (!ALLOWED_SPREADSHEET_MIMES.has(file.mimetype) && !ALLOWED_SPREADSHEET_EXTENSIONS.has(ext)) {
-      return cb(new Error('Tipo de archivo no permitido. Solo se aceptan hojas de cálculo (XLSX, XLS, CSV).'));
     }
     cb(null, true);
   }
@@ -1381,111 +1357,6 @@ app.delete('/api/inventario/:id', authenticateToken, async (req, res) => {
     if (error.code === 'ER_ROW_IS_REFERENCED_2' || error.code === 'ER_ROW_IS_REFERENCED') {
       return res.status(400).json({ error: 'No se puede eliminar este producto porque ya tiene órdenes de producción o descuentos vinculados. Primero debe eliminar esas vinculaciones.' });
     }
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.post('/api/inventario/import', authenticateToken, uploadSpreadsheet.single('file'), async (req, res) => {
-  // Restringido a admin: la librería xlsx que procesa el archivo subido tiene
-  // vulnerabilidades conocidas (contaminación de prototipos / ReDoS) sin parche
-  // disponible del creador — se reduce quién puede activarlas en vez de dejarlo abierto
-  // a cualquier cuenta con sesión iniciada.
-  if (req.user.role !== 'admin') {
-    return res.status(403).json({ error: 'Solo un administrador puede importar un archivo de inventario' });
-  }
-  if (!req.file) return res.status(400).json({ error: 'Archivo no proporcionado' });
-  try {
-    const workbook = xlsx.readFile(req.file.path);
-    const sheetName = workbook.SheetNames[0];
-    const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: '' });
-
-    const connection = await db.getConnection();
-    try {
-      await connection.beginTransaction();
-      
-      for (const row of data) {
-        let rawNumero = row['#'] || '';
-        let numero = Array.isArray(rawNumero) ? rawNumero[0] : rawNumero;
-        const temporada = String(row['TEMPORADA'] || row['Temporada'] || '');
-        const modelo = row['MODELO'] || row['Modelo'] || null;
-        let rawPrecio = String(row['PRECIO'] || row['Precio'] || '0').replace(/[^0-9.-]+/g,"");
-        let precio = parseFloat(rawPrecio) || 0;
-        const color = String(row['COLOR'] || row['Color'] || '');
-        const cliente = String(row['CLIENTE'] || row['Cliente'] || '');
-        const no_orden = String(row['NO. ORDEN'] || row['no. orden'] || row['No. Orden'] || row['NO ORDEN'] || '');
-        const piezasStr = row['PIEZAS EN PROCESO'] || row['Piezas en proceso'] || row['PIEZAS'] || '0';
-        const piezas_en_proceso = parseInt(String(piezasStr), 10) || 0;
-        
-        let rawPrecioPlancha = String(
-          row['PRECIO PLANCHA'] || 
-          row['Precio Plancha'] || 
-          row['PRECIO DE PLANCHA'] || 
-          row['PRECIO DE PLANCHADO'] || 
-          row['precio_plancha'] || 
-          row['PLANCHA'] || 
-          row['Plancha'] || 
-          row['Precio planchado'] || 
-          row['PRECIO PLANCHADO'] || 
-          row['Precio de Plancha'] ||
-          '0'
-        ).replace(/[^0-9.-]+/g,"");
-        let precio_plancha = parseFloat(rawPrecioPlancha) || 0;
-
-        if (modelo) {
-          const m = String(modelo).trim();
-
-          // `inventario` no tiene una llave única real sobre (numero, modelo), así que
-          // ON DUPLICATE KEY UPDATE nunca se disparaba: cada reimportación del mismo archivo
-          // creaba una fila nueva en vez de sumar piezas. Se busca explícitamente la fila
-          // existente (no reprogramada) antes de decidir si insertar o actualizar.
-          const [existingInv] = await connection.query(
-            "SELECT id FROM inventario WHERE numero = ? AND modelo = ? AND COALESCE(es_reprogramacion, 0) = 0",
-            [String(numero), m]
-          );
-
-          if (existingInv.length > 0) {
-            await connection.query(`
-              UPDATE inventario
-              SET temporada=?, precio=?, color=?, cliente=?, no_orden=?, piezas_en_proceso = piezas_en_proceso + ?, precio_plancha=?
-              WHERE id=?
-            `, [temporada, precio, color, cliente, no_orden, piezas_en_proceso, precio_plancha, existingInv[0].id]);
-          } else {
-            await connection.query(`
-              INSERT INTO inventario (numero, temporada, modelo, precio, color, cliente, no_orden, piezas_en_proceso, en_inventario, precio_plancha)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?)
-            `, [String(numero), temporada, m, precio, color, cliente, no_orden, piezas_en_proceso, precio_plancha]);
-          }
-
-          // Mirror immediately to inventario_real, enlazado por modelo + es_reprogramacion
-          // (igual que el resto de las rutas de inventario), no por no_orden+modelo.
-          const [existingReal] = await connection.query(
-            "SELECT id FROM inventario_real WHERE modelo = ? AND COALESCE(es_reprogramacion, 0) = 0",
-            [m]
-          );
-          if (existingReal.length > 0) {
-            await connection.query(`
-              UPDATE inventario_real
-              SET numero=?, temporada=?, precio=?, color=?, cliente=?, no_orden=?, piezas=piezas + ?, precio_plancha=?
-              WHERE id=?
-            `, [String(numero), temporada, precio, color, cliente, no_orden, piezas_en_proceso, precio_plancha, existingReal[0].id]);
-          } else {
-            await connection.query(`
-              INSERT INTO inventario_real (numero, temporada, modelo, precio, color, cliente, no_orden, piezas, fecha_ingreso, precio_plancha)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?)
-            `, [String(numero), temporada, m, precio, color, cliente, no_orden, piezas_en_proceso, precio_plancha]);
-          }
-        }
-      }
-      
-      await connection.commit();
-      res.json({ success: true, count: data.length });
-    } catch (error) {
-      await connection.rollback();
-      throw error;
-    } finally {
-      connection.release();
-    }
-  } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
