@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Shield, UserCog, MessageCircle, Home, LogOut } from 'lucide-react';
+import { Shield, UserCog, MessageCircle, Home, LogOut, BarChart3 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import API_URL from '../config';
 import Header from '../components/Header';
 import Usuarios from './Usuarios';
 import SoporteReportes from './SoporteReportes';
+import AnalisisUso from './AnalisisUso';
 
 export default function Administracion() {
   const { logout } = useAuth();
@@ -62,6 +63,16 @@ export default function Administracion() {
               </span>
             )}
           </a>
+
+          <a
+            href="#"
+            className={`nav-link ${activeTab === 'analitica' ? 'active' : ''}`}
+            onClick={(e) => { e.preventDefault(); setActiveTab('analitica'); }}
+            style={{ cursor: 'pointer' }}
+          >
+            <BarChart3 size={20} />
+            {isEn ? 'Usage Analytics' : 'Analítica de Uso'}
+          </a>
         </nav>
 
         {/* Botones al fondo */}
@@ -100,7 +111,9 @@ export default function Administracion() {
       <div className="main-container">
         <Header />
         <main className="main-content" style={{ padding: '2rem' }}>
-          {activeTab === 'usuarios' ? <Usuarios /> : <SoporteReportes />}
+          {activeTab === 'usuarios' && <Usuarios />}
+          {activeTab === 'soporte' && <SoporteReportes />}
+          {activeTab === 'analitica' && <AnalisisUso />}
         </main>
       </div>
     </div>

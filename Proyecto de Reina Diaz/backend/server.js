@@ -782,6 +782,99 @@ app.put('/api/users/:id/password', authenticateToken, async (req, res) => {
   }
 });
 
+// ANALÍTICA DE USO DEL SISTEMA (solo admin) — agregados en vivo sobre `historial`.
+// "Acción" = un evento de negocio registrado (crear/editar/eliminar algo), no una vista de
+// pantalla ni un clic: el sistema nunca ha medido tiempo en pantalla, y este endpoint no lo agrega.
+const DIAS_ES = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+
+app.get('/api/admin/analytics', authenticateToken, async (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'No tienes permiso para ver esta información' });
+  }
+  try {
+    const { desde, hasta } = req.query;
+    const whereClauses = [];
+    const params = [];
+    if (desde) { whereClauses.push('h.timestamp >= ?'); params.push(desde + ' 00:00:00'); }
+    if (hasta) { whereClauses.push('h.timestamp <= ?'); params.push(hasta + ' 23:59:59'); }
+    const where = whereClauses.length ? `WHERE ${whereClauses.join(' AND ')}` : '';
+
+    const [[resumenRow]] = await db.query(
+      `SELECT COUNT(*) as total, MIN(h.timestamp) as desde, MAX(h.timestamp) as hasta FROM historial h ${where}`,
+      params
+    );
+
+    const [porModulo] = await db.query(
+      `SELECT h.target as modulo, COUNT(*) as total FROM historial h ${where} GROUP BY h.target ORDER BY total DESC`,
+      params
+    );
+
+    const [porUsuario] = await db.query(
+      `SELECT COALESCE(u.username, '(desconocido)') as usuario, COUNT(*) as total
+       FROM historial h LEFT JOIN users u ON h.user_id = u.id ${where} GROUP BY usuario ORDER BY total DESC`,
+      params
+    );
+
+    const [porTipoAccion] = await db.query(
+      `SELECT h.action as tipo, COUNT(*) as total FROM historial h ${where} GROUP BY h.action ORDER BY total DESC`,
+      params
+    );
+
+    const [porHoraRaw] = await db.query(
+      `SELECT HOUR(h.timestamp) as horaUtc, COUNT(*) as total FROM historial h ${where} GROUP BY horaUtc ORDER BY horaUtc`,
+      params
+    );
+    const porHora = porHoraRaw.map(r => ({
+      horaUtc: r.horaUtc,
+      horaLocal: (r.horaUtc - 6 + 24) % 24,
+      total: r.total
+    }));
+
+    const [porDiaRaw] = await db.query(
+      `SELECT DAYOFWEEK(h.timestamp) as n, COUNT(*) as total FROM historial h ${where} GROUP BY n`,
+      params
+    );
+    const porDiaMap = {};
+    porDiaRaw.forEach(r => { porDiaMap[r.n] = r.total; });
+    const porDia = [2, 3, 4, 5, 6, 7, 1].map(n => ({ dia: DIAS_ES[n - 1], total: porDiaMap[n] || 0 }));
+
+    const [tendenciaMensual] = await db.query(
+      `SELECT DATE_FORMAT(h.timestamp, '%Y-%m') as mes, COUNT(*) as total FROM historial h ${where} GROUP BY mes ORDER BY mes`,
+      params
+    );
+
+    const [rutinaRaw] = await db.query(
+      `SELECT COALESCE(u.username, '(desconocido)') as usuario, h.target as modulo, COUNT(*) as total
+       FROM historial h LEFT JOIN users u ON h.user_id = u.id ${where} GROUP BY usuario, modulo ORDER BY usuario, total DESC`,
+      params
+    );
+    const rutinaPorUsuario = {};
+    rutinaRaw.forEach(r => {
+      if (!rutinaPorUsuario[r.usuario]) rutinaPorUsuario[r.usuario] = [];
+      rutinaPorUsuario[r.usuario].push({ modulo: r.modulo, total: r.total });
+    });
+
+    res.json({
+      resumen: {
+        total: resumenRow.total || 0,
+        desde: resumenRow.desde,
+        hasta: resumenRow.hasta,
+        usuariosActivos: porUsuario.length,
+        moduloTop: porModulo.length ? porModulo[0].modulo : null
+      },
+      porModulo,
+      porUsuario,
+      porTipoAccion,
+      porHora,
+      porDia,
+      tendenciaMensual,
+      rutinaPorUsuario
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // APIs Historial
 app.get('/api/historial', authenticateToken, async (req, res) => {
   const { limit = 50, recent } = req.query;
