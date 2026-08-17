@@ -1386,6 +1386,13 @@ app.delete('/api/inventario/:id', authenticateToken, async (req, res) => {
 });
 
 app.post('/api/inventario/import', authenticateToken, uploadSpreadsheet.single('file'), async (req, res) => {
+  // Restringido a admin: la librería xlsx que procesa el archivo subido tiene
+  // vulnerabilidades conocidas (contaminación de prototipos / ReDoS) sin parche
+  // disponible del creador — se reduce quién puede activarlas en vez de dejarlo abierto
+  // a cualquier cuenta con sesión iniciada.
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Solo un administrador puede importar un archivo de inventario' });
+  }
   if (!req.file) return res.status(400).json({ error: 'Archivo no proporcionado' });
   try {
     const workbook = xlsx.readFile(req.file.path);
