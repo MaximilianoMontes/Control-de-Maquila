@@ -22,7 +22,8 @@ import {
   Calendar, 
   X,
   Truck,
-  Flame
+  Flame,
+  Layers
 } from 'lucide-react';
 
 
@@ -81,7 +82,8 @@ const guides_es = {
           <ul>
             <li><strong>Admin (Administrador):</strong> Acceso total sin restricciones a todos los módulos, incluyendo la creación, edición y eliminación de datos, visualización del historial de auditoría, generación de reportes globales y control total de nóminas y pagos.</li>
             <li><strong>Producción (produccion1, produccion2):</strong> Tienen permitido gestionar maquileros y órdenes de producción, registrar piezas recibidas y realizar el control de pagos/abonos. En <strong>Cortes</strong> solo pueden ver las observaciones e iniciar producción de un corte disponible — no pueden editar, eliminar ni subir/cambiar la foto de un corte (reservado para Admin e Inventario). Tampoco tienen acceso a la eliminación crítica ni a reportes financieros de auditoría completa.</li>
-            <li><strong>Inventario (inventario1):</strong> Encargado de registrar los cortes de prendas y sus variantes de color/cantidad, así como consultar y administrar la salida del stock final en el inventario real. No tienen acceso a nóminas, pagos ni reportes financieros.</li>
+            <li><strong>Inventario (inventario1):</strong> Encargado de registrar los cortes de prendas y sus variantes de color/cantidad, así como consultar y administrar la salida del stock final en el inventario real. También tiene acceso al módulo de <strong>Telas</strong>. No tienen acceso a nóminas, pagos ni reportes financieros.</li>
+            <li><strong>Telas (telas1, telas2):</strong> Acceso exclusivo al módulo de <strong>Telas</strong> (almacén de materia prima textil): catálogos, generación de código, recepción de facturas y salidas de tela. No tienen acceso a ningún otro módulo del sistema (Maquileros, Inventario de prenda terminada, Cortes, Producción, Pagos).</li>
             <li><strong>Operadores generales:</strong> Pueden visualizar inventarios y estatus de producción pero con restricciones de eliminación y edición de flujos financieros directos para resguardar la seguridad del negocio.</li>
           </ul>
         </div>
@@ -641,6 +643,60 @@ const guides_es = {
       ),
       keywords: 'asistencia apoyo nomina planchador liquidacion pagos recibo comprobante pdf'
     }
+  ],
+  telas: [
+    {
+      title: '¿Qué es el módulo de Telas y para qué sirve?',
+      content: (
+        <div>
+          <p>El módulo de <strong>Telas</strong> lleva el control del almacén de materia prima textil (telas, no de la prenda terminada). Es completamente independiente de Maquileros, Inventario, Cortes y Producción — no afecta ni depende de ningún dato de esos módulos.</p>
+          <p>Su propósito es responder al instante preguntas como "¿cuánto llegó del código X?" o "¿cuánto queda en existencia?", sin tener que revisar libretas físicas ni pedir un reporte manual cada vez.</p>
+          <div className="workflow-container" style={{ marginTop: '15px', marginBottom: '15px' }}>
+            <div className="workflow-title">Flujo de Recepción de Telas</div>
+            <div className="workflow-steps-flex">
+              <div className="workflow-step-box">
+                <span className="workflow-step-num">1</span>
+                <div className="workflow-step-name">Generar Código</div>
+              </div>
+              <div className="workflow-step-arrow"><ArrowRight size={16} /></div>
+              <div className="workflow-step-box">
+                <span className="workflow-step-num">2</span>
+                <div className="workflow-step-name">Dar de Entrada</div>
+              </div>
+              <div className="workflow-step-arrow"><ArrowRight size={16} /></div>
+              <div className="workflow-step-box">
+                <span className="workflow-step-num">3</span>
+                <div className="workflow-step-name">Revisión de Ancho</div>
+              </div>
+              <div className="workflow-step-arrow"><ArrowRight size={16} /></div>
+              <div className="workflow-step-box">
+                <span className="workflow-step-num">4</span>
+                <div className="workflow-step-name">Salidas</div>
+              </div>
+            </div>
+          </div>
+          <ol>
+            <li><strong>Generar Código:</strong> En la pestaña "Catálogos y Códigos", se elige el tipo de tela, el proveedor, la referencia del proveedor y el color, junto con el precio en dólares y el tipo de cambio. El sistema arma el código automáticamente (no requiere escribirlo a mano ni pedirlo a una IA cada vez).</li>
+            <li><strong>Dar de Entrada:</strong> En "Facturas y Recepción", se registra la factura del proveedor y se agregan las líneas de recepción (rollos, yardas, modelos que la necesitan). El sistema convierte yardas a metros automáticamente.</li>
+            <li><strong>Revisión de Ancho / Devolución:</strong> Cada línea recibida se puede marcar como Aprobada o Devuelta una vez que se revisa físicamente el ancho del rollo.</li>
+            <li><strong>Salidas:</strong> Cuando se usa tela de la existencia, se registra la salida en metros y su destino, para mantener actualizada la existencia disponible de cada código.</li>
+          </ol>
+        </div>
+      ),
+      keywords: 'telas almacen materia prima algodon proveedor rollos yardas metros codigo generar recepcion'
+    },
+    {
+      title: 'Generar un código de tela y su fórmula de precio',
+      content: (
+        <div>
+          <p>El código se arma automáticamente con la estructura: <strong>F</strong> + 2 letras del tipo de tela + 1 letra del proveedor + 3 dígitos de la referencia del proveedor + 3 letras del color. Ejemplo: <code>FSZE101NEG</code> (Satín Zoe, proveedor EKB, referencia 101, Negro).</p>
+          <p>El precio en pesos se calcula con la fórmula: <strong>techo(precio en USD × tipo de cambio + $5 MXN)</strong>. Por ejemplo, $4.55 USD × 21 + $5 = $100.55, que se redondea hacia arriba a <strong>$101 MXN</strong>.</p>
+          <p>Antes de generar un código nuevo, hay que dar de alta el tipo de tela, el proveedor y/o el color en sus catálogos correspondientes (solo se hace una vez por cada uno; después quedan disponibles para todos los códigos futuros).</p>
+          <p>Desde cada factura abierta se pueden imprimir las <strong>tarjetas físicas</strong> (6 por hoja, para grapar la muestra de tela) y la <strong>nota de remisión</strong> (con IVA del 16% ya calculado) directamente en PDF.</p>
+        </div>
+      ),
+      keywords: 'codigo generar formula precio tipo de cambio tarjetas remision iva proveedor color'
+    }
   ]
 };
 
@@ -700,7 +756,8 @@ const guides_en = {
           <ul>
             <li><strong>Admin (Administrator):</strong> Total unrestricted access to all modules, including creating, editing, and deleting data, viewing audit logs, global financial reports, and complete control over payroll, payments, and discounts.</li>
             <li><strong>Production (produccion1, produccion2):</strong> Allowed to manage tailors and production orders, record received pieces, and manage payments/deposits. In <strong>Cuts</strong> they can only view notes and start production for an available cut — they cannot edit, delete, or upload/change a cut's photo (reserved for Admin and Inventory). They also do not have access to critical deletions or full financial audit logs.</li>
-            <li><strong>Inventory (inventario1):</strong> Responsible for registering garment cuts and color/quantity variants, as well as consulting and managing finished physical stock outputs in the real inventory. No access to payroll, payments, or financial reports.</li>
+            <li><strong>Inventory (inventario1):</strong> Responsible for registering garment cuts and color/quantity variants, as well as consulting and managing finished physical stock outputs in the real inventory. Also has access to the <strong>Fabrics</strong> module. No access to payroll, payments, or financial reports.</li>
+            <li><strong>Fabrics (telas1, telas2):</strong> Exclusive access to the <strong>Fabrics</strong> module (raw textile material warehouse): catalogs, code generation, invoice receiving, and fabric outbound movements. No access to any other module (Tailors, Finished Goods Inventory, Cuts, Production, Payments).</li>
             <li><strong>General Operators:</strong> Can view inventory and production status but with restrictions on deleting and editing direct financial flows to safeguard the business.</li>
           </ul>
         </div>
@@ -1206,6 +1263,60 @@ const guides_en = {
       ),
       keywords: 'attendance allowance payroll ironer settlement payments receipt PDF'
     }
+  ],
+  telas: [
+    {
+      title: 'What is the Fabrics module for?',
+      content: (
+        <div>
+          <p>The <strong>Fabrics</strong> module manages the raw textile material warehouse (fabric, not finished garments). It is fully independent from Tailors, Inventory, Cuts, and Production — it does not affect or depend on any data from those modules.</p>
+          <p>Its purpose is to instantly answer questions like "how much of code X arrived?" or "how much stock is left?", without checking physical notebooks or requesting a manual report each time.</p>
+          <div className="workflow-container" style={{ marginTop: '15px', marginBottom: '15px' }}>
+            <div className="workflow-title">Fabric Receiving Workflow</div>
+            <div className="workflow-steps-flex">
+              <div className="workflow-step-box">
+                <span className="workflow-step-num">1</span>
+                <div className="workflow-step-name">Generate Code</div>
+              </div>
+              <div className="workflow-step-arrow"><ArrowRight size={16} /></div>
+              <div className="workflow-step-box">
+                <span className="workflow-step-num">2</span>
+                <div className="workflow-step-name">Receive Stock</div>
+              </div>
+              <div className="workflow-step-arrow"><ArrowRight size={16} /></div>
+              <div className="workflow-step-box">
+                <span className="workflow-step-num">3</span>
+                <div className="workflow-step-name">Width Review</div>
+              </div>
+              <div className="workflow-step-arrow"><ArrowRight size={16} /></div>
+              <div className="workflow-step-box">
+                <span className="workflow-step-num">4</span>
+                <div className="workflow-step-name">Outbound</div>
+              </div>
+            </div>
+          </div>
+          <ol>
+            <li><strong>Generate Code:</strong> In "Catalogs & Codes", select the fabric type, supplier, supplier reference, and color, along with the USD price and exchange rate. The system builds the code automatically (no need to write it by hand or ask an AI each time).</li>
+            <li><strong>Receive Stock:</strong> In "Invoices & Receiving", register the supplier's invoice and add receipt lines (rolls, yards, models that need it). The system converts yards to meters automatically.</li>
+            <li><strong>Width Review / Return:</strong> Each received line can be marked as Approved or Returned once the roll's width is physically checked.</li>
+            <li><strong>Outbound:</strong> When fabric is used from stock, the outbound movement is registered in meters with its destination, keeping each code's available stock up to date.</li>
+          </ol>
+        </div>
+      ),
+      keywords: 'fabrics warehouse raw material supplier rolls yards meters code generate receiving'
+    },
+    {
+      title: 'Generating a fabric code and its price formula',
+      content: (
+        <div>
+          <p>The code is built automatically with the structure: <strong>F</strong> + 2 letters for the fabric type + 1 letter for the supplier + 3 digits of the supplier's reference + 3 letters for the color. Example: <code>FSZE101NEG</code> (Satín Zoe, EKB supplier, reference 101, Black).</p>
+          <p>The price in Mexican pesos is calculated with the formula: <strong>ceil(USD price × exchange rate + $5 MXN)</strong>. For example, $4.55 USD × 21 + $5 = $100.55, rounded up to <strong>$101 MXN</strong>.</p>
+          <p>Before generating a new code, the fabric type, supplier, and/or color must be registered in their respective catalogs (only once each; afterwards they remain available for all future codes).</p>
+          <p>From any open invoice you can print the <strong>physical cards</strong> (6 per sheet, to staple the fabric sample) and the <strong>delivery note</strong> (with 16% VAT already calculated) directly as PDF.</p>
+        </div>
+      ),
+      keywords: 'code generate formula price exchange rate cards delivery note vat supplier color'
+    }
   ]
 };
 
@@ -1257,6 +1368,7 @@ export default function Ayuda() {
         { id: 'extras', name: t('nav.extras'), icon: <Sparkles size={18} /> },
         { id: 'camion', name: t('nav.camion'), icon: <Truck size={18} /> },
         { id: 'plancha', name: t('nav.plancha'), icon: <Flame size={18} /> },
+        { id: 'telas', name: settings.language === 'en' ? 'Fabrics' : 'Telas', icon: <Layers size={18} /> },
         { id: 'pagos', name: t('nav.pagos'), icon: <Wallet size={18} /> },
       ];
 

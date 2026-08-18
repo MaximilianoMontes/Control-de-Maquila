@@ -342,7 +342,9 @@ async function initializeDatabase() {
       ['produccion1', 'prod123', 'produccion1'],
       ['produccion2', 'prod123', 'produccion2'],
       ['inventario1', 'inv123', 'inventario1'],
-      ['plancha', 'plan123', 'plancha']
+      ['plancha', 'plan123', 'plancha'],
+      ['telas1', 'telas123', 'telas1'],
+      ['telas2', 'telas123', 'telas2']
     ];
 
     for (const [username, password, role] of users) {
@@ -1921,6 +1923,134 @@ async function initializeDatabase() {
       console.log("DB debug dump written successfully to uploads/db_debug.json");
     } catch (e) {
       console.error("Error writing db debug dump:", e);
+    }
+
+    // --- NUEVO MÓDULO: TELAS (almacén de materia prima textil) ---
+    // Módulo 100% aditivo: ninguna de estas tablas tiene FK hacia inventario/produccion/
+    // maquileros/camion — Telas es independiente de Maquila, Plancha y Cortes.
+    try {
+      await connection.query(`
+        CREATE TABLE IF NOT EXISTS telas_tipos (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          nombre VARCHAR(150) NOT NULL,
+          abreviatura CHAR(2) NOT NULL UNIQUE,
+          composicion_default VARCHAR(255) DEFAULT NULL,
+          activo TINYINT(1) DEFAULT 1,
+          fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+
+      await connection.query(`
+        CREATE TABLE IF NOT EXISTS telas_proveedores (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          nombre VARCHAR(150) NOT NULL,
+          letra CHAR(1) NOT NULL UNIQUE,
+          activo TINYINT(1) DEFAULT 1,
+          fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+
+      await connection.query(`
+        CREATE TABLE IF NOT EXISTS telas_colores (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          nombre VARCHAR(100) NOT NULL,
+          abreviatura CHAR(3) NOT NULL UNIQUE,
+          activo TINYINT(1) DEFAULT 1,
+          fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+
+      await connection.query(`
+        CREATE TABLE IF NOT EXISTS telas_codigos (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          codigo VARCHAR(20) NOT NULL UNIQUE,
+          tipo_id INT NOT NULL,
+          proveedor_id INT NOT NULL,
+          referencia_proveedor VARCHAR(50) DEFAULT NULL,
+          color_id INT NOT NULL,
+          composicion VARCHAR(255) DEFAULT NULL,
+          precio_usd DECIMAL(10, 2) DEFAULT 0,
+          tipo_cambio DECIMAL(10, 4) DEFAULT 0,
+          precio_mxn DECIMAL(10, 2) DEFAULT 0,
+          descripcion TEXT,
+          activo TINYINT(1) DEFAULT 1,
+          fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY(tipo_id) REFERENCES telas_tipos(id),
+          FOREIGN KEY(proveedor_id) REFERENCES telas_proveedores(id),
+          FOREIGN KEY(color_id) REFERENCES telas_colores(id)
+        )
+      `);
+
+      await connection.query(`
+        CREATE TABLE IF NOT EXISTS telas_facturas (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          numero_factura VARCHAR(100) DEFAULT NULL,
+          proveedor_id INT NOT NULL,
+          fecha DATE NOT NULL,
+          tipo_cambio DECIMAL(10, 4) DEFAULT 0,
+          archivo VARCHAR(255) DEFAULT NULL,
+          notas TEXT,
+          fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY(proveedor_id) REFERENCES telas_proveedores(id)
+        )
+      `);
+
+      await connection.query(`
+        CREATE TABLE IF NOT EXISTS telas_recepciones (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          factura_id INT NOT NULL,
+          codigo_id INT NOT NULL,
+          rollos INT DEFAULT 0,
+          yardas DECIMAL(10, 2) DEFAULT 0,
+          metros DECIMAL(10, 2) DEFAULT 0,
+          modelos TEXT,
+          produccion_o_muestra VARCHAR(20) DEFAULT NULL,
+          ancho_revisado TINYINT(1) DEFAULT 0,
+          estado VARCHAR(30) DEFAULT 'pendiente',
+          devolucion_motivo TEXT DEFAULT NULL,
+          devolucion_fecha DATETIME DEFAULT NULL,
+          fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY(factura_id) REFERENCES telas_facturas(id) ON DELETE CASCADE,
+          FOREIGN KEY(codigo_id) REFERENCES telas_codigos(id)
+        )
+      `);
+
+      await connection.query(`
+        CREATE TABLE IF NOT EXISTS telas_salidas (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          codigo_id INT NOT NULL,
+          metros DECIMAL(10, 2) NOT NULL,
+          destino VARCHAR(255) DEFAULT NULL,
+          usuario_id INT DEFAULT NULL,
+          fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY(codigo_id) REFERENCES telas_codigos(id),
+          FOREIGN KEY(usuario_id) REFERENCES users(id)
+        )
+      `);
+
+      await connection.query(`
+        CREATE TABLE IF NOT EXISTS telas_codigos_pendientes (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          factura_id INT DEFAULT NULL,
+          estilo_proveedor VARCHAR(100) DEFAULT NULL,
+          color_texto VARCHAR(100) DEFAULT NULL,
+          motivo TEXT,
+          resuelto TINYINT(1) DEFAULT 0,
+          fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY(factura_id) REFERENCES telas_facturas(id) ON DELETE SET NULL
+        )
+      `);
+
+      await connection.query(`
+        CREATE TABLE IF NOT EXISTS telas_config (
+          clave VARCHAR(50) PRIMARY KEY,
+          valor VARCHAR(255) DEFAULT NULL
+        )
+      `);
+
+      console.log('Tablas del módulo Telas listas.');
+    } catch (e) {
+      console.error('Error creating tablas de Telas:', e);
     }
 
     connection.release();

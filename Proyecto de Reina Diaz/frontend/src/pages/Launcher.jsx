@@ -71,6 +71,25 @@ const CorteIcon = () => (
   </svg>
 );
 
+const TelasIcon = () => (
+  <svg width="86" height="86" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="gradTelas" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#ec4899" />
+        <stop offset="100%" stopColor="#f472b6" />
+      </linearGradient>
+      <filter id="shadowTelas" x="-10%" y="-10%" width="120%" height="120%">
+        <feDropShadow dx="0" dy="4" stdDeviation="4" floodOpacity="0.15" />
+      </filter>
+    </defs>
+    <rect width="64" height="64" rx="20" fill="url(#gradTelas)" filter="url(#shadowTelas)" />
+    {/* Rollo de tela */}
+    <ellipse cx="24" cy="32" rx="7" ry="10" stroke="white" strokeWidth="3" />
+    <path d="M24 22C34 22 42 25 42 32C42 38 36 41 30 41" stroke="white" strokeWidth="3" strokeLinecap="round" fill="none" />
+    <circle cx="24" cy="32" r="2.5" fill="white" />
+  </svg>
+);
+
 const AdminIcon = () => (
   <svg width="86" height="86" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
     <defs>
@@ -93,7 +112,7 @@ export default function Launcher() {
   const { settings, updateSetting } = useSettings();
   const navigate = useNavigate();
   
-  const [appsOrder, setAppsOrder] = useState(['maquila', 'plancha', 'corte', 'admin']);
+  const [appsOrder, setAppsOrder] = useState(['maquila', 'plancha', 'corte', 'telas', 'admin']);
   const [draggedApp, setDraggedApp] = useState(null);
   const isDraggingRef = useRef(false);
 
@@ -103,7 +122,7 @@ export default function Launcher() {
       try {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          const allKeys = ['maquila', 'plancha', 'corte', 'admin'];
+          const allKeys = ['maquila', 'plancha', 'corte', 'telas', 'admin'];
           const merged = [...parsed];
           allKeys.forEach(k => {
             if (!merged.includes(k)) {
@@ -170,6 +189,7 @@ export default function Launcher() {
     maquila: "Maquila ERP",
     plancha: "Pressing Module",
     corte: "Cutting Room",
+    telas: "Fabrics Warehouse",
     admin: "Admin Panel",
     soon: "Coming soon",
     logout: "Log Out",
@@ -179,6 +199,7 @@ export default function Launcher() {
     maquila: "Maquila ERP",
     plancha: "Módulo de Plancha",
     corte: "Taller de Corte",
+    telas: "Almacén de Telas",
     admin: "Panel de Administración",
     soon: "Próximamente",
     logout: "Cerrar Sesión",
@@ -189,6 +210,7 @@ export default function Launcher() {
     maquila: { id: 'maquila', name: text.maquila, to: '/dashboard', Icon: MaquilaIcon, visible: userRole !== 'plancha' },
     plancha: { id: 'plancha', name: text.plancha, to: '/plancha', Icon: PlanchaIcon, visible: true },
     corte: { id: 'corte', name: text.corte, to: '/taller-corte', Icon: CorteIcon, visible: userRole !== 'plancha' },
+    telas: { id: 'telas', name: text.telas, to: '/telas', Icon: TelasIcon, visible: ['admin', 'telas1', 'telas2', 'inventario1'].includes(userRole) },
     admin: { id: 'admin', name: text.admin, to: '/admin', Icon: AdminIcon, visible: userRole === 'admin' }
   };
 

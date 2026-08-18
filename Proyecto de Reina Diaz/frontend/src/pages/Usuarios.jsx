@@ -8,7 +8,7 @@ import { toast } from '../utils/themeNotifications';
 
 const API = API_URL;
 
-const ASSIGNABLE_ROLES = ['admin', 'produccion1', 'produccion2', 'inventario1', 'plancha'];
+const ASSIGNABLE_ROLES = ['admin', 'produccion1', 'produccion2', 'inventario1', 'plancha', 'telas1', 'telas2'];
 
 const roleLabel = (role, isEn) => {
   const labels = {
@@ -16,7 +16,9 @@ const roleLabel = (role, isEn) => {
     produccion1: isEn ? 'Production 1' : 'Producción 1',
     produccion2: isEn ? 'Production 2' : 'Producción 2',
     inventario1: isEn ? 'Inventory' : 'Inventario',
-    plancha: isEn ? 'Pressing' : 'Plancha'
+    plancha: isEn ? 'Pressing' : 'Plancha',
+    telas1: isEn ? 'Fabrics 1' : 'Telas 1',
+    telas2: isEn ? 'Fabrics 2' : 'Telas 2'
   };
   return labels[role] || role;
 };

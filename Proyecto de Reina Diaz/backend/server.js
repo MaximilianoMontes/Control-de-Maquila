@@ -660,7 +660,7 @@ app.post('/api/login', loginRateLimiter, async (req, res) => {
 });
 
 // Gestión de Usuarios (solo admin) — roles asignables desde esta pantalla
-const ASSIGNABLE_ROLES = ['admin', 'produccion1', 'produccion2', 'inventario1', 'plancha'];
+const ASSIGNABLE_ROLES = ['admin', 'produccion1', 'produccion2', 'inventario1', 'plancha', 'telas1', 'telas2'];
 
 // GET LISTA DE USUARIOS
 app.get('/api/users', authenticateToken, async (req, res) => {
@@ -6394,6 +6394,491 @@ app.post('/api/training/reset', authenticateToken, async (req, res) => {
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+// ============================================================================
+// MÓDULO TELAS (almacén de materia prima textil) — 100% aditivo, sin ninguna
+// referencia a inventario/produccion/maquileros/camion. No afecta Maquila,
+// Plancha ni Cortes.
+// ============================================================================
+const TELAS_ROLES = ['admin', 'telas1', 'telas2', 'inventario1'];
+function telasAllowed(req) {
+  const userRole = (req.user?.role || req.user?.rol || '').toString().toLowerCase().trim();
+  return TELAS_ROLES.includes(userRole);
+}
+
+// --- Catálogos: tipos de tela, proveedores, colores ---
+app.get('/api/telas/tipos', authenticateToken, async (req, res) => {
+  if (!telasAllowed(req)) return res.status(403).json({ error: 'No autorizado' });
+  try {
+    const [rows] = await db.query("SELECT * FROM telas_tipos WHERE activo = 1 ORDER BY nombre ASC");
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/telas/tipos', authenticateToken, async (req, res) => {
+  if (!telasAllowed(req)) return res.status(403).json({ error: 'No autorizado' });
+  const { nombre, abreviatura, composicion_default } = req.body;
+  if (!nombre || !abreviatura || abreviatura.trim().length !== 2) {
+    return res.status(400).json({ error: 'Nombre y abreviatura de 2 letras son requeridos' });
+  }
+  try {
+    const [existing] = await db.query("SELECT id FROM telas_tipos WHERE abreviatura = ?", [abreviatura.toUpperCase()]);
+    if (existing.length > 0) return res.status(409).json({ error: `La abreviatura ${abreviatura.toUpperCase()} ya está en uso` });
+    const [result] = await db.query(
+      "INSERT INTO telas_tipos (nombre, abreviatura, composicion_default) VALUES (?, ?, ?)",
+      [nombre.trim(), abreviatura.toUpperCase(), composicion_default || null]
+    );
+    await db.query("INSERT INTO historial (user_id, action, target, description) VALUES (?, 'ALTA', 'TELAS', ?)", [req.user.id, `Dio de alta el tipo de tela "${nombre}" (${abreviatura.toUpperCase()})`]);
+    res.status(201).json({ id: result.insertId });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/telas/proveedores', authenticateToken, async (req, res) => {
+  if (!telasAllowed(req)) return res.status(403).json({ error: 'No autorizado' });
+  try {
+    const [rows] = await db.query("SELECT * FROM telas_proveedores WHERE activo = 1 ORDER BY nombre ASC");
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/telas/proveedores', authenticateToken, async (req, res) => {
+  if (!telasAllowed(req)) return res.status(403).json({ error: 'No autorizado' });
+  const { nombre, letra } = req.body;
+  if (!nombre || !letra || letra.trim().length !== 1) {
+    return res.status(400).json({ error: 'Nombre y letra única son requeridos' });
+  }
+  try {
+    const [existing] = await db.query("SELECT id FROM telas_proveedores WHERE letra = ?", [letra.toUpperCase()]);
+    if (existing.length > 0) return res.status(409).json({ error: `La letra ${letra.toUpperCase()} ya está en uso` });
+    const [result] = await db.query(
+      "INSERT INTO telas_proveedores (nombre, letra) VALUES (?, ?)",
+      [nombre.trim(), letra.toUpperCase()]
+    );
+    await db.query("INSERT INTO historial (user_id, action, target, description) VALUES (?, 'ALTA', 'TELAS', ?)", [req.user.id, `Dio de alta el proveedor de telas "${nombre}" (${letra.toUpperCase()})`]);
+    res.status(201).json({ id: result.insertId });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/telas/colores', authenticateToken, async (req, res) => {
+  if (!telasAllowed(req)) return res.status(403).json({ error: 'No autorizado' });
+  try {
+    const [rows] = await db.query("SELECT * FROM telas_colores WHERE activo = 1 ORDER BY nombre ASC");
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/telas/colores', authenticateToken, async (req, res) => {
+  if (!telasAllowed(req)) return res.status(403).json({ error: 'No autorizado' });
+  const { nombre, abreviatura } = req.body;
+  if (!nombre || !abreviatura || abreviatura.trim().length !== 3) {
+    return res.status(400).json({ error: 'Nombre y abreviatura de 3 letras son requeridos' });
+  }
+  try {
+    const [existing] = await db.query("SELECT id FROM telas_colores WHERE abreviatura = ?", [abreviatura.toUpperCase()]);
+    if (existing.length > 0) return res.status(409).json({ error: `La abreviatura ${abreviatura.toUpperCase()} ya está en uso` });
+    const [result] = await db.query(
+      "INSERT INTO telas_colores (nombre, abreviatura) VALUES (?, ?)",
+      [nombre.trim(), abreviatura.toUpperCase()]
+    );
+    await db.query("INSERT INTO historial (user_id, action, target, description) VALUES (?, 'ALTA', 'TELAS', ?)", [req.user.id, `Dio de alta el color de tela "${nombre}" (${abreviatura.toUpperCase()})`]);
+    res.status(201).json({ id: result.insertId });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// --- Generador de código (determinístico, sin IA) ---
+app.get('/api/telas/config', authenticateToken, async (req, res) => {
+  if (!telasAllowed(req)) return res.status(403).json({ error: 'No autorizado' });
+  try {
+    const [rows] = await db.query("SELECT valor FROM telas_config WHERE clave = 'ultimo_tipo_cambio'");
+    res.json({ ultimo_tipo_cambio: rows.length > 0 ? parseFloat(rows[0].valor) : null });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/telas/generar-codigo', authenticateToken, async (req, res) => {
+  if (!telasAllowed(req)) return res.status(403).json({ error: 'No autorizado' });
+  const { tipo_id, proveedor_id, referencia_proveedor, color_id, precio_usd, tipo_cambio, composicion } = req.body;
+  if (!tipo_id || !proveedor_id || !referencia_proveedor || !color_id || precio_usd == null || tipo_cambio == null) {
+    return res.status(400).json({ error: 'Faltan datos para generar el código (tipo, proveedor, referencia, color, precio y tipo de cambio)' });
+  }
+  try {
+    const [tipoRows] = await db.query("SELECT * FROM telas_tipos WHERE id = ?", [tipo_id]);
+    const [provRows] = await db.query("SELECT * FROM telas_proveedores WHERE id = ?", [proveedor_id]);
+    const [colorRows] = await db.query("SELECT * FROM telas_colores WHERE id = ?", [color_id]);
+    if (!tipoRows[0] || !provRows[0] || !colorRows[0]) {
+      return res.status(404).json({ error: 'Tipo, proveedor o color no encontrado' });
+    }
+    const tipo = tipoRows[0], proveedor = provRows[0], color = colorRows[0];
+
+    const refDigits = referencia_proveedor.toString().replace(/\D/g, '').slice(-3).padStart(3, '0');
+    const codigo = `F${tipo.abreviatura}${proveedor.letra}${refDigits}${color.abreviatura}`;
+
+    const [existing] = await db.query("SELECT * FROM telas_codigos WHERE codigo = ?", [codigo]);
+    if (existing.length > 0) {
+      return res.status(409).json({ error: `El código ${codigo} ya existe`, codigo_existente: existing[0] });
+    }
+
+    const precioMxn = Math.ceil(parseFloat(precio_usd) * parseFloat(tipo_cambio) + 5);
+    const composicionFinal = (composicion && composicion.trim()) || tipo.composicion_default || '';
+    const descripcion = `${referencia_proveedor} ${tipo.nombre} ${composicionFinal} ${color.nombre} (${proveedor.nombre}) $${parseFloat(precio_usd).toFixed(2)}`;
+
+    const [result] = await db.query(
+      `INSERT INTO telas_codigos (codigo, tipo_id, proveedor_id, referencia_proveedor, color_id, composicion, precio_usd, tipo_cambio, precio_mxn, descripcion)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [codigo, tipo_id, proveedor_id, referencia_proveedor, color_id, composicionFinal, precio_usd, tipo_cambio, precioMxn, descripcion]
+    );
+    await db.query("REPLACE INTO telas_config (clave, valor) VALUES ('ultimo_tipo_cambio', ?)", [tipo_cambio]);
+    await db.query("INSERT INTO historial (user_id, action, target, description) VALUES (?, 'ALTA', 'TELAS', ?)", [req.user.id, `Generó el código de tela ${codigo} ($${precioMxn} MXN)`]);
+
+    const [nuevo] = await db.query("SELECT * FROM telas_codigos WHERE id = ?", [result.insertId]);
+    res.status(201).json(nuevo[0]);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/telas/codigos', authenticateToken, async (req, res) => {
+  if (!telasAllowed(req)) return res.status(403).json({ error: 'No autorizado' });
+  try {
+    let query = `
+      SELECT tc.*, tt.nombre as tipo_nombre, tp.nombre as proveedor_nombre, tcol.nombre as color_nombre,
+        COALESCE((SELECT SUM(metros) FROM telas_recepciones WHERE codigo_id = tc.id), 0)
+        - COALESCE((SELECT SUM(metros) FROM telas_salidas WHERE codigo_id = tc.id), 0) as stock_metros
+      FROM telas_codigos tc
+      JOIN telas_tipos tt ON tc.tipo_id = tt.id
+      JOIN telas_proveedores tp ON tc.proveedor_id = tp.id
+      JOIN telas_colores tcol ON tc.color_id = tcol.id
+      WHERE 1 = 1
+    `;
+    const params = [];
+    if (req.query.texto) {
+      query += ' AND (tc.codigo LIKE ? OR tc.descripcion LIKE ?)';
+      params.push(`%${req.query.texto}%`, `%${req.query.texto}%`);
+    }
+    if (req.query.proveedor_id) { query += ' AND tc.proveedor_id = ?'; params.push(req.query.proveedor_id); }
+    if (req.query.tipo_id) { query += ' AND tc.tipo_id = ?'; params.push(req.query.tipo_id); }
+    if (req.query.color_id) { query += ' AND tc.color_id = ?'; params.push(req.query.color_id); }
+    query += ' ORDER BY tc.fecha_creacion DESC';
+    const [rows] = await db.query(query, params);
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// --- Facturas y recepción (pasos 2-3 del flujo: dar de entrada / revisión de ancho) ---
+app.get('/api/telas/facturas', authenticateToken, async (req, res) => {
+  if (!telasAllowed(req)) return res.status(403).json({ error: 'No autorizado' });
+  try {
+    const [rows] = await db.query(`
+      SELECT tf.*, tp.nombre as proveedor_nombre,
+        (SELECT COUNT(*) FROM telas_recepciones WHERE factura_id = tf.id) as total_recepciones
+      FROM telas_facturas tf
+      JOIN telas_proveedores tp ON tf.proveedor_id = tp.id
+      ORDER BY tf.fecha DESC, tf.id DESC
+    `);
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/telas/facturas/:id', authenticateToken, async (req, res) => {
+  if (!telasAllowed(req)) return res.status(403).json({ error: 'No autorizado' });
+  try {
+    const [facturaRows] = await db.query(`
+      SELECT tf.*, tp.nombre as proveedor_nombre
+      FROM telas_facturas tf
+      JOIN telas_proveedores tp ON tf.proveedor_id = tp.id
+      WHERE tf.id = ?
+    `, [req.params.id]);
+    if (!facturaRows[0]) return res.status(404).json({ error: 'Factura no encontrada' });
+
+    const [recepciones] = await db.query(`
+      SELECT tr.*, tc.codigo, tc.descripcion, tc.precio_mxn
+      FROM telas_recepciones tr
+      JOIN telas_codigos tc ON tr.codigo_id = tc.id
+      WHERE tr.factura_id = ?
+      ORDER BY tr.id ASC
+    `, [req.params.id]);
+
+    res.json({ ...facturaRows[0], recepciones });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/telas/facturas', authenticateToken, uploadReporte.single('archivo'), async (req, res) => {
+  if (!telasAllowed(req)) return res.status(403).json({ error: 'No autorizado' });
+  const { numero_factura, proveedor_id, fecha, tipo_cambio, notas } = req.body;
+  if (!proveedor_id || !fecha) return res.status(400).json({ error: 'Proveedor y fecha son requeridos' });
+  try {
+    const archivo = req.file ? `/uploads/${req.file.filename}` : null;
+    const [result] = await db.query(
+      "INSERT INTO telas_facturas (numero_factura, proveedor_id, fecha, tipo_cambio, archivo, notas) VALUES (?, ?, ?, ?, ?, ?)",
+      [numero_factura || null, proveedor_id, fecha, tipo_cambio || 0, archivo, notas || null]
+    );
+    await db.query("INSERT INTO historial (user_id, action, target, description) VALUES (?, 'ALTA', 'TELAS', ?)", [req.user.id, `Registró la factura de telas ${numero_factura || '#' + result.insertId}`]);
+    res.status(201).json({ id: result.insertId });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/telas/facturas/:id/recepciones', authenticateToken, async (req, res) => {
+  if (!telasAllowed(req)) return res.status(403).json({ error: 'No autorizado' });
+  const { codigo_id, rollos, yardas, modelos, produccion_o_muestra } = req.body;
+  if (!codigo_id || yardas == null) return res.status(400).json({ error: 'Código y yardas son requeridos' });
+  try {
+    const metros = Math.floor(parseFloat(yardas) * 0.9144);
+    const [result] = await db.query(
+      `INSERT INTO telas_recepciones (factura_id, codigo_id, rollos, yardas, metros, modelos, produccion_o_muestra)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [req.params.id, codigo_id, rollos || 0, yardas, metros, modelos || null, produccion_o_muestra || null]
+    );
+    const [codigoRows] = await db.query("SELECT codigo FROM telas_codigos WHERE id = ?", [codigo_id]);
+    await db.query("INSERT INTO historial (user_id, action, target, description) VALUES (?, 'ALTA', 'TELAS', ?)", [req.user.id, `Dio entrada a ${metros} m (${rollos || 0} rollos) del código ${codigoRows[0]?.codigo || codigo_id}`]);
+    res.status(201).json({ id: result.insertId, metros });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.patch('/api/telas/recepciones/:id/revision', authenticateToken, async (req, res) => {
+  if (!telasAllowed(req)) return res.status(403).json({ error: 'No autorizado' });
+  const { ancho_revisado, estado, devolucion_motivo } = req.body;
+  try {
+    await db.query(
+      `UPDATE telas_recepciones
+       SET ancho_revisado = ?, estado = ?, devolucion_motivo = ?,
+           devolucion_fecha = CASE WHEN ? = 'devuelto' THEN NOW() ELSE devolucion_fecha END
+       WHERE id = ?`,
+      [ancho_revisado ? 1 : 0, estado || 'pendiente', devolucion_motivo || null, estado || '', req.params.id]
+    );
+    await db.query("INSERT INTO historial (user_id, action, target, description) VALUES (?, 'EDIT', 'TELAS', ?)", [req.user.id, `Actualizó la revisión de ancho de la recepción #${req.params.id} a "${estado}"`]);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// --- Salidas (paso 4 del flujo) ---
+app.post('/api/telas/salidas', authenticateToken, async (req, res) => {
+  if (!telasAllowed(req)) return res.status(403).json({ error: 'No autorizado' });
+  const { codigo_id, metros, destino } = req.body;
+  if (!codigo_id || !metros) return res.status(400).json({ error: 'Código y metros son requeridos' });
+  try {
+    const [recRows] = await db.query("SELECT COALESCE(SUM(metros), 0) as recibido FROM telas_recepciones WHERE codigo_id = ?", [codigo_id]);
+    const [salRows] = await db.query("SELECT COALESCE(SUM(metros), 0) as salido FROM telas_salidas WHERE codigo_id = ?", [codigo_id]);
+    const disponible = parseFloat(recRows[0].recibido) - parseFloat(salRows[0].salido);
+    if (parseFloat(metros) > disponible) {
+      return res.status(400).json({ error: `Stock insuficiente. Disponible: ${disponible} m` });
+    }
+    const [result] = await db.query(
+      "INSERT INTO telas_salidas (codigo_id, metros, destino, usuario_id) VALUES (?, ?, ?, ?)",
+      [codigo_id, metros, destino || null, req.user.id]
+    );
+    const [codigoRows] = await db.query("SELECT codigo FROM telas_codigos WHERE id = ?", [codigo_id]);
+    await db.query("INSERT INTO historial (user_id, action, target, description) VALUES (?, 'EDIT', 'TELAS', ?)", [req.user.id, `Registró salida de ${metros} m del código ${codigoRows[0]?.codigo || codigo_id}${destino ? ` (${destino})` : ''}`]);
+    res.status(201).json({ id: result.insertId });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// --- Códigos pendientes (cruce factura↔código no resuelto) ---
+app.get('/api/telas/codigos-pendientes', authenticateToken, async (req, res) => {
+  if (!telasAllowed(req)) return res.status(403).json({ error: 'No autorizado' });
+  try {
+    const [rows] = await db.query("SELECT * FROM telas_codigos_pendientes WHERE resuelto = 0 ORDER BY fecha_creacion DESC");
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/telas/codigos-pendientes', authenticateToken, async (req, res) => {
+  if (!telasAllowed(req)) return res.status(403).json({ error: 'No autorizado' });
+  const { factura_id, estilo_proveedor, color_texto, motivo } = req.body;
+  try {
+    const [result] = await db.query(
+      "INSERT INTO telas_codigos_pendientes (factura_id, estilo_proveedor, color_texto, motivo) VALUES (?, ?, ?, ?)",
+      [factura_id || null, estilo_proveedor || null, color_texto || null, motivo || null]
+    );
+    res.status(201).json({ id: result.insertId });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.patch('/api/telas/codigos-pendientes/:id/resolver', authenticateToken, async (req, res) => {
+  if (!telasAllowed(req)) return res.status(403).json({ error: 'No autorizado' });
+  try {
+    await db.query("UPDATE telas_codigos_pendientes SET resuelto = 1 WHERE id = ?", [req.params.id]);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// --- PDFs: tarjetas físicas (6 por hoja carta) y nota de remisión ---
+app.get('/api/telas/facturas/:id/tarjetas.pdf', authenticateToken, async (req, res) => {
+  if (!telasAllowed(req)) return res.status(403).json({ error: 'No autorizado' });
+  try {
+    const [facturaRows] = await db.query(`
+      SELECT tf.*, tp.nombre as proveedor_nombre FROM telas_facturas tf
+      JOIN telas_proveedores tp ON tf.proveedor_id = tp.id WHERE tf.id = ?
+    `, [req.params.id]);
+    if (!facturaRows[0]) return res.status(404).json({ error: 'Factura no encontrada' });
+
+    const [recepciones] = await db.query(`
+      SELECT tr.*, tc.codigo, tc.referencia_proveedor, tc.descripcion, tc.composicion,
+        tp.nombre as proveedor_nombre, tcol.nombre as color_nombre
+      FROM telas_recepciones tr
+      JOIN telas_codigos tc ON tr.codigo_id = tc.id
+      JOIN telas_proveedores tp ON tc.proveedor_id = tp.id
+      JOIN telas_colores tcol ON tc.color_id = tcol.id
+      WHERE tr.factura_id = ?
+      ORDER BY tr.id ASC
+    `, [req.params.id]);
+
+    if (recepciones.length === 0) return res.status(400).json({ error: 'La factura no tiene recepciones registradas todavía' });
+
+    const doc = new PDFDocument({ margin: 20, size: 'LETTER' });
+    res.setHeader('Content-disposition', `attachment; filename="Tarjetas_Factura_${req.params.id}.pdf"`);
+    res.setHeader('Content-type', 'application/pdf');
+    doc.pipe(res);
+
+    const pageW = 612, pageM = 20;
+    const cols = 2, rows = 3;
+    const gap = 12;
+    const cardW = (pageW - pageM * 2 - gap * (cols - 1)) / cols;
+    const cardH = 230;
+
+    recepciones.forEach((r, i) => {
+      const posInPage = i % (cols * rows);
+      if (i > 0 && posInPage === 0) doc.addPage();
+      const col = posInPage % cols;
+      const row = Math.floor(posInPage / cols);
+      const x = pageM + col * (cardW + gap);
+      const y = pageM + row * (cardH + gap);
+
+      doc.rect(x, y, cardW, cardH).stroke('#333333');
+      doc.fontSize(16).font('Helvetica-Bold').fillColor('#1F2A44').text(r.codigo, x + 10, y + 10, { width: cardW - 20 });
+      doc.moveTo(x + 10, y + 32).lineTo(x + cardW - 10, y + 32).stroke('#cccccc');
+
+      doc.fontSize(8).font('Helvetica').fillColor('#000000');
+      const line = (label, value, yy) => {
+        doc.font('Helvetica-Bold').text(label, x + 10, yy, { continued: true, width: cardW - 20 });
+        doc.font('Helvetica').text(' ' + (value || '-'));
+      };
+      line('REF. PROVEEDOR:', r.referencia_proveedor, y + 40);
+      doc.font('Helvetica-Bold').text('DESCRIPCIÓN:', x + 10, y + 54);
+      doc.font('Helvetica').fontSize(7.5).text(r.descripcion || '-', x + 10, y + 65, { width: cardW - 20 });
+      doc.fontSize(8);
+      line('COLOR:', r.color_nombre, y + 96);
+      line('PROVEEDOR:', r.proveedor_nombre, y + 108);
+      line('COMPOSICIÓN:', r.composicion, y + 120);
+      line('ROLLOS:', String(r.rollos), y + 132);
+      line('METROS / FECHA:', `${r.metros} m — ${new Date(r.fecha_creacion).toLocaleDateString('es-MX')}`, y + 144);
+      doc.font('Helvetica-Bold').text('MODELOS:', x + 10, y + 156);
+      doc.font('Helvetica').fontSize(7.5).text(r.modelos || 'STOCK', x + 10, y + 167, { width: cardW - 20 });
+
+      const boxY = y + cardH - 45;
+      doc.dash(2, { space: 2 }).rect(x + 10, boxY, cardW - 20, 30).stroke('#999999');
+      doc.undash();
+      doc.fontSize(6.5).fillColor('#999999').text('GRAPAR MUESTRA DE TELA AQUÍ', x + 10, boxY + 12, { width: cardW - 20, align: 'center' });
+      doc.fillColor('#000000');
+    });
+
+    doc.end();
+  } catch (error) {
+    if (!res.headersSent) res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/telas/facturas/:id/remision.pdf', authenticateToken, async (req, res) => {
+  if (!telasAllowed(req)) return res.status(403).json({ error: 'No autorizado' });
+  try {
+    const [facturaRows] = await db.query(`
+      SELECT tf.*, tp.nombre as proveedor_nombre FROM telas_facturas tf
+      JOIN telas_proveedores tp ON tf.proveedor_id = tp.id WHERE tf.id = ?
+    `, [req.params.id]);
+    if (!facturaRows[0]) return res.status(404).json({ error: 'Factura no encontrada' });
+    const factura = facturaRows[0];
+
+    const [grupos] = await db.query(`
+      SELECT tc.precio_mxn, SUM(tr.yardas) as yardas_total, GROUP_CONCAT(DISTINCT tc.codigo SEPARATOR ', ') as codigos
+      FROM telas_recepciones tr
+      JOIN telas_codigos tc ON tr.codigo_id = tc.id
+      WHERE tr.factura_id = ?
+      GROUP BY tc.precio_mxn
+      ORDER BY tc.precio_mxn ASC
+    `, [req.params.id]);
+
+    if (grupos.length === 0) return res.status(400).json({ error: 'La factura no tiene recepciones registradas todavía' });
+
+    const doc = new PDFDocument({ margins: { top: 30, bottom: 50, left: 40, right: 40 }, size: 'LETTER' });
+    res.setHeader('Content-disposition', `attachment; filename="Remision_Factura_${req.params.id}.pdf"`);
+    res.setHeader('Content-type', 'application/pdf');
+    doc.pipe(res);
+
+    try {
+      const logoPath = path.join(__dirname, '..', 'frontend', 'public', 'logo.png');
+      if (fs.existsSync(logoPath)) doc.image(logoPath, 40, 25, { width: 50 });
+    } catch (e) {}
+
+    doc.fontSize(16).font('Helvetica-Bold').text('Nota de Remisión — Telas', 100, 30);
+    doc.fontSize(10).font('Helvetica').text('Maquila Reina Díaz · Colima', 100, 50);
+    doc.moveDown(2);
+    doc.fontSize(10);
+    doc.text(`Factura: ${factura.numero_factura || '#' + factura.id}`);
+    doc.text(`Proveedor: ${factura.proveedor_nombre}`);
+    doc.text(`Fecha: ${new Date(factura.fecha).toLocaleDateString('es-MX')}`);
+    doc.text(`Tipo de cambio: ${factura.tipo_cambio}`);
+    doc.moveDown(1);
+
+    const tableConfig = {
+      headers: ['Código(s)', 'Yardas', 'Precio/yarda (MXN)', 'Subtotal (MXN)'],
+      rows: grupos.map(g => [
+        g.codigos,
+        parseFloat(g.yardas_total).toFixed(2),
+        `$${parseFloat(g.precio_mxn).toFixed(2)}`,
+        `$${(parseFloat(g.yardas_total) * parseFloat(g.precio_mxn)).toFixed(2)}`
+      ])
+    };
+    await doc.table(tableConfig, { prepareHeader: () => doc.font('Helvetica-Bold').fontSize(9), prepareRow: () => doc.font('Helvetica').fontSize(9) });
+
+    const subtotal = grupos.reduce((acc, g) => acc + parseFloat(g.yardas_total) * parseFloat(g.precio_mxn), 0);
+    const iva = subtotal * 0.16;
+    const total = subtotal + iva;
+
+    doc.moveDown(1);
+    doc.font('Helvetica-Bold').fontSize(10);
+    doc.text(`Subtotal: $${subtotal.toFixed(2)} MXN`, { align: 'right' });
+    doc.text(`IVA (16%): $${iva.toFixed(2)} MXN`, { align: 'right' });
+    doc.text(`Total: $${total.toFixed(2)} MXN`, { align: 'right' });
+
+    await db.query("INSERT INTO historial (user_id, action, target, description) VALUES (?, 'EDIT', 'TELAS', ?)", [req.user.id, `Generó la nota de remisión de la factura de telas ${factura.numero_factura || '#' + factura.id}`]);
+
+    doc.end();
+  } catch (error) {
+    if (!res.headersSent) res.status(500).json({ error: error.message });
   }
 });
 

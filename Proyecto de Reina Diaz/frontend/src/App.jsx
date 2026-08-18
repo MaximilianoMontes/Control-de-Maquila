@@ -20,6 +20,7 @@ import Historial from './pages/Historial';
 import Ayuda from './pages/Ayuda';
 import Camion from './pages/Camion';
 import TallerCorte from './pages/TallerCorte';
+import Telas from './pages/Telas';
 import KillFeed from './components/KillFeed';
 import ThemeEffects from './components/ThemeEffects';
 import TrainingBanner from './components/TrainingBanner';
@@ -115,6 +116,7 @@ function App() {
         <Route path="/camion" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2', 'produccion', 'inventario1']}><MainLayout><Camion /></MainLayout></ProtectedRoute>} />
         <Route path="/pagos" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2', 'produccion']}><MainLayout><Pagos /></MainLayout></ProtectedRoute>} />
         <Route path="/plancha" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2', 'produccion', 'plancha', 'inventario1']}><Plancha /></ProtectedRoute>} />
+        <Route path="/telas" element={<ProtectedRoute allowedRoles={['admin', 'telas1', 'telas2', 'inventario1']}><Telas /></ProtectedRoute>} />
         <Route path="/reportes" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2', 'produccion', 'inventario1']}><MainLayout><Reportes /></MainLayout></ProtectedRoute>} />
         <Route path="/historial" element={<ProtectedRoute allowedRoles={['admin', 'produccion1', 'produccion2', 'produccion', 'inventario1']}><MainLayout><Historial /></MainLayout></ProtectedRoute>} />
         <Route path="/ayuda" element={<ProtectedRoute><MainLayout><Ayuda /></MainLayout></ProtectedRoute>} />
