@@ -2048,6 +2048,37 @@ async function initializeDatabase() {
         )
       `);
 
+      // Requisición de tela: alguien pide tela para un modelo; al finalizarse queda
+      // visible en Salidas para que el almacén la surta (y ahí sí se descuenta existencia).
+      await connection.query(`
+        CREATE TABLE IF NOT EXISTS telas_requisiciones (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          modelo VARCHAR(255) NOT NULL,
+          notas TEXT,
+          estado VARCHAR(20) DEFAULT 'borrador',
+          creado_por INT DEFAULT NULL,
+          fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          fecha_finalizada DATETIME DEFAULT NULL,
+          FOREIGN KEY(creado_por) REFERENCES users(id)
+        )
+      `);
+
+      await connection.query(`
+        CREATE TABLE IF NOT EXISTS telas_requisicion_lineas (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          requisicion_id INT NOT NULL,
+          codigo_id INT NOT NULL,
+          cantidad_requerida DECIMAL(10, 2) NOT NULL,
+          ancho DECIMAL(6, 3) DEFAULT NULL,
+          estado VARCHAR(20) DEFAULT 'pendiente',
+          salida_id INT DEFAULT NULL,
+          fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY(requisicion_id) REFERENCES telas_requisiciones(id) ON DELETE CASCADE,
+          FOREIGN KEY(codigo_id) REFERENCES telas_codigos(id),
+          FOREIGN KEY(salida_id) REFERENCES telas_salidas(id)
+        )
+      `);
+
       console.log('Tablas del módulo Telas listas.');
     } catch (e) {
       console.error('Error creating tablas de Telas:', e);

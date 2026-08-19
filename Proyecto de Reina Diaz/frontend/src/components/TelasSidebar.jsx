@@ -4,6 +4,7 @@ import {
   Tags,
   FileText,
   PackageMinus,
+  ClipboardList,
   HelpCircle,
   Home,
   LogOut
@@ -32,6 +33,7 @@ export default function TelasSidebar({ activeTab, setActiveTab, onClose }) {
     { id: 'catalogos', name: isEn ? 'Catalogs & Codes' : 'Catálogos y Códigos', icon: <Tags size={20} /> },
     { id: 'facturas', name: isEn ? 'Invoices & Receiving' : 'Facturas y Recepción', icon: <FileText size={20} /> },
     { id: 'codigos', name: isEn ? 'Fabric Codes' : 'Códigos de Tela', icon: <Layers size={20} /> },
+    { id: 'requisiciones', name: isEn ? 'Requisitions' : 'Requisiciones', icon: <ClipboardList size={20} /> },
     { id: 'salidas', name: isEn ? 'Outbound' : 'Salidas', icon: <PackageMinus size={20} /> },
     { id: 'pendientes', name: isEn ? 'Pending Codes' : 'Códigos Pendientes', icon: <HelpCircle size={20} /> },
   ];

@@ -677,10 +677,11 @@ const guides_es = {
           </div>
           <ol>
             <li><strong>Generar Código:</strong> En la pestaña "Catálogos y Códigos", se elige el tipo de tela, el proveedor, la referencia del proveedor y el color, junto con el precio en dólares y el tipo de cambio. El sistema arma el código automáticamente (no requiere escribirlo a mano ni pedirlo a una IA cada vez).</li>
-            <li><strong>Dar de Entrada:</strong> En "Facturas y Recepción", se registra la factura del proveedor y se agregan las líneas de recepción (rollos, yardas, modelos que la necesitan). El sistema convierte yardas a metros automáticamente.</li>
+            <li><strong>Dar de Entrada:</strong> En "Facturas y Recepción", se registra la factura del proveedor y se agregan las líneas de recepción (código, rollos y yardas). El sistema convierte yardas a metros automáticamente y muestra el resultado antes de guardar.</li>
             <li><strong>Revisión de Ancho / Devolución:</strong> Cada línea recibida se puede marcar como Aprobada o Devuelta una vez que se revisa físicamente el ancho del rollo.</li>
             <li><strong>Salidas:</strong> Cuando se usa tela de la existencia, se registra la salida en metros y su destino, para mantener actualizada la existencia disponible de cada código.</li>
           </ol>
+          <p style={{ marginTop: '10px' }}>La sección de recepción ya no maneja "modelos" como campo — para pedir tela destinada a un modelo específico se usa la <strong>Requisición de Tela</strong> (ver guía siguiente).</p>
         </div>
       ),
       keywords: 'telas almacen materia prima algodon proveedor rollos yardas metros codigo generar recepcion'
@@ -692,10 +693,47 @@ const guides_es = {
           <p>El código se arma automáticamente con la estructura: <strong>F</strong> + 2 letras del tipo de tela + 1 letra del proveedor + 3 dígitos de la referencia del proveedor + 3 letras del color. Ejemplo: <code>FSZE101NEG</code> (Satín Zoe, proveedor EKB, referencia 101, Negro).</p>
           <p>El precio en pesos se calcula con la fórmula: <strong>techo(precio en USD × tipo de cambio + $5 MXN)</strong>. Por ejemplo, $4.55 USD × 21 + $5 = $100.55, que se redondea hacia arriba a <strong>$101 MXN</strong>.</p>
           <p>Antes de generar un código nuevo, hay que dar de alta el tipo de tela, el proveedor y/o el color en sus catálogos correspondientes (solo se hace una vez por cada uno; después quedan disponibles para todos los códigos futuros).</p>
-          <p>Desde cada factura abierta se pueden imprimir las <strong>tarjetas físicas</strong> (6 por hoja, para grapar la muestra de tela) y la <strong>nota de remisión</strong> (con IVA del 16% ya calculado) directamente en PDF.</p>
+          <p>Desde cada factura abierta se pueden imprimir las <strong>tarjetas físicas</strong> (6 por hoja, para grapar la muestra de tela, con rollos/yardas/metros/fecha) y la <strong>nota de remisión</strong> (con IVA del 16% ya calculado) directamente en PDF.</p>
         </div>
       ),
       keywords: 'codigo generar formula precio tipo de cambio tarjetas remision iva proveedor color'
+    },
+    {
+      title: 'Requisición de tela: pedir tela para un modelo y surtirla',
+      content: (
+        <div>
+          <p>La <strong>Requisición de Tela</strong> (pestaña "Requisiciones") es cómo se pide tela ya existente en el almacén para un modelo específico:</p>
+          <ol>
+            <li>Se captura el modelo y se agregan una o más líneas (código de tela, cantidad en metros y ancho).</li>
+            <li>Se guarda como <strong>borrador</strong> y se le pueden seguir agregando líneas.</li>
+            <li>Al presionar <strong>"Finalizar"</strong>, la requisición pasa a la pestaña "Salidas", en la sección "Requisiciones por Surtir".</li>
+            <li>Alguien del almacén revisa esa lista y presiona <strong>"Surtir"</strong> en cada línea — <strong>solo hasta ese momento se descuenta la existencia real</strong> del código (finalizar la requisición no descuenta nada por sí solo).</li>
+          </ol>
+          <p>Si la existencia disponible es menor a lo pedido, el botón "Surtir" no deja continuar.</p>
+        </div>
+      ),
+      keywords: 'requisicion tela modelo surtir pendiente almacen pedido ancho'
+    },
+    {
+      title: 'Ver el historial de salidas de un código o en general',
+      content: (
+        <div>
+          <p>En "Códigos de Tela y Existencias", al hacer clic sobre cualquier fila se abre el historial de salidas de ese código específico (fecha, metros, destino y usuario).</p>
+          <p>En "Salidas" hay además un historial general de todos los movimientos, con filtros de fecha, código de tela y destino/modelo.</p>
+        </div>
+      ),
+      keywords: 'historial salidas filtro fecha codigo modelo consultar'
+    },
+    {
+      title: 'Leer una factura o packing list con IA',
+      content: (
+        <div>
+          <p>Dentro de una factura con un archivo adjunto (imagen o PDF), el botón <strong>"Leer con IA"</strong> envía ese documento a Claude para que detecte automáticamente, por estilo y color, cuántos rollos y cuántas yardas trae — útil cuando el packing list del proveedor lista cada rollo en un renglón suelto en vez de traer el total ya sumado.</p>
+          <p>El resultado se muestra en una tabla editable: hay que revisar los números y elegir manualmente a qué <strong>código de tela</strong> corresponde cada línea detectada antes de agregarla — el sistema nunca inventa ni asigna el código por sí solo, eso siempre lo decide una persona.</p>
+          <p>Esta función usa la API de pago de Anthropic, así que cada lectura tiene un costo — no es necesario usarla en cada factura si prefieren capturar a mano.</p>
+        </div>
+      ),
+      keywords: 'ia leer factura packing list automatico anthropic claude rollos yardas'
     }
   ]
 };
@@ -1297,10 +1335,11 @@ const guides_en = {
           </div>
           <ol>
             <li><strong>Generate Code:</strong> In "Catalogs & Codes", select the fabric type, supplier, supplier reference, and color, along with the USD price and exchange rate. The system builds the code automatically (no need to write it by hand or ask an AI each time).</li>
-            <li><strong>Receive Stock:</strong> In "Invoices & Receiving", register the supplier's invoice and add receipt lines (rolls, yards, models that need it). The system converts yards to meters automatically.</li>
+            <li><strong>Receive Stock:</strong> In "Invoices & Receiving", register the supplier's invoice and add receipt lines (code, rolls, and yards). The system converts yards to meters automatically and shows the result before saving.</li>
             <li><strong>Width Review / Return:</strong> Each received line can be marked as Approved or Returned once the roll's width is physically checked.</li>
             <li><strong>Outbound:</strong> When fabric is used from stock, the outbound movement is registered in meters with its destination, keeping each code's available stock up to date.</li>
           </ol>
+          <p style={{ marginTop: '10px' }}>Receiving no longer has a "models" field — to request fabric for a specific model, use a <strong>Fabric Requisition</strong> instead (see the next guide).</p>
         </div>
       ),
       keywords: 'fabrics warehouse raw material supplier rolls yards meters code generate receiving'
@@ -1312,10 +1351,47 @@ const guides_en = {
           <p>The code is built automatically with the structure: <strong>F</strong> + 2 letters for the fabric type + 1 letter for the supplier + 3 digits of the supplier's reference + 3 letters for the color. Example: <code>FSZE101NEG</code> (Satín Zoe, EKB supplier, reference 101, Black).</p>
           <p>The price in Mexican pesos is calculated with the formula: <strong>ceil(USD price × exchange rate + $5 MXN)</strong>. For example, $4.55 USD × 21 + $5 = $100.55, rounded up to <strong>$101 MXN</strong>.</p>
           <p>Before generating a new code, the fabric type, supplier, and/or color must be registered in their respective catalogs (only once each; afterwards they remain available for all future codes).</p>
-          <p>From any open invoice you can print the <strong>physical cards</strong> (6 per sheet, to staple the fabric sample) and the <strong>delivery note</strong> (with 16% VAT already calculated) directly as PDF.</p>
+          <p>From any open invoice you can print the <strong>physical cards</strong> (6 per sheet, to staple the fabric sample, with rolls/yards/meters/date) and the <strong>delivery note</strong> (with 16% VAT already calculated) directly as PDF.</p>
         </div>
       ),
       keywords: 'code generate formula price exchange rate cards delivery note vat supplier color'
+    },
+    {
+      title: 'Fabric requisitions: requesting fabric for a model and fulfilling it',
+      content: (
+        <div>
+          <p>A <strong>Fabric Requisition</strong> ("Requisitions" tab) is how you request fabric already in stock for a specific model:</p>
+          <ol>
+            <li>Enter the model and add one or more lines (fabric code, quantity in meters, and width).</li>
+            <li>It's saved as a <strong>draft</strong> and more lines can still be added.</li>
+            <li>Pressing <strong>"Finalize"</strong> moves it to the "Outbound" tab, under "Requisitions Ready to Fulfill".</li>
+            <li>Someone in the warehouse reviews that list and presses <strong>"Fulfill"</strong> on each line — <strong>stock is only deducted at that point</strong> (finalizing the requisition alone does not touch stock).</li>
+          </ol>
+          <p>If available stock is less than requested, the "Fulfill" button won't let it go through.</p>
+        </div>
+      ),
+      keywords: 'requisition fabric model fulfill pending warehouse request width'
+    },
+    {
+      title: "Viewing a code's outbound history or the general one",
+      content: (
+        <div>
+          <p>In "Fabric Codes & Stock", clicking any row opens that code's outbound history (date, meters, destination, and user).</p>
+          <p>"Outbound" also has a general history of every movement, with filters by date, fabric code, and destination/model.</p>
+        </div>
+      ),
+      keywords: 'history outbound filter date code model check'
+    },
+    {
+      title: 'Reading an invoice or packing list with AI',
+      content: (
+        <div>
+          <p>Inside an invoice with an attached file (image or PDF), the <strong>"Read with AI"</strong> button sends that document to Claude so it can automatically detect, by style and color, how many rolls and yards it carries — useful when the supplier's packing list lists each roll on its own line instead of a ready-made total.</p>
+          <p>The result shows up as an editable table: review the numbers and manually pick which <strong>fabric code</strong> each detected line matches before adding it — the system never invents or assigns the code on its own, that's always a human decision.</p>
+          <p>This feature uses Anthropic's paid API, so each read has a cost — it's not required for every invoice if you'd rather type it in by hand.</p>
+        </div>
+      ),
+      keywords: 'ai read invoice packing list automatic anthropic claude rolls yards'
     }
   ]
 };

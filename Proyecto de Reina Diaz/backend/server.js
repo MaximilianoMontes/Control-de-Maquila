@@ -9,7 +9,15 @@ const PDFDocument = require('pdfkit-table');
 const fs = require('fs');
 const path = require('path');
 const sharp = require('sharp');
+const Anthropic = require('@anthropic-ai/sdk');
+const { zodOutputFormat } = require('@anthropic-ai/sdk/helpers/zod');
+const { z } = require('zod');
 require('dotenv').config();
+
+// Cliente de Claude usado únicamente por el módulo de Telas para leer facturas/packing
+// list adjuntas. Sin ANTHROPIC_API_KEY configurada, el cliente se construye igual pero
+// cualquier llamada real falla — el endpoint que lo usa reporta ese error con claridad.
+const anthropicClient = new Anthropic();
 
 const uploadDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadDir)){fs.mkdirSync(uploadDir);}
@@ -6640,16 +6648,83 @@ app.post('/api/telas/facturas', authenticateToken, uploadReporte.single('archivo
   }
 });
 
+// Lee una factura/packing list adjunta con Claude y devuelve el desglose de rollos/yardas
+// que detecta, agrupado por estilo+color, para revisión humana — no inserta nada por sí
+// sola (el cruce a un código de tela sigue siendo una decisión de la persona, nunca automática).
+const TelasDocumentoSchema = z.object({
+  lineas: z.array(z.object({
+    estilo: z.string().describe('Número de estilo o STYLE NO.'),
+    color: z.string().describe('Color o nombre de color tal como aparece en el documento'),
+    referencia: z.string().nullable().describe('REF# del proveedor, si aparece'),
+    lote: z.string().nullable().describe('LOT# o número de lote, si aparece'),
+    rollos: z.number().describe('Cantidad de mediciones individuales (rollos) listadas para esa línea'),
+    yardas_total: z.number().describe('Suma total de yardas de esa línea')
+  }))
+});
+
+const TELAS_DOC_MEDIA_TYPES = { '.pdf': 'application/pdf', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp', '.gif': 'image/gif' };
+
+app.post('/api/telas/facturas/:id/parse-documento', authenticateToken, async (req, res) => {
+  if (!telasAllowed(req)) return res.status(403).json({ error: 'No autorizado' });
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return res.status(503).json({ error: 'La lectura automática no está configurada en este servidor (falta ANTHROPIC_API_KEY)' });
+  }
+  try {
+    const [facturaRows] = await db.query("SELECT archivo FROM telas_facturas WHERE id = ?", [req.params.id]);
+    if (!facturaRows[0] || !facturaRows[0].archivo) {
+      return res.status(400).json({ error: 'Esta factura no tiene ningún archivo adjunto para leer' });
+    }
+    const filename = path.basename(facturaRows[0].archivo);
+    const filePath = path.join(uploadDir, filename);
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: 'El archivo adjunto ya no existe en el servidor' });
+    }
+    const ext = path.extname(filename).toLowerCase();
+    const mediaType = TELAS_DOC_MEDIA_TYPES[ext];
+    if (!mediaType) {
+      return res.status(400).json({ error: 'Tipo de archivo no soportado para lectura automática' });
+    }
+    const fileData = fs.readFileSync(filePath).toString('base64');
+    const isPdf = mediaType === 'application/pdf';
+    const documentBlock = isPdf
+      ? { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: fileData } }
+      : { type: 'image', source: { type: 'base64', media_type: mediaType, data: fileData } };
+
+    const response = await anthropicClient.messages.parse({
+      model: 'claude-opus-5',
+      max_tokens: 4096,
+      messages: [{
+        role: 'user',
+        content: [
+          documentBlock,
+          {
+            type: 'text',
+            text: 'Esta es una factura o packing list de un proveedor de telas. Extrae, agrupando por cada combinación de estilo (STYLE NO.) y color, la referencia (REF#) si aparece, el lote (LOT#) si aparece, la cantidad de mediciones individuales listadas (esos son los rollos) y la suma total de yardas de esa combinación. Si el documento ya trae un total para el grupo, úsalo para verificar tu suma en vez de solo copiarlo sin revisar.'
+          }
+        ]
+      }],
+      output_config: { format: zodOutputFormat(TelasDocumentoSchema) }
+    });
+
+    if (!response.parsed_output) {
+      return res.status(502).json({ error: 'No se pudo interpretar el documento' });
+    }
+    res.json(response.parsed_output);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.post('/api/telas/facturas/:id/recepciones', authenticateToken, async (req, res) => {
   if (!telasAllowed(req)) return res.status(403).json({ error: 'No autorizado' });
-  const { codigo_id, rollos, yardas, modelos, produccion_o_muestra } = req.body;
+  const { codigo_id, rollos, yardas } = req.body;
   if (!codigo_id || yardas == null) return res.status(400).json({ error: 'Código y yardas son requeridos' });
   try {
     const metros = Math.floor(parseFloat(yardas) * 0.9144);
     const [result] = await db.query(
-      `INSERT INTO telas_recepciones (factura_id, codigo_id, rollos, yardas, metros, modelos, produccion_o_muestra)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [req.params.id, codigo_id, rollos || 0, yardas, metros, modelos || null, produccion_o_muestra || null]
+      `INSERT INTO telas_recepciones (factura_id, codigo_id, rollos, yardas, metros)
+       VALUES (?, ?, ?, ?, ?)`,
+      [req.params.id, codigo_id, rollos || 0, yardas, metros]
     );
     const [codigoRows] = await db.query("SELECT codigo FROM telas_codigos WHERE id = ?", [codigo_id]);
     await db.query("INSERT INTO historial (user_id, action, target, description) VALUES (?, 'ALTA', 'TELAS', ?)", [req.user.id, `Dio entrada a ${metros} m (${rollos || 0} rollos) del código ${codigoRows[0]?.codigo || codigo_id}`]);
@@ -6701,6 +6776,45 @@ app.post('/api/telas/salidas', authenticateToken, async (req, res) => {
   }
 });
 
+app.get('/api/telas/salidas', authenticateToken, async (req, res) => {
+  if (!telasAllowed(req)) return res.status(403).json({ error: 'No autorizado' });
+  try {
+    let query = `
+      SELECT ts.*, tc.codigo, u.username
+      FROM telas_salidas ts
+      JOIN telas_codigos tc ON ts.codigo_id = tc.id
+      LEFT JOIN users u ON ts.usuario_id = u.id
+      WHERE 1 = 1
+    `;
+    const params = [];
+    if (req.query.desde) { query += ' AND ts.fecha >= ?'; params.push(req.query.desde); }
+    if (req.query.hasta) { query += ' AND ts.fecha <= ?'; params.push(req.query.hasta + ' 23:59:59'); }
+    if (req.query.codigo_id) { query += ' AND ts.codigo_id = ?'; params.push(req.query.codigo_id); }
+    if (req.query.destino) { query += ' AND ts.destino LIKE ?'; params.push(`%${req.query.destino}%`); }
+    query += ' ORDER BY ts.fecha DESC';
+    const [rows] = await db.query(query, params);
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/telas/codigos/:id/historial', authenticateToken, async (req, res) => {
+  if (!telasAllowed(req)) return res.status(403).json({ error: 'No autorizado' });
+  try {
+    const [rows] = await db.query(`
+      SELECT ts.*, u.username
+      FROM telas_salidas ts
+      LEFT JOIN users u ON ts.usuario_id = u.id
+      WHERE ts.codigo_id = ?
+      ORDER BY ts.fecha DESC
+    `, [req.params.id]);
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // --- Códigos pendientes (cruce factura↔código no resuelto) ---
 app.get('/api/telas/codigos-pendientes', authenticateToken, async (req, res) => {
   if (!telasAllowed(req)) return res.status(403).json({ error: 'No autorizado' });
@@ -6733,6 +6847,165 @@ app.patch('/api/telas/codigos-pendientes/:id/resolver', authenticateToken, async
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+// --- Requisición de tela: modelo + líneas → al finalizar queda pendiente de surtir en Salidas ---
+app.post('/api/telas/requisiciones', authenticateToken, async (req, res) => {
+  if (!telasAllowed(req)) return res.status(403).json({ error: 'No autorizado' });
+  const { modelo, notas, lineas } = req.body;
+  if (!modelo || !Array.isArray(lineas) || lineas.length === 0) {
+    return res.status(400).json({ error: 'Modelo y al menos una línea son requeridos' });
+  }
+  const connection = await db.getConnection();
+  try {
+    await connection.beginTransaction();
+    const [result] = await connection.query(
+      "INSERT INTO telas_requisiciones (modelo, notas, creado_por) VALUES (?, ?, ?)",
+      [modelo, notas || null, req.user.id]
+    );
+    const requisicionId = result.insertId;
+    for (const linea of lineas) {
+      if (!linea.codigo_id || !linea.cantidad_requerida) continue;
+      await connection.query(
+        "INSERT INTO telas_requisicion_lineas (requisicion_id, codigo_id, cantidad_requerida, ancho) VALUES (?, ?, ?, ?)",
+        [requisicionId, linea.codigo_id, linea.cantidad_requerida, linea.ancho || null]
+      );
+    }
+    await connection.query("INSERT INTO historial (user_id, action, target, description) VALUES (?, 'ALTA', 'TELAS', ?)", [req.user.id, `Creó la requisición de tela para el modelo ${modelo}`]);
+    await connection.commit();
+    res.status(201).json({ id: requisicionId });
+  } catch (error) {
+    await connection.rollback();
+    res.status(500).json({ error: error.message });
+  } finally {
+    connection.release();
+  }
+});
+
+app.get('/api/telas/requisiciones', authenticateToken, async (req, res) => {
+  if (!telasAllowed(req)) return res.status(403).json({ error: 'No autorizado' });
+  try {
+    let query = `
+      SELECT tr.*, u.username as creado_por_username,
+        (SELECT COUNT(*) FROM telas_requisicion_lineas WHERE requisicion_id = tr.id) as total_lineas,
+        (SELECT COUNT(*) FROM telas_requisicion_lineas WHERE requisicion_id = tr.id AND estado = 'pendiente') as lineas_pendientes
+      FROM telas_requisiciones tr
+      LEFT JOIN users u ON tr.creado_por = u.id
+      WHERE 1 = 1
+    `;
+    const params = [];
+    if (req.query.estado) { query += ' AND tr.estado = ?'; params.push(req.query.estado); }
+    query += ' ORDER BY tr.fecha_creacion DESC';
+    const [rows] = await db.query(query, params);
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Lista plana de líneas pendientes de requisiciones ya finalizadas — lo que Salidas
+// necesita mostrar como "por surtir". Debe declararse antes de /:id para que Express no
+// intente interpretar "lineas-pendientes" como un id de requisición.
+app.get('/api/telas/requisiciones/lineas-pendientes', authenticateToken, async (req, res) => {
+  if (!telasAllowed(req)) return res.status(403).json({ error: 'No autorizado' });
+  try {
+    const [rows] = await db.query(`
+      SELECT trl.*, tr.modelo, tc.codigo,
+        COALESCE((SELECT SUM(metros) FROM telas_recepciones WHERE codigo_id = tc.id), 0)
+        - COALESCE((SELECT SUM(metros) FROM telas_salidas WHERE codigo_id = tc.id), 0) as stock_disponible
+      FROM telas_requisicion_lineas trl
+      JOIN telas_requisiciones tr ON trl.requisicion_id = tr.id
+      JOIN telas_codigos tc ON trl.codigo_id = tc.id
+      WHERE trl.estado = 'pendiente' AND tr.estado = 'finalizada'
+      ORDER BY trl.fecha_creacion ASC
+    `);
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/telas/requisiciones/:id', authenticateToken, async (req, res) => {
+  if (!telasAllowed(req)) return res.status(403).json({ error: 'No autorizado' });
+  try {
+    const [reqRows] = await db.query(`
+      SELECT tr.*, u.username as creado_por_username
+      FROM telas_requisiciones tr
+      LEFT JOIN users u ON tr.creado_por = u.id
+      WHERE tr.id = ?
+    `, [req.params.id]);
+    if (!reqRows[0]) return res.status(404).json({ error: 'Requisición no encontrada' });
+
+    const [lineas] = await db.query(`
+      SELECT trl.*, tc.codigo, tc.descripcion
+      FROM telas_requisicion_lineas trl
+      JOIN telas_codigos tc ON trl.codigo_id = tc.id
+      WHERE trl.requisicion_id = ?
+      ORDER BY trl.id ASC
+    `, [req.params.id]);
+
+    res.json({ ...reqRows[0], lineas });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.patch('/api/telas/requisiciones/:id/finalizar', authenticateToken, async (req, res) => {
+  if (!telasAllowed(req)) return res.status(403).json({ error: 'No autorizado' });
+  try {
+    await db.query("UPDATE telas_requisiciones SET estado = 'finalizada', fecha_finalizada = NOW() WHERE id = ? AND estado = 'borrador'", [req.params.id]);
+    await db.query("INSERT INTO historial (user_id, action, target, description) VALUES (?, 'EDIT', 'TELAS', ?)", [req.user.id, `Finalizó la requisición de tela #${req.params.id}, lista para surtir`]);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Surtir una línea de requisición: aquí sí se descuenta la existencia (crea la salida real).
+app.post('/api/telas/requisiciones/lineas/:id/surtir', authenticateToken, async (req, res) => {
+  if (!telasAllowed(req)) return res.status(403).json({ error: 'No autorizado' });
+  const connection = await db.getConnection();
+  try {
+    await connection.beginTransaction();
+    const [lineaRows] = await connection.query(`
+      SELECT trl.*, tr.modelo, tc.codigo
+      FROM telas_requisicion_lineas trl
+      JOIN telas_requisiciones tr ON trl.requisicion_id = tr.id
+      JOIN telas_codigos tc ON trl.codigo_id = tc.id
+      WHERE trl.id = ?
+    `, [req.params.id]);
+    const linea = lineaRows[0];
+    if (!linea) { await connection.rollback(); return res.status(404).json({ error: 'Línea de requisición no encontrada' }); }
+    if (linea.estado === 'surtida') { await connection.rollback(); return res.status(400).json({ error: 'Esta línea ya fue surtida' }); }
+
+    const [recRows] = await connection.query("SELECT COALESCE(SUM(metros), 0) as recibido FROM telas_recepciones WHERE codigo_id = ?", [linea.codigo_id]);
+    const [salRows] = await connection.query("SELECT COALESCE(SUM(metros), 0) as salido FROM telas_salidas WHERE codigo_id = ?", [linea.codigo_id]);
+    const disponible = parseFloat(recRows[0].recibido) - parseFloat(salRows[0].salido);
+    if (parseFloat(linea.cantidad_requerida) > disponible) {
+      await connection.rollback();
+      return res.status(400).json({ error: `Stock insuficiente para surtir. Disponible: ${disponible} m` });
+    }
+
+    const [salidaResult] = await connection.query(
+      "INSERT INTO telas_salidas (codigo_id, metros, destino, usuario_id) VALUES (?, ?, ?, ?)",
+      [linea.codigo_id, linea.cantidad_requerida, `Requisición modelo ${linea.modelo}`, req.user.id]
+    );
+    await connection.query("UPDATE telas_requisicion_lineas SET estado = 'surtida', salida_id = ? WHERE id = ?", [salidaResult.insertId, req.params.id]);
+
+    const [pendientesRows] = await connection.query("SELECT COUNT(*) as total FROM telas_requisicion_lineas WHERE requisicion_id = ? AND estado = 'pendiente'", [linea.requisicion_id]);
+    if (pendientesRows[0].total === 0) {
+      await connection.query("UPDATE telas_requisiciones SET estado = 'surtida' WHERE id = ?", [linea.requisicion_id]);
+    }
+
+    await connection.query("INSERT INTO historial (user_id, action, target, description) VALUES (?, 'EDIT', 'TELAS', ?)", [req.user.id, `Surtió ${linea.cantidad_requerida} m del código ${linea.codigo} para la requisición del modelo ${linea.modelo}`]);
+    await connection.commit();
+    res.json({ success: true, salida_id: salidaResult.insertId });
+  } catch (error) {
+    await connection.rollback();
+    res.status(500).json({ error: error.message });
+  } finally {
+    connection.release();
   }
 });
 
@@ -6795,9 +7068,9 @@ app.get('/api/telas/facturas/:id/tarjetas.pdf', authenticateToken, async (req, r
       line('PROVEEDOR:', r.proveedor_nombre, y + 108);
       line('COMPOSICIÓN:', r.composicion, y + 120);
       line('ROLLOS:', String(r.rollos), y + 132);
-      line('METROS / FECHA:', `${r.metros} m — ${new Date(r.fecha_creacion).toLocaleDateString('es-MX')}`, y + 144);
-      doc.font('Helvetica-Bold').text('MODELOS:', x + 10, y + 156);
-      doc.font('Helvetica').fontSize(7.5).text(r.modelos || 'STOCK', x + 10, y + 167, { width: cardW - 20 });
+      line('YARDAS:', String(r.yardas), y + 144);
+      line('METROS:', `${r.metros} m`, y + 156);
+      line('FECHA:', new Date(r.fecha_creacion).toLocaleDateString('es-MX'), y + 168);
 
       const boxY = y + cardH - 45;
       doc.dash(2, { space: 2 }).rect(x + 10, boxY, cardW - 20, 30).stroke('#999999');

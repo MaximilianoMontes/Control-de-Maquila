@@ -11,6 +11,7 @@ import SupportChatWidget from '../components/SupportChatWidget';
 import TelasCatalogos from '../components/telas/TelasCatalogos';
 import TelasFacturas from '../components/telas/TelasFacturas';
 import TelasCodigos from '../components/telas/TelasCodigos';
+import TelasRequisiciones from '../components/telas/TelasRequisiciones';
 import TelasSalidas from '../components/telas/TelasSalidas';
 import TelasPendientes from '../components/telas/TelasPendientes';
 
@@ -106,6 +107,10 @@ export default function Telas() {
 
           {activeTab === 'codigos' && (
             <TelasCodigos codigos={codigos} fetchCodigos={fetchCodigos} tipos={tipos} proveedores={proveedores} colores={colores} />
+          )}
+
+          {activeTab === 'requisiciones' && (
+            <TelasRequisiciones codigos={codigos} />
           )}
 
           {activeTab === 'salidas' && (

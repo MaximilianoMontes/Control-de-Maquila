@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import { FileText, Plus, X, Printer, Receipt, Paperclip } from 'lucide-react';
+import { FileText, Plus, X, Printer, Receipt, Paperclip, Sparkles } from 'lucide-react';
 import { useSettings } from '../../context/SettingsContext';
 import API_URL from '../../config';
 import { toast } from '../../utils/themeNotifications';
@@ -19,7 +19,10 @@ export default function TelasFacturas({ proveedores, codigos, fetchCodigos }) {
   const [guardando, setGuardando] = useState(false);
 
   const [facturaAbierta, setFacturaAbierta] = useState(null);
-  const [recNueva, setRecNueva] = useState({ codigo_id: '', rollos: '', yardas: '', modelos: '', produccion_o_muestra: '' });
+  const [recNueva, setRecNueva] = useState({ codigo_id: '', rollos: '', yardas: '' });
+
+  const [leyendoIA, setLeyendoIA] = useState(false);
+  const [lineasDetectadas, setLineasDetectadas] = useState(null);
 
   const fetchFacturas = useCallback(async () => {
     try {
@@ -34,6 +37,7 @@ export default function TelasFacturas({ proveedores, codigos, fetchCodigos }) {
     try {
       const res = await axios.get(`${API_URL}/api/telas/facturas/${id}`, authHeaders());
       setFacturaAbierta(res.data);
+      setLineasDetectadas(null);
     } catch {
       toast.error(isEn ? 'Error loading invoice' : 'Error al cargar la factura');
     }
@@ -69,7 +73,7 @@ export default function TelasFacturas({ proveedores, codigos, fetchCodigos }) {
     try {
       await axios.post(`${API_URL}/api/telas/facturas/${facturaAbierta.id}/recepciones`, recNueva, authHeaders());
       toast.success(isEn ? 'Receipt line added' : 'Línea de recepción agregada');
-      setRecNueva({ codigo_id: '', rollos: '', yardas: '', modelos: '', produccion_o_muestra: '' });
+      setRecNueva({ codigo_id: '', rollos: '', yardas: '' });
       abrirFactura(facturaAbierta.id);
       fetchCodigos();
     } catch (e) {
@@ -86,6 +90,56 @@ export default function TelasFacturas({ proveedores, codigos, fetchCodigos }) {
       toast.error(isEn ? 'Error updating review' : 'Error al actualizar la revisión');
     }
   };
+
+  const handleLeerConIA = async () => {
+    if (!facturaAbierta) return;
+    setLeyendoIA(true);
+    try {
+      const res = await axios.post(`${API_URL}/api/telas/facturas/${facturaAbierta.id}/parse-documento`, {}, authHeaders());
+      const conCodigo = (res.data.lineas || []).map(l => ({ ...l, codigo_id: '' }));
+      setLineasDetectadas(conCodigo);
+      if (conCodigo.length === 0) {
+        toast.error(isEn ? "Couldn't detect any lines in the document" : 'No se detectaron líneas en el documento');
+      }
+    } catch (e) {
+      toast.error(e.response?.data?.error || (isEn ? 'Error reading the document' : 'Error al leer el documento'));
+    } finally {
+      setLeyendoIA(false);
+    }
+  };
+
+  const actualizarLineaDetectada = (idx, field, value) => {
+    setLineasDetectadas(prev => prev.map((l, i) => i === idx ? { ...l, [field]: value } : l));
+  };
+
+  const handleAgregarLineasDetectadas = async () => {
+    const seleccionadas = lineasDetectadas.filter(l => l.codigo_id);
+    if (seleccionadas.length === 0) {
+      toast.error(isEn ? 'Assign a fabric code to at least one line' : 'Asigna un código de tela a al menos una línea');
+      return;
+    }
+    let agregadas = 0;
+    for (const l of seleccionadas) {
+      try {
+        await axios.post(`${API_URL}/api/telas/facturas/${facturaAbierta.id}/recepciones`, {
+          codigo_id: l.codigo_id,
+          rollos: l.rollos,
+          yardas: l.yardas_total
+        }, authHeaders());
+        agregadas++;
+      } catch (e) {
+        toast.error(`${l.estilo} ${l.color}: ${e.response?.data?.error || (isEn ? 'error' : 'error')}`);
+      }
+    }
+    if (agregadas > 0) {
+      toast.success(isEn ? `${agregadas} line(s) added` : `${agregadas} línea(s) agregada(s)`);
+      setLineasDetectadas(prev => prev.filter(l => !l.codigo_id));
+      abrirFactura(facturaAbierta.id);
+      fetchCodigos();
+    }
+  };
+
+  const metrosPreview = recNueva.yardas ? Math.floor(parseFloat(recNueva.yardas) * 0.9144) : null;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -188,6 +242,12 @@ export default function TelasFacturas({ proveedores, codigos, fetchCodigos }) {
                 </p>
               </div>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
+                {facturaAbierta.archivo && (
+                  <button className="btn btn-secondary" onClick={handleLeerConIA} disabled={leyendoIA} title={isEn ? 'Read attachment with AI' : 'Leer adjunto con IA'}>
+                    <Sparkles size={16} style={{ marginRight: '4px' }} />
+                    {leyendoIA ? (isEn ? 'Reading...' : 'Leyendo...') : (isEn ? 'Read with AI' : 'Leer con IA')}
+                  </button>
+                )}
                 <a className="btn btn-secondary" href={`${API_URL}/api/telas/facturas/${facturaAbierta.id}/tarjetas.pdf?token=${token()}`} target="_blank" rel="noreferrer" title={isEn ? 'Print cards' : 'Imprimir tarjetas'}>
                   <Printer size={16} />
                 </a>
@@ -199,6 +259,63 @@ export default function TelasFacturas({ proveedores, codigos, fetchCodigos }) {
                 </button>
               </div>
             </div>
+
+            {lineasDetectadas && (
+              <div style={{ marginBottom: '1.2rem', padding: '1rem', background: 'rgba(124, 58, 237, 0.06)', border: '1px solid rgba(124, 58, 237, 0.2)', borderRadius: '10px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
+                  <strong style={{ fontSize: '0.95rem' }}>
+                    {isEn ? 'Lines detected by AI — review before adding' : 'Líneas detectadas por IA — revisa antes de agregar'}
+                  </strong>
+                  <button className="btn" style={{ padding: '2px 8px' }} onClick={() => setLineasDetectadas(null)}><X size={14} /></button>
+                </div>
+                {lineasDetectadas.length === 0 ? (
+                  <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{isEn ? 'Nothing detected.' : 'No se detectó nada.'}</p>
+                ) : (
+                  <>
+                    <div className="table-wrapper">
+                      <table className="data-table" style={{ fontSize: '0.82rem' }}>
+                        <thead>
+                          <tr>
+                            <th>{isEn ? 'Style' : 'Estilo'}</th>
+                            <th>{isEn ? 'Color' : 'Color'}</th>
+                            <th>REF#</th>
+                            <th>LOT#</th>
+                            <th style={{ textAlign: 'right' }}>{isEn ? 'Rolls' : 'Rollos'}</th>
+                            <th style={{ textAlign: 'right' }}>{isEn ? 'Yards' : 'Yardas'}</th>
+                            <th>{isEn ? 'Fabric Code' : 'Código de Tela'}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {lineasDetectadas.map((l, idx) => (
+                            <tr key={idx}>
+                              <td>{l.estilo}</td>
+                              <td>{l.color}</td>
+                              <td>{l.referencia || '—'}</td>
+                              <td>{l.lote || '—'}</td>
+                              <td style={{ textAlign: 'right' }}>
+                                <input type="number" className="form-input" style={{ width: '70px', padding: '4px' }} value={l.rollos} onChange={e => actualizarLineaDetectada(idx, 'rollos', e.target.value)} />
+                              </td>
+                              <td style={{ textAlign: 'right' }}>
+                                <input type="number" step="0.01" className="form-input" style={{ width: '90px', padding: '4px' }} value={l.yardas_total} onChange={e => actualizarLineaDetectada(idx, 'yardas_total', e.target.value)} />
+                              </td>
+                              <td>
+                                <select className="form-input" style={{ padding: '4px' }} value={l.codigo_id} onChange={e => actualizarLineaDetectada(idx, 'codigo_id', e.target.value)}>
+                                  <option value="">{isEn ? 'Not matched' : 'Sin cruzar'}</option>
+                                  {codigos.map(c => <option key={c.id} value={c.id}>{c.codigo}</option>)}
+                                </select>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    <button className="btn btn-primary" style={{ marginTop: '0.8rem' }} onClick={handleAgregarLineasDetectadas}>
+                      {isEn ? 'Add selected lines' : 'Agregar líneas seleccionadas'}
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
 
             <form onSubmit={handleAgregarRecepcion} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.8rem', marginBottom: '1.2rem', padding: '1rem', background: 'rgba(255,255,255,0.02)', borderRadius: '10px' }}>
               <div className="form-group">
@@ -215,18 +332,9 @@ export default function TelasFacturas({ proveedores, codigos, fetchCodigos }) {
               <div className="form-group">
                 <label className="form-label">{isEn ? 'Yards' : 'Yardas'}</label>
                 <input type="number" step="0.01" className="form-input" value={recNueva.yardas} onChange={e => setRecNueva({ ...recNueva, yardas: e.target.value })} required />
-              </div>
-              <div className="form-group">
-                <label className="form-label">{isEn ? 'Models / meters needed' : 'Modelos / metros'}</label>
-                <input className="form-input" value={recNueva.modelos} onChange={e => setRecNueva({ ...recNueva, modelos: e.target.value })} placeholder="STOCK" />
-              </div>
-              <div className="form-group">
-                <label className="form-label">{isEn ? 'Production / Sample' : 'Producción / Muestra'}</label>
-                <select className="form-input" value={recNueva.produccion_o_muestra} onChange={e => setRecNueva({ ...recNueva, produccion_o_muestra: e.target.value })}>
-                  <option value="">—</option>
-                  <option value="produccion">{isEn ? 'Production' : 'Producción'}</option>
-                  <option value="muestra">{isEn ? 'Sample' : 'Muestra'}</option>
-                </select>
+                {metrosPreview !== null && (
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>≈ {metrosPreview.toFixed(2)} m</span>
+                )}
               </div>
               <div style={{ display: 'flex', alignItems: 'flex-end' }}>
                 <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>
@@ -243,14 +351,13 @@ export default function TelasFacturas({ proveedores, codigos, fetchCodigos }) {
                     <th style={{ textAlign: 'right' }}>{isEn ? 'Rolls' : 'Rollos'}</th>
                     <th style={{ textAlign: 'right' }}>{isEn ? 'Yards' : 'Yardas'}</th>
                     <th style={{ textAlign: 'right' }}>{isEn ? 'Meters' : 'Metros'}</th>
-                    <th>{isEn ? 'Models' : 'Modelos'}</th>
                     <th>{isEn ? 'Review status' : 'Estado de revisión'}</th>
                     <th style={{ textAlign: 'right' }}>{isEn ? 'Action' : 'Acción'}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {(facturaAbierta.recepciones || []).length === 0 ? (
-                    <tr><td colSpan="7" style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '1.2rem' }}>
+                    <tr><td colSpan="6" style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '1.2rem' }}>
                       {isEn ? 'No receipt lines yet.' : 'Sin líneas de recepción todavía.'}
                     </td></tr>
                   ) : (
@@ -260,7 +367,6 @@ export default function TelasFacturas({ proveedores, codigos, fetchCodigos }) {
                         <td style={{ textAlign: 'right' }}>{r.rollos}</td>
                         <td style={{ textAlign: 'right' }}>{r.yardas}</td>
                         <td style={{ textAlign: 'right' }}>{r.metros}</td>
-                        <td>{r.modelos || 'STOCK'}</td>
                         <td>
                           <span className={`badge ${r.estado === 'aprobado' ? 'badge-success' : r.estado === 'devuelto' ? 'badge-danger' : 'badge-info'}`}>
                             {r.estado}
