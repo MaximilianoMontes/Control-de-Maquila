@@ -1,11 +1,115 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import axios from 'axios';
-import { PackageMinus, ClipboardCheck, RefreshCw } from 'lucide-react';
+import { PackageMinus, ClipboardCheck, RefreshCw, Boxes } from 'lucide-react';
 import { useSettings } from '../../context/SettingsContext';
 import API_URL from '../../config';
 import { toast } from '../../utils/themeNotifications';
 
 const authHeaders = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+
+function LineaPorSurtir({ linea, isEn, onSurtida }) {
+  const [abierto, setAbierto] = useState(false);
+  const [rollos, setRollos] = useState(null);
+  const [cargandoRollos, setCargandoRollos] = useState(false);
+  const [metrosASurtir, setMetrosASurtir] = useState('');
+  const [surtiendo, setSurtiendo] = useState(false);
+
+  const disponible = parseFloat(linea.stock_disponible);
+  const requerida = parseFloat(linea.cantidad_requerida);
+  const sinExistencia = disponible <= 0;
+
+  const abrirPanel = async () => {
+    setAbierto(true);
+    setMetrosASurtir(Math.max(0, Math.min(requerida, disponible)).toFixed(2));
+    setCargandoRollos(true);
+    try {
+      const res = await axios.get(`${API_URL}/api/telas/codigos/${linea.codigo_id}/recepciones`, authHeaders());
+      setRollos(res.data);
+    } catch {
+      toast.error(isEn ? 'Error loading rolls' : 'Error al cargar los rollos');
+    } finally {
+      setCargandoRollos(false);
+    }
+  };
+
+  const confirmarSurtir = async () => {
+    const metros = parseFloat(metrosASurtir);
+    if (!(metros > 0)) {
+      toast.error(isEn ? 'Enter how many meters to fulfill' : 'Captura cuántos metros surtir');
+      return;
+    }
+    setSurtiendo(true);
+    try {
+      await axios.post(`${API_URL}/api/telas/requisiciones/lineas/${linea.id}/surtir`, { metros }, authHeaders());
+      toast.success(isEn ? 'Requisition line fulfilled' : 'Línea de requisición surtida');
+      onSurtida();
+    } catch (e) {
+      toast.error(e.response?.data?.error || (isEn ? 'Error fulfilling requisition line' : 'Error al surtir la línea'));
+    } finally {
+      setSurtiendo(false);
+    }
+  };
+
+  return (
+    <div style={{ background: 'rgba(245, 158, 11, 0.06)', border: '1px solid rgba(245, 158, 11, 0.2)', borderRadius: '8px', overflow: 'hidden' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 0.8rem', gap: '0.6rem', flexWrap: 'wrap' }}>
+        <div style={{ fontSize: '0.85rem' }}>
+          <strong style={{ fontFamily: 'monospace' }}>{linea.codigo}</strong> — {requerida.toFixed(2)} m
+          <div style={{ color: 'var(--text-secondary)', fontSize: '0.78rem' }}>
+            {isEn ? 'Stock' : 'Existencia'}: {disponible.toFixed(2)} m
+          </div>
+        </div>
+        {abierto ? (
+          <button className="btn" style={{ padding: '5px 12px', fontSize: '0.8rem' }} onClick={() => setAbierto(false)}>
+            {isEn ? 'Close' : 'Cerrar'}
+          </button>
+        ) : (
+          <button className="btn btn-primary" style={{ padding: '5px 12px', fontSize: '0.8rem' }} disabled={sinExistencia} onClick={abrirPanel}>
+            {isEn ? 'Fulfill' : 'Surtir'}
+          </button>
+        )}
+      </div>
+
+      {abierto && (
+        <div style={{ padding: '0.8rem', borderTop: '1px solid rgba(245, 158, 11, 0.2)', background: 'rgba(0,0,0,0.03)' }}>
+          <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <Boxes size={13} /> {isEn ? 'Rolls in stock for this code:' : 'Rollos en existencia de este código:'}
+          </p>
+          {cargandoRollos ? (
+            <p style={{ margin: '0 0 0.6rem 0', fontSize: '0.8rem' }}>{isEn ? 'Loading...' : 'Cargando...'}</p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginBottom: '0.6rem', maxHeight: '120px', overflowY: 'auto' }}>
+              {(rollos || []).filter(r => r.estado !== 'devuelto').length === 0 ? (
+                <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>{isEn ? 'No rolls received for this code.' : 'No hay rollos recibidos de este código.'}</span>
+              ) : (
+                (rollos || []).filter(r => r.estado !== 'devuelto').map(r => (
+                  <div key={r.id} style={{ fontSize: '0.78rem', display: 'flex', justifyContent: 'space-between' }}>
+                    <span>{new Date(r.fecha_creacion).toLocaleDateString('es-MX')} {r.numero_factura ? `· ${r.numero_factura}` : ''}</span>
+                    <span>{r.rollos} {isEn ? 'rolls' : 'rollos'} · {parseFloat(r.metros).toFixed(2)} m</span>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+            <div className="form-group" style={{ margin: 0 }}>
+              <label className="form-label" style={{ fontSize: '0.78rem' }}>{isEn ? 'Meters to fulfill' : 'Metros a surtir'}</label>
+              <input type="number" step="0.01" max={disponible} className="form-input" style={{ width: '120px' }} value={metrosASurtir} onChange={e => setMetrosASurtir(e.target.value)} />
+            </div>
+            <button className="btn btn-primary" style={{ padding: '6px 14px', fontSize: '0.8rem' }} disabled={surtiendo} onClick={confirmarSurtir}>
+              {surtiendo ? (isEn ? 'Confirming...' : 'Confirmando...') : (isEn ? 'Confirm' : 'Confirmar')}
+            </button>
+          </div>
+          {requerida > disponible && (
+            <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.75rem', color: '#f59e0b' }}>
+              {isEn ? `Only ${disponible.toFixed(2)} m available — the closest possible amount was suggested.` : `Solo hay ${disponible.toFixed(2)} m disponibles — se sugirió la cantidad más cercana posible.`}
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function TelasSalidas({ codigos, fetchCodigos }) {
   const { settings } = useSettings();
@@ -16,7 +120,6 @@ export default function TelasSalidas({ codigos, fetchCodigos }) {
   const [guardando, setGuardando] = useState(false);
 
   const [lineasPendientes, setLineasPendientes] = useState([]);
-  const [surtiendoId, setSurtiendoId] = useState(null);
 
   const [historial, setHistorial] = useState([]);
   const [filtros, setFiltros] = useState({ desde: '', hasta: '', codigo_id: '', destino: '' });
@@ -50,6 +153,17 @@ export default function TelasSalidas({ codigos, fetchCodigos }) {
     fetchHistorial();
   }, [fetchHistorial]);
 
+  const requisicionesAgrupadas = useMemo(() => {
+    const grupos = new Map();
+    for (const l of lineasPendientes) {
+      if (!grupos.has(l.requisicion_id)) {
+        grupos.set(l.requisicion_id, { requisicion_id: l.requisicion_id, modelo: l.modelo, fecha_finalizada: l.fecha_finalizada, lineas: [] });
+      }
+      grupos.get(l.requisicion_id).lineas.push(l);
+    }
+    return Array.from(grupos.values());
+  }, [lineasPendientes]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!codigoId || !metros) return;
@@ -68,19 +182,10 @@ export default function TelasSalidas({ codigos, fetchCodigos }) {
     }
   };
 
-  const handleSurtir = async (lineaId) => {
-    setSurtiendoId(lineaId);
-    try {
-      await axios.post(`${API_URL}/api/telas/requisiciones/lineas/${lineaId}/surtir`, {}, authHeaders());
-      toast.success(isEn ? 'Requisition line fulfilled' : 'Línea de requisición surtida');
-      fetchLineasPendientes();
-      fetchCodigos();
-      fetchHistorial();
-    } catch (e) {
-      toast.error(e.response?.data?.error || (isEn ? 'Error fulfilling requisition line' : 'Error al surtir la línea'));
-    } finally {
-      setSurtiendoId(null);
-    }
+  const handleLineaSurtida = () => {
+    fetchLineasPendientes();
+    fetchCodigos();
+    fetchHistorial();
   };
 
   return (
@@ -121,28 +226,22 @@ export default function TelasSalidas({ codigos, fetchCodigos }) {
           <h2 style={{ fontSize: '1.3rem', margin: '0 0 1rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <ClipboardCheck color="#f59e0b" /> {isEn ? 'Requisitions Ready to Fulfill' : 'Requisiciones por Surtir'}
           </h2>
-          {lineasPendientes.length === 0 ? (
+          {requisicionesAgrupadas.length === 0 ? (
             <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
               {isEn ? 'No finalized requisition lines waiting to be fulfilled.' : 'No hay líneas de requisición finalizadas esperando surtirse.'}
             </p>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-              {lineasPendientes.map(l => (
-                <div key={l.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 0.8rem', background: 'rgba(245, 158, 11, 0.06)', border: '1px solid rgba(245, 158, 11, 0.2)', borderRadius: '8px', gap: '0.6rem', flexWrap: 'wrap' }}>
-                  <div style={{ fontSize: '0.85rem' }}>
-                    <strong style={{ fontFamily: 'monospace' }}>{l.codigo}</strong> — {parseFloat(l.cantidad_requerida).toFixed(2)} m
-                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.78rem' }}>
-                      {isEn ? 'Model' : 'Modelo'}: {l.modelo} · {isEn ? 'Stock' : 'Existencia'}: {parseFloat(l.stock_disponible).toFixed(2)} m
-                    </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {requisicionesAgrupadas.map(grupo => (
+                <div key={grupo.requisicion_id}>
+                  <p style={{ margin: '0 0 0.4rem 0', fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--text-secondary)' }}>
+                    {isEn ? 'Requisition' : 'Requisición'} #{grupo.requisicion_id} — {isEn ? 'Model' : 'Modelo'} {grupo.modelo}
+                  </p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    {grupo.lineas.map(l => (
+                      <LineaPorSurtir key={l.id} linea={l} isEn={isEn} onSurtida={handleLineaSurtida} />
+                    ))}
                   </div>
-                  <button
-                    className="btn btn-primary"
-                    style={{ padding: '5px 12px', fontSize: '0.8rem' }}
-                    disabled={surtiendoId === l.id || parseFloat(l.cantidad_requerida) > parseFloat(l.stock_disponible)}
-                    onClick={() => handleSurtir(l.id)}
-                  >
-                    {surtiendoId === l.id ? (isEn ? 'Fulfilling...' : 'Surtiendo...') : (isEn ? 'Fulfill' : 'Surtir')}
-                  </button>
                 </div>
               ))}
             </div>

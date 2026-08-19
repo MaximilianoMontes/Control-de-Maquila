@@ -6565,7 +6565,7 @@ app.get('/api/telas/codigos', authenticateToken, async (req, res) => {
   try {
     let query = `
       SELECT tc.*, tt.nombre as tipo_nombre, tp.nombre as proveedor_nombre, tcol.nombre as color_nombre,
-        COALESCE((SELECT SUM(metros) FROM telas_recepciones WHERE codigo_id = tc.id), 0)
+        COALESCE((SELECT SUM(metros) FROM telas_recepciones WHERE codigo_id = tc.id AND estado != 'devuelto'), 0)
         - COALESCE((SELECT SUM(metros) FROM telas_salidas WHERE codigo_id = tc.id), 0) as stock_metros
       FROM telas_codigos tc
       JOIN telas_tipos tt ON tc.tipo_id = tt.id
@@ -6758,7 +6758,7 @@ app.post('/api/telas/salidas', authenticateToken, async (req, res) => {
   const { codigo_id, metros, destino } = req.body;
   if (!codigo_id || !metros) return res.status(400).json({ error: 'Código y metros son requeridos' });
   try {
-    const [recRows] = await db.query("SELECT COALESCE(SUM(metros), 0) as recibido FROM telas_recepciones WHERE codigo_id = ?", [codigo_id]);
+    const [recRows] = await db.query("SELECT COALESCE(SUM(metros), 0) as recibido FROM telas_recepciones WHERE codigo_id = ? AND estado != 'devuelto'", [codigo_id]);
     const [salRows] = await db.query("SELECT COALESCE(SUM(metros), 0) as salido FROM telas_salidas WHERE codigo_id = ?", [codigo_id]);
     const disponible = parseFloat(recRows[0].recibido) - parseFloat(salRows[0].salido);
     if (parseFloat(metros) > disponible) {
@@ -6815,40 +6815,24 @@ app.get('/api/telas/codigos/:id/historial', authenticateToken, async (req, res) 
   }
 });
 
-// --- Códigos pendientes (cruce factura↔código no resuelto) ---
-app.get('/api/telas/codigos-pendientes', authenticateToken, async (req, res) => {
+// Rollos (líneas de recepción) que existen en inventario de un código, para que quien
+// surte una requisición vea contra qué está descontando antes de confirmar.
+app.get('/api/telas/codigos/:id/recepciones', authenticateToken, async (req, res) => {
   if (!telasAllowed(req)) return res.status(403).json({ error: 'No autorizado' });
   try {
-    const [rows] = await db.query("SELECT * FROM telas_codigos_pendientes WHERE resuelto = 0 ORDER BY fecha_creacion DESC");
+    const [rows] = await db.query(`
+      SELECT tr.id, tr.rollos, tr.yardas, tr.metros, tr.estado, tr.fecha_creacion, tf.numero_factura
+      FROM telas_recepciones tr
+      LEFT JOIN telas_facturas tf ON tr.factura_id = tf.id
+      WHERE tr.codigo_id = ?
+      ORDER BY tr.fecha_creacion ASC
+    `, [req.params.id]);
     res.json(rows);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-app.post('/api/telas/codigos-pendientes', authenticateToken, async (req, res) => {
-  if (!telasAllowed(req)) return res.status(403).json({ error: 'No autorizado' });
-  const { factura_id, estilo_proveedor, color_texto, motivo } = req.body;
-  try {
-    const [result] = await db.query(
-      "INSERT INTO telas_codigos_pendientes (factura_id, estilo_proveedor, color_texto, motivo) VALUES (?, ?, ?, ?)",
-      [factura_id || null, estilo_proveedor || null, color_texto || null, motivo || null]
-    );
-    res.status(201).json({ id: result.insertId });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.patch('/api/telas/codigos-pendientes/:id/resolver', authenticateToken, async (req, res) => {
-  if (!telasAllowed(req)) return res.status(403).json({ error: 'No autorizado' });
-  try {
-    await db.query("UPDATE telas_codigos_pendientes SET resuelto = 1 WHERE id = ?", [req.params.id]);
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
 
 // --- Requisición de tela: modelo + líneas → al finalizar queda pendiente de surtir en Salidas ---
 app.post('/api/telas/requisiciones', authenticateToken, async (req, res) => {
@@ -6911,14 +6895,14 @@ app.get('/api/telas/requisiciones/lineas-pendientes', authenticateToken, async (
   if (!telasAllowed(req)) return res.status(403).json({ error: 'No autorizado' });
   try {
     const [rows] = await db.query(`
-      SELECT trl.*, tr.modelo, tc.codigo,
-        COALESCE((SELECT SUM(metros) FROM telas_recepciones WHERE codigo_id = tc.id), 0)
+      SELECT trl.*, tr.modelo, tr.fecha_finalizada, tc.codigo,
+        COALESCE((SELECT SUM(metros) FROM telas_recepciones WHERE codigo_id = tc.id AND estado != 'devuelto'), 0)
         - COALESCE((SELECT SUM(metros) FROM telas_salidas WHERE codigo_id = tc.id), 0) as stock_disponible
       FROM telas_requisicion_lineas trl
       JOIN telas_requisiciones tr ON trl.requisicion_id = tr.id
       JOIN telas_codigos tc ON trl.codigo_id = tc.id
       WHERE trl.estado = 'pendiente' AND tr.estado = 'finalizada'
-      ORDER BY trl.fecha_creacion ASC
+      ORDER BY tr.fecha_finalizada ASC, trl.fecha_creacion ASC
     `);
     res.json(rows);
   } catch (error) {
@@ -6979,26 +6963,34 @@ app.post('/api/telas/requisiciones/lineas/:id/surtir', authenticateToken, async 
     if (!linea) { await connection.rollback(); return res.status(404).json({ error: 'Línea de requisición no encontrada' }); }
     if (linea.estado === 'surtida') { await connection.rollback(); return res.status(400).json({ error: 'Esta línea ya fue surtida' }); }
 
-    const [recRows] = await connection.query("SELECT COALESCE(SUM(metros), 0) as recibido FROM telas_recepciones WHERE codigo_id = ?", [linea.codigo_id]);
+    const [recRows] = await connection.query("SELECT COALESCE(SUM(metros), 0) as recibido FROM telas_recepciones WHERE codigo_id = ? AND estado != 'devuelto'", [linea.codigo_id]);
     const [salRows] = await connection.query("SELECT COALESCE(SUM(metros), 0) as salido FROM telas_salidas WHERE codigo_id = ?", [linea.codigo_id]);
     const disponible = parseFloat(recRows[0].recibido) - parseFloat(salRows[0].salido);
-    if (parseFloat(linea.cantidad_requerida) > disponible) {
+
+    // Por defecto se surte lo pedido; si el almacén decide surtir menos (lo más cercano
+    // disponible), lo indica explícitamente en el body.
+    const metrosSurtir = req.body.metros != null ? parseFloat(req.body.metros) : parseFloat(linea.cantidad_requerida);
+    if (!(metrosSurtir > 0)) {
+      await connection.rollback();
+      return res.status(400).json({ error: 'Los metros a surtir deben ser mayores a 0' });
+    }
+    if (metrosSurtir > disponible) {
       await connection.rollback();
       return res.status(400).json({ error: `Stock insuficiente para surtir. Disponible: ${disponible} m` });
     }
 
     const [salidaResult] = await connection.query(
       "INSERT INTO telas_salidas (codigo_id, metros, destino, usuario_id) VALUES (?, ?, ?, ?)",
-      [linea.codigo_id, linea.cantidad_requerida, `Requisición modelo ${linea.modelo}`, req.user.id]
+      [linea.codigo_id, metrosSurtir, `Requisición modelo ${linea.modelo}`, req.user.id]
     );
-    await connection.query("UPDATE telas_requisicion_lineas SET estado = 'surtida', salida_id = ? WHERE id = ?", [salidaResult.insertId, req.params.id]);
+    await connection.query("UPDATE telas_requisicion_lineas SET estado = 'surtida', salida_id = ?, metros_surtidos = ? WHERE id = ?", [salidaResult.insertId, metrosSurtir, req.params.id]);
 
     const [pendientesRows] = await connection.query("SELECT COUNT(*) as total FROM telas_requisicion_lineas WHERE requisicion_id = ? AND estado = 'pendiente'", [linea.requisicion_id]);
     if (pendientesRows[0].total === 0) {
       await connection.query("UPDATE telas_requisiciones SET estado = 'surtida' WHERE id = ?", [linea.requisicion_id]);
     }
 
-    await connection.query("INSERT INTO historial (user_id, action, target, description) VALUES (?, 'EDIT', 'TELAS', ?)", [req.user.id, `Surtió ${linea.cantidad_requerida} m del código ${linea.codigo} para la requisición del modelo ${linea.modelo}`]);
+    await connection.query("INSERT INTO historial (user_id, action, target, description) VALUES (?, 'EDIT', 'TELAS', ?)", [req.user.id, `Surtió ${metrosSurtir} m del código ${linea.codigo} para la requisición del modelo ${linea.modelo}`]);
     await connection.commit();
     res.json({ success: true, salida_id: salidaResult.insertId });
   } catch (error) {

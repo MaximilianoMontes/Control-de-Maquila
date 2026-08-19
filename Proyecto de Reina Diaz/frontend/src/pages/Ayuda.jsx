@@ -704,15 +704,15 @@ const guides_es = {
         <div>
           <p>La <strong>Requisición de Tela</strong> (pestaña "Requisiciones") es cómo se pide tela ya existente en el almacén para un modelo específico:</p>
           <ol>
-            <li>Se captura el modelo y se agregan una o más líneas (código de tela, cantidad en metros y ancho).</li>
+            <li>Se captura el modelo (funciona como folio) y se agregan una o más líneas (código de tela, cantidad en metros y ancho).</li>
             <li>Se guarda como <strong>borrador</strong> y se le pueden seguir agregando líneas.</li>
-            <li>Al presionar <strong>"Finalizar"</strong>, la requisición pasa a la pestaña "Salidas", en la sección "Requisiciones por Surtir".</li>
-            <li>Alguien del almacén revisa esa lista y presiona <strong>"Surtir"</strong> en cada línea — <strong>solo hasta ese momento se descuenta la existencia real</strong> del código (finalizar la requisición no descuenta nada por sí solo).</li>
+            <li>Al presionar <strong>"Finalizar"</strong>, la requisición pasa a la pestaña "Salidas", en la sección "Requisiciones por Surtir", agrupada con todas sus líneas juntas bajo el mismo folio.</li>
+            <li>Alguien del almacén presiona <strong>"Surtir"</strong> en la línea que le corresponde: el sistema muestra los rollos que existen de ese código y sugiere la cantidad más cercana posible a lo pedido (si no alcanza el total, sugiere lo máximo disponible en vez de bloquear todo). Al confirmar, <strong>solo hasta ese momento se descuenta la existencia real</strong> del código.</li>
           </ol>
-          <p>Si la existencia disponible es menor a lo pedido, el botón "Surtir" no deja continuar.</p>
+          <p>Finalizar la requisición no descuenta nada por sí solo — la confirmación de "Surtir" es la única acción que mueve existencia.</p>
         </div>
       ),
-      keywords: 'requisicion tela modelo surtir pendiente almacen pedido ancho'
+      keywords: 'requisicion tela modelo surtir pendiente almacen pedido ancho folio rollos'
     },
     {
       title: 'Ver el historial de salidas de un código o en general',
@@ -1362,15 +1362,15 @@ const guides_en = {
         <div>
           <p>A <strong>Fabric Requisition</strong> ("Requisitions" tab) is how you request fabric already in stock for a specific model:</p>
           <ol>
-            <li>Enter the model and add one or more lines (fabric code, quantity in meters, and width).</li>
+            <li>Enter the model (it works as the folio) and add one or more lines (fabric code, quantity in meters, and width).</li>
             <li>It's saved as a <strong>draft</strong> and more lines can still be added.</li>
-            <li>Pressing <strong>"Finalize"</strong> moves it to the "Outbound" tab, under "Requisitions Ready to Fulfill".</li>
-            <li>Someone in the warehouse reviews that list and presses <strong>"Fulfill"</strong> on each line — <strong>stock is only deducted at that point</strong> (finalizing the requisition alone does not touch stock).</li>
+            <li>Pressing <strong>"Finalize"</strong> moves it to the "Outbound" tab, under "Requisitions Ready to Fulfill", grouped with all its lines together under the same folio.</li>
+            <li>Someone in the warehouse presses <strong>"Fulfill"</strong> on the line they're handling: the system shows the rolls that exist for that code and suggests the closest possible amount to what was requested (if it can't cover the full amount, it suggests the maximum available instead of blocking everything). Confirming is what actually deducts stock.</li>
           </ol>
-          <p>If available stock is less than requested, the "Fulfill" button won't let it go through.</p>
+          <p>Finalizing a requisition alone doesn't touch stock — confirming "Fulfill" is the only action that does.</p>
         </div>
       ),
-      keywords: 'requisition fabric model fulfill pending warehouse request width'
+      keywords: 'requisition fabric model fulfill pending warehouse request width folio rolls'
     },
     {
       title: "Viewing a code's outbound history or the general one",

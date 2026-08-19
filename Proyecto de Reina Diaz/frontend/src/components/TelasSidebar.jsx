@@ -5,7 +5,6 @@ import {
   FileText,
   PackageMinus,
   ClipboardList,
-  HelpCircle,
   Home,
   LogOut
 } from 'lucide-react';
@@ -35,7 +34,6 @@ export default function TelasSidebar({ activeTab, setActiveTab, onClose }) {
     { id: 'codigos', name: isEn ? 'Fabric Codes' : 'Códigos de Tela', icon: <Layers size={20} /> },
     { id: 'requisiciones', name: isEn ? 'Requisitions' : 'Requisiciones', icon: <ClipboardList size={20} /> },
     { id: 'salidas', name: isEn ? 'Outbound' : 'Salidas', icon: <PackageMinus size={20} /> },
-    { id: 'pendientes', name: isEn ? 'Pending Codes' : 'Códigos Pendientes', icon: <HelpCircle size={20} /> },
   ];
 
   return (

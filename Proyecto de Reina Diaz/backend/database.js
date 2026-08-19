@@ -2072,12 +2072,18 @@ async function initializeDatabase() {
           ancho DECIMAL(6, 3) DEFAULT NULL,
           estado VARCHAR(20) DEFAULT 'pendiente',
           salida_id INT DEFAULT NULL,
+          metros_surtidos DECIMAL(10, 2) DEFAULT NULL,
           fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           FOREIGN KEY(requisicion_id) REFERENCES telas_requisiciones(id) ON DELETE CASCADE,
           FOREIGN KEY(codigo_id) REFERENCES telas_codigos(id),
           FOREIGN KEY(salida_id) REFERENCES telas_salidas(id)
         )
       `);
+      try {
+        await connection.query("ALTER TABLE telas_requisicion_lineas ADD COLUMN metros_surtidos DECIMAL(10, 2) DEFAULT NULL");
+      } catch (e) {
+        // Columna ya existe
+      }
 
       console.log('Tablas del módulo Telas listas.');
     } catch (e) {

@@ -13,7 +13,6 @@ import TelasFacturas from '../components/telas/TelasFacturas';
 import TelasCodigos from '../components/telas/TelasCodigos';
 import TelasRequisiciones from '../components/telas/TelasRequisiciones';
 import TelasSalidas from '../components/telas/TelasSalidas';
-import TelasPendientes from '../components/telas/TelasPendientes';
 
 export default function Telas() {
   const { settings } = useSettings();
@@ -115,10 +114,6 @@ export default function Telas() {
 
           {activeTab === 'salidas' && (
             <TelasSalidas codigos={codigos} fetchCodigos={fetchCodigos} />
-          )}
-
-          {activeTab === 'pendientes' && (
-            <TelasPendientes />
           )}
         </main>
       </div>

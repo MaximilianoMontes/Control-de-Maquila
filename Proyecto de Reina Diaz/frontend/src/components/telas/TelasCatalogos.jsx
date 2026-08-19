@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import axios from 'axios';
-import { Plus, Wand2, Copy } from 'lucide-react';
+import { Plus, Wand2, Copy, List, X, Search } from 'lucide-react';
 import { useSettings } from '../../context/SettingsContext';
 import API_URL from '../../config';
 import { toast } from '../../utils/themeNotifications';
@@ -9,6 +9,8 @@ const authHeaders = () => ({ headers: { Authorization: `Bearer ${localStorage.ge
 
 function CatalogoMini({ title, items, columns, placeholderes, onSubmit, isEn }) {
   const [values, setValues] = useState(columns.map(() => ''));
+  const [verLista, setVerLista] = useState(false);
+  const [buscar, setBuscar] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -16,6 +18,12 @@ function CatalogoMini({ title, items, columns, placeholderes, onSubmit, isEn }) 
     const ok = await onSubmit(values);
     if (ok) setValues(columns.map(() => ''));
   };
+
+  const filtrados = useMemo(() => {
+    if (!buscar.trim()) return items;
+    const q = buscar.toLowerCase();
+    return items.filter(it => (it.nombre || '').toLowerCase().includes(q) || (it.abreviatura || it.letra || '').toLowerCase().includes(q));
+  }, [items, buscar]);
 
   return (
     <div className="glass-card" style={{ padding: '1.2rem' }}>
@@ -39,17 +47,52 @@ function CatalogoMini({ title, items, columns, placeholderes, onSubmit, isEn }) 
           <Plus size={16} />
         </button>
       </form>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', maxHeight: '160px', overflowY: 'auto' }}>
-        {items.length === 0 ? (
-          <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{isEn ? 'No entries yet.' : 'Sin registros todavía.'}</span>
-        ) : (
-          items.map(it => (
-            <span key={it.id} className="badge badge-info" style={{ fontSize: '0.8rem' }}>
-              {it.abreviatura || it.letra} — {it.nombre}
-            </span>
-          ))
-        )}
-      </div>
+
+      <button type="button" className="btn btn-secondary" style={{ width: '100%', justifyContent: 'center' }} onClick={() => setVerLista(true)}>
+        <List size={16} style={{ marginRight: '6px' }} />
+        {items.length === 0
+          ? (isEn ? 'No entries yet' : 'Sin registros todavía')
+          : (isEn ? `View list (${items.length})` : `Ver lista (${items.length})`)}
+      </button>
+
+      {verLista && (
+        <div
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(8px)' }}
+          onClick={() => { setVerLista(false); setBuscar(''); }}
+        >
+          <div className="glass-card" style={{ width: '95%', maxWidth: '480px', maxHeight: '75vh', display: 'flex', flexDirection: 'column', padding: '1.4rem 1.6rem' }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem' }}>
+              <h3 style={{ margin: 0, fontSize: '1.1rem' }}>{title}</h3>
+              <button className="btn-icon" style={{ background: 'rgba(255,255,255,0.05)', border: 'none', padding: '6px', borderRadius: '50%', cursor: 'pointer' }} onClick={() => { setVerLista(false); setBuscar(''); }}>
+                <X size={18} />
+              </button>
+            </div>
+            <div style={{ position: 'relative', marginBottom: '0.8rem' }}>
+              <Search size={15} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
+              <input
+                className="form-input"
+                style={{ paddingLeft: '30px' }}
+                placeholder={isEn ? 'Search...' : 'Buscar...'}
+                value={buscar}
+                onChange={e => setBuscar(e.target.value)}
+                autoFocus
+              />
+            </div>
+            <div style={{ overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+              {filtrados.length === 0 ? (
+                <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{isEn ? 'No matches.' : 'Sin coincidencias.'}</span>
+              ) : (
+                filtrados.map(it => (
+                  <div key={it.id} style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', padding: '0.4rem 0.6rem', background: 'rgba(255,255,255,0.02)', borderRadius: '8px' }}>
+                    <span className="badge badge-info" style={{ fontSize: '0.78rem', fontFamily: 'monospace' }}>{it.abreviatura || it.letra}</span>
+                    <span style={{ fontSize: '0.88rem' }}>{it.nombre}</span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
