@@ -24,6 +24,8 @@ export default function TelasFacturas({ proveedores, codigos, fetchCodigos }) {
   const [leyendoIA, setLeyendoIA] = useState(false);
   const [lineasDetectadas, setLineasDetectadas] = useState(null);
 
+  const [aprobando, setAprobando] = useState(null); // { id, rollos, yardas }
+
   const fetchFacturas = useCallback(async () => {
     try {
       const res = await axios.get(`${API_URL}/api/telas/facturas`, authHeaders());
@@ -81,14 +83,24 @@ export default function TelasFacturas({ proveedores, codigos, fetchCodigos }) {
     }
   };
 
-  const actualizarRevision = async (recepcionId, estado) => {
+  const actualizarRevision = async (recepcionId, estado, extra = {}) => {
     try {
-      await axios.patch(`${API_URL}/api/telas/recepciones/${recepcionId}/revision`, { ancho_revisado: 1, estado }, authHeaders());
+      await axios.patch(`${API_URL}/api/telas/recepciones/${recepcionId}/revision`, { ancho_revisado: 1, estado, ...extra }, authHeaders());
       toast.success(isEn ? 'Review updated' : 'Revisión actualizada');
       abrirFactura(facturaAbierta.id);
+      fetchCodigos();
     } catch {
       toast.error(isEn ? 'Error updating review' : 'Error al actualizar la revisión');
     }
+  };
+
+  const abrirAprobar = (r) => {
+    setAprobando({ id: r.id, rollos: r.rollos, yardas: r.yardas });
+  };
+
+  const confirmarAprobar = async () => {
+    await actualizarRevision(aprobando.id, 'aprobado', { rollos: aprobando.rollos, yardas: aprobando.yardas });
+    setAprobando(null);
   };
 
   const handleLeerConIA = async () => {
@@ -200,12 +212,13 @@ export default function TelasFacturas({ proveedores, codigos, fetchCodigos }) {
                 <th>{isEn ? 'Supplier' : 'Proveedor'}</th>
                 <th>{isEn ? 'Date' : 'Fecha'}</th>
                 <th style={{ textAlign: 'center' }}>{isEn ? 'Lines' : 'Líneas'}</th>
+                <th>{isEn ? 'Review' : 'Revisión'}</th>
                 <th style={{ textAlign: 'right' }}>{isEn ? 'Action' : 'Acción'}</th>
               </tr>
             </thead>
             <tbody>
               {facturas.length === 0 ? (
-                <tr><td colSpan="5" style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '1.5rem' }}>
+                <tr><td colSpan="6" style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '1.5rem' }}>
                   {isEn ? 'No invoices registered yet.' : 'No hay facturas registradas todavía.'}
                 </td></tr>
               ) : (
@@ -215,6 +228,11 @@ export default function TelasFacturas({ proveedores, codigos, fetchCodigos }) {
                     <td>{f.proveedor_nombre}</td>
                     <td>{new Date(f.fecha).toLocaleDateString('es-MX')}</td>
                     <td style={{ textAlign: 'center' }}>{f.total_recepciones}</td>
+                    <td>
+                      <span className={`badge ${f.estado_revision === 'revisado_total' ? 'badge-success' : f.estado_revision === 'revisado_parcial' ? 'badge-warning' : 'badge-info'}`}>
+                        {f.estado_revision === 'revisado_total' ? (isEn ? 'Fully reviewed' : 'Revisado total') : f.estado_revision === 'revisado_parcial' ? (isEn ? 'Partially reviewed' : 'Revisado parcial') : (isEn ? 'Not reviewed' : 'Sin revisar')}
+                      </span>
+                    </td>
                     <td style={{ textAlign: 'right' }}>
                       <button className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: '0.8rem' }} onClick={() => abrirFactura(f.id)}>
                         {isEn ? 'Open' : 'Abrir'}
@@ -374,7 +392,7 @@ export default function TelasFacturas({ proveedores, codigos, fetchCodigos }) {
                         </td>
                         <td style={{ textAlign: 'right', display: 'flex', gap: '0.3rem', justifyContent: 'flex-end' }}>
                           {r.estado !== 'aprobado' && (
-                            <button className="btn btn-secondary" style={{ padding: '3px 8px', fontSize: '0.75rem' }} onClick={() => actualizarRevision(r.id, 'aprobado')}>
+                            <button className="btn btn-secondary" style={{ padding: '3px 8px', fontSize: '0.75rem' }} onClick={() => abrirAprobar(r)}>
                               {isEn ? 'Approve' : 'Aprobar'}
                             </button>
                           )}
@@ -389,6 +407,33 @@ export default function TelasFacturas({ proveedores, codigos, fetchCodigos }) {
                   )}
                 </tbody>
               </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {aprobando && (
+        <div
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100, backdropFilter: 'blur(8px)' }}
+          onClick={() => setAprobando(null)}
+        >
+          <div className="glass-card" style={{ width: '95%', maxWidth: '380px', padding: '1.4rem 1.6rem' }} onClick={e => e.stopPropagation()}>
+            <h3 style={{ margin: '0 0 0.6rem 0', fontSize: '1.1rem' }}>{isEn ? 'Confirm actual quantity received' : 'Confirmar cantidad que realmente llegó'}</h3>
+            <p style={{ margin: '0 0 1rem 0', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+              {isEn ? 'Correct these if what physically arrived is different from what was originally captured.' : 'Corrige estos valores si lo que llegó físicamente es distinto de lo que se capturó al dar de entrada.'}
+            </p>
+            <div className="form-group">
+              <label className="form-label">{isEn ? 'Rolls' : 'Rollos'}</label>
+              <input type="number" className="form-input" value={aprobando.rollos} onChange={e => setAprobando({ ...aprobando, rollos: e.target.value })} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">{isEn ? 'Yards' : 'Yardas'}</label>
+              <input type="number" step="0.01" className="form-input" value={aprobando.yardas} onChange={e => setAprobando({ ...aprobando, yardas: e.target.value })} />
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>≈ {Math.floor(parseFloat(aprobando.yardas || 0) * 0.9144).toFixed(2)} m</span>
+            </div>
+            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.8rem' }}>
+              <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setAprobando(null)}>{isEn ? 'Cancel' : 'Cancelar'}</button>
+              <button className="btn btn-primary" style={{ flex: 1 }} onClick={confirmarAprobar}>{isEn ? 'Approve' : 'Aprobar'}</button>
             </div>
           </div>
         </div>

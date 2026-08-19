@@ -1933,12 +1933,19 @@ async function initializeDatabase() {
         CREATE TABLE IF NOT EXISTS telas_tipos (
           id INT AUTO_INCREMENT PRIMARY KEY,
           nombre VARCHAR(150) NOT NULL,
-          abreviatura CHAR(2) NOT NULL UNIQUE,
+          abreviatura CHAR(2) NOT NULL,
           composicion_default VARCHAR(255) DEFAULT NULL,
           activo TINYINT(1) DEFAULT 1,
           fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
       `);
+      // La abreviatura ya puede repetirse entre tipos distintos (ver POST /api/telas/tipos):
+      // lo único que se bloquea ahí es la combinación exacta nombre+abreviatura+composición.
+      try {
+        await connection.query("ALTER TABLE telas_tipos DROP INDEX abreviatura");
+      } catch (e) {
+        // El índice ya no existe (instalación nueva) o ya se quitó antes
+      }
 
       await connection.query(`
         CREATE TABLE IF NOT EXISTS telas_proveedores (
@@ -2019,14 +2026,22 @@ async function initializeDatabase() {
         CREATE TABLE IF NOT EXISTS telas_salidas (
           id INT AUTO_INCREMENT PRIMARY KEY,
           codigo_id INT NOT NULL,
+          recepcion_id INT DEFAULT NULL,
           metros DECIMAL(10, 2) NOT NULL,
           destino VARCHAR(255) DEFAULT NULL,
           usuario_id INT DEFAULT NULL,
           fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           FOREIGN KEY(codigo_id) REFERENCES telas_codigos(id),
+          FOREIGN KEY(recepcion_id) REFERENCES telas_recepciones(id),
           FOREIGN KEY(usuario_id) REFERENCES users(id)
         )
       `);
+      try {
+        await connection.query("ALTER TABLE telas_salidas ADD COLUMN recepcion_id INT DEFAULT NULL");
+        await connection.query("ALTER TABLE telas_salidas ADD CONSTRAINT fk_telas_salidas_recepcion FOREIGN KEY(recepcion_id) REFERENCES telas_recepciones(id)");
+      } catch (e) {
+        // Columna/constraint ya existe
+      }
 
       await connection.query(`
         CREATE TABLE IF NOT EXISTS telas_codigos_pendientes (

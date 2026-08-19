@@ -11,7 +11,7 @@ function LineaPorSurtir({ linea, isEn, onSurtida }) {
   const [abierto, setAbierto] = useState(false);
   const [rollos, setRollos] = useState(null);
   const [cargandoRollos, setCargandoRollos] = useState(false);
-  const [metrosASurtir, setMetrosASurtir] = useState('');
+  const [asignado, setAsignado] = useState({}); // { recepcion_id: metros }
   const [surtiendo, setSurtiendo] = useState(false);
 
   const disponible = parseFloat(linea.stock_disponible);
@@ -20,11 +20,24 @@ function LineaPorSurtir({ linea, isEn, onSurtida }) {
 
   const abrirPanel = async () => {
     setAbierto(true);
-    setMetrosASurtir(Math.max(0, Math.min(requerida, disponible)).toFixed(2));
     setCargandoRollos(true);
     try {
       const res = await axios.get(`${API_URL}/api/telas/codigos/${linea.codigo_id}/recepciones`, authHeaders());
-      setRollos(res.data);
+      const disponibles = res.data.filter(r => parseFloat(r.disponible) > 0);
+      setRollos(disponibles);
+      // Sugerencia inicial: llenar rollo por rollo (el más viejo primero) hasta cubrir lo
+      // pedido o hasta agotar la existencia — lo más cercano posible a lo pedido.
+      let restante = requerida;
+      const sugerido = {};
+      for (const r of disponibles) {
+        if (restante <= 0) break;
+        const tomar = Math.min(parseFloat(r.disponible), restante);
+        if (tomar > 0) {
+          sugerido[r.id] = tomar.toFixed(2);
+          restante -= tomar;
+        }
+      }
+      setAsignado(sugerido);
     } catch {
       toast.error(isEn ? 'Error loading rolls' : 'Error al cargar los rollos');
     } finally {
@@ -32,15 +45,23 @@ function LineaPorSurtir({ linea, isEn, onSurtida }) {
     }
   };
 
+  const totalAsignado = Object.values(asignado).reduce((acc, v) => acc + (parseFloat(v) || 0), 0);
+
+  const cambiarAsignacion = (recepcionId, value) => {
+    setAsignado(prev => ({ ...prev, [recepcionId]: value }));
+  };
+
   const confirmarSurtir = async () => {
-    const metros = parseFloat(metrosASurtir);
-    if (!(metros > 0)) {
-      toast.error(isEn ? 'Enter how many meters to fulfill' : 'Captura cuántos metros surtir');
+    const asignaciones = Object.entries(asignado)
+      .map(([recepcion_id, metros]) => ({ recepcion_id, metros: parseFloat(metros) }))
+      .filter(a => a.metros > 0);
+    if (asignaciones.length === 0) {
+      toast.error(isEn ? 'Assign meters to at least one roll' : 'Asigna metros de al menos un rollo');
       return;
     }
     setSurtiendo(true);
     try {
-      await axios.post(`${API_URL}/api/telas/requisiciones/lineas/${linea.id}/surtir`, { metros }, authHeaders());
+      await axios.post(`${API_URL}/api/telas/requisiciones/lineas/${linea.id}/surtir`, { asignaciones }, authHeaders());
       toast.success(isEn ? 'Requisition line fulfilled' : 'Línea de requisición surtida');
       onSurtida();
     } catch (e) {
@@ -73,30 +94,36 @@ function LineaPorSurtir({ linea, isEn, onSurtida }) {
       {abierto && (
         <div style={{ padding: '0.8rem', borderTop: '1px solid rgba(245, 158, 11, 0.2)', background: 'rgba(0,0,0,0.03)' }}>
           <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <Boxes size={13} /> {isEn ? 'Rolls in stock for this code:' : 'Rollos en existencia de este código:'}
+            <Boxes size={13} /> {isEn ? 'Choose which rolls to take meters from:' : 'Elige de qué rollos tomar los metros:'}
           </p>
           {cargandoRollos ? (
             <p style={{ margin: '0 0 0.6rem 0', fontSize: '0.8rem' }}>{isEn ? 'Loading...' : 'Cargando...'}</p>
+          ) : (rollos || []).length === 0 ? (
+            <p style={{ margin: '0 0 0.6rem 0', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>{isEn ? 'No rolls with stock for this code.' : 'No hay rollos con existencia de este código.'}</p>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginBottom: '0.6rem', maxHeight: '120px', overflowY: 'auto' }}>
-              {(rollos || []).filter(r => r.estado !== 'devuelto').length === 0 ? (
-                <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>{isEn ? 'No rolls received for this code.' : 'No hay rollos recibidos de este código.'}</span>
-              ) : (
-                (rollos || []).filter(r => r.estado !== 'devuelto').map(r => (
-                  <div key={r.id} style={{ fontSize: '0.78rem', display: 'flex', justifyContent: 'space-between' }}>
-                    <span>{new Date(r.fecha_creacion).toLocaleDateString('es-MX')} {r.numero_factura ? `· ${r.numero_factura}` : ''}</span>
-                    <span>{r.rollos} {isEn ? 'rolls' : 'rollos'} · {parseFloat(r.metros).toFixed(2)} m</span>
-                  </div>
-                ))
-              )}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginBottom: '0.6rem', maxHeight: '180px', overflowY: 'auto' }}>
+              {rollos.map(r => (
+                <div key={r.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', fontSize: '0.78rem' }}>
+                  <span style={{ flex: 1 }}>
+                    {new Date(r.fecha_creacion).toLocaleDateString('es-MX')} {r.numero_factura ? `· ${r.numero_factura}` : ''}
+                    <span style={{ color: 'var(--text-secondary)' }}> — {isEn ? 'available' : 'disponible'}: {parseFloat(r.disponible).toFixed(2)} m</span>
+                  </span>
+                  <input
+                    type="number" step="0.01" min="0" max={r.disponible}
+                    className="form-input" style={{ width: '90px', padding: '4px' }}
+                    value={asignado[r.id] ?? ''}
+                    onChange={e => cambiarAsignacion(r.id, e.target.value)}
+                    placeholder="0"
+                  />
+                </div>
+              ))}
             </div>
           )}
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
-            <div className="form-group" style={{ margin: 0 }}>
-              <label className="form-label" style={{ fontSize: '0.78rem' }}>{isEn ? 'Meters to fulfill' : 'Metros a surtir'}</label>
-              <input type="number" step="0.01" max={disponible} className="form-input" style={{ width: '120px' }} value={metrosASurtir} onChange={e => setMetrosASurtir(e.target.value)} />
-            </div>
-            <button className="btn btn-primary" style={{ padding: '6px 14px', fontSize: '0.8rem' }} disabled={surtiendo} onClick={confirmarSurtir}>
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>
+              {isEn ? 'Total assigned' : 'Total asignado'}: {totalAsignado.toFixed(2)} / {requerida.toFixed(2)} m
+            </span>
+            <button className="btn btn-primary" style={{ padding: '6px 14px', fontSize: '0.8rem' }} disabled={surtiendo || totalAsignado <= 0} onClick={confirmarSurtir}>
               {surtiendo ? (isEn ? 'Confirming...' : 'Confirmando...') : (isEn ? 'Confirm' : 'Confirmar')}
             </button>
           </div>

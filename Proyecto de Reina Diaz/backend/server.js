@@ -6434,8 +6434,14 @@ app.post('/api/telas/tipos', authenticateToken, async (req, res) => {
     return res.status(400).json({ error: 'Nombre y abreviatura de 2 letras son requeridos' });
   }
   try {
-    const [existing] = await db.query("SELECT id FROM telas_tipos WHERE abreviatura = ?", [abreviatura.toUpperCase()]);
-    if (existing.length > 0) return res.status(409).json({ error: `La abreviatura ${abreviatura.toUpperCase()} ya está en uso` });
+    // La abreviatura sí se puede repetir entre tipos de tela distintos (por ejemplo, dos
+    // telas que naturalmente abrevian igual) — solo se bloquea el duplicado exacto:
+    // mismo nombre, misma abreviatura y misma composición.
+    const [existing] = await db.query(
+      "SELECT id FROM telas_tipos WHERE abreviatura = ? AND nombre = ? AND composicion_default <=> ?",
+      [abreviatura.toUpperCase(), nombre.trim(), composicion_default || null]
+    );
+    if (existing.length > 0) return res.status(409).json({ error: `Ya existe un tipo de tela idéntico (mismo nombre, abreviatura y composición)` });
     const [result] = await db.query(
       "INSERT INTO telas_tipos (nombre, abreviatura, composicion_default) VALUES (?, ?, ?)",
       [nombre.trim(), abreviatura.toUpperCase(), composicion_default || null]
@@ -6595,12 +6601,24 @@ app.get('/api/telas/facturas', authenticateToken, async (req, res) => {
   try {
     const [rows] = await db.query(`
       SELECT tf.*, tp.nombre as proveedor_nombre,
-        (SELECT COUNT(*) FROM telas_recepciones WHERE factura_id = tf.id) as total_recepciones
+        (SELECT COUNT(*) FROM telas_recepciones WHERE factura_id = tf.id) as total_recepciones,
+        (SELECT COUNT(*) FROM telas_recepciones WHERE factura_id = tf.id AND estado = 'pendiente') as recepciones_pendientes
       FROM telas_facturas tf
       JOIN telas_proveedores tp ON tf.proveedor_id = tp.id
       ORDER BY tf.fecha DESC, tf.id DESC
     `);
-    res.json(rows);
+    // Estado de revisión de la factura, derivado de sus líneas: sin líneas o todas
+    // pendientes = "sin revisar"; algunas resueltas = "revisado parcial"; todas
+    // resueltas (aprobado/devuelto) = "revisado total".
+    const withEstado = rows.map(f => {
+      let estado_revision = 'sin_revisar';
+      if (f.total_recepciones > 0) {
+        if (f.recepciones_pendientes === 0) estado_revision = 'revisado_total';
+        else if (f.recepciones_pendientes < f.total_recepciones) estado_revision = 'revisado_parcial';
+      }
+      return { ...f, estado_revision };
+    });
+    res.json(withEstado);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -6736,16 +6754,26 @@ app.post('/api/telas/facturas/:id/recepciones', authenticateToken, async (req, r
 
 app.patch('/api/telas/recepciones/:id/revision', authenticateToken, async (req, res) => {
   if (!telasAllowed(req)) return res.status(403).json({ error: 'No autorizado' });
-  const { ancho_revisado, estado, devolucion_motivo } = req.body;
+  const { ancho_revisado, estado, devolucion_motivo, rollos, yardas } = req.body;
   try {
+    // Al aprobar (o en cualquier revisión), se puede corregir la cantidad que realmente
+    // llegó — lo que ya se guardó al "dar de entrada" era la cantidad declarada, no
+    // necesariamente la real. Si llega yardas, se recalculan metros; si no, se deja igual.
+    const huboCorreccion = yardas != null && yardas !== '';
+    const metros = huboCorreccion ? Math.floor(parseFloat(yardas) * 0.9144) : null;
+
     await db.query(
       `UPDATE telas_recepciones
        SET ancho_revisado = ?, estado = ?, devolucion_motivo = ?,
-           devolucion_fecha = CASE WHEN ? = 'devuelto' THEN NOW() ELSE devolucion_fecha END
+           devolucion_fecha = CASE WHEN ? = 'devuelto' THEN NOW() ELSE devolucion_fecha END,
+           rollos = COALESCE(?, rollos),
+           yardas = COALESCE(?, yardas),
+           metros = COALESCE(?, metros)
        WHERE id = ?`,
-      [ancho_revisado ? 1 : 0, estado || 'pendiente', devolucion_motivo || null, estado || '', req.params.id]
+      [ancho_revisado ? 1 : 0, estado || 'pendiente', devolucion_motivo || null, estado || '', rollos != null && rollos !== '' ? rollos : null, huboCorreccion ? yardas : null, metros, req.params.id]
     );
-    await db.query("INSERT INTO historial (user_id, action, target, description) VALUES (?, 'EDIT', 'TELAS', ?)", [req.user.id, `Actualizó la revisión de ancho de la recepción #${req.params.id} a "${estado}"`]);
+    const detalleCorreccion = huboCorreccion ? ` (cantidad corregida a ${yardas} yardas / ${metros} m)` : '';
+    await db.query("INSERT INTO historial (user_id, action, target, description) VALUES (?, 'EDIT', 'TELAS', ?)", [req.user.id, `Actualizó la revisión de ancho de la recepción #${req.params.id} a "${estado}"${detalleCorreccion}`]);
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -6821,10 +6849,11 @@ app.get('/api/telas/codigos/:id/recepciones', authenticateToken, async (req, res
   if (!telasAllowed(req)) return res.status(403).json({ error: 'No autorizado' });
   try {
     const [rows] = await db.query(`
-      SELECT tr.id, tr.rollos, tr.yardas, tr.metros, tr.estado, tr.fecha_creacion, tf.numero_factura
+      SELECT tr.id, tr.rollos, tr.yardas, tr.metros, tr.estado, tr.fecha_creacion, tf.numero_factura,
+        tr.metros - COALESCE((SELECT SUM(ts.metros) FROM telas_salidas ts WHERE ts.recepcion_id = tr.id), 0) as disponible
       FROM telas_recepciones tr
       LEFT JOIN telas_facturas tf ON tr.factura_id = tf.id
-      WHERE tr.codigo_id = ?
+      WHERE tr.codigo_id = ? AND tr.estado != 'devuelto'
       ORDER BY tr.fecha_creacion ASC
     `, [req.params.id]);
     res.json(rows);
@@ -6967,9 +6996,14 @@ app.post('/api/telas/requisiciones/lineas/:id/surtir', authenticateToken, async 
     const [salRows] = await connection.query("SELECT COALESCE(SUM(metros), 0) as salido FROM telas_salidas WHERE codigo_id = ?", [linea.codigo_id]);
     const disponible = parseFloat(recRows[0].recibido) - parseFloat(salRows[0].salido);
 
-    // Por defecto se surte lo pedido; si el almacén decide surtir menos (lo más cercano
-    // disponible), lo indica explícitamente en el body.
-    const metrosSurtir = req.body.metros != null ? parseFloat(req.body.metros) : parseFloat(linea.cantidad_requerida);
+    // Dos formas de surtir: eligiendo rollos específicos (asignaciones: [{recepcion_id,
+    // metros}], para saber exactamente de qué lote físico salió la tela), o con un total
+    // simple sin desglose (compatibilidad con el flujo anterior).
+    const asignaciones = Array.isArray(req.body.asignaciones) ? req.body.asignaciones.filter(a => a && a.recepcion_id && parseFloat(a.metros) > 0) : [];
+    const metrosSurtir = asignaciones.length > 0
+      ? asignaciones.reduce((acc, a) => acc + parseFloat(a.metros), 0)
+      : (req.body.metros != null ? parseFloat(req.body.metros) : parseFloat(linea.cantidad_requerida));
+
     if (!(metrosSurtir > 0)) {
       await connection.rollback();
       return res.status(400).json({ error: 'Los metros a surtir deben ser mayores a 0' });
@@ -6979,20 +7013,51 @@ app.post('/api/telas/requisiciones/lineas/:id/surtir', authenticateToken, async 
       return res.status(400).json({ error: `Stock insuficiente para surtir. Disponible: ${disponible} m` });
     }
 
-    const [salidaResult] = await connection.query(
-      "INSERT INTO telas_salidas (codigo_id, metros, destino, usuario_id) VALUES (?, ?, ?, ?)",
-      [linea.codigo_id, metrosSurtir, `Requisición modelo ${linea.modelo}`, req.user.id]
-    );
-    await connection.query("UPDATE telas_requisicion_lineas SET estado = 'surtida', salida_id = ?, metros_surtidos = ? WHERE id = ?", [salidaResult.insertId, metrosSurtir, req.params.id]);
+    const destino = `Requisición modelo ${linea.modelo}`;
+    let ultimaSalidaId = null;
+
+    if (asignaciones.length > 0) {
+      // Validar cada rollo elegido: que pertenezca a este código y que no exceda lo
+      // disponible de ese lote específico.
+      for (const asign of asignaciones) {
+        const [recepcionRows] = await connection.query(`
+          SELECT tr.id, tr.metros - COALESCE((SELECT SUM(ts.metros) FROM telas_salidas ts WHERE ts.recepcion_id = tr.id), 0) as disponible_linea
+          FROM telas_recepciones tr WHERE tr.id = ? AND tr.codigo_id = ? AND tr.estado != 'devuelto'
+        `, [asign.recepcion_id, linea.codigo_id]);
+        const recepcion = recepcionRows[0];
+        const metrosAsignados = parseFloat(asign.metros);
+        if (!recepcion) {
+          await connection.rollback();
+          return res.status(400).json({ error: `El rollo #${asign.recepcion_id} no pertenece a este código` });
+        }
+        if (metrosAsignados > parseFloat(recepcion.disponible_linea)) {
+          await connection.rollback();
+          return res.status(400).json({ error: `El rollo #${asign.recepcion_id} solo tiene ${recepcion.disponible_linea} m disponibles` });
+        }
+        const [salidaResult] = await connection.query(
+          "INSERT INTO telas_salidas (codigo_id, recepcion_id, metros, destino, usuario_id) VALUES (?, ?, ?, ?, ?)",
+          [linea.codigo_id, asign.recepcion_id, metrosAsignados, destino, req.user.id]
+        );
+        ultimaSalidaId = salidaResult.insertId;
+      }
+    } else {
+      const [salidaResult] = await connection.query(
+        "INSERT INTO telas_salidas (codigo_id, metros, destino, usuario_id) VALUES (?, ?, ?, ?)",
+        [linea.codigo_id, metrosSurtir, destino, req.user.id]
+      );
+      ultimaSalidaId = salidaResult.insertId;
+    }
+
+    await connection.query("UPDATE telas_requisicion_lineas SET estado = 'surtida', salida_id = ?, metros_surtidos = ? WHERE id = ?", [ultimaSalidaId, metrosSurtir, req.params.id]);
 
     const [pendientesRows] = await connection.query("SELECT COUNT(*) as total FROM telas_requisicion_lineas WHERE requisicion_id = ? AND estado = 'pendiente'", [linea.requisicion_id]);
     if (pendientesRows[0].total === 0) {
       await connection.query("UPDATE telas_requisiciones SET estado = 'surtida' WHERE id = ?", [linea.requisicion_id]);
     }
 
-    await connection.query("INSERT INTO historial (user_id, action, target, description) VALUES (?, 'EDIT', 'TELAS', ?)", [req.user.id, `Surtió ${metrosSurtir} m del código ${linea.codigo} para la requisición del modelo ${linea.modelo}`]);
+    await connection.query("INSERT INTO historial (user_id, action, target, description) VALUES (?, 'EDIT', 'TELAS', ?)", [req.user.id, `Surtió ${metrosSurtir} m del código ${linea.codigo} para la requisición del modelo ${linea.modelo}${asignaciones.length > 0 ? ` (de ${asignaciones.length} rollo(s) específico(s))` : ''}`]);
     await connection.commit();
-    res.json({ success: true, salida_id: salidaResult.insertId });
+    res.json({ success: true, salida_id: ultimaSalidaId });
   } catch (error) {
     await connection.rollback();
     res.status(500).json({ error: error.message });
@@ -7011,18 +7076,26 @@ app.get('/api/telas/facturas/:id/tarjetas.pdf', authenticateToken, async (req, r
     `, [req.params.id]);
     if (!facturaRows[0]) return res.status(404).json({ error: 'Factura no encontrada' });
 
+    // Una sola tarjeta por código dentro de esta factura, sumando todas sus líneas de
+    // recepción (puede haber varias si la tela llegó/se capturó en más de un lote) — las
+    // devueltas no cuentan, igual que en la existencia.
     const [recepciones] = await db.query(`
-      SELECT tr.*, tc.codigo, tc.referencia_proveedor, tc.descripcion, tc.composicion,
-        tp.nombre as proveedor_nombre, tcol.nombre as color_nombre
+      SELECT tc.id as codigo_id, tc.codigo, tc.referencia_proveedor, tc.descripcion, tc.composicion,
+        tp.nombre as proveedor_nombre, tcol.nombre as color_nombre,
+        SUM(tr.rollos) as rollos, SUM(tr.yardas) as yardas, SUM(tr.metros) as metros,
+        MAX(tr.fecha_creacion) as fecha_creacion
       FROM telas_recepciones tr
       JOIN telas_codigos tc ON tr.codigo_id = tc.id
       JOIN telas_proveedores tp ON tc.proveedor_id = tp.id
       JOIN telas_colores tcol ON tc.color_id = tcol.id
-      WHERE tr.factura_id = ?
-      ORDER BY tr.id ASC
+      WHERE tr.factura_id = ? AND tr.estado != 'devuelto'
+      GROUP BY tc.id
+      ORDER BY tc.codigo ASC
     `, [req.params.id]);
 
-    if (recepciones.length === 0) return res.status(400).json({ error: 'La factura no tiene recepciones registradas todavía' });
+    if (recepciones.length === 0) return res.status(400).json({ error: 'La factura no tiene recepciones registradas todavía (o todas fueron devueltas)' });
+
+    const facturaLabel = facturaRows[0].numero_factura || `#${facturaRows[0].id}`;
 
     const doc = new PDFDocument({ margin: 20, size: 'LETTER' });
     res.setHeader('Content-disposition', `attachment; filename="Tarjetas_Factura_${req.params.id}.pdf"`);
@@ -7044,7 +7117,8 @@ app.get('/api/telas/facturas/:id/tarjetas.pdf', authenticateToken, async (req, r
       const y = pageM + row * (cardH + gap);
 
       doc.rect(x, y, cardW, cardH).stroke('#333333');
-      doc.fontSize(16).font('Helvetica-Bold').fillColor('#1F2A44').text(r.codigo, x + 10, y + 10, { width: cardW - 20 });
+      doc.fontSize(7).font('Helvetica').fillColor('#666666').text(facturaLabel, x + cardW - 90, y + 12, { width: 80, align: 'right' });
+      doc.fontSize(16).font('Helvetica-Bold').fillColor('#1F2A44').text(r.codigo, x + 10, y + 10, { width: cardW - 100 });
       doc.moveTo(x + 10, y + 32).lineTo(x + cardW - 10, y + 32).stroke('#cccccc');
 
       doc.fontSize(8).font('Helvetica').fillColor('#000000');
