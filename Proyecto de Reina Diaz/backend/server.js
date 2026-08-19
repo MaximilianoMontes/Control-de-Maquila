@@ -6547,7 +6547,12 @@ app.post('/api/telas/generar-codigo', authenticateToken, async (req, res) => {
       return res.status(409).json({ error: `El código ${codigo} ya existe`, codigo_existente: existing[0] });
     }
 
-    const precioMxn = Math.ceil(parseFloat(precio_usd) * parseFloat(tipo_cambio) + 5);
+    // El proveedor cotiza en USD por YARDA (así viene en sus facturas), pero el precio del
+    // código se maneja en MXN por METRO: se convierte antes de aplicar tipo de cambio y el
+    // cobro fijo de $5 MXN por paquetería. La nota de remisión multiplica por metros, no
+    // por yardas, para que sea consistente con esto.
+    const precioUsdPorMetro = parseFloat(precio_usd) / 0.9144;
+    const precioMxn = Math.ceil(precioUsdPorMetro * parseFloat(tipo_cambio) + 5);
     const composicionFinal = (composicion && composicion.trim()) || tipo.composicion_default || '';
     const descripcion = `${referencia_proveedor} ${tipo.nombre} ${composicionFinal} ${color.nombre} (${proveedor.nombre}) $${parseFloat(precio_usd).toFixed(2)}`;
 
@@ -7161,16 +7166,18 @@ app.get('/api/telas/facturas/:id/remision.pdf', authenticateToken, async (req, r
     if (!facturaRows[0]) return res.status(404).json({ error: 'Factura no encontrada' });
     const factura = facturaRows[0];
 
+    // El precio del código es por metro (ver generar-codigo), así que la remisión cobra
+    // por metros, no por yardas — y las líneas devueltas no se cobran.
     const [grupos] = await db.query(`
-      SELECT tc.precio_mxn, SUM(tr.yardas) as yardas_total, GROUP_CONCAT(DISTINCT tc.codigo SEPARATOR ', ') as codigos
+      SELECT tc.precio_mxn, SUM(tr.metros) as metros_total, GROUP_CONCAT(DISTINCT tc.codigo SEPARATOR ', ') as codigos
       FROM telas_recepciones tr
       JOIN telas_codigos tc ON tr.codigo_id = tc.id
-      WHERE tr.factura_id = ?
+      WHERE tr.factura_id = ? AND tr.estado != 'devuelto'
       GROUP BY tc.precio_mxn
       ORDER BY tc.precio_mxn ASC
     `, [req.params.id]);
 
-    if (grupos.length === 0) return res.status(400).json({ error: 'La factura no tiene recepciones registradas todavía' });
+    if (grupos.length === 0) return res.status(400).json({ error: 'La factura no tiene recepciones registradas todavía (o todas fueron devueltas)' });
 
     const doc = new PDFDocument({ margins: { top: 30, bottom: 50, left: 40, right: 40 }, size: 'LETTER' });
     res.setHeader('Content-disposition', `attachment; filename="Remision_Factura_${req.params.id}.pdf"`);
@@ -7193,17 +7200,17 @@ app.get('/api/telas/facturas/:id/remision.pdf', authenticateToken, async (req, r
     doc.moveDown(1);
 
     const tableConfig = {
-      headers: ['Código(s)', 'Yardas', 'Precio/yarda (MXN)', 'Subtotal (MXN)'],
+      headers: ['Código(s)', 'Metros', 'Precio/metro (MXN)', 'Subtotal (MXN)'],
       rows: grupos.map(g => [
         g.codigos,
-        parseFloat(g.yardas_total).toFixed(2),
+        parseFloat(g.metros_total).toFixed(2),
         `$${parseFloat(g.precio_mxn).toFixed(2)}`,
-        `$${(parseFloat(g.yardas_total) * parseFloat(g.precio_mxn)).toFixed(2)}`
+        `$${(parseFloat(g.metros_total) * parseFloat(g.precio_mxn)).toFixed(2)}`
       ])
     };
     await doc.table(tableConfig, { prepareHeader: () => doc.font('Helvetica-Bold').fontSize(9), prepareRow: () => doc.font('Helvetica').fontSize(9) });
 
-    const subtotal = grupos.reduce((acc, g) => acc + parseFloat(g.yardas_total) * parseFloat(g.precio_mxn), 0);
+    const subtotal = grupos.reduce((acc, g) => acc + parseFloat(g.metros_total) * parseFloat(g.precio_mxn), 0);
     const iva = subtotal * 0.16;
     const total = subtotal + iva;
 

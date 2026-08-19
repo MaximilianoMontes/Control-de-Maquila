@@ -692,7 +692,7 @@ const guides_es = {
       content: (
         <div>
           <p>El código se arma automáticamente con la estructura: <strong>F</strong> + 2 letras del tipo de tela + 1 letra del proveedor + 3 dígitos de la referencia del proveedor + 3 letras del color. Ejemplo: <code>FSZE101NEG</code> (Satín Zoe, proveedor EKB, referencia 101, Negro).</p>
-          <p>El precio en pesos se calcula con la fórmula: <strong>techo(precio en USD × tipo de cambio + $5 MXN)</strong>. Por ejemplo, $4.55 USD × 21 + $5 = $100.55, que se redondea hacia arriba a <strong>$101 MXN</strong>.</p>
+          <p>El precio del código es <strong>por metro</strong>, aunque los proveedores casi siempre cotizan por yarda. La fórmula es: <strong>techo((precio en USD por yarda ÷ 0.9144) × tipo de cambio + $5 MXN de paquetería)</strong>. Por ejemplo, $4.55 USD ÷ 0.9144 = $4.98 USD por metro, × 21 = $104.49, + $5 = $109.49, que se redondea hacia arriba a <strong>$110 MXN por metro</strong>.</p>
           <p>Antes de generar un código nuevo, hay que dar de alta el tipo de tela, el proveedor y/o el color en sus catálogos correspondientes (solo se hace una vez por cada uno; después quedan disponibles para todos los códigos futuros). La abreviatura de un tipo de tela sí se puede repetir entre dos telas distintas — solo se bloquea si el nombre, la abreviatura y la composición son exactamente iguales a un tipo ya existente.</p>
           <p>Desde cada factura abierta se pueden imprimir las <strong>tarjetas físicas</strong> (una por código, sumando todos sus rollos/yardas/metros dentro de esa factura, con el número de factura en la esquina superior derecha, para grapar la muestra de tela) y la <strong>nota de remisión</strong> (con IVA del 16% ya calculado) directamente en PDF.</p>
         </div>
@@ -1351,7 +1351,7 @@ const guides_en = {
       content: (
         <div>
           <p>The code is built automatically with the structure: <strong>F</strong> + 2 letters for the fabric type + 1 letter for the supplier + 3 digits of the supplier's reference + 3 letters for the color. Example: <code>FSZE101NEG</code> (Satín Zoe, EKB supplier, reference 101, Black).</p>
-          <p>The price in Mexican pesos is calculated with the formula: <strong>ceil(USD price × exchange rate + $5 MXN)</strong>. For example, $4.55 USD × 21 + $5 = $100.55, rounded up to <strong>$101 MXN</strong>.</p>
+          <p>The code's price is <strong>per meter</strong>, even though suppliers almost always quote per yard. The formula is: <strong>ceil((USD price per yard ÷ 0.9144) × exchange rate + $5 MXN shipping)</strong>. For example, $4.55 USD ÷ 0.9144 = $4.98 USD per meter, × 21 = $104.49, + $5 = $109.49, rounded up to <strong>$110 MXN per meter</strong>.</p>
           <p>Before generating a new code, the fabric type, supplier, and/or color must be registered in their respective catalogs (only once each; afterwards they remain available for all future codes). A fabric type's abbreviation can be reused across two different fabric types — it's only blocked if the name, abbreviation, and composition are all identical to an existing one.</p>
           <p>From any open invoice you can print the <strong>physical cards</strong> (one per code, summing all its rolls/yards/meters within that invoice, with the invoice number in the top-right corner, to staple the fabric sample) and the <strong>delivery note</strong> (with 16% VAT already calculated) directly as PDF.</p>
         </div>
