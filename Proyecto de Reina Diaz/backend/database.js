@@ -2012,6 +2012,7 @@ async function initializeDatabase() {
           metros DECIMAL(10, 2) DEFAULT 0,
           modelos TEXT,
           produccion_o_muestra VARCHAR(20) DEFAULT NULL,
+          observaciones TEXT DEFAULT NULL,
           ancho_revisado TINYINT(1) DEFAULT 0,
           estado VARCHAR(30) DEFAULT 'pendiente',
           devolucion_motivo TEXT DEFAULT NULL,
@@ -2021,6 +2022,11 @@ async function initializeDatabase() {
           FOREIGN KEY(codigo_id) REFERENCES telas_codigos(id)
         )
       `);
+      try {
+        await connection.query("ALTER TABLE telas_recepciones ADD COLUMN observaciones TEXT DEFAULT NULL");
+      } catch (e) {
+        // Columna ya existe
+      }
 
       await connection.query(`
         CREATE TABLE IF NOT EXISTS telas_salidas (
@@ -2029,6 +2035,7 @@ async function initializeDatabase() {
           recepcion_id INT DEFAULT NULL,
           metros DECIMAL(10, 2) NOT NULL,
           destino VARCHAR(255) DEFAULT NULL,
+          tipo VARCHAR(20) DEFAULT 'produccion',
           usuario_id INT DEFAULT NULL,
           fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           FOREIGN KEY(codigo_id) REFERENCES telas_codigos(id),
@@ -2042,6 +2049,29 @@ async function initializeDatabase() {
       } catch (e) {
         // Columna/constraint ya existe
       }
+      try {
+        await connection.query("ALTER TABLE telas_salidas ADD COLUMN tipo VARCHAR(20) DEFAULT 'produccion'");
+      } catch (e) {
+        // Columna ya existe
+      }
+
+      // Devolución de tela: metros que regresan a la existencia de un código (excedente no
+      // usado, tela defectuosa detectada después de una salida, etc.) — movimiento contrario
+      // a una salida, con su propio rastro de auditoría.
+      await connection.query(`
+        CREATE TABLE IF NOT EXISTS telas_devoluciones (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          codigo_id INT NOT NULL,
+          salida_id INT DEFAULT NULL,
+          metros DECIMAL(10, 2) NOT NULL,
+          motivo TEXT DEFAULT NULL,
+          usuario_id INT DEFAULT NULL,
+          fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY(codigo_id) REFERENCES telas_codigos(id),
+          FOREIGN KEY(salida_id) REFERENCES telas_salidas(id),
+          FOREIGN KEY(usuario_id) REFERENCES users(id)
+        )
+      `);
 
       await connection.query(`
         CREATE TABLE IF NOT EXISTS telas_codigos_pendientes (

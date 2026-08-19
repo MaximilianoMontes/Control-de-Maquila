@@ -6577,7 +6577,8 @@ app.get('/api/telas/codigos', authenticateToken, async (req, res) => {
     let query = `
       SELECT tc.*, tt.nombre as tipo_nombre, tp.nombre as proveedor_nombre, tcol.nombre as color_nombre,
         COALESCE((SELECT SUM(metros) FROM telas_recepciones WHERE codigo_id = tc.id AND estado != 'devuelto'), 0)
-        - COALESCE((SELECT SUM(metros) FROM telas_salidas WHERE codigo_id = tc.id), 0) as stock_metros
+        - COALESCE((SELECT SUM(metros) FROM telas_salidas WHERE codigo_id = tc.id), 0)
+        + COALESCE((SELECT SUM(metros) FROM telas_devoluciones WHERE codigo_id = tc.id), 0) as stock_metros
       FROM telas_codigos tc
       JOIN telas_tipos tt ON tc.tipo_id = tt.id
       JOIN telas_proveedores tp ON tc.proveedor_id = tp.id
@@ -6740,14 +6741,14 @@ app.post('/api/telas/facturas/:id/parse-documento', authenticateToken, async (re
 
 app.post('/api/telas/facturas/:id/recepciones', authenticateToken, async (req, res) => {
   if (!telasAllowed(req)) return res.status(403).json({ error: 'No autorizado' });
-  const { codigo_id, rollos, yardas } = req.body;
+  const { codigo_id, rollos, yardas, observaciones } = req.body;
   if (!codigo_id || yardas == null) return res.status(400).json({ error: 'Código y yardas son requeridos' });
   try {
     const metros = Math.floor(parseFloat(yardas) * 0.9144);
     const [result] = await db.query(
-      `INSERT INTO telas_recepciones (factura_id, codigo_id, rollos, yardas, metros)
-       VALUES (?, ?, ?, ?, ?)`,
-      [req.params.id, codigo_id, rollos || 0, yardas, metros]
+      `INSERT INTO telas_recepciones (factura_id, codigo_id, rollos, yardas, metros, observaciones)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [req.params.id, codigo_id, rollos || 0, yardas, metros, observaciones || null]
     );
     const [codigoRows] = await db.query("SELECT codigo FROM telas_codigos WHERE id = ?", [codigo_id]);
     await db.query("INSERT INTO historial (user_id, action, target, description) VALUES (?, 'ALTA', 'TELAS', ?)", [req.user.id, `Dio entrada a ${metros} m (${rollos || 0} rollos) del código ${codigoRows[0]?.codigo || codigo_id}`]);
@@ -6759,13 +6760,16 @@ app.post('/api/telas/facturas/:id/recepciones', authenticateToken, async (req, r
 
 app.patch('/api/telas/recepciones/:id/revision', authenticateToken, async (req, res) => {
   if (!telasAllowed(req)) return res.status(403).json({ error: 'No autorizado' });
-  const { ancho_revisado, estado, devolucion_motivo, rollos, yardas } = req.body;
+  const { ancho_revisado, estado, devolucion_motivo, rollos, metros: metrosCorregidos, observaciones } = req.body;
   try {
     // Al aprobar (o en cualquier revisión), se puede corregir la cantidad que realmente
     // llegó — lo que ya se guardó al "dar de entrada" era la cantidad declarada, no
-    // necesariamente la real. Si llega yardas, se recalculan metros; si no, se deja igual.
-    const huboCorreccion = yardas != null && yardas !== '';
-    const metros = huboCorreccion ? Math.floor(parseFloat(yardas) * 0.9144) : null;
+    // necesariamente la real. La corrección se captura en METROS (así es como se vuelve a
+    // medir físicamente), y de ahí se recalculan las yardas para que el registro siga
+    // completo.
+    const huboCorreccion = metrosCorregidos != null && metrosCorregidos !== '';
+    const metros = huboCorreccion ? parseFloat(metrosCorregidos) : null;
+    const yardas = huboCorreccion ? parseFloat((metros / 0.9144).toFixed(2)) : null;
 
     await db.query(
       `UPDATE telas_recepciones
@@ -6773,11 +6777,12 @@ app.patch('/api/telas/recepciones/:id/revision', authenticateToken, async (req, 
            devolucion_fecha = CASE WHEN ? = 'devuelto' THEN NOW() ELSE devolucion_fecha END,
            rollos = COALESCE(?, rollos),
            yardas = COALESCE(?, yardas),
-           metros = COALESCE(?, metros)
+           metros = COALESCE(?, metros),
+           observaciones = COALESCE(?, observaciones)
        WHERE id = ?`,
-      [ancho_revisado ? 1 : 0, estado || 'pendiente', devolucion_motivo || null, estado || '', rollos != null && rollos !== '' ? rollos : null, huboCorreccion ? yardas : null, metros, req.params.id]
+      [ancho_revisado ? 1 : 0, estado || 'pendiente', devolucion_motivo || null, estado || '', rollos != null && rollos !== '' ? rollos : null, yardas, metros, observaciones != null && observaciones !== '' ? observaciones : null, req.params.id]
     );
-    const detalleCorreccion = huboCorreccion ? ` (cantidad corregida a ${yardas} yardas / ${metros} m)` : '';
+    const detalleCorreccion = huboCorreccion ? ` (cantidad corregida a ${metros} m / ${yardas} yardas)` : '';
     await db.query("INSERT INTO historial (user_id, action, target, description) VALUES (?, 'EDIT', 'TELAS', ?)", [req.user.id, `Actualizó la revisión de ancho de la recepción #${req.params.id} a "${estado}"${detalleCorreccion}`]);
     res.json({ success: true });
   } catch (error) {
@@ -6788,22 +6793,58 @@ app.patch('/api/telas/recepciones/:id/revision', authenticateToken, async (req, 
 // --- Salidas (paso 4 del flujo) ---
 app.post('/api/telas/salidas', authenticateToken, async (req, res) => {
   if (!telasAllowed(req)) return res.status(403).json({ error: 'No autorizado' });
-  const { codigo_id, metros, destino } = req.body;
+  const { codigo_id, metros, destino, tipo } = req.body;
   if (!codigo_id || !metros) return res.status(400).json({ error: 'Código y metros son requeridos' });
   try {
     const [recRows] = await db.query("SELECT COALESCE(SUM(metros), 0) as recibido FROM telas_recepciones WHERE codigo_id = ? AND estado != 'devuelto'", [codigo_id]);
     const [salRows] = await db.query("SELECT COALESCE(SUM(metros), 0) as salido FROM telas_salidas WHERE codigo_id = ?", [codigo_id]);
-    const disponible = parseFloat(recRows[0].recibido) - parseFloat(salRows[0].salido);
+    const [devRows] = await db.query("SELECT COALESCE(SUM(metros), 0) as devuelto FROM telas_devoluciones WHERE codigo_id = ?", [codigo_id]);
+    const disponible = parseFloat(recRows[0].recibido) - parseFloat(salRows[0].salido) + parseFloat(devRows[0].devuelto);
     if (parseFloat(metros) > disponible) {
       return res.status(400).json({ error: `Stock insuficiente. Disponible: ${disponible} m` });
     }
     const [result] = await db.query(
-      "INSERT INTO telas_salidas (codigo_id, metros, destino, usuario_id) VALUES (?, ?, ?, ?)",
-      [codigo_id, metros, destino || null, req.user.id]
+      "INSERT INTO telas_salidas (codigo_id, metros, destino, tipo, usuario_id) VALUES (?, ?, ?, ?, ?)",
+      [codigo_id, metros, destino || null, tipo === 'muestra' ? 'muestra' : 'produccion', req.user.id]
     );
     const [codigoRows] = await db.query("SELECT codigo FROM telas_codigos WHERE id = ?", [codigo_id]);
-    await db.query("INSERT INTO historial (user_id, action, target, description) VALUES (?, 'EDIT', 'TELAS', ?)", [req.user.id, `Registró salida de ${metros} m del código ${codigoRows[0]?.codigo || codigo_id}${destino ? ` (${destino})` : ''}`]);
+    const etiquetaTipo = tipo === 'muestra' ? ' [MUESTRA]' : '';
+    await db.query("INSERT INTO historial (user_id, action, target, description) VALUES (?, 'EDIT', 'TELAS', ?)", [req.user.id, `Registró salida de ${metros} m del código ${codigoRows[0]?.codigo || codigo_id}${destino ? ` (${destino})` : ''}${etiquetaTipo}`]);
     res.status(201).json({ id: result.insertId });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Devolución de tela: metros que regresan a la existencia de un código.
+app.post('/api/telas/devoluciones', authenticateToken, async (req, res) => {
+  if (!telasAllowed(req)) return res.status(403).json({ error: 'No autorizado' });
+  const { codigo_id, metros, motivo, salida_id } = req.body;
+  if (!codigo_id || !(parseFloat(metros) > 0)) return res.status(400).json({ error: 'Código y metros son requeridos' });
+  try {
+    const [result] = await db.query(
+      "INSERT INTO telas_devoluciones (codigo_id, salida_id, metros, motivo, usuario_id) VALUES (?, ?, ?, ?, ?)",
+      [codigo_id, salida_id || null, metros, motivo || null, req.user.id]
+    );
+    const [codigoRows] = await db.query("SELECT codigo FROM telas_codigos WHERE id = ?", [codigo_id]);
+    await db.query("INSERT INTO historial (user_id, action, target, description) VALUES (?, 'EDIT', 'TELAS', ?)", [req.user.id, `Registró devolución de ${metros} m al código ${codigoRows[0]?.codigo || codigo_id}${motivo ? ` (${motivo})` : ''}`]);
+    res.status(201).json({ id: result.insertId });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/telas/devoluciones', authenticateToken, async (req, res) => {
+  if (!telasAllowed(req)) return res.status(403).json({ error: 'No autorizado' });
+  try {
+    const [rows] = await db.query(`
+      SELECT td.*, tc.codigo, u.username
+      FROM telas_devoluciones td
+      JOIN telas_codigos tc ON td.codigo_id = tc.id
+      LEFT JOIN users u ON td.usuario_id = u.id
+      ORDER BY td.fecha DESC
+    `);
+    res.json(rows);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -6931,7 +6972,8 @@ app.get('/api/telas/requisiciones/lineas-pendientes', authenticateToken, async (
     const [rows] = await db.query(`
       SELECT trl.*, tr.modelo, tr.fecha_finalizada, tc.codigo,
         COALESCE((SELECT SUM(metros) FROM telas_recepciones WHERE codigo_id = tc.id AND estado != 'devuelto'), 0)
-        - COALESCE((SELECT SUM(metros) FROM telas_salidas WHERE codigo_id = tc.id), 0) as stock_disponible
+        - COALESCE((SELECT SUM(metros) FROM telas_salidas WHERE codigo_id = tc.id), 0)
+        + COALESCE((SELECT SUM(metros) FROM telas_devoluciones WHERE codigo_id = tc.id), 0) as stock_disponible
       FROM telas_requisicion_lineas trl
       JOIN telas_requisiciones tr ON trl.requisicion_id = tr.id
       JOIN telas_codigos tc ON trl.codigo_id = tc.id
@@ -6999,7 +7041,8 @@ app.post('/api/telas/requisiciones/lineas/:id/surtir', authenticateToken, async 
 
     const [recRows] = await connection.query("SELECT COALESCE(SUM(metros), 0) as recibido FROM telas_recepciones WHERE codigo_id = ? AND estado != 'devuelto'", [linea.codigo_id]);
     const [salRows] = await connection.query("SELECT COALESCE(SUM(metros), 0) as salido FROM telas_salidas WHERE codigo_id = ?", [linea.codigo_id]);
-    const disponible = parseFloat(recRows[0].recibido) - parseFloat(salRows[0].salido);
+    const [devRows] = await connection.query("SELECT COALESCE(SUM(metros), 0) as devuelto FROM telas_devoluciones WHERE codigo_id = ?", [linea.codigo_id]);
+    const disponible = parseFloat(recRows[0].recibido) - parseFloat(salRows[0].salido) + parseFloat(devRows[0].devuelto);
 
     // Dos formas de surtir: eligiendo rollos específicos (asignaciones: [{recepcion_id,
     // metros}], para saber exactamente de qué lote físico salió la tela), o con un total

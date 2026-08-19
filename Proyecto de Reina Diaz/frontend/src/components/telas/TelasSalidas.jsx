@@ -1,13 +1,31 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import axios from 'axios';
-import { PackageMinus, ClipboardCheck, RefreshCw, Boxes } from 'lucide-react';
+import { PackageMinus, PackagePlus, ClipboardCheck, RefreshCw, Boxes, CheckSquare } from 'lucide-react';
 import { useSettings } from '../../context/SettingsContext';
 import API_URL from '../../config';
 import { toast } from '../../utils/themeNotifications';
 
 const authHeaders = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
 
-function LineaPorSurtir({ linea, isEn, onSurtida }) {
+// Reparte los metros pedidos entre los rollos disponibles de un código, empezando por el
+// más viejo — misma lógica que usa el panel manual, reutilizada para el "surtir" rápido.
+async function sugerirAsignaciones(codigoId, requerida) {
+  const res = await axios.get(`${API_URL}/api/telas/codigos/${codigoId}/recepciones`, authHeaders());
+  const disponibles = res.data.filter(r => parseFloat(r.disponible) > 0);
+  let restante = requerida;
+  const asignaciones = [];
+  for (const r of disponibles) {
+    if (restante <= 0) break;
+    const tomar = Math.min(parseFloat(r.disponible), restante);
+    if (tomar > 0) {
+      asignaciones.push({ recepcion_id: r.id, metros: tomar });
+      restante -= tomar;
+    }
+  }
+  return asignaciones;
+}
+
+function LineaPorSurtir({ linea, isEn, onSurtida, seleccionada, onToggleSeleccion }) {
   const [abierto, setAbierto] = useState(false);
   const [rollos, setRollos] = useState(null);
   const [cargandoRollos, setCargandoRollos] = useState(false);
@@ -25,8 +43,6 @@ function LineaPorSurtir({ linea, isEn, onSurtida }) {
       const res = await axios.get(`${API_URL}/api/telas/codigos/${linea.codigo_id}/recepciones`, authHeaders());
       const disponibles = res.data.filter(r => parseFloat(r.disponible) > 0);
       setRollos(disponibles);
-      // Sugerencia inicial: llenar rollo por rollo (el más viejo primero) hasta cubrir lo
-      // pedido o hasta agotar la existencia — lo más cercano posible a lo pedido.
       let restante = requerida;
       const sugerido = {};
       for (const r of disponibles) {
@@ -74,10 +90,18 @@ function LineaPorSurtir({ linea, isEn, onSurtida }) {
   return (
     <div style={{ background: 'rgba(245, 158, 11, 0.06)', border: '1px solid rgba(245, 158, 11, 0.2)', borderRadius: '8px', overflow: 'hidden' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 0.8rem', gap: '0.6rem', flexWrap: 'wrap' }}>
-        <div style={{ fontSize: '0.85rem' }}>
-          <strong style={{ fontFamily: 'monospace' }}>{linea.codigo}</strong> — {requerida.toFixed(2)} m
-          <div style={{ color: 'var(--text-secondary)', fontSize: '0.78rem' }}>
-            {isEn ? 'Stock' : 'Existencia'}: {disponible.toFixed(2)} m
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
+          <input
+            type="checkbox" checked={seleccionada} disabled={sinExistencia}
+            onChange={() => onToggleSeleccion(linea.id)}
+            style={{ marginTop: '4px', cursor: sinExistencia ? 'not-allowed' : 'pointer' }}
+            title={sinExistencia ? (isEn ? 'No stock available' : 'Sin existencia disponible') : (isEn ? 'Select to authorize in bulk' : 'Seleccionar para autorizar en lote')}
+          />
+          <div style={{ fontSize: '0.85rem' }}>
+            <strong style={{ fontFamily: 'monospace' }}>{linea.codigo}</strong> — {requerida.toFixed(2)} m
+            <div style={{ color: 'var(--text-secondary)', fontSize: '0.78rem' }}>
+              {isEn ? 'Stock' : 'Existencia'}: {disponible.toFixed(2)} m
+            </div>
           </div>
         </div>
         {abierto ? (
@@ -144,14 +168,24 @@ export default function TelasSalidas({ codigos, fetchCodigos }) {
   const [codigoId, setCodigoId] = useState('');
   const [metros, setMetros] = useState('');
   const [destino, setDestino] = useState('');
+  const [tipoSalida, setTipoSalida] = useState('produccion');
   const [guardando, setGuardando] = useState(false);
 
+  const [devCodigoId, setDevCodigoId] = useState('');
+  const [devMetros, setDevMetros] = useState('');
+  const [devMotivo, setDevMotivo] = useState('');
+  const [guardandoDev, setGuardandoDev] = useState(false);
+
   const [lineasPendientes, setLineasPendientes] = useState([]);
+  const [seleccionadas, setSeleccionadas] = useState(new Set());
+  const [autorizandoLote, setAutorizandoLote] = useState(false);
 
   const [historial, setHistorial] = useState([]);
   const [filtros, setFiltros] = useState({ desde: '', hasta: '', codigo_id: '', destino: '' });
+  const [devoluciones, setDevoluciones] = useState([]);
 
   const codigoSeleccionado = codigos.find(c => String(c.id) === String(codigoId));
+  const devCodigoSeleccionado = codigos.find(c => String(c.id) === String(devCodigoId));
 
   const fetchLineasPendientes = useCallback(async () => {
     try {
@@ -172,6 +206,13 @@ export default function TelasSalidas({ codigos, fetchCodigos }) {
     } catch (e) { console.error('Error fetching historial de salidas', e); }
   }, [filtros]);
 
+  const fetchDevoluciones = useCallback(async () => {
+    try {
+      const res = await axios.get(`${API_URL}/api/telas/devoluciones`, authHeaders());
+      setDevoluciones(res.data);
+    } catch (e) { console.error('Error fetching devoluciones de telas', e); }
+  }, []);
+
   useEffect(() => {
     fetchLineasPendientes();
   }, [fetchLineasPendientes]);
@@ -179,6 +220,10 @@ export default function TelasSalidas({ codigos, fetchCodigos }) {
   useEffect(() => {
     fetchHistorial();
   }, [fetchHistorial]);
+
+  useEffect(() => {
+    fetchDevoluciones();
+  }, [fetchDevoluciones]);
 
   const requisicionesAgrupadas = useMemo(() => {
     const grupos = new Map();
@@ -196,7 +241,7 @@ export default function TelasSalidas({ codigos, fetchCodigos }) {
     if (!codigoId || !metros) return;
     setGuardando(true);
     try {
-      await axios.post(`${API_URL}/api/telas/salidas`, { codigo_id: codigoId, metros, destino }, authHeaders());
+      await axios.post(`${API_URL}/api/telas/salidas`, { codigo_id: codigoId, metros, destino, tipo: tipoSalida }, authHeaders());
       toast.success(isEn ? 'Outbound movement registered' : 'Salida registrada');
       setMetros('');
       setDestino('');
@@ -209,15 +254,63 @@ export default function TelasSalidas({ codigos, fetchCodigos }) {
     }
   };
 
+  const handleSubmitDevolucion = async (e) => {
+    e.preventDefault();
+    if (!devCodigoId || !devMetros) return;
+    setGuardandoDev(true);
+    try {
+      await axios.post(`${API_URL}/api/telas/devoluciones`, { codigo_id: devCodigoId, metros: devMetros, motivo: devMotivo }, authHeaders());
+      toast.success(isEn ? 'Return registered' : 'Devolución registrada');
+      setDevMetros('');
+      setDevMotivo('');
+      fetchCodigos();
+      fetchDevoluciones();
+    } catch (e) {
+      toast.error(e.response?.data?.error || (isEn ? 'Error registering return' : 'Error al registrar la devolución'));
+    } finally {
+      setGuardandoDev(false);
+    }
+  };
+
   const handleLineaSurtida = () => {
     fetchLineasPendientes();
     fetchCodigos();
     fetchHistorial();
   };
 
+  const toggleSeleccion = (lineaId) => {
+    setSeleccionadas(prev => {
+      const next = new Set(prev);
+      if (next.has(lineaId)) next.delete(lineaId); else next.add(lineaId);
+      return next;
+    });
+  };
+
+  const autorizarSeleccionadas = async () => {
+    const lineas = lineasPendientes.filter(l => seleccionadas.has(l.id));
+    if (lineas.length === 0) return;
+    setAutorizandoLote(true);
+    let ok = 0, fallidas = 0;
+    for (const linea of lineas) {
+      try {
+        const asignaciones = await sugerirAsignaciones(linea.codigo_id, parseFloat(linea.cantidad_requerida));
+        if (asignaciones.length === 0) { fallidas++; continue; }
+        await axios.post(`${API_URL}/api/telas/requisiciones/lineas/${linea.id}/surtir`, { asignaciones }, authHeaders());
+        ok++;
+      } catch {
+        fallidas++;
+      }
+    }
+    setSeleccionadas(new Set());
+    setAutorizandoLote(false);
+    if (ok > 0) toast.success(isEn ? `${ok} line(s) fulfilled` : `${ok} línea(s) surtida(s)`);
+    if (fallidas > 0) toast.error(isEn ? `${fallidas} line(s) could not be fulfilled` : `${fallidas} línea(s) no se pudieron surtir`);
+    handleLineaSurtida();
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '1.5rem', alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem', alignItems: 'start' }}>
         <div className="glass-card">
           <h2 style={{ fontSize: '1.3rem', margin: '0 0 1.2rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <PackageMinus color="#ef4444" /> {isEn ? 'Register Outbound Fabric' : 'Registrar Salida de Tela'}
@@ -240,6 +333,13 @@ export default function TelasSalidas({ codigos, fetchCodigos }) {
               <input type="number" step="0.01" className="form-input" value={metros} onChange={e => setMetros(e.target.value)} required />
             </div>
             <div className="form-group">
+              <label className="form-label">{isEn ? 'Type' : 'Tipo'}</label>
+              <select className="form-input" value={tipoSalida} onChange={e => setTipoSalida(e.target.value)}>
+                <option value="produccion">{isEn ? 'Production' : 'Producción'}</option>
+                <option value="muestra">{isEn ? 'Sample' : 'Muestra'}</option>
+              </select>
+            </div>
+            <div className="form-group">
               <label className="form-label">{isEn ? 'Destination (model / cut)' : 'Destino (modelo / corte)'}</label>
               <input className="form-input" value={destino} onChange={e => setDestino(e.target.value)} placeholder={isEn ? 'Free text, e.g. model 723138' : 'Texto libre, ej. modelo 723138'} />
             </div>
@@ -250,9 +350,46 @@ export default function TelasSalidas({ codigos, fetchCodigos }) {
         </div>
 
         <div className="glass-card">
-          <h2 style={{ fontSize: '1.3rem', margin: '0 0 1rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <ClipboardCheck color="#f59e0b" /> {isEn ? 'Requisitions Ready to Fulfill' : 'Requisiciones por Surtir'}
+          <h2 style={{ fontSize: '1.3rem', margin: '0 0 1.2rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <PackagePlus color="#34d399" /> {isEn ? 'Register Fabric Return' : 'Registrar Devolución de Tela'}
           </h2>
+          <form onSubmit={handleSubmitDevolucion} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div className="form-group">
+              <label className="form-label">{isEn ? 'Fabric Code' : 'Código de Tela'}</label>
+              <select className="form-input" value={devCodigoId} onChange={e => setDevCodigoId(e.target.value)} required>
+                <option value="">{isEn ? 'Select...' : 'Seleccionar...'}</option>
+                {codigos.map(c => <option key={c.id} value={c.id}>{c.codigo}</option>)}
+              </select>
+            </div>
+            {devCodigoSeleccionado && (
+              <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{devCodigoSeleccionado.descripcion}</p>
+            )}
+            <div className="form-group">
+              <label className="form-label">{isEn ? 'Meters' : 'Metros'}</label>
+              <input type="number" step="0.01" className="form-input" value={devMetros} onChange={e => setDevMetros(e.target.value)} required />
+            </div>
+            <div className="form-group">
+              <label className="form-label">{isEn ? 'Reason' : 'Motivo'}</label>
+              <input className="form-input" value={devMotivo} onChange={e => setDevMotivo(e.target.value)} placeholder={isEn ? 'e.g. unused excess, defect found later' : 'ej. sobrante sin usar, defecto detectado después'} />
+            </div>
+            <button type="submit" className="btn btn-primary" disabled={guardandoDev}>
+              {guardandoDev ? (isEn ? 'Saving...' : 'Guardando...') : (isEn ? 'Register Return' : 'Registrar Devolución')}
+            </button>
+          </form>
+        </div>
+
+        <div className="glass-card">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+            <h2 style={{ fontSize: '1.3rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <ClipboardCheck color="#f59e0b" /> {isEn ? 'Requisitions Ready to Fulfill' : 'Requisiciones por Surtir'}
+            </h2>
+            {seleccionadas.size > 0 && (
+              <button className="btn btn-primary" style={{ padding: '5px 12px', fontSize: '0.78rem' }} disabled={autorizandoLote} onClick={autorizarSeleccionadas}>
+                <CheckSquare size={14} style={{ marginRight: '4px' }} />
+                {autorizandoLote ? (isEn ? 'Authorizing...' : 'Autorizando...') : (isEn ? `Authorize (${seleccionadas.size})` : `Autorizar (${seleccionadas.size})`)}
+              </button>
+            )}
+          </div>
           {requisicionesAgrupadas.length === 0 ? (
             <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
               {isEn ? 'No finalized requisition lines waiting to be fulfilled.' : 'No hay líneas de requisición finalizadas esperando surtirse.'}
@@ -266,7 +403,10 @@ export default function TelasSalidas({ codigos, fetchCodigos }) {
                   </p>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                     {grupo.lineas.map(l => (
-                      <LineaPorSurtir key={l.id} linea={l} isEn={isEn} onSurtida={handleLineaSurtida} />
+                      <LineaPorSurtir
+                        key={l.id} linea={l} isEn={isEn} onSurtida={handleLineaSurtida}
+                        seleccionada={seleccionadas.has(l.id)} onToggleSeleccion={toggleSeleccion}
+                      />
                     ))}
                   </div>
                 </div>
@@ -313,13 +453,14 @@ export default function TelasSalidas({ codigos, fetchCodigos }) {
                 <th>{isEn ? 'Date & Time' : 'Fecha y Hora'}</th>
                 <th>{isEn ? 'Code' : 'Código'}</th>
                 <th style={{ textAlign: 'right' }}>{isEn ? 'Meters' : 'Metros'}</th>
+                <th>{isEn ? 'Type' : 'Tipo'}</th>
                 <th>{isEn ? 'Destination' : 'Destino'}</th>
                 <th>{isEn ? 'User' : 'Usuario'}</th>
               </tr>
             </thead>
             <tbody>
               {historial.length === 0 ? (
-                <tr><td colSpan="5" style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '1.5rem' }}>
+                <tr><td colSpan="6" style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '1.5rem' }}>
                   {isEn ? 'No outbound movements found.' : 'No se encontraron salidas.'}
                 </td></tr>
               ) : (
@@ -328,8 +469,47 @@ export default function TelasSalidas({ codigos, fetchCodigos }) {
                     <td>{new Date(h.fecha).toLocaleString('es-MX')}</td>
                     <td style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>{h.codigo}</td>
                     <td style={{ textAlign: 'right' }}>{parseFloat(h.metros).toFixed(2)}</td>
+                    <td>
+                      <span className={`badge ${h.tipo === 'muestra' ? 'badge-warning' : 'badge-info'}`}>
+                        {h.tipo === 'muestra' ? (isEn ? 'Sample' : 'Muestra') : (isEn ? 'Production' : 'Producción')}
+                      </span>
+                    </td>
                     <td>{h.destino || '—'}</td>
                     <td>{h.username || '—'}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div className="glass-card">
+        <h2 style={{ fontSize: '1.3rem', margin: '0 0 1rem 0' }}>{isEn ? 'Return History' : 'Historial de Devoluciones'}</h2>
+        <div className="table-wrapper">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>{isEn ? 'Date & Time' : 'Fecha y Hora'}</th>
+                <th>{isEn ? 'Code' : 'Código'}</th>
+                <th style={{ textAlign: 'right' }}>{isEn ? 'Meters' : 'Metros'}</th>
+                <th>{isEn ? 'Reason' : 'Motivo'}</th>
+                <th>{isEn ? 'User' : 'Usuario'}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {devoluciones.length === 0 ? (
+                <tr><td colSpan="5" style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '1.5rem' }}>
+                  {isEn ? 'No returns found.' : 'No se encontraron devoluciones.'}
+                </td></tr>
+              ) : (
+                devoluciones.map(d => (
+                  <tr key={d.id}>
+                    <td>{new Date(d.fecha).toLocaleString('es-MX')}</td>
+                    <td style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>{d.codigo}</td>
+                    <td style={{ textAlign: 'right', color: '#34d399', fontWeight: 'bold' }}>+{parseFloat(d.metros).toFixed(2)}</td>
+                    <td>{d.motivo || '—'}</td>
+                    <td>{d.username || '—'}</td>
                   </tr>
                 ))
               )}

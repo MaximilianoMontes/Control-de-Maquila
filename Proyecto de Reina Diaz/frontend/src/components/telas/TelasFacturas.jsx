@@ -19,7 +19,7 @@ export default function TelasFacturas({ proveedores, codigos, fetchCodigos }) {
   const [guardando, setGuardando] = useState(false);
 
   const [facturaAbierta, setFacturaAbierta] = useState(null);
-  const [recNueva, setRecNueva] = useState({ codigo_id: '', rollos: '', yardas: '' });
+  const [recNueva, setRecNueva] = useState({ codigo_id: '', rollos: '', yardas: '', observaciones: '' });
 
   const [leyendoIA, setLeyendoIA] = useState(false);
   const [lineasDetectadas, setLineasDetectadas] = useState(null);
@@ -75,7 +75,7 @@ export default function TelasFacturas({ proveedores, codigos, fetchCodigos }) {
     try {
       await axios.post(`${API_URL}/api/telas/facturas/${facturaAbierta.id}/recepciones`, recNueva, authHeaders());
       toast.success(isEn ? 'Receipt line added' : 'Línea de recepción agregada');
-      setRecNueva({ codigo_id: '', rollos: '', yardas: '' });
+      setRecNueva({ codigo_id: '', rollos: '', yardas: '', observaciones: '' });
       abrirFactura(facturaAbierta.id);
       fetchCodigos();
     } catch (e) {
@@ -95,11 +95,11 @@ export default function TelasFacturas({ proveedores, codigos, fetchCodigos }) {
   };
 
   const abrirAprobar = (r) => {
-    setAprobando({ id: r.id, rollos: r.rollos, yardas: r.yardas });
+    setAprobando({ id: r.id, rollos: r.rollos, metros: r.metros, observaciones: r.observaciones || '' });
   };
 
   const confirmarAprobar = async () => {
-    await actualizarRevision(aprobando.id, 'aprobado', { rollos: aprobando.rollos, yardas: aprobando.yardas });
+    await actualizarRevision(aprobando.id, 'aprobado', { rollos: aprobando.rollos, metros: aprobando.metros, observaciones: aprobando.observaciones });
     setAprobando(null);
   };
 
@@ -354,6 +354,10 @@ export default function TelasFacturas({ proveedores, codigos, fetchCodigos }) {
                   <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>≈ {metrosPreview.toFixed(2)} m</span>
                 )}
               </div>
+              <div className="form-group">
+                <label className="form-label">{isEn ? 'Observations (defects, etc.)' : 'Observaciones (fallas, etc.)'}</label>
+                <input className="form-input" value={recNueva.observaciones} onChange={e => setRecNueva({ ...recNueva, observaciones: e.target.value })} placeholder={isEn ? 'Optional' : 'Opcional'} />
+              </div>
               <div style={{ display: 'flex', alignItems: 'flex-end' }}>
                 <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>
                   <Plus size={16} style={{ marginRight: '4px' }} /> {isEn ? 'Add' : 'Agregar'}
@@ -381,7 +385,10 @@ export default function TelasFacturas({ proveedores, codigos, fetchCodigos }) {
                   ) : (
                     facturaAbierta.recepciones.map(r => (
                       <tr key={r.id}>
-                        <td style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>{r.codigo}</td>
+                        <td style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
+                          {r.codigo}
+                          {r.observaciones && <div style={{ fontWeight: 'normal', fontSize: '0.72rem', color: '#f59e0b' }} title={r.observaciones}>{r.observaciones}</div>}
+                        </td>
                         <td style={{ textAlign: 'right' }}>{r.rollos}</td>
                         <td style={{ textAlign: 'right' }}>{r.yardas}</td>
                         <td style={{ textAlign: 'right' }}>{r.metros}</td>
@@ -427,9 +434,12 @@ export default function TelasFacturas({ proveedores, codigos, fetchCodigos }) {
               <input type="number" className="form-input" value={aprobando.rollos} onChange={e => setAprobando({ ...aprobando, rollos: e.target.value })} />
             </div>
             <div className="form-group">
-              <label className="form-label">{isEn ? 'Yards' : 'Yardas'}</label>
-              <input type="number" step="0.01" className="form-input" value={aprobando.yardas} onChange={e => setAprobando({ ...aprobando, yardas: e.target.value })} />
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>≈ {Math.floor(parseFloat(aprobando.yardas || 0) * 0.9144).toFixed(2)} m</span>
+              <label className="form-label">{isEn ? 'Meters' : 'Metros'}</label>
+              <input type="number" step="0.01" className="form-input" value={aprobando.metros} onChange={e => setAprobando({ ...aprobando, metros: e.target.value })} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">{isEn ? 'Observations (defects, etc.)' : 'Observaciones (fallas, etc.)'}</label>
+              <input className="form-input" value={aprobando.observaciones} onChange={e => setAprobando({ ...aprobando, observaciones: e.target.value })} placeholder={isEn ? 'Optional' : 'Opcional'} />
             </div>
             <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.8rem' }}>
               <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setAprobando(null)}>{isEn ? 'Cancel' : 'Cancelar'}</button>
