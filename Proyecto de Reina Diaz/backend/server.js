@@ -4191,6 +4191,7 @@ app.get('/api/reportes/pagos', authenticateToken, async (req, res) => {
   try {
     let query = `
       SELECT pg.*, m.nombre as maquilero_nombre, i.modelo as producto_modelo,
+             i.no_orden as producto_orden,
              p.es_extra, p.precio_extra, i.precio as precio_inventario,
              p.precio_total, p.cantidad, p.cantidad_recibida
       FROM pagos pg
@@ -4249,13 +4250,14 @@ app.get('/api/reportes/pagos', authenticateToken, async (req, res) => {
         title: tLabel("Reporte de Pagos a Maquileros", "Payments to Tailors Report"),
         subtitle: tLabel(`Pagos realizados `, `Payments made `) + subtitleDate + tLabel(" - Generado el ", " - Generated on ") + formatDateToDMY(new Date()),
         headers: [
-          { label: tLabel("FECHA", "DATE"), property: "fecha", width: 65 },
-          { label: tLabel("MAQUILERO", "TAILOR"), property: "maquilero", width: 135 },
-          { label: tLabel("MODELO", "MODEL"), property: "modelo", width: 65 },
-          { label: tLabel("PIEZAS", "PIECES"), property: "piezas", width: 55 },
-          { label: tLabel("IVA (16%)", "IVA (16%)"), property: "iva", width: 65 },
-          { label: tLabel("TIPO", "TYPE"), property: "tipo", width: 70 },
-          { label: tLabel("MONTO", "AMOUNT"), property: "monto", width: 75 }
+          { label: tLabel("FECHA", "DATE"), property: "fecha", width: 60 },
+          { label: tLabel("MAQUILERO", "TAILOR"), property: "maquilero", width: 105 },
+          { label: tLabel("MODELO", "MODEL"), property: "modelo", width: 55 },
+          { label: tLabel("ORDEN", "ORDER"), property: "orden", width: 55 },
+          { label: tLabel("PIEZAS", "PIECES"), property: "piezas", width: 45 },
+          { label: tLabel("IVA (16%)", "IVA (16%)"), property: "iva", width: 60 },
+          { label: tLabel("TIPO", "TYPE"), property: "tipo", width: 60 },
+          { label: tLabel("MONTO", "AMOUNT"), property: "monto", width: 70 }
         ],
         datas: rows.map(r => {
           const hasIva = r.con_iva === 1 || r.con_iva;
@@ -4280,6 +4282,7 @@ app.get('/api/reportes/pagos', authenticateToken, async (req, res) => {
             fecha: formatDateToDMY(r.fecha),
             maquilero: (r.maquilero_nombre || '').toUpperCase(),
             modelo: r.producto_modelo || '-',
+            orden: r.producto_orden || '-',
             piezas: piezasEquivalentes !== null ? String(piezasEquivalentes) : 'N/A',
             iva: hasIva ? '$' + ivaVal.toFixed(2) : 'N/A',
             tipo: (r.tipo_pago === 'completo' ? tLabel('LIQUIDACIÓN', 'SETTLEMENT') : (r.tipo_pago === 'abono' ? tLabel('ABONO', 'DEPOSIT') : (r.tipo_pago || 'ABONO'))).toUpperCase(),
