@@ -3609,29 +3609,13 @@ const sortTallasEntries = (entries) => entries.sort((a, b) => {
   return a[0].localeCompare(b[0], undefined, { numeric: true });
 });
 
-// Corta la lista de tallas de UN color en líneas de ancho manejable, partiendo solo en
-// los espacios entre pares talla:cantidad (nunca a media cifra).
-const TALLAS_PDF_CHARS_PER_LINE = 30;
-const wrapTallasParts = (parts) => {
-  const lines = [];
-  let current = '';
-  parts.forEach(part => {
-    const candidate = current ? `${current}  ${part}` : part;
-    if (candidate.length > TALLAS_PDF_CHARS_PER_LINE && current) {
-      lines.push(current);
-      current = part;
-    } else {
-      current = candidate;
-    }
-  });
-  if (current) lines.push(current);
-  return lines.join('\n');
-};
-
-// Arma, para el JSON de tallas de un modelo, un grupo por color: { label, text }. La celda
-// de "Distribución de Tallas" del PDF dibuja cada grupo como su propia caja con borde y
-// fondo (no como texto plano) para que se distinga claramente un color de otro. "label" es
-// null cuando el modelo es de un solo color (estructura plana, sin desglose por color).
+// Arma, para el JSON de tallas de un modelo, un grupo por color: { label, parts }, donde
+// "parts" es la lista de pares [talla, cantidad] ya ordenados. La celda de "Distribución
+// de Tallas" del PDF dibuja cada grupo como su propia caja con borde y fondo, y adentro
+// las tallas y sus cantidades en una cuadrícula (talla arriba, cantidad justo debajo, en
+// columnas alineadas) — antes iban en una sola línea corrida ("T05:10 T07:10 T09:10...")
+// que se prestaba a confusión sobre qué cantidad correspondía a qué talla. "label" es null
+// cuando el modelo es de un solo color (estructura plana, sin desglose por color).
 const buildTallasGroups = (tallasJson) => {
   let tallas = {};
   try { tallas = typeof tallasJson === 'string' ? JSON.parse(tallasJson) : (tallasJson || {}); } catch (e) { tallas = {}; }
@@ -3641,7 +3625,7 @@ const buildTallasGroups = (tallasJson) => {
   const buildGroup = (label, sizesObj) => {
     const parts = sortTallasEntries(Object.entries(sizesObj)).filter(([, q]) => parseInt(q) > 0);
     if (!parts.length) return null;
-    return { label, text: wrapTallasParts(parts.map(([sz, q]) => `T${sz}:${q}`)) };
+    return { label, parts };
   };
 
   if (isNested) {
@@ -3732,6 +3716,14 @@ app.get('/api/reportes/camion/:id', authenticateToken, async (req, res) => {
       // exactamente con lo que la tabla usa internamente para lo mismo.
       doc.font('Helvetica').fontSize(8);
 
+      // Adentro de cada caja, la talla y su cantidad ya NO van corridas en una sola línea
+      // ("T05:10 T07:10 T09:10...", fácil de confundir a simple vista) — van en una
+      // cuadrícula: la talla arriba y su cantidad justo debajo, alineadas en columnas fijas,
+      // como una hoja de cálculo. Máximo 6 tallas por renglón de cuadrícula; si un color
+      // tiene más, se pasa a un segundo par de renglones dentro de la misma caja.
+      const TALLAS_GRID_COLS = 6;
+      const TALLAS_GRID_COL_WIDTH = Math.floor((TALLAS_COL_WIDTH - (TALLAS_CELL_PADDING * 2) - (TALLAS_BOX_PAD_X * 2)) / TALLAS_GRID_COLS);
+
       // IMPORTANTE (causa de la paginación rota del intento anterior): el alto de cada
       // renglón de la tabla lo calcula la librería midiendo el TEXTO real de la celda
       // ("tallas"), no lo que nosotros dibujemos aparte. Antes reservábamos el alto con
@@ -3745,22 +3737,39 @@ app.get('/api/reportes/camion/:id', authenticateToken, async (req, res) => {
       // sin importar cuántos colores tenga el modelo.
       const tallasData = items.map(it => {
         const groups = buildTallasGroups(it.tallas_cantidades);
-        const list = groups.length ? groups : [{ label: null, text: 'N/A' }];
+        const list = groups.length ? groups : [{ label: null, parts: [] }];
 
-        const text = list.map(g => (g.label ? `${g.label}\n${g.text}` : g.text)).join('\n');
+        const groupPlans = list.map(g => {
+          const rows = [];
+          for (let i = 0; i < g.parts.length; i += TALLAS_GRID_COLS) {
+            rows.push(g.parts.slice(i, i + TALLAS_GRID_COLS));
+          }
+          return { label: g.label, rows: rows.length ? rows : [[]] };
+        });
+
+        // Texto plano equivalente (una línea por cabecera de tallas y otra por cantidades,
+        // igual que se dibuja) — es lo único que determina el alto real reservado.
+        const groupTexts = groupPlans.map(gp => {
+          const lines = [];
+          if (gp.label) lines.push(gp.label);
+          gp.rows.forEach(row => {
+            if (!row.length) { lines.push('N/A'); return; }
+            lines.push(row.map(([sz]) => `T${sz}`).join('  '));
+            lines.push(row.map(([, q]) => String(q)).join('  '));
+          });
+          return lines.join('\n');
+        });
+        const text = groupTexts.join('\n');
         const totalTextHeight = doc.heightOfString(text, { width: tallasTextWidth });
 
-        const rawHeights = list.map(g => {
-          const combined = g.label ? `${g.label}\n${g.text}` : g.text;
-          return doc.heightOfString(combined, { width: tallasTextWidth });
-        });
+        const rawHeights = groupTexts.map(t => doc.heightOfString(t, { width: tallasTextWidth }));
         const rawSum = rawHeights.reduce((a, b) => a + b, 0) || 1;
         const scale = Math.min(1, (totalTextHeight * 0.97) / rawSum);
 
         let cursorY = 0;
-        const boxes = list.map((g, i) => {
+        const boxes = groupPlans.map((gp, i) => {
           const h = rawHeights[i] * scale;
-          const box = { offsetY: cursorY, height: h, label: g.label, text: g.text };
+          const box = { offsetY: cursorY, height: h, label: gp.label, rows: gp.rows };
           cursorY += h;
           return box;
         });
@@ -3817,14 +3826,33 @@ app.get('/api/reportes/camion/:id', authenticateToken, async (req, res) => {
                 doc.lineWidth(0.6)
                   .roundedRect(boxX, boxY, boxWidth, b.height, 2)
                   .fillAndStroke('#eef2ff', '#94a3b8');
-                let textY = boxY + 1;
+                let y = boxY + 1;
                 if (b.label) {
                   doc.fillColor('#1e3a8a').font('Helvetica-Bold').fontSize(7)
-                    .text(b.label, boxX + TALLAS_BOX_PAD_X, textY, { width: boxWidth - (TALLAS_BOX_PAD_X * 2) });
-                  textY = doc.y;
+                    .text(b.label, boxX + TALLAS_BOX_PAD_X, y, { width: boxWidth - (TALLAS_BOX_PAD_X * 2) });
+                  y = doc.y;
                 }
-                doc.fillColor('#0f172a').font('Helvetica').fontSize(7)
-                  .text(b.text, boxX + TALLAS_BOX_PAD_X, textY, { width: boxWidth - (TALLAS_BOX_PAD_X * 2) });
+                // Cuadrícula: la talla arriba y su cantidad justo debajo, en la misma
+                // columna — así no hay forma de confundir a qué talla pertenece cada número.
+                b.rows.forEach(row => {
+                  if (!row.length) {
+                    doc.fillColor('#64748b').font('Helvetica').fontSize(7)
+                      .text('N/A', boxX + TALLAS_BOX_PAD_X, y, { width: boxWidth - (TALLAS_BOX_PAD_X * 2) });
+                    y = doc.y;
+                    return;
+                  }
+                  const rowY = y;
+                  row.forEach(([sz], i) => {
+                    doc.fillColor('#64748b').font('Helvetica-Bold').fontSize(6.5)
+                      .text(`T${sz}`, boxX + TALLAS_BOX_PAD_X + (i * TALLAS_GRID_COL_WIDTH), rowY, { width: TALLAS_GRID_COL_WIDTH, align: 'center' });
+                  });
+                  const valuesY = doc.y;
+                  row.forEach(([, q], i) => {
+                    doc.fillColor('#0f172a').font('Helvetica-Bold').fontSize(7.5)
+                      .text(String(q), boxX + TALLAS_BOX_PAD_X + (i * TALLAS_GRID_COL_WIDTH), valuesY, { width: TALLAS_GRID_COL_WIDTH, align: 'center' });
+                  });
+                  y = doc.y;
+                });
               });
               // El texto real de esta celda ("tallas" property) es el que determina el alto
               // del renglón (así la paginación siempre acierta), pero ya lo dibujamos arriba
