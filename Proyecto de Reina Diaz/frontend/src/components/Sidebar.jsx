@@ -13,16 +13,19 @@ import {
   Truck,
   Home,
   Calendar,
-  Layers
+  Layers,
+  ChevronLeft
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
+import useSidebarCollapse from '../hooks/useSidebarCollapse';
 
 export default function Sidebar({ onClose }) {
   const location = useLocation();
   const { user, logout } = useAuth();
   const { t, settings } = useSettings();
   const isEn = settings?.language === 'en';
+  const [collapsed, toggleCollapsed] = useSidebarCollapse();
 
   // Todos los items del sidebar - cualquier usuario autenticado los ve
   // excepto Pagos que solo es para admin y produccion
@@ -48,11 +51,20 @@ export default function Sidebar({ onClose }) {
 
   return (
     <aside className="sidebar">
+      <button
+        type="button"
+        className="sidebar-collapse-btn"
+        onClick={toggleCollapsed}
+        title={collapsed ? (isEn ? 'Expand menu' : 'Expandir menú') : (isEn ? 'Collapse menu' : 'Colapsar menú')}
+      >
+        <ChevronLeft size={14} />
+      </button>
+
       <Link to="/dashboard" className="sidebar-logo" onClick={onClose}>
         <img src="/logo.png" alt="Logo Maquila" className="logo-img" />
-        <span className="gradient-text">Maquila ERP</span>
+        <span className="gradient-text sidebar-label">Maquila ERP</span>
       </Link>
-      
+
       <nav className="nav-links" style={{ marginBottom: '1rem' }}>
         {allowedNavItems.map(item => (
           <Link
@@ -60,12 +72,13 @@ export default function Sidebar({ onClose }) {
             to={item.path}
             className={`nav-link ${location.pathname === item.path ? 'active' : ''}`}
             onClick={onClose}
+            title={item.name}
             style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}
           >
             {item.icon}
-            {item.name}
+            <span className="sidebar-label">{item.name}</span>
             {!!item.badge && (
-              <span className="badge badge-danger" style={{ marginLeft: 'auto', fontSize: '10px', fontWeight: 700, padding: '1px 6px' }}>
+              <span className="badge badge-danger sidebar-label" style={{ marginLeft: 'auto', fontSize: '10px', fontWeight: 700, padding: '1px 6px' }}>
                 {item.badge}
               </span>
             )}
@@ -75,32 +88,34 @@ export default function Sidebar({ onClose }) {
 
       {/* Botones de acción al fondo */}
       <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-        <Link 
-          to="/" 
-          className="btn" 
+        <Link
+          to="/"
+          className="btn"
           onClick={onClose}
-          style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center', 
-            gap: '8px', 
-            background: 'rgba(255,255,255,0.03)', 
-            border: '1px solid rgba(255,255,255,0.05)', 
+          title={isEn ? 'Back to Home' : 'Volver al Inicio'}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+            background: 'rgba(255,255,255,0.03)',
+            border: '1px solid rgba(255,255,255,0.05)',
             color: 'var(--text-primary)',
             padding: '10px',
             borderRadius: '8px',
             fontSize: '0.95rem'
           }}
         >
-          <Home size={18} /> Volver al Inicio
+          <Home size={18} /> <span className="sidebar-label">Volver al Inicio</span>
         </Link>
 
-        <button 
-          className="btn logout-btn" 
-          onClick={() => { logout(); if (onClose) onClose(); }} 
+        <button
+          className="btn logout-btn"
+          onClick={() => { logout(); if (onClose) onClose(); }}
+          title={t('nav.logout')}
           style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
         >
-          <LogOut size={20} /> {t('nav.logout')}
+          <LogOut size={20} /> <span className="sidebar-label">{t('nav.logout')}</span>
         </button>
       </div>
     </aside>

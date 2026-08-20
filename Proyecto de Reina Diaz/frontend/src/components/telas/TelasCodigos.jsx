@@ -58,11 +58,9 @@ export default function TelasCodigos({ codigos, fetchCodigos }) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', gap: '1rem', flexWrap: 'wrap' }}>
         <h2 style={{ fontSize: '1.3rem', margin: 0 }}>{isEn ? 'Fabric Codes & Stock' : 'Códigos de Tela y Existencias'}</h2>
         <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
-          <div style={{ position: 'relative' }}>
-            <Search size={16} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
+          <div className="search-box">
+            <Search size={16} className="search-box-icon" />
             <input
-              className="form-input"
-              style={{ paddingLeft: '32px' }}
               placeholder={isEn ? 'Search code, color, supplier...' : 'Buscar código, color, proveedor...'}
               value={texto}
               onChange={e => setTexto(e.target.value)}

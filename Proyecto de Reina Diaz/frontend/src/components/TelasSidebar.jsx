@@ -6,16 +6,19 @@ import {
   PackageMinus,
   ClipboardList,
   Home,
-  LogOut
+  LogOut,
+  ChevronLeft
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
+import useSidebarCollapse from '../hooks/useSidebarCollapse';
 
 export default function TelasSidebar({ activeTab, setActiveTab, onClose }) {
   const { logout } = useAuth();
   const { t, settings } = useSettings();
   const location = useLocation();
   const navigate = useNavigate();
+  const [collapsed, toggleCollapsed] = useSidebarCollapse();
   const isTelasPage = location.pathname === '/telas';
   const isEn = settings.language === 'en';
 
@@ -38,10 +41,20 @@ export default function TelasSidebar({ activeTab, setActiveTab, onClose }) {
 
   return (
     <aside className="sidebar plancha-sidebar">
+      <button
+        type="button"
+        className="sidebar-collapse-btn"
+        onClick={toggleCollapsed}
+        title={collapsed ? (isEn ? 'Expand menu' : 'Expandir menú') : (isEn ? 'Collapse menu' : 'Colapsar menú')}
+      >
+        <ChevronLeft size={14} />
+      </button>
+
       <Link to="/telas" className="sidebar-logo">
         <img src="/logo.png" alt="Logo Maquila" className="logo-img" />
-        <span className="gradient-text">Maquila ERP</span>
+        <span className="gradient-text sidebar-label">Maquila ERP</span>
         <span
+          className="sidebar-label"
           style={{
             fontSize: '0.7rem',
             fontWeight: 700,
@@ -62,10 +75,11 @@ export default function TelasSidebar({ activeTab, setActiveTab, onClose }) {
             href="#"
             onClick={(e) => { e.preventDefault(); handleTabClick(item.id); }}
             className={`nav-link ${activeTab === item.id ? 'active' : ''}`}
+            title={item.name}
             style={{ cursor: 'pointer' }}
           >
             {item.icon}
-            <span>{item.name}</span>
+            <span className="sidebar-label">{item.name}</span>
           </a>
         ))}
       </nav>
@@ -75,6 +89,7 @@ export default function TelasSidebar({ activeTab, setActiveTab, onClose }) {
           to="/"
           className="btn"
           onClick={onClose}
+          title={isEn ? 'Back to Home' : 'Volver al Inicio'}
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -88,15 +103,16 @@ export default function TelasSidebar({ activeTab, setActiveTab, onClose }) {
             fontSize: '0.95rem'
           }}
         >
-          <Home size={18} /> {isEn ? 'Back to Home' : 'Volver al Inicio'}
+          <Home size={18} /> <span className="sidebar-label">{isEn ? 'Back to Home' : 'Volver al Inicio'}</span>
         </Link>
 
         <button
           className="btn logout-btn"
           onClick={() => { logout(); if (onClose) onClose(); }}
+          title={t('nav.logout')}
           style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
         >
-          <LogOut size={18} /> {t('nav.logout')}
+          <LogOut size={18} /> <span className="sidebar-label">{t('nav.logout')}</span>
         </button>
       </div>
     </aside>

@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { 
-  Plus, 
+import {
+  Plus,
   X,
   Clock,
   Layers,
-  MinusCircle
+  MinusCircle,
+  Search
 } from 'lucide-react';
 import { useSettings } from '../../context/SettingsContext';
 import API_URL from '../../config';
@@ -955,13 +956,15 @@ export default function PlanchaBurros({
           </div>
           
           <div style={{ padding: '1rem 1.5rem 0 1.5rem' }}>
-            <input 
-              type="text" 
-              placeholder={isEn ? "Search model..." : "Buscar modelo..."} 
-              value={searchQuery} 
-              onChange={e => setSearchQuery(e.target.value)} 
-              style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: '1px solid var(--border-color, #e2e8f0)', background: 'var(--bg-input)', color: 'var(--text-primary)', outline: 'none' }} 
-            />
+            <div className="search-box search-box-full">
+              <Search size={16} className="search-box-icon" />
+              <input
+                type="text"
+                placeholder={isEn ? "Search model..." : "Buscar modelo..."}
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+              />
+            </div>
           </div>
 
           <div style={{ overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>

@@ -146,7 +146,57 @@ p { color: var(--text-secondary); line-height: 1.6; }
 .form-input:focus {
   outline: none;
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-color) 22%, transparent);
+}
+
+/* Barra de búsqueda con ícono: se usa en las listas de todos los módulos.
+   Crece un poco y muestra un resplandor del color del tema activo al enfocarse,
+   en vez de quedarse plana como un input normal. */
+.search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: 300px;
+  width: 100%;
+  padding: 0.65rem 0.85rem 0.65rem 2.3rem;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  transition: max-width 0.3s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s ease, border-color 0.25s ease;
+}
+.search-box.search-box-full {
+  max-width: none;
+}
+.search-box .search-box-icon {
+  position: absolute;
+  left: 0.75rem;
+  color: var(--text-secondary);
+  transition: color 0.25s ease;
+  pointer-events: none;
+}
+.search-box input {
+  border: none;
+  background: transparent;
+  outline: none;
+  color: var(--text-primary);
+  width: 100%;
+  min-width: 0;
+  font-size: 0.9rem;
+  font-family: inherit;
+}
+.search-box:focus-within {
+  max-width: 420px;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-color) 18%, transparent);
+}
+.search-box.search-box-full:focus-within {
+  max-width: none;
+}
+.search-box:focus-within .search-box-icon {
+  color: var(--primary-color);
 }
 
 /* Buttons */
@@ -198,14 +248,67 @@ p { color: var(--text-secondary); line-height: 1.6; }
   display: grid;
   grid-template-columns: 260px 1fr;
   min-height: 100vh;
+  transition: grid-template-columns 0.25s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .sidebar {
+  position: relative;
   background: var(--bg-card);
   border-right: 1px solid var(--border-color);
   padding: 2rem 1.5rem;
   display: flex;
   flex-direction: column;
+  transition: padding 0.25s ease;
+}
+
+/* Botón que colapsa/expande el sidebar a solo íconos (se guarda en localStorage) */
+.sidebar-collapse-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  top: 1.75rem;
+  right: -13px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  cursor: pointer;
+  z-index: 5;
+  transition: var(--transition);
+}
+.sidebar-collapse-btn:hover {
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+  transform: scale(1.08);
+}
+.sidebar-collapse-btn svg {
+  transition: transform 0.25s ease;
+}
+
+body.sidebar-collapsed .app-layout {
+  grid-template-columns: 84px 1fr;
+}
+body.sidebar-collapsed .sidebar {
+  padding: 2rem 0.6rem;
+}
+body.sidebar-collapsed .sidebar-label {
+  display: none;
+}
+body.sidebar-collapsed .logo-img {
+  max-width: 40px;
+}
+body.sidebar-collapsed .sidebar-logo {
+  margin-bottom: 1.5rem;
+}
+body.sidebar-collapsed .nav-link {
+  justify-content: center;
+  padding: 0.875rem 0.4rem;
+}
+body.sidebar-collapsed .sidebar-collapse-btn svg {
+  transform: rotate(180deg);
 }
 .sidebar-logo {
   display: flex;
@@ -5243,6 +5346,25 @@ body.dark-mode .search-clear-btn:hover {
   .sidebar-container.mobile-open .sidebar,
   .sidebar-container.mobile-open .plancha-sidebar {
     transform: translateX(0) !important;
+  }
+
+  /* El drawer móvil siempre se ve completo (con etiquetas), sin importar
+     si el usuario colapsó el sidebar en la vista de escritorio */
+  .sidebar-collapse-btn {
+    display: none;
+  }
+  body.sidebar-collapsed .sidebar-label {
+    display: inline;
+  }
+  body.sidebar-collapsed .sidebar {
+    padding: 2rem 1.5rem;
+  }
+  body.sidebar-collapsed .logo-img {
+    max-width: 180px;
+  }
+  body.sidebar-collapsed .nav-link {
+    justify-content: flex-start;
+    padding: 0.875rem 1rem;
   }
 
   /* Show mobile menu button */

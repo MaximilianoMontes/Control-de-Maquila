@@ -727,14 +727,13 @@ export default function Camion() {
           </div>
 
           {/* Search bar */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', padding: '0.5rem 0.75rem', border: '1px solid rgba(255,255,255,0.1)' }}>
-            <Search size={18} color="#94a3b8" />
-            <input 
-              type="text" 
+          <div className="search-box search-box-full">
+            <Search size={18} className="search-box-icon" />
+            <input
+              type="text"
               placeholder={t('prod.search') || 'Buscar modelo, color, orden...'}
-              value={searchTerm} 
+              value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              style={{ border: 'none', background: 'transparent', color: 'var(--text-primary)', outline: 'none', width: '100%', fontSize: '0.9rem' }}
             />
           </div>
 
@@ -883,14 +882,13 @@ export default function Camion() {
           </div>
 
           {cargo.length > 0 && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', padding: '0.5rem 0.75rem', border: '1px solid rgba(255,255,255,0.1)' }}>
-              <Search size={18} color="#94a3b8" />
+            <div className="search-box search-box-full">
+              <Search size={18} className="search-box-icon" />
               <input
                 type="text"
                 placeholder={isEn ? 'Search loaded model, color, order...' : 'Buscar modelo, color u orden cargado...'}
                 value={cargoSearchTerm}
                 onChange={e => setCargoSearchTerm(e.target.value)}
-                style={{ border: 'none', background: 'transparent', color: 'var(--text-primary)', outline: 'none', width: '100%', fontSize: '0.9rem' }}
               />
             </div>
           )}
@@ -1490,14 +1488,13 @@ export default function Camion() {
               <button className="btn-icon" onClick={() => setAdelantadaModalOpen(false)}><X size={22} /></button>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', padding: '0.5rem 0.75rem', border: '1px solid rgba(255,255,255,0.1)', marginTop: '1rem' }}>
-              <Search size={18} color="#94a3b8" />
+            <div className="search-box search-box-full" style={{ marginTop: '1rem' }}>
+              <Search size={18} className="search-box-icon" />
               <input
                 type="text"
                 placeholder={isEn ? 'Search model, tailor, order...' : 'Buscar por modelo, maquilero u orden...'}
                 value={adelantadaSearchTerm}
                 onChange={e => setAdelantadaSearchTerm(e.target.value)}
-                style={{ border: 'none', background: 'transparent', color: 'var(--text-primary)', outline: 'none', width: '100%', fontSize: '0.9rem' }}
               />
             </div>
 

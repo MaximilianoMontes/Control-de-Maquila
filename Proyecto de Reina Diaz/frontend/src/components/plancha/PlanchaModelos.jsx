@@ -1,14 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { 
-  Layers, 
-  Unlock, 
-  Lock, 
-  Edit3, 
-  ShieldCheck, 
+import {
+  Layers,
+  Unlock,
+  Lock,
+  Edit3,
+  ShieldCheck,
   X,
   AlertCircle,
-  ArrowLeftRight
+  ArrowLeftRight,
+  Search
 } from 'lucide-react';
 import { useSettings } from '../../context/SettingsContext';
 import API_URL from '../../config';
@@ -206,13 +207,15 @@ export default function PlanchaModelos({ modelosCamion, fetchModelosCamion, fetc
       <h2 style={{ fontSize: '1.5rem', margin: '0 0 1.5rem 0' }}>{isEn ? 'Models in Transit / Colima' : 'Modelos en Tránsito / Colima'}</h2>
       
       <div style={{ marginBottom: '1.5rem' }}>
-        <input 
-          type="text" 
-          placeholder={isEn ? 'Search by model...' : 'Buscar por modelo...'}
-          value={searchModelosCamion} 
-          onChange={e => setSearchModelosCamion(e.target.value)} 
-          style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: '1px solid var(--border-color, #e2e8f0)', background: 'var(--bg-input)', color: 'var(--text-primary)', outline: 'none' }} 
-        />
+        <div className="search-box search-box-full">
+          <Search size={16} className="search-box-icon" />
+          <input
+            type="text"
+            placeholder={isEn ? 'Search by model...' : 'Buscar por modelo...'}
+            value={searchModelosCamion}
+            onChange={e => setSearchModelosCamion(e.target.value)}
+          />
+        </div>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>

@@ -30,15 +30,13 @@ export default function PlanchaHistorial({ historialGeneral, fetchHistorialGener
         <button className="btn btn-secondary" onClick={fetchHistorialGeneral}>{isEn ? 'Refresh History' : 'Refrescar Historial'}</button>
       </div>
 
-      <div className="glass-card" style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem', background: 'rgba(255, 255, 255, 0.02)' }}>
-        <Search size={20} color="#64748b" />
-        <input 
-          type="text" 
-          className="form-input" 
-          style={{ border: 'none', background: 'transparent', padding: '0.5rem', width: '100%', outline: 'none', fontSize: '0.95rem' }} 
-          placeholder={isEn ? 'Search by model, order, color, size, or ironer...' : 'Buscar por modelo, orden, color, talla o planchador...'} 
-          value={searchTerm} 
-          onChange={e => setSearchTerm(e.target.value)} 
+      <div className="search-box search-box-full" style={{ marginBottom: '1.5rem' }}>
+        <Search size={20} className="search-box-icon" />
+        <input
+          type="text"
+          placeholder={isEn ? 'Search by model, order, color, size, or ironer...' : 'Buscar por modelo, orden, color, talla o planchador...'}
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
         />
       </div>
 
