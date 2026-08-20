@@ -553,6 +553,13 @@ const processImage = async (file) => {
   }
 };
 
+// Recuerda, por corte (inventario_id), la última vez que checkAndMoveToInventory cambió su
+// visibilidad en Cortes, para no revertir esa dirección antes de CUT_FLIP_COOLDOWN_MS — ver
+// el comentario dentro de la función. Vive en memoria (no en el Historial ni en la base) a
+// propósito: es plomería interna, no algo que valga la pena persistir entre reinicios.
+const cutInventarioFlip = new Map();
+const CUT_FLIP_COOLDOWN_MS = 5 * 60 * 1000;
+
 // Helper to check production conditions and transfer to inventory
 const checkAndMoveToInventory = async (produccionId, userId) => {
   const connection = await db.getConnection();
@@ -592,45 +599,27 @@ const checkAndMoveToInventory = async (produccionId, userId) => {
     const archivedOrders = Number(ordersStatus[0].archived_orders) || 0;
     const shouldBeInInventory = totalOrders > 0 && totalOrders === archivedOrders;
 
-    // Segunda capa de protección además del candado de autoArchiveOrders: si por cualquier
-    // motivo futuro este estado llegara a alternar rápido otra vez, no se vuelve a repetir el
-    // mismo mensaje en el historial más de una vez cada 10 minutos.
-    const wasLoggedRecently = async (desc, minutos = 10) => {
-      const [recent] = await connection.query(
-        "SELECT id FROM historial WHERE description = ? AND timestamp >= (NOW() - INTERVAL ? MINUTE) LIMIT 1",
-        [desc, minutos]
-      );
-      return recent.length > 0;
-    };
-
-    const descArchivar = `Marcó el modelo ${prod.modelo} como completado (oculto en Cortes) por liquidación de todas sus órdenes`;
-    const descRestaurar = `Restauró el modelo ${prod.modelo} a Cortes debido a que tiene órdenes de producción activas`;
-
+    // Este ocultar/mostrar en Cortes es una verificación automática de plomería interna, no
+    // una acción de nadie — nunca se registra en el Historial (antes sí, y cuando el estado
+    // quedaba justo en el límite exacto de "completado" podía alternar varias veces al día,
+    // llenando de ruido las entradas más recientes del Historial y tapando movimientos reales
+    // que sí importa poder encontrar ahí). El candado de 5 minutos contra el parpadeo se
+    // mantiene, pero ahora en memoria — ya no depende de haber escrito algo en el Historial.
     if (shouldBeInInventory) {
-      // Si este modelo se restauró a Cortes hace menos de 5 minutos, no lo volvemos a ocultar
-      // de inmediato — esto evita el parpadeo (ocultar/restaurar/ocultar...) que se ve en el
-      // Historial cuando el pago o las piezas recibidas quedan justo en el límite exacto de
-      // completarse; si de verdad ya está listo, se confirma solo en la siguiente pasada.
-      if (prod.en_inventario !== 1 && !(await wasLoggedRecently(descRestaurar, 5))) {
+      const last = cutInventarioFlip.get(prod.cut_id);
+      const recienRestaurado = last && last.enInventario === 0 && (Date.now() - last.at) < CUT_FLIP_COOLDOWN_MS;
+      if (prod.en_inventario !== 1 && !recienRestaurado) {
         await connection.query("UPDATE inventario SET en_inventario = 1 WHERE id = ?", [prod.cut_id]);
-        if (!(await wasLoggedRecently(descArchivar))) {
-          await connection.query(
-            "INSERT INTO historial (user_id, action, target, description) VALUES (?, 'EDIT', 'INVENTARIO', ?)",
-            [userId || 1, descArchivar]
-          );
-        }
+        cutInventarioFlip.set(prod.cut_id, { enInventario: 1, at: Date.now() });
       }
     } else {
       // If there are active production orders, we make the cut visible in Cortes — mismo
       // candado de 5 minutos en la dirección contraria.
-      if (prod.en_inventario === 1 && !(await wasLoggedRecently(descArchivar, 5))) {
+      const last = cutInventarioFlip.get(prod.cut_id);
+      const recienArchivado = last && last.enInventario === 1 && (Date.now() - last.at) < CUT_FLIP_COOLDOWN_MS;
+      if (prod.en_inventario === 1 && !recienArchivado) {
         await connection.query("UPDATE inventario SET en_inventario = 0 WHERE id = ?", [prod.cut_id]);
-        if (!(await wasLoggedRecently(descRestaurar))) {
-          await connection.query(
-            "INSERT INTO historial (user_id, action, target, description) VALUES (?, 'EDIT', 'INVENTARIO', ?)",
-            [userId || 1, descRestaurar]
-          );
-        }
+        cutInventarioFlip.set(prod.cut_id, { enInventario: 0, at: Date.now() });
       }
     }
 
