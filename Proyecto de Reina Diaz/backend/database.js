@@ -2077,6 +2077,27 @@ async function initializeDatabase() {
           FOREIGN KEY(usuario_id) REFERENCES users(id)
         )
       `);
+      try {
+        // Folio del rollo del que sobró esta devolución (solo referencia/trazabilidad, no
+        // reserva el folio — el rollo original ya lo tiene ocupado desde su recepción).
+        await connection.query("ALTER TABLE telas_devoluciones ADD COLUMN folio INT DEFAULT NULL");
+      } catch (e) {
+        // Columna ya existe
+      }
+
+      // Solo existen 50 folios físicos (etiquetas reutilizables) para marcar rollos de tela
+      // en la bodega. Cada rollo de una recepción aprobada ocupa uno mientras le quede tela
+      // disponible (misma cuenta que ya se usa en "Disponible (m)" por recepción); en cuanto
+      // se agota, el folio vuelve a estar libre para el siguiente rollo que entre.
+      await connection.query(`
+        CREATE TABLE IF NOT EXISTS telas_recepcion_folios (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          recepcion_id INT NOT NULL,
+          folio INT NOT NULL,
+          fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY(recepcion_id) REFERENCES telas_recepciones(id) ON DELETE CASCADE
+        )
+      `);
 
       await connection.query(`
         CREATE TABLE IF NOT EXISTS telas_codigos_pendientes (

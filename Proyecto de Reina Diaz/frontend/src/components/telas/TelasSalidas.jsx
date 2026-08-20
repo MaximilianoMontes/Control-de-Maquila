@@ -174,6 +174,8 @@ export default function TelasSalidas({ codigos, fetchCodigos }) {
   const [devCodigoId, setDevCodigoId] = useState('');
   const [devMetros, setDevMetros] = useState('');
   const [devMotivo, setDevMotivo] = useState('');
+  const [devFolio, setDevFolio] = useState('');
+  const [foliosEnUsoDelCodigo, setFoliosEnUsoDelCodigo] = useState([]);
   const [guardandoDev, setGuardandoDev] = useState(false);
 
   const [lineasPendientes, setLineasPendientes] = useState([]);
@@ -225,6 +227,21 @@ export default function TelasSalidas({ codigos, fetchCodigos }) {
     fetchDevoluciones();
   }, [fetchDevoluciones]);
 
+  // Folios en uso del código seleccionado en Devoluciones — solo para referenciar de qué
+  // rollo salió el sobrante, no reserva nada.
+  useEffect(() => {
+    setDevFolio('');
+    if (!devCodigoId) { setFoliosEnUsoDelCodigo([]); return; }
+    (async () => {
+      try {
+        const res = await axios.get(`${API_URL}/api/telas/folios/en-uso?codigo_id=${devCodigoId}`, authHeaders());
+        setFoliosEnUsoDelCodigo(res.data);
+      } catch {
+        setFoliosEnUsoDelCodigo([]);
+      }
+    })();
+  }, [devCodigoId]);
+
   const requisicionesAgrupadas = useMemo(() => {
     const grupos = new Map();
     for (const l of lineasPendientes) {
@@ -259,10 +276,11 @@ export default function TelasSalidas({ codigos, fetchCodigos }) {
     if (!devCodigoId || !devMetros) return;
     setGuardandoDev(true);
     try {
-      await axios.post(`${API_URL}/api/telas/devoluciones`, { codigo_id: devCodigoId, metros: devMetros, motivo: devMotivo }, authHeaders());
+      await axios.post(`${API_URL}/api/telas/devoluciones`, { codigo_id: devCodigoId, metros: devMetros, motivo: devMotivo, folio: devFolio || null }, authHeaders());
       toast.success(isEn ? 'Return registered' : 'Devolución registrada');
       setDevMetros('');
       setDevMotivo('');
+      setDevFolio('');
       fetchCodigos();
       fetchDevoluciones();
     } catch (e) {
@@ -372,6 +390,18 @@ export default function TelasSalidas({ codigos, fetchCodigos }) {
               <label className="form-label">{isEn ? 'Reason' : 'Motivo'}</label>
               <input className="form-input" value={devMotivo} onChange={e => setDevMotivo(e.target.value)} placeholder={isEn ? 'e.g. unused excess, defect found later' : 'ej. sobrante sin usar, defecto detectado después'} />
             </div>
+            {foliosEnUsoDelCodigo.length > 0 && (
+              <div className="form-group">
+                <label className="form-label">{isEn ? 'Roll folio it came from' : 'Folio del rollo del que salió'}</label>
+                <select className="form-input" value={devFolio} onChange={e => setDevFolio(e.target.value)}>
+                  <option value="">{isEn ? 'Not specified' : 'No especificar'}</option>
+                  {foliosEnUsoDelCodigo.map(f => <option key={f.folio} value={f.folio}>{f.folio}</option>)}
+                </select>
+                <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
+                  {isEn ? 'Optional, just for reference — does not free up the folio.' : 'Opcional, solo para referencia — no libera el folio.'}
+                </span>
+              </div>
+            )}
             <button type="submit" className="btn btn-primary" disabled={guardandoDev}>
               {guardandoDev ? (isEn ? 'Saving...' : 'Guardando...') : (isEn ? 'Register Return' : 'Registrar Devolución')}
             </button>
@@ -493,13 +523,14 @@ export default function TelasSalidas({ codigos, fetchCodigos }) {
                 <th>{isEn ? 'Date & Time' : 'Fecha y Hora'}</th>
                 <th>{isEn ? 'Code' : 'Código'}</th>
                 <th style={{ textAlign: 'right' }}>{isEn ? 'Meters' : 'Metros'}</th>
+                <th>{isEn ? 'Folio' : 'Folio'}</th>
                 <th>{isEn ? 'Reason' : 'Motivo'}</th>
                 <th>{isEn ? 'User' : 'Usuario'}</th>
               </tr>
             </thead>
             <tbody>
               {devoluciones.length === 0 ? (
-                <tr><td colSpan="5" style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '1.5rem' }}>
+                <tr><td colSpan="6" style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '1.5rem' }}>
                   {isEn ? 'No returns found.' : 'No se encontraron devoluciones.'}
                 </td></tr>
               ) : (
@@ -508,6 +539,7 @@ export default function TelasSalidas({ codigos, fetchCodigos }) {
                     <td>{new Date(d.fecha).toLocaleString('es-MX')}</td>
                     <td style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>{d.codigo}</td>
                     <td style={{ textAlign: 'right', color: '#34d399', fontWeight: 'bold' }}>+{parseFloat(d.metros).toFixed(2)}</td>
+                    <td>{d.folio || '—'}</td>
                     <td>{d.motivo || '—'}</td>
                     <td>{d.username || '—'}</td>
                   </tr>

@@ -683,10 +683,11 @@ const guides_es = {
           </ol>
           <p style={{ marginTop: '10px' }}>La sección de recepción ya no maneja "modelos" como campo — para pedir tela destinada a un modelo específico se usa la <strong>Requisición de Tela</strong> (ver guía siguiente).</p>
           <p>Cada factura muestra un estado de revisión general en su listado: <strong>Sin revisar</strong> (ninguna línea tocada), <strong>Revisado parcial</strong> (algunas líneas aprobadas/devueltas, otras pendientes) o <strong>Revisado total</strong> (todas las líneas ya resueltas).</p>
-          <p>En "Códigos de Tela y Existencias", al hacer clic sobre un código se puede ver su <strong>inventario por rollo</strong> (cada línea recibida, con su propia existencia disponible) además de su historial de salidas.</p>
+          <p>En "Códigos de Tela y Existencias", al hacer clic sobre un código se puede ver su <strong>inventario por rollo</strong> (cada línea recibida, con su propia existencia disponible y su ancho real) además de su historial de salidas.</p>
+          <p>Al <strong>aprobar</strong> una recepción (confirmar la cantidad que realmente llegó) también se puede capturar el <strong>ancho</strong> real del rollo y, opcionalmente, asignarle a cada rollo un <strong>folio</strong> — solo existen 50 folios físicos (etiquetas reutilizables) para marcar rollos en la bodega; el sistema solo deja elegir folios que no estén ya ocupados por otro rollo con existencia disponible, y en cuanto un rollo se agota por completo su folio vuelve a estar libre para el siguiente. Al registrar una <strong>Devolución de Tela</strong> se puede indicar, solo como referencia, de qué folio salió el sobrante.</p>
         </div>
       ),
-      keywords: 'telas almacen materia prima algodon proveedor rollos yardas metros codigo generar recepcion revisado devolucion muestra observaciones inventario por rollo'
+      keywords: 'telas almacen materia prima algodon proveedor rollos yardas metros codigo generar recepcion revisado devolucion muestra observaciones inventario por rollo ancho folio folios etiqueta'
     },
     {
       title: 'Generar un código de tela y su fórmula de precio',
@@ -713,9 +714,10 @@ const guides_es = {
           </ol>
           <p>Finalizar la requisición no descuenta nada por sí solo — la confirmación de "Surtir" es la única acción que mueve existencia.</p>
           <p>Para autorizar varias líneas de un jalón, cada una tiene una casilla junto a su nombre (solo se puede marcar si tiene existencia disponible); al marcar una o más y presionar <strong>"Autorizar (N)"</strong>, el sistema las surte automáticamente usando la asignación de rollos sugerida para cada una, sin tener que abrir cada línea por separado.</p>
+          <p>El detalle de cada requisición muestra <strong>"Pedida (m)"</strong> junto a <strong>"Surtida (m)"</strong> — si una línea se surtió por menos de lo pedido (por ejemplo, porque no había suficiente existencia), la diferencia queda resaltada ahí mismo.</p>
         </div>
       ),
-      keywords: 'requisicion tela modelo surtir pendiente almacen pedido ancho folio rollos elegir autorizar lote casilla'
+      keywords: 'requisicion tela modelo surtir pendiente almacen pedido ancho folio rollos elegir autorizar lote casilla surtida pedida'
     },
     {
       title: 'Ver el historial de salidas de un código o en general',
@@ -1344,10 +1346,11 @@ const guides_en = {
           </ol>
           <p style={{ marginTop: '10px' }}>Receiving no longer has a "models" field — to request fabric for a specific model, use a <strong>Fabric Requisition</strong> instead (see the next guide).</p>
           <p>Each invoice shows an overall review status in its list: <strong>Not reviewed</strong> (no line touched yet), <strong>Partially reviewed</strong> (some lines approved/returned, others still pending), or <strong>Fully reviewed</strong> (every line resolved).</p>
-          <p>In "Fabric Codes & Stock", clicking a code shows its <strong>inventory by roll</strong> (each received line, with its own available stock) in addition to its outbound history.</p>
+          <p>In "Fabric Codes & Stock", clicking a code shows its <strong>inventory by roll</strong> (each received line, with its own available stock and actual width) in addition to its outbound history.</p>
+          <p>When <strong>approving</strong> a receipt (confirming the quantity that actually arrived) you can also capture the roll's actual <strong>width</strong> and, optionally, assign each roll a <strong>folio</strong> — there are only 50 physical folios (reusable tags) to mark rolls in the warehouse; the system only lets you pick folios that aren't already held by another roll with remaining stock, and once a roll is fully used up its folio becomes free again for the next one. When registering a <strong>Fabric Return</strong> you can note, just for reference, which folio the leftover came from.</p>
         </div>
       ),
-      keywords: 'fabrics warehouse raw material supplier rolls yards meters code generate receiving reviewed return sample observations inventory by roll'
+      keywords: 'fabrics warehouse raw material supplier rolls yards meters code generate receiving reviewed return sample observations inventory by roll width folio folios tag'
     },
     {
       title: 'Generating a fabric code and its price formula',
@@ -1374,9 +1377,10 @@ const guides_en = {
           </ol>
           <p>Finalizing a requisition alone doesn't touch stock — confirming "Fulfill" is the only action that does.</p>
           <p>To authorize several lines at once, each one has a checkbox next to it (only selectable if it has available stock); checking one or more and pressing <strong>"Authorize (N)"</strong> fulfills them automatically using each line's suggested roll allocation, without opening each one individually.</p>
+          <p>Each requisition's detail shows <strong>"Requested (m)"</strong> next to <strong>"Supplied (m)"</strong> — if a line was fulfilled for less than requested (for example, because there wasn't enough stock), the difference is highlighted right there.</p>
         </div>
       ),
-      keywords: 'requisition fabric model fulfill pending warehouse request width folio rolls choose authorize bulk checkbox'
+      keywords: 'requisition fabric model fulfill pending warehouse request width folio rolls choose authorize bulk checkbox supplied requested'
     },
     {
       title: "Viewing a code's outbound history or the general one",

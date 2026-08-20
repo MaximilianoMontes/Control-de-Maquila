@@ -26,6 +26,7 @@ export default function TelasFacturas({ proveedores, codigos, fetchCodigos }) {
   const [lineasDetectadas, setLineasDetectadas] = useState(null);
 
   const [aprobando, setAprobando] = useState(null); // { id, rollos, yardas }
+  const [foliosDisponibles, setFoliosDisponibles] = useState([]);
 
   const fetchFacturas = useCallback(async () => {
     try {
@@ -95,12 +96,28 @@ export default function TelasFacturas({ proveedores, codigos, fetchCodigos }) {
     }
   };
 
-  const abrirAprobar = (r) => {
-    setAprobando({ id: r.id, rollos: r.rollos, metros: r.metros, observaciones: r.observaciones || '', ancho: r.ancho || '' });
+  const abrirAprobar = async (r) => {
+    const foliosYaAsignados = r.folios ? String(r.folios).split(',').map(f => parseInt(f)) : [];
+    setAprobando({ id: r.id, rollos: r.rollos, metros: r.metros, observaciones: r.observaciones || '', ancho: r.ancho || '', folios: foliosYaAsignados });
+    try {
+      const res = await axios.get(`${API_URL}/api/telas/folios/disponibles?excluir_recepcion_id=${r.id}`, authHeaders());
+      setFoliosDisponibles(res.data);
+    } catch {
+      setFoliosDisponibles([]);
+    }
+  };
+
+  const setFolioEnSlot = (idx, valor) => {
+    setAprobando(prev => {
+      const folios = [...(prev.folios || [])];
+      folios[idx] = valor ? parseInt(valor) : null;
+      return { ...prev, folios };
+    });
   };
 
   const confirmarAprobar = async () => {
-    await actualizarRevision(aprobando.id, 'aprobado', { rollos: aprobando.rollos, metros: aprobando.metros, observaciones: aprobando.observaciones, ancho: aprobando.ancho });
+    const foliosLimpios = (aprobando.folios || []).filter(f => f != null);
+    await actualizarRevision(aprobando.id, 'aprobado', { rollos: aprobando.rollos, metros: aprobando.metros, observaciones: aprobando.observaciones, ancho: aprobando.ancho, folios: foliosLimpios });
     setAprobando(null);
   };
 
@@ -395,7 +412,10 @@ export default function TelasFacturas({ proveedores, codigos, fetchCodigos }) {
                           {r.codigo}
                           {r.observaciones && <div style={{ fontWeight: 'normal', fontSize: '0.72rem', color: '#f59e0b' }} title={r.observaciones}>{r.observaciones}</div>}
                         </td>
-                        <td style={{ textAlign: 'right' }}>{r.rollos}</td>
+                        <td style={{ textAlign: 'right' }}>
+                          {r.rollos}
+                          {r.folios && <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>{isEn ? 'Folios' : 'Folios'}: {r.folios}</div>}
+                        </td>
                         <td style={{ textAlign: 'right' }}>{r.yardas}</td>
                         <td style={{ textAlign: 'right' }}>{r.metros}</td>
                         <td>
@@ -447,6 +467,34 @@ export default function TelasFacturas({ proveedores, codigos, fetchCodigos }) {
               <label className="form-label">{isEn ? 'Width' : 'Ancho'}</label>
               <input type="number" step="0.001" className="form-input" value={aprobando.ancho} onChange={e => setAprobando({ ...aprobando, ancho: e.target.value })} placeholder={isEn ? 'Optional' : 'Opcional'} />
             </div>
+            {parseInt(aprobando.rollos) > 0 && (
+              <div className="form-group">
+                <label className="form-label">{isEn ? 'Roll folios (of the 50 physical tags)' : 'Folios de rollo (de las 50 etiquetas físicas)'}</label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(70px, 1fr))', gap: '0.4rem' }}>
+                  {Array.from({ length: parseInt(aprobando.rollos) }).map((_, idx) => {
+                    const elegidoAqui = aprobando.folios?.[idx];
+                    const elegidosOtros = (aprobando.folios || []).filter((f, i) => i !== idx && f != null);
+                    const opciones = foliosDisponibles.filter(f => !elegidosOtros.includes(f));
+                    return (
+                      <select
+                        key={idx}
+                        className="form-input"
+                        style={{ padding: '4px 6px', fontSize: '0.8rem' }}
+                        value={elegidoAqui || ''}
+                        onChange={e => setFolioEnSlot(idx, e.target.value)}
+                      >
+                        <option value="">{isEn ? `Roll ${idx + 1}` : `Rollo ${idx + 1}`}</option>
+                        {(elegidoAqui && !opciones.includes(elegidoAqui)) && <option value={elegidoAqui}>{elegidoAqui}</option>}
+                        {opciones.map(f => <option key={f} value={f}>{f}</option>)}
+                      </select>
+                    );
+                  })}
+                </div>
+                <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
+                  {isEn ? 'Optional — leave blank if you are not tagging individual rolls' : 'Opcional — déjalo en blanco si no vas a etiquetar los rollos por separado'}
+                </span>
+              </div>
+            )}
             <div className="form-group">
               <label className="form-label">{isEn ? 'Observations (defects, etc.)' : 'Observaciones (fallas, etc.)'}</label>
               <input className="form-input" value={aprobando.observaciones} onChange={e => setAprobando({ ...aprobando, observaciones: e.target.value })} placeholder={isEn ? 'Optional' : 'Opcional'} />

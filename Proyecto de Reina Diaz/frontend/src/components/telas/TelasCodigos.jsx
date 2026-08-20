@@ -147,6 +147,7 @@ export default function TelasCodigos({ codigos, fetchCodigos }) {
                       <th>{isEn ? 'Date' : 'Fecha'}</th>
                       <th>{isEn ? 'Invoice' : 'Factura'}</th>
                       <th style={{ textAlign: 'right' }}>{isEn ? 'Rolls' : 'Rollos'}</th>
+                      <th>{isEn ? 'Folios' : 'Folios'}</th>
                       <th style={{ textAlign: 'right' }}>{isEn ? 'Received (m)' : 'Recibido (m)'}</th>
                       <th style={{ textAlign: 'right' }}>{isEn ? 'Width' : 'Ancho'}</th>
                       <th style={{ textAlign: 'right' }}>{isEn ? 'Available (m)' : 'Disponible (m)'}</th>
@@ -155,9 +156,9 @@ export default function TelasCodigos({ codigos, fetchCodigos }) {
                   </thead>
                   <tbody>
                     {cargandoRollos ? (
-                      <tr><td colSpan="7" style={{ textAlign: 'center', padding: '1.5rem' }}>{isEn ? 'Loading...' : 'Cargando...'}</td></tr>
+                      <tr><td colSpan="8" style={{ textAlign: 'center', padding: '1.5rem' }}>{isEn ? 'Loading...' : 'Cargando...'}</td></tr>
                     ) : !rollos || rollos.length === 0 ? (
-                      <tr><td colSpan="7" style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '1.5rem' }}>
+                      <tr><td colSpan="8" style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '1.5rem' }}>
                         {isEn ? 'No rolls received for this code.' : 'No hay rollos recibidos de este código.'}
                       </td></tr>
                     ) : (
@@ -166,6 +167,7 @@ export default function TelasCodigos({ codigos, fetchCodigos }) {
                           <td>{new Date(r.fecha_creacion).toLocaleDateString('es-MX')}</td>
                           <td>{r.numero_factura || '—'}</td>
                           <td style={{ textAlign: 'right' }}>{r.rollos}</td>
+                          <td style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{r.folios || '—'}</td>
                           <td style={{ textAlign: 'right' }}>{parseFloat(r.metros).toFixed(2)}</td>
                           <td style={{ textAlign: 'right' }}>{r.ancho ? parseFloat(r.ancho).toFixed(3) : '—'}</td>
                           <td style={{ textAlign: 'right', fontWeight: 'bold', color: parseFloat(r.disponible) > 0 ? '#34d399' : '#ef4444' }}>{parseFloat(r.disponible).toFixed(2)}</td>
