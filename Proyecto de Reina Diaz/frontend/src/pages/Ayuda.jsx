@@ -529,7 +529,7 @@ const guides_es = {
       title: 'Generar el Reporte de Camión (PDF)',
       content: (
         <div>
-          <p>Desde la sección de <strong>Reportes</strong>, la tarjeta <strong>Reporte de Camión</strong> genera un PDF con la misma lista de "Modelos Terminados en Maquila" que ves en la pantalla de Camión: modelo, maquilero, orden, cliente, colores disponibles con su cantidad exacta, precio y piezas disponibles — además del total de lotes y piezas.</p>
+          <p>Desde la sección de <strong>Reportes</strong>, la tarjeta <strong>Reporte de Camión</strong> genera un PDF con la misma lista de "Modelos Terminados en Maquila" que ves en la pantalla de Camión: modelo, maquilero, orden, cliente, colores disponibles con su cantidad exacta, precio y piezas disponibles — además del total de modelos y piezas.</p>
           <div className="step-alert">
             <strong>💡 Filtro de Entregas Adelantadas:</strong> Marca la casilla <strong>"Incluir también modelos con Entrega Adelantada ya aplicada"</strong> para agregar, en una sección aparte y claramente marcada, únicamente los modelos que <strong>ya se subieron al camión</strong> antes de que su orden estuviera Terminada (no una lista de candidatos que podrían aplicarla, solo los que de verdad se usaron).
           </div>
@@ -1190,7 +1190,7 @@ const guides_en = {
       title: 'Generating the Truck Report (PDF)',
       content: (
         <div>
-          <p>From the <strong>Reports</strong> section, the <strong>Truck Report</strong> card generates a PDF with the same "Finished Models in Maquila" list you see on the Truck screen: model, tailor, order, client, available colors with exact quantities, price, and available pieces — plus the total batch and piece counts.</p>
+          <p>From the <strong>Reports</strong> section, the <strong>Truck Report</strong> card generates a PDF with the same "Finished Models in Maquila" list you see on the Truck screen: model, tailor, order, client, available colors with exact quantities, price, and available pieces — plus the total model and piece counts.</p>
           <div className="step-alert">
             <strong>💡 Early Delivery Filter:</strong> Check <strong>"Also include models with Early Delivery already applied"</strong> to add, in a separate, clearly marked section, only the models that were <strong>already loaded onto the truck</strong> before their order was Finished (not a list of candidates that could use it, only the ones that actually did).
           </div>

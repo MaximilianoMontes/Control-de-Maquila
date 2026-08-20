@@ -3609,11 +3609,37 @@ const sortTallasEntries = (entries) => entries.sort((a, b) => {
   return a[0].localeCompare(b[0], undefined, { numeric: true });
 });
 
-// Cada color en su propio renglón (salto de línea real, no " | ") — antes todo iba en una
-// sola línea larga que pdfkit envolvía donde le tocara, a veces justo a la mitad de un color,
-// dando la impresión de que unas tallas eran de otro color. Con renglones separados y un
-// marcador al inicio de cada uno, no hay forma de confundir dónde termina un color y empieza
-// el siguiente.
+// Cada color en su propio renglón, y ahora también con salto de línea manual dentro
+// del renglón: antes, si la lista de tallas de un color era larga, pdfkit la envolvía
+// solo donde le alcanzaba el ancho de columna, sin ninguna marca de que era una
+// continuación — se veía como si esas tallas fueran de otro color/línea. Aquí partimos
+// nosotros mismos en los espacios entre pares talla:cantidad (nunca a media cifra) y
+// sangramos la continuación bajo el nombre del color, para que quede claro que sigue
+// siendo el mismo grupo. Además dejamos un renglón en blanco entre colores.
+const TALLAS_PDF_CHARS_PER_LINE = 34;
+const wrapTallasParts = (parts, indent) => {
+  const lines = [];
+  let current = '';
+  parts.forEach(part => {
+    const candidate = current ? `${current}  ${part}` : part;
+    if (candidate.length > TALLAS_PDF_CHARS_PER_LINE && current) {
+      lines.push(current);
+      current = part;
+    } else {
+      current = candidate;
+    }
+  });
+  if (current) lines.push(current);
+  return lines.map((line, i) => (i === 0 ? line : `${indent}${line}`)).join('\n');
+};
+const formatTallasGroupPdf = (label, sizesObj) => {
+  const parts = sortTallasEntries(Object.entries(sizesObj))
+    .filter(([, q]) => parseInt(q) > 0)
+    .map(([sz, q]) => `T${sz}:${q}`);
+  if (!parts.length) return null;
+  const prefix = label ? `${label}  ` : '';
+  return prefix + wrapTallasParts(parts, ' '.repeat(prefix.length));
+};
 const formatTallasPdf = (tallasJson) => {
   let tallas = {};
   try { tallas = typeof tallasJson === 'string' ? JSON.parse(tallasJson) : (tallasJson || {}); } catch (e) { tallas = {}; }
@@ -3621,21 +3647,11 @@ const formatTallasPdf = (tallasJson) => {
   const isNested = typeof firstVal === 'object' && firstVal !== null;
   if (isNested) {
     return Object.entries(tallas)
-      .map(([color, sizesObj]) => {
-        const parts = sortTallasEntries(Object.entries(sizesObj))
-          .filter(([, q]) => parseInt(q) > 0)
-          .map(([sz, q]) => `T${sz}:${q}`)
-          .join(', ');
-        return parts ? `- ${String(color).toUpperCase()}: ${parts}` : null;
-      })
+      .map(([color, sizesObj]) => formatTallasGroupPdf(String(color).toUpperCase(), sizesObj))
       .filter(Boolean)
-      .join('\n') || 'N/A';
+      .join('\n\n') || 'N/A';
   }
-  const parts = sortTallasEntries(Object.entries(tallas))
-    .filter(([, q]) => parseInt(q) > 0)
-    .map(([sz, q]) => `T${sz}:${q}`)
-    .join(', ');
-  return parts ? `- ${parts}` : 'N/A';
+  return formatTallasGroupPdf('', tallas) || 'N/A';
 };
 
 // Orden natural para el No. de Orden (menor a mayor) aunque tenga letras mezcladas
@@ -3712,10 +3728,10 @@ app.get('/api/reportes/camion/:id', authenticateToken, async (req, res) => {
           { label: tLabel("IMAGEN", "IMAGE"), property: "imagen", width: 70 },
           { label: tLabel("MODELO", "MODEL"), property: "modelo", width: 65 },
           { label: tLabel("ORDEN", "ORDER"), property: "orden", width: 60 },
-          { label: tLabel("CLIENTE", "CLIENT"), property: "cliente", width: 110 },
-          { label: tLabel("COLORES", "COLORS"), property: "colores", width: 175 },
+          { label: tLabel("CLIENTE", "CLIENT"), property: "cliente", width: 100 },
+          { label: tLabel("COLORES", "COLORS"), property: "colores", width: 160 },
           { label: tLabel("PIEZAS", "PIECES"), property: "piezas", width: 50 },
-          { label: tLabel("DISTRIBUCIÓN DE TALLAS", "SIZE BREAKDOWN"), property: "tallas", width: 235 }
+          { label: tLabel("DISTRIBUCIÓN DE TALLAS", "SIZE BREAKDOWN"), property: "tallas", width: 260 }
         ],
         datas: items.map(it => ({
           imagen: '\n\n\n\n\n\n',
