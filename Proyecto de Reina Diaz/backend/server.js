@@ -594,38 +594,41 @@ const checkAndMoveToInventory = async (produccionId, userId) => {
 
     // Segunda capa de protección además del candado de autoArchiveOrders: si por cualquier
     // motivo futuro este estado llegara a alternar rápido otra vez, no se vuelve a repetir el
-    // mismo mensaje en el historial más de una vez cada 10 minutos. El cambio de estado real
-    // (en_inventario) siempre se aplica igual — esto solo evita el spam en el registro.
-    const wasLoggedRecently = async (desc) => {
+    // mismo mensaje en el historial más de una vez cada 10 minutos.
+    const wasLoggedRecently = async (desc, minutos = 10) => {
       const [recent] = await connection.query(
-        "SELECT id FROM historial WHERE description = ? AND timestamp >= (NOW() - INTERVAL 10 MINUTE) LIMIT 1",
-        [desc]
+        "SELECT id FROM historial WHERE description = ? AND timestamp >= (NOW() - INTERVAL ? MINUTE) LIMIT 1",
+        [desc, minutos]
       );
       return recent.length > 0;
     };
 
-    if (shouldBeInInventory) {
-      if (prod.en_inventario !== 1) {
-        await connection.query("UPDATE inventario SET en_inventario = 1 WHERE id = ?", [prod.cut_id]);
+    const descArchivar = `Marcó el modelo ${prod.modelo} como completado (oculto en Cortes) por liquidación de todas sus órdenes`;
+    const descRestaurar = `Restauró el modelo ${prod.modelo} a Cortes debido a que tiene órdenes de producción activas`;
 
-        const desc = `Marcó el modelo ${prod.modelo} como completado (oculto en Cortes) por liquidación de todas sus órdenes`;
-        if (!(await wasLoggedRecently(desc))) {
+    if (shouldBeInInventory) {
+      // Si este modelo se restauró a Cortes hace menos de 5 minutos, no lo volvemos a ocultar
+      // de inmediato — esto evita el parpadeo (ocultar/restaurar/ocultar...) que se ve en el
+      // Historial cuando el pago o las piezas recibidas quedan justo en el límite exacto de
+      // completarse; si de verdad ya está listo, se confirma solo en la siguiente pasada.
+      if (prod.en_inventario !== 1 && !(await wasLoggedRecently(descRestaurar, 5))) {
+        await connection.query("UPDATE inventario SET en_inventario = 1 WHERE id = ?", [prod.cut_id]);
+        if (!(await wasLoggedRecently(descArchivar))) {
           await connection.query(
             "INSERT INTO historial (user_id, action, target, description) VALUES (?, 'EDIT', 'INVENTARIO', ?)",
-            [userId || 1, desc]
+            [userId || 1, descArchivar]
           );
         }
       }
     } else {
-      // If there are active production orders, we make the cut visible in Cortes
-      if (prod.en_inventario === 1) {
+      // If there are active production orders, we make the cut visible in Cortes — mismo
+      // candado de 5 minutos en la dirección contraria.
+      if (prod.en_inventario === 1 && !(await wasLoggedRecently(descArchivar, 5))) {
         await connection.query("UPDATE inventario SET en_inventario = 0 WHERE id = ?", [prod.cut_id]);
-
-        const desc = `Restauró el modelo ${prod.modelo} a Cortes debido a que tiene órdenes de producción activas`;
-        if (!(await wasLoggedRecently(desc))) {
+        if (!(await wasLoggedRecently(descRestaurar))) {
           await connection.query(
             "INSERT INTO historial (user_id, action, target, description) VALUES (?, 'EDIT', 'INVENTARIO', ?)",
-            [userId || 1, desc]
+            [userId || 1, descRestaurar]
           );
         }
       }
