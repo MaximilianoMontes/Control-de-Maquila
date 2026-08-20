@@ -6876,16 +6876,18 @@ app.post('/api/telas/facturas/:id/recepciones', authenticateToken, async (req, r
 
 app.patch('/api/telas/recepciones/:id/revision', authenticateToken, async (req, res) => {
   if (!telasAllowed(req)) return res.status(403).json({ error: 'No autorizado' });
-  const { ancho_revisado, estado, devolucion_motivo, rollos, metros: metrosCorregidos, observaciones } = req.body;
+  const { ancho_revisado, estado, devolucion_motivo, rollos, metros: metrosCorregidos, observaciones, ancho } = req.body;
   try {
     // Al aprobar (o en cualquier revisión), se puede corregir la cantidad que realmente
     // llegó — lo que ya se guardó al "dar de entrada" era la cantidad declarada, no
     // necesariamente la real. La corrección se captura en METROS (así es como se vuelve a
     // medir físicamente), y de ahí se recalculan las yardas para que el registro siga
-    // completo.
+    // completo. El ancho real (a veces distinto del nominal del código) también se puede
+    // asignar en este mismo paso, ya que es cuando alguien tiene el rollo físico en mano.
     const huboCorreccion = metrosCorregidos != null && metrosCorregidos !== '';
     const metros = huboCorreccion ? parseFloat(metrosCorregidos) : null;
     const yardas = huboCorreccion ? parseFloat((metros / 0.9144).toFixed(2)) : null;
+    const anchoValor = ancho != null && ancho !== '' ? parseFloat(ancho) : null;
 
     await db.query(
       `UPDATE telas_recepciones
@@ -6894,9 +6896,10 @@ app.patch('/api/telas/recepciones/:id/revision', authenticateToken, async (req, 
            rollos = COALESCE(?, rollos),
            yardas = COALESCE(?, yardas),
            metros = COALESCE(?, metros),
-           observaciones = COALESCE(?, observaciones)
+           observaciones = COALESCE(?, observaciones),
+           ancho = COALESCE(?, ancho)
        WHERE id = ?`,
-      [ancho_revisado ? 1 : 0, estado || 'pendiente', devolucion_motivo || null, estado || '', rollos != null && rollos !== '' ? rollos : null, yardas, metros, observaciones != null && observaciones !== '' ? observaciones : null, req.params.id]
+      [ancho_revisado ? 1 : 0, estado || 'pendiente', devolucion_motivo || null, estado || '', rollos != null && rollos !== '' ? rollos : null, yardas, metros, observaciones != null && observaciones !== '' ? observaciones : null, anchoValor, req.params.id]
     );
     const detalleCorreccion = huboCorreccion ? ` (cantidad corregida a ${metros} m / ${yardas} yardas)` : '';
     await db.query("INSERT INTO historial (user_id, action, target, description) VALUES (?, 'EDIT', 'TELAS', ?)", [req.user.id, `Actualizó la revisión de ancho de la recepción #${req.params.id} a "${estado}"${detalleCorreccion}`]);
@@ -7011,7 +7014,7 @@ app.get('/api/telas/codigos/:id/recepciones', authenticateToken, async (req, res
   if (!telasAllowed(req)) return res.status(403).json({ error: 'No autorizado' });
   try {
     const [rows] = await db.query(`
-      SELECT tr.id, tr.rollos, tr.yardas, tr.metros, tr.estado, tr.fecha_creacion, tf.numero_factura,
+      SELECT tr.id, tr.rollos, tr.yardas, tr.metros, tr.estado, tr.fecha_creacion, tr.ancho, tf.numero_factura,
         tr.metros - COALESCE((SELECT SUM(ts.metros) FROM telas_salidas ts WHERE ts.recepcion_id = tr.id), 0) as disponible
       FROM telas_recepciones tr
       LEFT JOIN telas_facturas tf ON tr.factura_id = tf.id

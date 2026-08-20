@@ -2027,6 +2027,11 @@ async function initializeDatabase() {
       } catch (e) {
         // Columna ya existe
       }
+      try {
+        await connection.query("ALTER TABLE telas_recepciones ADD COLUMN ancho DECIMAL(6, 3) DEFAULT NULL");
+      } catch (e) {
+        // Columna ya existe
+      }
 
       await connection.query(`
         CREATE TABLE IF NOT EXISTS telas_salidas (

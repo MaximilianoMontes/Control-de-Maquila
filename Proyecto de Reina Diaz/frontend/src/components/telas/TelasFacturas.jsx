@@ -4,6 +4,7 @@ import { FileText, Plus, X, Printer, Receipt, Paperclip, Sparkles } from 'lucide
 import { useSettings } from '../../context/SettingsContext';
 import API_URL from '../../config';
 import { toast } from '../../utils/themeNotifications';
+import SearchableSelect from '../SearchableSelect';
 
 const authHeaders = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
 const token = () => localStorage.getItem('token');
@@ -95,11 +96,11 @@ export default function TelasFacturas({ proveedores, codigos, fetchCodigos }) {
   };
 
   const abrirAprobar = (r) => {
-    setAprobando({ id: r.id, rollos: r.rollos, metros: r.metros, observaciones: r.observaciones || '' });
+    setAprobando({ id: r.id, rollos: r.rollos, metros: r.metros, observaciones: r.observaciones || '', ancho: r.ancho || '' });
   };
 
   const confirmarAprobar = async () => {
-    await actualizarRevision(aprobando.id, 'aprobado', { rollos: aprobando.rollos, metros: aprobando.metros, observaciones: aprobando.observaciones });
+    await actualizarRevision(aprobando.id, 'aprobado', { rollos: aprobando.rollos, metros: aprobando.metros, observaciones: aprobando.observaciones, ancho: aprobando.ancho });
     setAprobando(null);
   };
 
@@ -338,10 +339,15 @@ export default function TelasFacturas({ proveedores, codigos, fetchCodigos }) {
             <form onSubmit={handleAgregarRecepcion} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.8rem', marginBottom: '1.2rem', padding: '1rem', background: 'rgba(255,255,255,0.02)', borderRadius: '10px' }}>
               <div className="form-group">
                 <label className="form-label">{isEn ? 'Fabric Code' : 'Código'}</label>
-                <select className="form-input" value={recNueva.codigo_id} onChange={e => setRecNueva({ ...recNueva, codigo_id: e.target.value })} required>
-                  <option value="">{isEn ? 'Select...' : 'Seleccionar...'}</option>
-                  {codigos.map(c => <option key={c.id} value={c.id}>{c.codigo}</option>)}
-                </select>
+                <SearchableSelect
+                  options={codigos}
+                  value={recNueva.codigo_id}
+                  onChange={val => setRecNueva({ ...recNueva, codigo_id: val })}
+                  labelKey="codigo"
+                  valueKey="id"
+                  placeholder={isEn ? 'Select...' : 'Seleccionar...'}
+                  required
+                />
               </div>
               <div className="form-group">
                 <label className="form-label">{isEn ? 'Rolls' : 'Rollos'}</label>
@@ -436,6 +442,10 @@ export default function TelasFacturas({ proveedores, codigos, fetchCodigos }) {
             <div className="form-group">
               <label className="form-label">{isEn ? 'Meters' : 'Metros'}</label>
               <input type="number" step="0.01" className="form-input" value={aprobando.metros} onChange={e => setAprobando({ ...aprobando, metros: e.target.value })} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">{isEn ? 'Width' : 'Ancho'}</label>
+              <input type="number" step="0.001" className="form-input" value={aprobando.ancho} onChange={e => setAprobando({ ...aprobando, ancho: e.target.value })} placeholder={isEn ? 'Optional' : 'Opcional'} />
             </div>
             <div className="form-group">
               <label className="form-label">{isEn ? 'Observations (defects, etc.)' : 'Observaciones (fallas, etc.)'}</label>

@@ -209,20 +209,29 @@ export default function TelasRequisiciones({ codigos }) {
                 <thead>
                   <tr>
                     <th>{isEn ? 'Code' : 'Código'}</th>
-                    <th style={{ textAlign: 'right' }}>{isEn ? 'Quantity (m)' : 'Cantidad (m)'}</th>
+                    <th style={{ textAlign: 'right' }}>{isEn ? 'Requested (m)' : 'Pedida (m)'}</th>
+                    <th style={{ textAlign: 'right' }}>{isEn ? 'Supplied (m)' : 'Surtida (m)'}</th>
                     <th style={{ textAlign: 'right' }}>{isEn ? 'Width' : 'Ancho'}</th>
                     <th>{isEn ? 'Status' : 'Estado'}</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {(detalle.lineas || []).map(l => (
-                    <tr key={l.id}>
-                      <td style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>{l.codigo}</td>
-                      <td style={{ textAlign: 'right' }}>{parseFloat(l.cantidad_requerida).toFixed(2)}</td>
-                      <td style={{ textAlign: 'right' }}>{l.ancho || '—'}</td>
-                      <td><span className={`badge ${l.estado === 'surtida' ? 'badge-success' : 'badge-info'}`}>{l.estado}</span></td>
-                    </tr>
-                  ))}
+                  {(detalle.lineas || []).map(l => {
+                    const surtida = l.metros_surtidos != null ? parseFloat(l.metros_surtidos) : null;
+                    const pedida = parseFloat(l.cantidad_requerida);
+                    const difiere = surtida != null && Math.abs(surtida - pedida) > 0.01;
+                    return (
+                      <tr key={l.id}>
+                        <td style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>{l.codigo}</td>
+                        <td style={{ textAlign: 'right' }}>{pedida.toFixed(2)}</td>
+                        <td style={{ textAlign: 'right', fontWeight: difiere ? 'bold' : 'normal', color: difiere ? '#f59e0b' : 'inherit' }}>
+                          {surtida != null ? surtida.toFixed(2) : '—'}
+                        </td>
+                        <td style={{ textAlign: 'right' }}>{l.ancho || '—'}</td>
+                        <td><span className={`badge ${l.estado === 'surtida' ? 'badge-success' : 'badge-info'}`}>{l.estado}</span></td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
