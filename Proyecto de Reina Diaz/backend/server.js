@@ -3724,35 +3724,49 @@ app.get('/api/reportes/camion/:id', authenticateToken, async (req, res) => {
 
       const TALLAS_COL_WIDTH = 260;
       const TALLAS_CELL_PADDING = 4; // igual que options.padding de la tabla
-      const TALLAS_BOX_PAD_X = 4;
-      const TALLAS_BOX_PAD_Y = 3;
-      const TALLAS_BOX_GAP = 3;
-      const tallasTextWidth = TALLAS_COL_WIDTH - (TALLAS_CELL_PADDING * 2) - (TALLAS_BOX_PAD_X * 2);
+      const TALLAS_BOX_PAD_X = 3;
+      const tallasTextWidth = TALLAS_COL_WIDTH - (TALLAS_CELL_PADDING * 2);
 
-      // Misma fuente/tamaño que se usa en prepareRow más abajo, para que la altura que
-      // medimos aquí (y por lo tanto el alto de renglón que la tabla reserva) coincida con
-      // lo que en verdad se dibuja.
+      // Misma fuente/tamaño (8pt Helvetica) que prepareRow deja puesta para el resto de la
+      // fila más abajo — así lo que medimos aquí para reservar el alto del renglón coincide
+      // exactamente con lo que la tabla usa internamente para lo mismo.
       doc.font('Helvetica').fontSize(8);
 
-      // Cada color de un modelo se dibuja como su propia caja con borde y fondo dentro de
-      // la celda de "Distribución de Tallas" (no como texto plano envuelto) — así se
-      // distingue de un vistazo dónde termina un color y empieza el siguiente. La celda en
-      // la tabla solo reserva el alto correcto (con líneas en blanco); el dibujo real de las
-      // cajas ocurre en prepareRow, usando este plan precalculado.
-      const tallasPlans = items.map(it => {
+      // IMPORTANTE (causa de la paginación rota del intento anterior): el alto de cada
+      // renglón de la tabla lo calcula la librería midiendo el TEXTO real de la celda
+      // ("tallas"), no lo que nosotros dibujemos aparte. Antes reservábamos el alto con
+      // líneas en blanco "adivinadas" y dibujábamos las cajas por nuestra cuenta — cuando
+      // la adivinanza se quedaba corta, pdfkit metía un salto de página a la mitad de una
+      // celda, dejando el resto de la página en blanco. Medir cada color por separado y
+      // sumar tampoco es 100% exacto frente a medir el bloque completo de un jalón (hay un
+      // pequeño margen de redondeo entre ambas formas), así que aquí escalamos la altura de
+      // cada caja para que la suma NUNCA pueda pasarse de lo que en verdad mide el texto
+      // completo — así las cajas jamás se salen de su propio renglón hacia el siguiente,
+      // sin importar cuántos colores tenga el modelo.
+      const tallasData = items.map(it => {
         const groups = buildTallasGroups(it.tallas_cantidades);
-        const plan = (groups.length ? groups : [{ label: null, text: 'N/A' }]).map(g => {
-          const combined = g.label ? `${g.label}\n${g.text}` : g.text;
-          const textHeight = doc.heightOfString(combined, { width: tallasTextWidth });
-          return { label: g.label, text: g.text, boxHeight: textHeight + (TALLAS_BOX_PAD_Y * 2) };
-        });
-        const totalHeight = plan.reduce((sum, g) => sum + g.boxHeight, 0)
-          + TALLAS_BOX_GAP * Math.max(0, plan.length - 1)
-          + (TALLAS_CELL_PADDING * 2);
-        return { groups: plan, totalHeight };
-      });
+        const list = groups.length ? groups : [{ label: null, text: 'N/A' }];
 
-      const tallasLineHeight = doc.currentLineHeight(true) || 10;
+        const text = list.map(g => (g.label ? `${g.label}\n${g.text}` : g.text)).join('\n');
+        const totalTextHeight = doc.heightOfString(text, { width: tallasTextWidth });
+
+        const rawHeights = list.map(g => {
+          const combined = g.label ? `${g.label}\n${g.text}` : g.text;
+          return doc.heightOfString(combined, { width: tallasTextWidth });
+        });
+        const rawSum = rawHeights.reduce((a, b) => a + b, 0) || 1;
+        const scale = Math.min(1, (totalTextHeight * 0.97) / rawSum);
+
+        let cursorY = 0;
+        const boxes = list.map((g, i) => {
+          const h = rawHeights[i] * scale;
+          const box = { offsetY: cursorY, height: h, label: g.label, text: g.text };
+          cursorY += h;
+          return box;
+        });
+
+        return { boxes, text };
+      });
 
       const tableConfig = {
         headers: [
@@ -3764,18 +3778,15 @@ app.get('/api/reportes/camion/:id', authenticateToken, async (req, res) => {
           { label: tLabel("PIEZAS", "PIECES"), property: "piezas", width: 50 },
           { label: tLabel("DISTRIBUCIÓN DE TALLAS", "SIZE BREAKDOWN"), property: "tallas", width: TALLAS_COL_WIDTH }
         ],
-        datas: items.map((it, idx) => {
-          const placeholderLines = Math.max(1, Math.ceil(tallasPlans[idx].totalHeight / tallasLineHeight));
-          return {
-            imagen: '\n\n\n\n\n\n',
-            modelo: it.modelo || '-',
-            orden: it.no_orden || '-',
-            cliente: truncatePdf(it.cliente, 24),
-            colores: formatColoresPdf(it.color),
-            piezas: String(it.piezas),
-            tallas: Array(placeholderLines).fill(' ').join('\n')
-          };
-        }),
+        datas: items.map((it, idx) => ({
+          imagen: '\n\n\n\n\n\n',
+          modelo: it.modelo || '-',
+          orden: it.no_orden || '-',
+          cliente: truncatePdf(it.cliente, 24),
+          colores: formatColoresPdf(it.color),
+          piezas: String(it.piezas),
+          tallas: tallasData[idx].text
+        })),
         options: { padding: TALLAS_CELL_PADDING }
       };
 
@@ -3794,25 +3805,34 @@ app.get('/api/reportes/camion/:id', authenticateToken, async (req, res) => {
               }
             }
             if (indexColumn === tallasColIndex) {
-              const plan = tallasPlans[indexRow];
-              const boxX = rectCell.x + TALLAS_CELL_PADDING;
-              const boxWidth = rectCell.width - (TALLAS_CELL_PADDING * 2);
-              let y = rectCell.y + TALLAS_CELL_PADDING;
-              plan.groups.forEach(g => {
+              const { boxes } = tallasData[indexRow];
+              const boxX = rectCell.x + 2;
+              const boxWidth = rectCell.width - 4;
+              const baseY = rectCell.y + TALLAS_CELL_PADDING;
+              boxes.forEach(b => {
+                // Las cajas van pegadas una debajo de otra (sin separación extra ni relleno
+                // adicional en el rectángulo) para nunca exceder el alto real medido arriba;
+                // el respiro visual del texto es solo un margen interno mínimo.
+                const boxY = baseY + b.offsetY;
                 doc.lineWidth(0.6)
-                  .roundedRect(boxX, y, boxWidth, g.boxHeight, 3)
+                  .roundedRect(boxX, boxY, boxWidth, b.height, 2)
                   .fillAndStroke('#eef2ff', '#94a3b8');
-                let textY = y + TALLAS_BOX_PAD_Y;
-                if (g.label) {
-                  doc.fillColor('#1e3a8a').font('Helvetica-Bold').fontSize(7.5)
-                    .text(g.label, boxX + TALLAS_BOX_PAD_X, textY, { width: boxWidth - (TALLAS_BOX_PAD_X * 2) });
+                let textY = boxY + 1;
+                if (b.label) {
+                  doc.fillColor('#1e3a8a').font('Helvetica-Bold').fontSize(7)
+                    .text(b.label, boxX + TALLAS_BOX_PAD_X, textY, { width: boxWidth - (TALLAS_BOX_PAD_X * 2) });
                   textY = doc.y;
                 }
-                doc.fillColor('#0f172a').font('Helvetica').fontSize(7.5)
-                  .text(g.text, boxX + TALLAS_BOX_PAD_X, textY, { width: boxWidth - (TALLAS_BOX_PAD_X * 2) });
-                y += g.boxHeight + TALLAS_BOX_GAP;
+                doc.fillColor('#0f172a').font('Helvetica').fontSize(7)
+                  .text(b.text, boxX + TALLAS_BOX_PAD_X, textY, { width: boxWidth - (TALLAS_BOX_PAD_X * 2) });
               });
-              doc.fillColor('black').font('Helvetica').fontSize(8);
+              // El texto real de esta celda ("tallas" property) es el que determina el alto
+              // del renglón (así la paginación siempre acierta), pero ya lo dibujamos arriba
+              // con nuestro propio estilo — así que cuando la librería lo dibuje después de
+              // este prepareRow, lo hacemos con el mismo color de fondo de las cajas para
+              // que no se vea duplicado encima.
+              doc.fillColor('#eef2ff').font('Helvetica').fontSize(8);
+              return;
             }
           } catch (e) {}
         }
