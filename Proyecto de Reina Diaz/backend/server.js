@@ -3609,15 +3609,16 @@ const sortTallasEntries = (entries) => entries.sort((a, b) => {
   return a[0].localeCompare(b[0], undefined, { numeric: true });
 });
 
-// Cada color en su propio renglón, y ahora también con salto de línea manual dentro
-// del renglón: antes, si la lista de tallas de un color era larga, pdfkit la envolvía
-// solo donde le alcanzaba el ancho de columna, sin ninguna marca de que era una
-// continuación — se veía como si esas tallas fueran de otro color/línea. Aquí partimos
-// nosotros mismos en los espacios entre pares talla:cantidad (nunca a media cifra) y
-// sangramos la continuación bajo el nombre del color, para que quede claro que sigue
-// siendo el mismo grupo. Además dejamos un renglón en blanco entre colores.
+// Antes se metían todos los colores de un modelo en una sola celda de texto,
+// separados por saltos de línea — visualmente ilegible: nada de cuadrícula real,
+// solo texto envuelto sobre sí mismo, y si una línea era larga pdfkit la partía
+// donde le alcanzaba el ancho sin ninguna marca de que seguía siendo el mismo color.
+// Ahora cada color de cada modelo es su PROPIO renglón de la tabla (con sus líneas
+// divisorias reales, como una hoja de cálculo), así que esto ya no arma un bloque de
+// texto: solo corta la lista de tallas de UN color en pares talla:cantidad, partiendo
+// solo en los espacios entre pares (nunca a media cifra) si de plano no cabe en una línea.
 const TALLAS_PDF_CHARS_PER_LINE = 34;
-const wrapTallasParts = (parts, indent) => {
+const wrapTallasParts = (parts) => {
   const lines = [];
   let current = '';
   parts.forEach(part => {
@@ -3630,28 +3631,50 @@ const wrapTallasParts = (parts, indent) => {
     }
   });
   if (current) lines.push(current);
-  return lines.map((line, i) => (i === 0 ? line : `${indent}${line}`)).join('\n');
+  return lines.join('\n');
 };
-const formatTallasGroupPdf = (label, sizesObj) => {
-  const parts = sortTallasEntries(Object.entries(sizesObj))
-    .filter(([, q]) => parseInt(q) > 0)
-    .map(([sz, q]) => `T${sz}:${q}`);
-  if (!parts.length) return null;
-  const prefix = label ? `${label}  ` : '';
-  return prefix + wrapTallasParts(parts, ' '.repeat(prefix.length));
-};
-const formatTallasPdf = (tallasJson) => {
+
+// Separa el JSON de tallas de UN modelo en un renglón por color: [{ color, piezas, tallas }, ...].
+// Si el modelo es de un solo color (estructura plana, sin desglose por color), regresa un único
+// renglón con color = null (el llamador usa el color propio del modelo en ese caso).
+const explodeTallasPorColor = (tallasJson) => {
   let tallas = {};
   try { tallas = typeof tallasJson === 'string' ? JSON.parse(tallasJson) : (tallasJson || {}); } catch (e) { tallas = {}; }
   const firstVal = Object.values(tallas)[0];
   const isNested = typeof firstVal === 'object' && firstVal !== null;
+
+  const buildRow = (color, sizesObj) => {
+    const parts = sortTallasEntries(Object.entries(sizesObj)).filter(([, q]) => parseInt(q) > 0);
+    if (!parts.length) return null;
+    const piezas = parts.reduce((sum, [, q]) => sum + (parseInt(q) || 0), 0);
+    const tallasTexto = wrapTallasParts(parts.map(([sz, q]) => `T${sz}:${q}`));
+    return { color, piezas, tallasTexto };
+  };
+
   if (isNested) {
     return Object.entries(tallas)
-      .map(([color, sizesObj]) => formatTallasGroupPdf(String(color).toUpperCase(), sizesObj))
-      .filter(Boolean)
-      .join('\n\n') || 'N/A';
+      .map(([color, sizesObj]) => buildRow(String(color).toUpperCase(), sizesObj))
+      .filter(Boolean);
   }
-  return formatTallasGroupPdf('', tallas) || 'N/A';
+  const flatRow = buildRow(null, tallas);
+  return flatRow ? [flatRow] : [];
+};
+
+// Para modelos de un solo color, "color" viene en un campo aparte (no en el JSON de tallas),
+// a veces como JSON ("[{\"color\":\"CAF\",\"cantidad\":\"40\"}]"), a veces como texto plano.
+const extractColorLabelPdf = (colorStr) => {
+  if (!colorStr) return '-';
+  const trimmed = String(colorStr).trim();
+  if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed) && parsed.length) {
+        const first = parsed[0];
+        return String(first.color || first.Color || first.name || first).toUpperCase();
+      }
+    } catch (e) { /* no era JSON, se deja tal cual */ }
+  }
+  return trimmed.toUpperCase();
 };
 
 // Orden natural para el No. de Orden (menor a mayor) aunque tenga letras mezcladas
@@ -3723,36 +3746,71 @@ app.get('/api/reportes/camion/:id', authenticateToken, async (req, res) => {
       doc.font('Helvetica');
       doc.moveDown(1);
 
+      // Un renglón real por cada color de cada modelo (no todo apachurrado en una sola
+      // celda de texto), para que se vea como una hoja de cálculo: líneas divisorias
+      // reales entre colores y una banda de color alternada que agrupa visualmente los
+      // renglones de un mismo modelo.
+      const flatRows = [];
+      let bandToggle = false;
+      items.forEach(it => {
+        let subRows = explodeTallasPorColor(it.tallas_cantidades);
+        if (!subRows.length) {
+          subRows = [{ color: null, piezas: it.piezas, tallasTexto: 'N/A' }];
+        }
+        const bg = bandToggle ? '#eef2ff' : '#ffffff';
+        bandToggle = !bandToggle;
+        subRows.forEach(sr => {
+          flatRows.push({
+            imagenPath: it.imagen || null,
+            modelo: it.modelo || '-',
+            orden: it.no_orden || '-',
+            cliente: truncatePdf(it.cliente, 24),
+            color: sr.color || extractColorLabelPdf(it.color),
+            piezas: String(sr.piezas),
+            tallas: sr.tallasTexto || 'N/A',
+            bg
+          });
+        });
+      });
+
+      const headerFill = { backgroundColor: '#1e293b', backgroundOpacity: 1 };
       const tableConfig = {
         headers: [
-          { label: tLabel("IMAGEN", "IMAGE"), property: "imagen", width: 70 },
-          { label: tLabel("MODELO", "MODEL"), property: "modelo", width: 65 },
-          { label: tLabel("ORDEN", "ORDER"), property: "orden", width: 60 },
-          { label: tLabel("CLIENTE", "CLIENT"), property: "cliente", width: 100 },
-          { label: tLabel("COLORES", "COLORS"), property: "colores", width: 160 },
-          { label: tLabel("PIEZAS", "PIECES"), property: "piezas", width: 50 },
-          { label: tLabel("DISTRIBUCIÓN DE TALLAS", "SIZE BREAKDOWN"), property: "tallas", width: 260 }
+          { label: tLabel("IMAGEN", "IMAGE"), property: "imagen", width: 70, ...headerFill },
+          { label: tLabel("MODELO", "MODEL"), property: "modelo", width: 65, ...headerFill },
+          { label: tLabel("ORDEN", "ORDER"), property: "orden", width: 60, ...headerFill },
+          { label: tLabel("CLIENTE", "CLIENT"), property: "cliente", width: 100, ...headerFill },
+          { label: tLabel("COLOR", "COLOR"), property: "color", width: 90, ...headerFill },
+          { label: tLabel("PIEZAS", "PIECES"), property: "piezas", width: 50, ...headerFill },
+          { label: tLabel("DISTRIBUCIÓN DE TALLAS", "SIZE BREAKDOWN"), property: "tallas", width: 330, ...headerFill }
         ],
-        datas: items.map(it => ({
+        datas: flatRows.map(r => ({
           imagen: '\n\n\n\n\n\n',
-          modelo: it.modelo || '-',
-          orden: it.no_orden || '-',
-          cliente: truncatePdf(it.cliente, 24),
-          colores: formatColoresPdf(it.color),
-          piezas: String(it.piezas),
-          tallas: formatTallasPdf(it.tallas_cantidades)
+          modelo: r.modelo,
+          orden: r.orden,
+          cliente: r.cliente,
+          color: r.color,
+          piezas: r.piezas,
+          tallas: r.tallas,
+          options: { backgroundColor: r.bg, backgroundOpacity: 1 }
         })),
-        options: { padding: 4 }
+        options: {
+          padding: 4,
+          divider: {
+            horizontal: { disabled: false, width: 0.6, opacity: 0.5, color: '#94a3b8' },
+            vertical: { disabled: false, width: 0.6, opacity: 0.5, color: '#94a3b8' }
+          }
+        }
       };
 
       await doc.table(tableConfig, {
-        prepareHeader: () => doc.font("Helvetica-Bold").fontSize(8),
+        prepareHeader: () => doc.font("Helvetica-Bold").fontSize(8).fillColor('white'),
         prepareRow: (row, indexColumn, indexRow, rectRow) => {
-          doc.font("Helvetica").fontSize(8);
+          doc.font("Helvetica").fontSize(8).fillColor('black');
           try {
-            const item = items[indexRow];
-            if (indexColumn === 0 && item && item.imagen) {
-              const imgPath = path.join(__dirname, item.imagen);
+            const flatRow = flatRows[indexRow];
+            if (indexColumn === 0 && flatRow && flatRow.imagenPath) {
+              const imgPath = path.join(__dirname, flatRow.imagenPath);
               if (fs.existsSync(imgPath)) {
                 doc.image(imgPath, rectRow.x + 5, rectRow.y + 5, { fit: [55, 55] });
               }
