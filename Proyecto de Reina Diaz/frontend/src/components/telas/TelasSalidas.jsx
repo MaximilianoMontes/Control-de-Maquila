@@ -143,8 +143,20 @@ export default function TelasSalidas({ codigos, fetchCodigos }) {
   const [historial, setHistorial] = useState([]);
   const [filtros, setFiltros] = useState({ desde: '', hasta: '', codigo_id: '', destino: '' });
   const [devoluciones, setDevoluciones] = useState([]);
+  // Códigos que sí tienen alguna salida registrada, con el "sobrante" de su salida más
+  // reciente — es la lista que ofrece "Registrar Devolución" (independiente de los filtros
+  // del historial de arriba, para que nunca se vacíe si alguien está filtrando esa tabla).
+  const [salidasCodigos, setSalidasCodigos] = useState([]);
 
   const devCodigoSeleccionado = codigos.find(c => String(c.id) === String(devCodigoId));
+
+  const seleccionarDevCodigo = (id) => {
+    setDevCodigoId(id);
+    // El sobrante de la salida más reciente de ese código se precarga en Metros — es solo un
+    // punto de partida: al pesar/medir la tela físicamente puede resultar igual, mayor o menor.
+    const match = salidasCodigos.find(c => String(c.id) === String(id));
+    setDevMetros(match && match.sobrante != null ? parseFloat(match.sobrante).toFixed(2) : '');
+  };
 
   const fetchLineasPendientes = useCallback(async () => {
     try {
@@ -172,6 +184,19 @@ export default function TelasSalidas({ codigos, fetchCodigos }) {
     } catch (e) { console.error('Error fetching devoluciones de telas', e); }
   }, []);
 
+  const fetchSalidasCodigos = useCallback(async () => {
+    try {
+      const res = await axios.get(`${API_URL}/api/telas/salidas`, authHeaders());
+      const vistos = new Map();
+      // Ya viene ordenado por fecha DESC desde el backend, así que la primera salida que se
+      // encuentra de cada código es la más reciente.
+      for (const h of res.data) {
+        if (!vistos.has(h.codigo_id)) vistos.set(h.codigo_id, { id: h.codigo_id, codigo: h.codigo, sobrante: h.sobrante });
+      }
+      setSalidasCodigos(Array.from(vistos.values()));
+    } catch (e) { console.error('Error fetching códigos con salidas', e); }
+  }, []);
+
   useEffect(() => {
     fetchLineasPendientes();
   }, [fetchLineasPendientes]);
@@ -183,6 +208,10 @@ export default function TelasSalidas({ codigos, fetchCodigos }) {
   useEffect(() => {
     fetchDevoluciones();
   }, [fetchDevoluciones]);
+
+  useEffect(() => {
+    fetchSalidasCodigos();
+  }, [fetchSalidasCodigos]);
 
   const codigosConTodos = useMemo(() => [{ id: '', codigo: isEn ? 'All' : 'Todos' }, ...codigos], [codigos, isEn]);
 
@@ -204,10 +233,12 @@ export default function TelasSalidas({ codigos, fetchCodigos }) {
     try {
       await axios.post(`${API_URL}/api/telas/devoluciones`, { codigo_id: devCodigoId, metros: devMetros, motivo: devMotivo }, authHeaders());
       toast.success(isEn ? 'Return registered' : 'Devolución registrada');
+      setDevCodigoId('');
       setDevMetros('');
       setDevMotivo('');
       fetchCodigos();
       fetchDevoluciones();
+      fetchSalidasCodigos();
     } catch (e) {
       toast.error(e.response?.data?.error || (isEn ? 'Error registering return' : 'Error al registrar la devolución'));
     } finally {
@@ -219,6 +250,7 @@ export default function TelasSalidas({ codigos, fetchCodigos }) {
     fetchLineasPendientes();
     fetchCodigos();
     fetchHistorial();
+    fetchSalidasCodigos();
   };
 
   const toggleSeleccion = (lineaId) => {
@@ -299,12 +331,12 @@ export default function TelasSalidas({ codigos, fetchCodigos }) {
             <div className="form-group">
               <label className="form-label">{isEn ? 'Fabric Code' : 'Código de Tela'}</label>
               <SearchableSelect
-                options={codigos}
+                options={salidasCodigos}
                 value={devCodigoId}
-                onChange={setDevCodigoId}
+                onChange={seleccionarDevCodigo}
                 labelKey="codigo"
                 valueKey="id"
-                placeholder={isEn ? 'Select...' : 'Seleccionar...'}
+                placeholder={salidasCodigos.length === 0 ? (isEn ? 'No outbound movements yet' : 'Aún no hay salidas registradas') : (isEn ? 'Select...' : 'Seleccionar...')}
                 required
               />
             </div>
@@ -314,6 +346,16 @@ export default function TelasSalidas({ codigos, fetchCodigos }) {
             <div className="form-group">
               <label className="form-label">{isEn ? 'Meters' : 'Metros'}</label>
               <input type="number" step="0.01" className="form-input" value={devMetros} onChange={e => setDevMetros(e.target.value)} required />
+              {devCodigoId && (() => {
+                const match = salidasCodigos.find(c => String(c.id) === String(devCodigoId));
+                return match && match.sobrante != null ? (
+                  <p style={{ margin: '0.3rem 0 0 0', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                    {isEn
+                      ? `Prefilled with the surplus of the latest outbound (${parseFloat(match.sobrante).toFixed(2)} m) — adjust to the exact physical amount.`
+                      : `Prellenado con el sobrante de la salida más reciente (${parseFloat(match.sobrante).toFixed(2)} m) — ajusta a la cantidad física exacta.`}
+                  </p>
+                ) : null;
+              })()}
             </div>
             <div className="form-group">
               <label className="form-label">{isEn ? 'Reason' : 'Motivo'}</label>
