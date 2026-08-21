@@ -37,7 +37,12 @@ async function resetTrainingData() {
     'produccion_entregas_log', 'plancha_trabajos', 'planchador_pagos', 'planchador_asistencias',
     'plancha_devoluciones', 'plancha_borrador', 'descuentos_personales', 'pagos',
     'camion_detalles', 'camiones', 'camion_borrador', 'produccion', 'inventario_real',
-    'inventario', 'maquileros', 'planchadores', 'historial'
+    'inventario', 'maquileros', 'planchadores', 'historial',
+    // Módulo de Telas — independiente del resto, pero también debe quedar en blanco al
+    // reiniciar los datos de práctica (antes se omitía por completo).
+    'telas_requisicion_lineas', 'telas_requisiciones', 'telas_devoluciones', 'telas_salidas',
+    'telas_recepciones', 'telas_codigos', 'telas_facturas', 'telas_colores',
+    'telas_proveedores', 'telas_tipos'
   ];
   for (const t of tablesToClear) {
     try {
@@ -192,9 +197,104 @@ async function resetTrainingData() {
     ]
   );
 
+  // --- Módulo de Telas (independiente, pero también necesita datos de práctica) ---
+  const tiposTela = [
+    ['Satín Zoe', 'SZ', '100% Poliéster'],
+    ['Twill Jamaica', 'TJ', '70% Poliamida 27% Rayón 3% Spandex'],
+  ];
+  const tipoIds = {};
+  for (const [nombre, abrev, composicion] of tiposTela) {
+    const [r] = await db.query('INSERT INTO telas_tipos (nombre, abreviatura, composicion_default) VALUES (?,?,?)', [nombre, abrev, composicion]);
+    tipoIds[abrev] = r.insertId;
+  }
+
+  const proveedoresTela = [
+    ['EKB Textiles', 'E'],
+    ['Jiaxing Textil', 'J'],
+  ];
+  const provIds = {};
+  for (const [nombre, letra] of proveedoresTela) {
+    const [r] = await db.query('INSERT INTO telas_proveedores (nombre, letra) VALUES (?,?)', [nombre, letra]);
+    provIds[letra] = r.insertId;
+  }
+
+  const coloresTela = [
+    ['Negro', 'NEG'], ['Rojo', 'ROJ'], ['Azul', 'AZU'], ['Blanco', 'BLA'],
+  ];
+  const colorIds = {};
+  for (const [nombre, abrev] of coloresTela) {
+    const [r] = await db.query('INSERT INTO telas_colores (nombre, abreviatura) VALUES (?,?)', [nombre, abrev]);
+    colorIds[abrev] = r.insertId;
+  }
+
+  // codigo, tipo, proveedor, referencia, color, precio_usd, tipo_cambio
+  const codigosTela = [
+    ['FSZE101NEG', 'SZ', 'E', '101', 'NEG', 4.55, 21],
+    ['FSZE101ROJ', 'SZ', 'E', '101', 'ROJ', 4.55, 21],
+    ['FTJJ862AZU', 'TJ', 'J', '862', 'AZU', 3.25, 21],
+  ];
+  const codigoIds = {};
+  for (const [codigo, tipoAb, provLetra, referencia, colorAb, precioUsd, tc] of codigosTela) {
+    const precioMxn = Math.ceil((precioUsd / 0.9144) * tc + 5);
+    const [r] = await db.query(
+      `INSERT INTO telas_codigos (codigo, tipo_id, proveedor_id, referencia_proveedor, color_id, precio_usd, tipo_cambio, precio_mxn)
+       VALUES (?,?,?,?,?,?,?,?)`,
+      [codigo, tipoIds[tipoAb], provIds[provLetra], referencia, colorIds[colorAb], precioUsd, tc, precioMxn]
+    );
+    codigoIds[codigo] = r.insertId;
+  }
+
+  // Factura 1 (EKB): una línea ya aprobada con ancho (da existencia real) y otra pendiente de revisar
+  const [facturaEkb] = await db.query(
+    'INSERT INTO telas_facturas (numero_factura, proveedor_id, fecha, tipo_cambio) VALUES (?,?,?,?)',
+    ['155555', provIds['E'], daysFromNow(-10), 21]
+  );
+  await db.query(
+    `INSERT INTO telas_recepciones (factura_id, codigo_id, rollos, yardas, metros, ancho_revisado, estado, ancho)
+     VALUES (?,?,?,?,?,1,'aprobado',?)`,
+    [facturaEkb.insertId, codigoIds['FSZE101NEG'], 5, 200, Math.floor(200 * 0.9144), 1.44]
+  );
+  await db.query(
+    `INSERT INTO telas_recepciones (factura_id, codigo_id, rollos, yardas, metros, estado)
+     VALUES (?,?,?,?,?,'pendiente')`,
+    [facturaEkb.insertId, codigoIds['FSZE101ROJ'], 3, 120, Math.floor(120 * 0.9144)]
+  );
+
+  // Factura 2 (Jiaxing): línea aprobada, da existencia para practicar "Surtir"
+  const [facturaJiaxing] = await db.query(
+    'INSERT INTO telas_facturas (numero_factura, proveedor_id, fecha, tipo_cambio) VALUES (?,?,?,?)',
+    ['155600', provIds['J'], daysFromNow(-5), 21]
+  );
+  await db.query(
+    `INSERT INTO telas_recepciones (factura_id, codigo_id, rollos, yardas, metros, ancho_revisado, estado, ancho)
+     VALUES (?,?,?,?,?,1,'aprobado',?)`,
+    [facturaJiaxing.insertId, codigoIds['FTJJ862AZU'], 4, 150, Math.floor(150 * 0.9144), 1.50]
+  );
+
+  // Requisición en borrador — practicar "Finalizar"
+  const [reqBorrador] = await db.query(
+    "INSERT INTO telas_requisiciones (modelo, notas, estado) VALUES (?,?,'borrador')",
+    ['531200-DEMO', 'Requisición de práctica sin finalizar']
+  );
+  await db.query(
+    'INSERT INTO telas_requisicion_lineas (requisicion_id, codigo_id, cantidad_requerida, ancho) VALUES (?,?,?,?)',
+    [reqBorrador.insertId, codigoIds['FSZE101NEG'], 60, 1.44]
+  );
+
+  // Requisición finalizada — aparece en Salidas → "Requisiciones por Surtir", lista para practicar "Surtir"
+  const [reqFinalizada] = await db.query(
+    "INSERT INTO telas_requisiciones (modelo, notas, estado, fecha_finalizada) VALUES (?,?,'finalizada',?)",
+    ['531300-DEMO', 'Requisición de práctica lista para surtir', daysFromNow(-1)]
+  );
+  await db.query(
+    'INSERT INTO telas_requisicion_lineas (requisicion_id, codigo_id, cantidad_requerida, ancho) VALUES (?,?,?,?)',
+    [reqFinalizada.insertId, codigoIds['FTJJ862AZU'], 50, 1.50]
+  );
+
   console.log('✅ Datos de práctica listos:');
   console.log('   5 maquileros, 2 planchadores, 10 cortes, 8 órdenes de producción (variadas), 1 camión ya enviado.');
-  console.log('   Roles para practicar: produccion1 / produccion2 / inventario1 / plancha (contraseñas por defecto del sistema).');
+  console.log('   Telas: 2 tipos, 2 proveedores, 4 colores, 3 códigos, 2 facturas (una línea pendiente de revisar), 2 requisiciones (una en borrador, otra lista para surtir).');
+  console.log('   Roles para practicar: produccion1 / produccion2 / inventario1 / plancha / telas1 / telas2 (contraseñas por defecto del sistema).');
 }
 
 module.exports = { resetTrainingData };
