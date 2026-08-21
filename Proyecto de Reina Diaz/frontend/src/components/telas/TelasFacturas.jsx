@@ -17,16 +17,17 @@ export default function TelasFacturas({ proveedores, codigos, fetchCodigos }) {
   const [mostrarForm, setMostrarForm] = useState(false);
   const [nueva, setNueva] = useState({ numero_factura: '', proveedor_id: '', fecha: '', tipo_cambio: '', notas: '' });
   const [archivo, setArchivo] = useState(null);
+  const [archivoInputKey, setArchivoInputKey] = useState(0);
   const [guardando, setGuardando] = useState(false);
 
   const [facturaAbierta, setFacturaAbierta] = useState(null);
-  const [recNueva, setRecNueva] = useState({ codigo_id: '', rollos: '', yardas: '', observaciones: '' });
+  const [recNueva, setRecNueva] = useState({ codigo_id: '', rollos: '', cantidad: '', unidad: 'yardas', observaciones: '' });
+  const [cambiandoArchivo, setCambiandoArchivo] = useState(false);
 
   const [leyendoIA, setLeyendoIA] = useState(false);
   const [lineasDetectadas, setLineasDetectadas] = useState(null);
 
   const [aprobando, setAprobando] = useState(null); // { id, rollos, yardas }
-  const [foliosDisponibles, setFoliosDisponibles] = useState([]);
 
   const fetchFacturas = useCallback(async () => {
     try {
@@ -73,11 +74,17 @@ export default function TelasFacturas({ proveedores, codigos, fetchCodigos }) {
 
   const handleAgregarRecepcion = async (e) => {
     e.preventDefault();
-    if (!facturaAbierta || !recNueva.codigo_id || !recNueva.yardas) return;
+    if (!facturaAbierta || !recNueva.codigo_id || !recNueva.cantidad) return;
     try {
-      await axios.post(`${API_URL}/api/telas/facturas/${facturaAbierta.id}/recepciones`, recNueva, authHeaders());
+      const payload = {
+        codigo_id: recNueva.codigo_id,
+        rollos: recNueva.rollos,
+        observaciones: recNueva.observaciones,
+        ...(recNueva.unidad === 'metros' ? { metros: recNueva.cantidad } : { yardas: recNueva.cantidad })
+      };
+      await axios.post(`${API_URL}/api/telas/facturas/${facturaAbierta.id}/recepciones`, payload, authHeaders());
       toast.success(isEn ? 'Receipt line added' : 'Línea de recepción agregada');
-      setRecNueva({ codigo_id: '', rollos: '', yardas: '', observaciones: '' });
+      setRecNueva({ codigo_id: '', rollos: '', cantidad: '', unidad: recNueva.unidad, observaciones: '' });
       abrirFactura(facturaAbierta.id);
       fetchCodigos();
     } catch (e) {
@@ -96,29 +103,49 @@ export default function TelasFacturas({ proveedores, codigos, fetchCodigos }) {
     }
   };
 
-  const abrirAprobar = async (r) => {
-    const foliosYaAsignados = r.folios ? String(r.folios).split(',').map(f => parseInt(f)) : [];
-    setAprobando({ id: r.id, rollos: r.rollos, metros: r.metros, observaciones: r.observaciones || '', ancho: r.ancho || '', folios: foliosYaAsignados });
-    try {
-      const res = await axios.get(`${API_URL}/api/telas/folios/disponibles?excluir_recepcion_id=${r.id}`, authHeaders());
-      setFoliosDisponibles(res.data);
-    } catch {
-      setFoliosDisponibles([]);
-    }
-  };
-
-  const setFolioEnSlot = (idx, valor) => {
-    setAprobando(prev => {
-      const folios = [...(prev.folios || [])];
-      folios[idx] = valor ? parseInt(valor) : null;
-      return { ...prev, folios };
-    });
+  const abrirAprobar = (r) => {
+    setAprobando({ id: r.id, rollos: r.rollos, metros: r.metros, observaciones: r.observaciones || '', ancho: r.ancho || '' });
   };
 
   const confirmarAprobar = async () => {
-    const foliosLimpios = (aprobando.folios || []).filter(f => f != null);
-    await actualizarRevision(aprobando.id, 'aprobado', { rollos: aprobando.rollos, metros: aprobando.metros, observaciones: aprobando.observaciones, ancho: aprobando.ancho, folios: foliosLimpios });
+    await actualizarRevision(aprobando.id, 'aprobado', { rollos: aprobando.rollos, metros: aprobando.metros, observaciones: aprobando.observaciones, ancho: aprobando.ancho });
     setAprobando(null);
+  };
+
+  const handleCambiarArchivo = async (file) => {
+    if (!facturaAbierta) return;
+    setCambiandoArchivo(true);
+    try {
+      const formData = new FormData();
+      formData.append('archivo', file);
+      await axios.patch(`${API_URL}/api/telas/facturas/${facturaAbierta.id}/archivo`, formData, {
+        headers: { Authorization: `Bearer ${token()}`, 'Content-Type': 'multipart/form-data' }
+      });
+      toast.success(isEn ? 'Attachment replaced' : 'Adjunto reemplazado');
+      abrirFactura(facturaAbierta.id);
+    } catch (e) {
+      toast.error(e.response?.data?.error || (isEn ? 'Error replacing attachment' : 'Error al reemplazar el adjunto'));
+    } finally {
+      setCambiandoArchivo(false);
+    }
+  };
+
+  const handleQuitarArchivo = async () => {
+    if (!facturaAbierta) return;
+    setCambiandoArchivo(true);
+    try {
+      const formData = new FormData();
+      formData.append('remove', 'true');
+      await axios.patch(`${API_URL}/api/telas/facturas/${facturaAbierta.id}/archivo`, formData, {
+        headers: { Authorization: `Bearer ${token()}`, 'Content-Type': 'multipart/form-data' }
+      });
+      toast.success(isEn ? 'Attachment removed' : 'Adjunto eliminado');
+      abrirFactura(facturaAbierta.id);
+    } catch (e) {
+      toast.error(e.response?.data?.error || (isEn ? 'Error removing attachment' : 'Error al eliminar el adjunto'));
+    } finally {
+      setCambiandoArchivo(false);
+    }
   };
 
   const handleLeerConIA = async () => {
@@ -169,7 +196,8 @@ export default function TelasFacturas({ proveedores, codigos, fetchCodigos }) {
     }
   };
 
-  const metrosPreview = recNueva.yardas ? Math.floor(parseFloat(recNueva.yardas) * 0.9144) : null;
+  const metrosPreview = (recNueva.unidad === 'yardas' && recNueva.cantidad) ? Math.floor(parseFloat(recNueva.cantidad) * 0.9144) : null;
+  const proveedoresOpciones = proveedores.map(p => ({ ...p, _label: p.nombre }));
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -191,10 +219,15 @@ export default function TelasFacturas({ proveedores, codigos, fetchCodigos }) {
             </div>
             <div className="form-group">
               <label className="form-label">{isEn ? 'Supplier' : 'Proveedor'}</label>
-              <select className="form-input" value={nueva.proveedor_id} onChange={e => setNueva({ ...nueva, proveedor_id: e.target.value })} required>
-                <option value="">{isEn ? 'Select...' : 'Seleccionar...'}</option>
-                {proveedores.map(p => <option key={p.id} value={p.id}>{p.nombre}</option>)}
-              </select>
+              <SearchableSelect
+                options={proveedoresOpciones}
+                value={nueva.proveedor_id}
+                onChange={val => setNueva({ ...nueva, proveedor_id: val })}
+                labelKey="_label"
+                valueKey="id"
+                placeholder={isEn ? 'Select...' : 'Seleccionar...'}
+                required
+              />
             </div>
             <div className="form-group">
               <label className="form-label">{isEn ? 'Date' : 'Fecha'}</label>
@@ -209,8 +242,15 @@ export default function TelasFacturas({ proveedores, codigos, fetchCodigos }) {
               <input className="form-input" value={nueva.notas} onChange={e => setNueva({ ...nueva, notas: e.target.value })} />
             </div>
             <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-              <label className="form-label">{isEn ? 'Attachment (invoice / packing list)' : 'Adjunto (factura / packing list)'}</label>
-              <input type="file" accept="image/*,application/pdf" onChange={e => setArchivo(e.target.files[0])} />
+              <label className="form-label">{isEn ? 'Attachment (invoice / packing list, only 1 file)' : 'Adjunto (factura / packing list, solo 1 archivo)'}</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <input key={archivoInputKey} type="file" accept="image/*,application/pdf" onChange={e => setArchivo(e.target.files[0] || null)} />
+                {archivo && (
+                  <button type="button" className="btn-icon" style={{ background: 'rgba(239,68,68,0.1)', border: 'none', padding: '6px', borderRadius: '50%', cursor: 'pointer' }} title={isEn ? 'Remove' : 'Quitar'} onClick={() => { setArchivo(null); setArchivoInputKey(k => k + 1); }}>
+                    <X size={14} color="#ef4444" />
+                  </button>
+                )}
+              </div>
             </div>
             <div style={{ gridColumn: '1 / -1' }}>
               <button type="submit" className="btn btn-primary" disabled={guardando}>
@@ -276,6 +316,26 @@ export default function TelasFacturas({ proveedores, codigos, fetchCodigos }) {
                 <p style={{ margin: '0.2rem 0 0 0', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
                   {facturaAbierta.proveedor_nombre} · {new Date(facturaAbierta.fecha).toLocaleDateString('es-MX')} · TC {facturaAbierta.tipo_cambio}
                 </p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.4rem', fontSize: '0.78rem' }}>
+                  {facturaAbierta.archivo ? (
+                    <>
+                      <Paperclip size={12} color="var(--text-secondary)" />
+                      <span style={{ color: 'var(--text-secondary)' }}>{isEn ? 'Attachment saved' : 'Adjunto guardado'}</span>
+                      <label className="btn btn-secondary" style={{ padding: '2px 8px', fontSize: '0.72rem', cursor: cambiandoArchivo ? 'default' : 'pointer' }}>
+                        {isEn ? 'Change' : 'Cambiar'}
+                        <input type="file" accept="image/*,application/pdf" disabled={cambiandoArchivo} style={{ display: 'none' }} onChange={e => e.target.files[0] && handleCambiarArchivo(e.target.files[0])} />
+                      </label>
+                      <button type="button" className="btn" style={{ padding: '2px 8px', fontSize: '0.72rem', background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: 'none' }} disabled={cambiandoArchivo} onClick={handleQuitarArchivo}>
+                        {isEn ? 'Remove' : 'Quitar'}
+                      </button>
+                    </>
+                  ) : (
+                    <label className="btn btn-secondary" style={{ padding: '2px 8px', fontSize: '0.72rem', cursor: cambiandoArchivo ? 'default' : 'pointer' }}>
+                      {isEn ? 'Attach file' : 'Adjuntar archivo'}
+                      <input type="file" accept="image/*,application/pdf" disabled={cambiandoArchivo} style={{ display: 'none' }} onChange={e => e.target.files[0] && handleCambiarArchivo(e.target.files[0])} />
+                    </label>
+                  )}
+                </div>
               </div>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
                 {facturaAbierta.archivo && (
@@ -371,8 +431,14 @@ export default function TelasFacturas({ proveedores, codigos, fetchCodigos }) {
                 <input type="number" className="form-input" value={recNueva.rollos} onChange={e => setRecNueva({ ...recNueva, rollos: e.target.value })} />
               </div>
               <div className="form-group">
-                <label className="form-label">{isEn ? 'Yards' : 'Yardas'}</label>
-                <input type="number" step="0.01" className="form-input" value={recNueva.yardas} onChange={e => setRecNueva({ ...recNueva, yardas: e.target.value })} required />
+                <label className="form-label">{isEn ? 'Quantity' : 'Cantidad'}</label>
+                <div style={{ display: 'flex', gap: '0.3rem' }}>
+                  <input type="number" step="0.01" className="form-input" value={recNueva.cantidad} onChange={e => setRecNueva({ ...recNueva, cantidad: e.target.value })} required />
+                  <select className="form-input" style={{ maxWidth: '90px' }} value={recNueva.unidad} onChange={e => setRecNueva({ ...recNueva, unidad: e.target.value })}>
+                    <option value="yardas">{isEn ? 'yd' : 'yds'}</option>
+                    <option value="metros">{isEn ? 'm' : 'mts'}</option>
+                  </select>
+                </div>
                 {metrosPreview !== null && (
                   <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>≈ {metrosPreview.toFixed(2)} m</span>
                 )}
@@ -412,10 +478,7 @@ export default function TelasFacturas({ proveedores, codigos, fetchCodigos }) {
                           {r.codigo}
                           {r.observaciones && <div style={{ fontWeight: 'normal', fontSize: '0.72rem', color: '#f59e0b' }} title={r.observaciones}>{r.observaciones}</div>}
                         </td>
-                        <td style={{ textAlign: 'right' }}>
-                          {r.rollos}
-                          {r.folios && <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>{isEn ? 'Folios' : 'Folios'}: {r.folios}</div>}
-                        </td>
+                        <td style={{ textAlign: 'right' }}>{r.rollos}</td>
                         <td style={{ textAlign: 'right' }}>{r.yardas}</td>
                         <td style={{ textAlign: 'right' }}>{r.metros}</td>
                         <td>
@@ -467,34 +530,6 @@ export default function TelasFacturas({ proveedores, codigos, fetchCodigos }) {
               <label className="form-label">{isEn ? 'Width' : 'Ancho'}</label>
               <input type="number" step="0.001" className="form-input" value={aprobando.ancho} onChange={e => setAprobando({ ...aprobando, ancho: e.target.value })} placeholder={isEn ? 'Optional' : 'Opcional'} />
             </div>
-            {parseInt(aprobando.rollos) > 0 && (
-              <div className="form-group">
-                <label className="form-label">{isEn ? 'Roll folios (of the 50 physical tags)' : 'Folios de rollo (de las 50 etiquetas físicas)'}</label>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(70px, 1fr))', gap: '0.4rem' }}>
-                  {Array.from({ length: parseInt(aprobando.rollos) }).map((_, idx) => {
-                    const elegidoAqui = aprobando.folios?.[idx];
-                    const elegidosOtros = (aprobando.folios || []).filter((f, i) => i !== idx && f != null);
-                    const opciones = foliosDisponibles.filter(f => !elegidosOtros.includes(f));
-                    return (
-                      <select
-                        key={idx}
-                        className="form-input"
-                        style={{ padding: '4px 6px', fontSize: '0.8rem' }}
-                        value={elegidoAqui || ''}
-                        onChange={e => setFolioEnSlot(idx, e.target.value)}
-                      >
-                        <option value="">{isEn ? `Roll ${idx + 1}` : `Rollo ${idx + 1}`}</option>
-                        {(elegidoAqui && !opciones.includes(elegidoAqui)) && <option value={elegidoAqui}>{elegidoAqui}</option>}
-                        {opciones.map(f => <option key={f} value={f}>{f}</option>)}
-                      </select>
-                    );
-                  })}
-                </div>
-                <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
-                  {isEn ? 'Optional — leave blank if you are not tagging individual rolls' : 'Opcional — déjalo en blanco si no vas a etiquetar los rollos por separado'}
-                </span>
-              </div>
-            )}
             <div className="form-group">
               <label className="form-label">{isEn ? 'Observations (defects, etc.)' : 'Observaciones (fallas, etc.)'}</label>
               <input className="form-input" value={aprobando.observaciones} onChange={e => setAprobando({ ...aprobando, observaciones: e.target.value })} placeholder={isEn ? 'Optional' : 'Opcional'} />

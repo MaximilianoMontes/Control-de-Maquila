@@ -4,6 +4,7 @@ import { ClipboardList, Plus, X, CheckCircle2, Trash2 } from 'lucide-react';
 import { useSettings } from '../../context/SettingsContext';
 import API_URL from '../../config';
 import { toast } from '../../utils/themeNotifications';
+import SearchableSelect from '../SearchableSelect';
 
 const authHeaders = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
 
@@ -30,6 +31,17 @@ export default function TelasRequisiciones({ codigos }) {
   useEffect(() => {
     fetchRequisiciones();
   }, [fetchRequisiciones]);
+
+  const seleccionarCodigoLinea = (codigoId) => {
+    const codigo = codigos.find(c => String(c.id) === String(codigoId));
+    setLineaNueva(prev => ({
+      ...prev,
+      codigo_id: codigoId,
+      // Se autorellena con el último ancho real registrado para ese código (el que se
+      // capturó al aprobar su recepción más reciente) — se puede seguir corrigiendo a mano.
+      ancho: codigo?.ultimo_ancho != null ? String(codigo.ultimo_ancho) : ''
+    }));
+  };
 
   const agregarLinea = () => {
     if (!lineaNueva.codigo_id || !lineaNueva.cantidad_requerida) return;
@@ -106,10 +118,14 @@ export default function TelasRequisiciones({ codigos }) {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.8rem', padding: '1rem', background: 'rgba(255,255,255,0.02)', borderRadius: '10px', marginBottom: '1rem' }}>
           <div className="form-group">
             <label className="form-label">{isEn ? 'Fabric Code' : 'Código de Tela'}</label>
-            <select className="form-input" value={lineaNueva.codigo_id} onChange={e => setLineaNueva({ ...lineaNueva, codigo_id: e.target.value })}>
-              <option value="">{isEn ? 'Select...' : 'Seleccionar...'}</option>
-              {codigos.map(c => <option key={c.id} value={c.id}>{c.codigo}</option>)}
-            </select>
+            <SearchableSelect
+              options={codigos}
+              value={lineaNueva.codigo_id}
+              onChange={seleccionarCodigoLinea}
+              labelKey="codigo"
+              valueKey="id"
+              placeholder={isEn ? 'Select...' : 'Seleccionar...'}
+            />
           </div>
           <div className="form-group">
             <label className="form-label">{isEn ? 'Quantity (m)' : 'Cantidad (m)'}</label>

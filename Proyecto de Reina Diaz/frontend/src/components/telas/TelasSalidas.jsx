@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import axios from 'axios';
-import { PackageMinus, PackagePlus, ClipboardCheck, RefreshCw, Boxes, CheckSquare } from 'lucide-react';
+import { PackagePlus, ClipboardCheck, RefreshCw, CheckSquare } from 'lucide-react';
 import { useSettings } from '../../context/SettingsContext';
 import API_URL from '../../config';
 import { toast } from '../../utils/themeNotifications';
+import SearchableSelect from '../SearchableSelect';
 
 const authHeaders = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
 
@@ -27,56 +28,37 @@ async function sugerirAsignaciones(codigoId, requerida) {
 
 function LineaPorSurtir({ linea, isEn, onSurtida, seleccionada, onToggleSeleccion }) {
   const [abierto, setAbierto] = useState(false);
-  const [rollos, setRollos] = useState(null);
-  const [cargandoRollos, setCargandoRollos] = useState(false);
-  const [asignado, setAsignado] = useState({}); // { recepcion_id: metros }
+  const [montoSurtir, setMontoSurtir] = useState('');
   const [surtiendo, setSurtiendo] = useState(false);
 
   const disponible = parseFloat(linea.stock_disponible);
   const requerida = parseFloat(linea.cantidad_requerida);
   const sinExistencia = disponible <= 0;
 
-  const abrirPanel = async () => {
+  const abrirPanel = () => {
+    setMontoSurtir(Math.min(requerida, disponible).toFixed(2));
     setAbierto(true);
-    setCargandoRollos(true);
-    try {
-      const res = await axios.get(`${API_URL}/api/telas/codigos/${linea.codigo_id}/recepciones`, authHeaders());
-      const disponibles = res.data.filter(r => parseFloat(r.disponible) > 0);
-      setRollos(disponibles);
-      let restante = requerida;
-      const sugerido = {};
-      for (const r of disponibles) {
-        if (restante <= 0) break;
-        const tomar = Math.min(parseFloat(r.disponible), restante);
-        if (tomar > 0) {
-          sugerido[r.id] = tomar.toFixed(2);
-          restante -= tomar;
-        }
-      }
-      setAsignado(sugerido);
-    } catch {
-      toast.error(isEn ? 'Error loading rolls' : 'Error al cargar los rollos');
-    } finally {
-      setCargandoRollos(false);
-    }
-  };
-
-  const totalAsignado = Object.values(asignado).reduce((acc, v) => acc + (parseFloat(v) || 0), 0);
-
-  const cambiarAsignacion = (recepcionId, value) => {
-    setAsignado(prev => ({ ...prev, [recepcionId]: value }));
   };
 
   const confirmarSurtir = async () => {
-    const asignaciones = Object.entries(asignado)
-      .map(([recepcion_id, metros]) => ({ recepcion_id, metros: parseFloat(metros) }))
-      .filter(a => a.metros > 0);
-    if (asignaciones.length === 0) {
-      toast.error(isEn ? 'Assign meters to at least one roll' : 'Asigna metros de al menos un rollo');
+    const monto = parseFloat(montoSurtir);
+    if (!(monto > 0)) {
+      toast.error(isEn ? 'Enter how much you are fulfilling' : 'Escribe cuánto estás surtiendo');
+      return;
+    }
+    if (monto > disponible) {
+      toast.error(isEn ? `Only ${disponible.toFixed(2)} m available` : `Solo hay ${disponible.toFixed(2)} m disponibles`);
       return;
     }
     setSurtiendo(true);
     try {
+      // Por dentro se sigue repartiendo entre los rollos más viejos con existencia (FIFO) —
+      // solo que ya no se le pide a la persona elegir de cuál rollo, solo cuánto surtir.
+      const asignaciones = await sugerirAsignaciones(linea.codigo_id, monto);
+      if (asignaciones.length === 0) {
+        toast.error(isEn ? 'No rolls with stock for this code' : 'No hay rollos con existencia de este código');
+        return;
+      }
       await axios.post(`${API_URL}/api/telas/requisiciones/lineas/${linea.id}/surtir`, { asignaciones }, authHeaders());
       toast.success(isEn ? 'Requisition line fulfilled' : 'Línea de requisición surtida');
       onSurtida();
@@ -117,43 +99,26 @@ function LineaPorSurtir({ linea, isEn, onSurtida, seleccionada, onToggleSeleccio
 
       {abierto && (
         <div style={{ padding: '0.8rem', borderTop: '1px solid rgba(245, 158, 11, 0.2)', background: 'rgba(0,0,0,0.03)' }}>
-          <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <Boxes size={13} /> {isEn ? 'Choose which rolls to take meters from:' : 'Elige de qué rollos tomar los metros:'}
+          <p style={{ margin: '0 0 0.6rem 0', fontSize: '0.8rem' }}>
+            {isEn ? 'Total stock available' : 'Existencia total disponible'}: <strong>{disponible.toFixed(2)} m</strong>
           </p>
-          {cargandoRollos ? (
-            <p style={{ margin: '0 0 0.6rem 0', fontSize: '0.8rem' }}>{isEn ? 'Loading...' : 'Cargando...'}</p>
-          ) : (rollos || []).length === 0 ? (
-            <p style={{ margin: '0 0 0.6rem 0', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>{isEn ? 'No rolls with stock for this code.' : 'No hay rollos con existencia de este código.'}</p>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginBottom: '0.6rem', maxHeight: '180px', overflowY: 'auto' }}>
-              {rollos.map(r => (
-                <div key={r.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', fontSize: '0.78rem' }}>
-                  <span style={{ flex: 1 }}>
-                    {new Date(r.fecha_creacion).toLocaleDateString('es-MX')} {r.numero_factura ? `· ${r.numero_factura}` : ''}
-                    <span style={{ color: 'var(--text-secondary)' }}> — {isEn ? 'available' : 'disponible'}: {parseFloat(r.disponible).toFixed(2)} m</span>
-                  </span>
-                  <input
-                    type="number" step="0.01" min="0" max={r.disponible}
-                    className="form-input" style={{ width: '90px', padding: '4px' }}
-                    value={asignado[r.id] ?? ''}
-                    onChange={e => cambiarAsignacion(r.id, e.target.value)}
-                    placeholder="0"
-                  />
-                </div>
-              ))}
-            </div>
-          )}
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>
-              {isEn ? 'Total assigned' : 'Total asignado'}: {totalAsignado.toFixed(2)} / {requerida.toFixed(2)} m
-            </span>
-            <button className="btn btn-primary" style={{ padding: '6px 14px', fontSize: '0.8rem' }} disabled={surtiendo || totalAsignado <= 0} onClick={confirmarSurtir}>
+          <div className="form-group" style={{ marginBottom: '0.6rem' }}>
+            <label className="form-label">{isEn ? 'Amount to fulfill' : 'Cantidad a surtir'}</label>
+            <input
+              type="number" step="0.01" min="0" max={disponible}
+              className="form-input"
+              value={montoSurtir}
+              onChange={e => setMontoSurtir(e.target.value)}
+            />
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <button className="btn btn-primary" style={{ padding: '6px 14px', fontSize: '0.8rem' }} disabled={surtiendo} onClick={confirmarSurtir}>
               {surtiendo ? (isEn ? 'Confirming...' : 'Confirmando...') : (isEn ? 'Confirm' : 'Confirmar')}
             </button>
           </div>
           {requerida > disponible && (
             <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.75rem', color: '#f59e0b' }}>
-              {isEn ? `Only ${disponible.toFixed(2)} m available — the closest possible amount was suggested.` : `Solo hay ${disponible.toFixed(2)} m disponibles — se sugirió la cantidad más cercana posible.`}
+              {isEn ? `Only ${disponible.toFixed(2)} m available — less than the ${requerida.toFixed(2)} m requested.` : `Solo hay ${disponible.toFixed(2)} m disponibles — menos de los ${requerida.toFixed(2)} m pedidos.`}
             </p>
           )}
         </div>
@@ -165,17 +130,10 @@ function LineaPorSurtir({ linea, isEn, onSurtida, seleccionada, onToggleSeleccio
 export default function TelasSalidas({ codigos, fetchCodigos }) {
   const { settings } = useSettings();
   const isEn = settings.language === 'en';
-  const [codigoId, setCodigoId] = useState('');
-  const [metros, setMetros] = useState('');
-  const [destino, setDestino] = useState('');
-  const [tipoSalida, setTipoSalida] = useState('produccion');
-  const [guardando, setGuardando] = useState(false);
 
   const [devCodigoId, setDevCodigoId] = useState('');
   const [devMetros, setDevMetros] = useState('');
   const [devMotivo, setDevMotivo] = useState('');
-  const [devFolio, setDevFolio] = useState('');
-  const [foliosEnUsoDelCodigo, setFoliosEnUsoDelCodigo] = useState([]);
   const [guardandoDev, setGuardandoDev] = useState(false);
 
   const [lineasPendientes, setLineasPendientes] = useState([]);
@@ -186,7 +144,6 @@ export default function TelasSalidas({ codigos, fetchCodigos }) {
   const [filtros, setFiltros] = useState({ desde: '', hasta: '', codigo_id: '', destino: '' });
   const [devoluciones, setDevoluciones] = useState([]);
 
-  const codigoSeleccionado = codigos.find(c => String(c.id) === String(codigoId));
   const devCodigoSeleccionado = codigos.find(c => String(c.id) === String(devCodigoId));
 
   const fetchLineasPendientes = useCallback(async () => {
@@ -227,20 +184,7 @@ export default function TelasSalidas({ codigos, fetchCodigos }) {
     fetchDevoluciones();
   }, [fetchDevoluciones]);
 
-  // Folios en uso del código seleccionado en Devoluciones — solo para referenciar de qué
-  // rollo salió el sobrante, no reserva nada.
-  useEffect(() => {
-    setDevFolio('');
-    if (!devCodigoId) { setFoliosEnUsoDelCodigo([]); return; }
-    (async () => {
-      try {
-        const res = await axios.get(`${API_URL}/api/telas/folios/en-uso?codigo_id=${devCodigoId}`, authHeaders());
-        setFoliosEnUsoDelCodigo(res.data);
-      } catch {
-        setFoliosEnUsoDelCodigo([]);
-      }
-    })();
-  }, [devCodigoId]);
+  const codigosConTodos = useMemo(() => [{ id: '', codigo: isEn ? 'All' : 'Todos' }, ...codigos], [codigos, isEn]);
 
   const requisicionesAgrupadas = useMemo(() => {
     const grupos = new Map();
@@ -253,34 +197,15 @@ export default function TelasSalidas({ codigos, fetchCodigos }) {
     return Array.from(grupos.values());
   }, [lineasPendientes]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!codigoId || !metros) return;
-    setGuardando(true);
-    try {
-      await axios.post(`${API_URL}/api/telas/salidas`, { codigo_id: codigoId, metros, destino, tipo: tipoSalida }, authHeaders());
-      toast.success(isEn ? 'Outbound movement registered' : 'Salida registrada');
-      setMetros('');
-      setDestino('');
-      fetchCodigos();
-      fetchHistorial();
-    } catch (e) {
-      toast.error(e.response?.data?.error || (isEn ? 'Error registering outbound movement' : 'Error al registrar la salida'));
-    } finally {
-      setGuardando(false);
-    }
-  };
-
   const handleSubmitDevolucion = async (e) => {
     e.preventDefault();
     if (!devCodigoId || !devMetros) return;
     setGuardandoDev(true);
     try {
-      await axios.post(`${API_URL}/api/telas/devoluciones`, { codigo_id: devCodigoId, metros: devMetros, motivo: devMotivo, folio: devFolio || null }, authHeaders());
+      await axios.post(`${API_URL}/api/telas/devoluciones`, { codigo_id: devCodigoId, metros: devMetros, motivo: devMotivo }, authHeaders());
       toast.success(isEn ? 'Return registered' : 'Devolución registrada');
       setDevMetros('');
       setDevMotivo('');
-      setDevFolio('');
       fetchCodigos();
       fetchDevoluciones();
     } catch (e) {
@@ -328,86 +253,7 @@ export default function TelasSalidas({ codigos, fetchCodigos }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem', alignItems: 'start' }}>
-        <div className="glass-card">
-          <h2 style={{ fontSize: '1.3rem', margin: '0 0 1.2rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <PackageMinus color="#ef4444" /> {isEn ? 'Register Outbound Fabric' : 'Registrar Salida de Tela'}
-          </h2>
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <div className="form-group">
-              <label className="form-label">{isEn ? 'Fabric Code' : 'Código de Tela'}</label>
-              <select className="form-input" value={codigoId} onChange={e => setCodigoId(e.target.value)} required>
-                <option value="">{isEn ? 'Select...' : 'Seleccionar...'}</option>
-                {codigos.map(c => (
-                  <option key={c.id} value={c.id}>{c.codigo} — {isEn ? 'Stock' : 'Existencia'}: {parseFloat(c.stock_metros).toFixed(2)} m</option>
-                ))}
-              </select>
-            </div>
-            {codigoSeleccionado && (
-              <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{codigoSeleccionado.descripcion}</p>
-            )}
-            <div className="form-group">
-              <label className="form-label">{isEn ? 'Meters' : 'Metros'}</label>
-              <input type="number" step="0.01" className="form-input" value={metros} onChange={e => setMetros(e.target.value)} required />
-            </div>
-            <div className="form-group">
-              <label className="form-label">{isEn ? 'Type' : 'Tipo'}</label>
-              <select className="form-input" value={tipoSalida} onChange={e => setTipoSalida(e.target.value)}>
-                <option value="produccion">{isEn ? 'Production' : 'Producción'}</option>
-                <option value="muestra">{isEn ? 'Sample' : 'Muestra'}</option>
-              </select>
-            </div>
-            <div className="form-group">
-              <label className="form-label">{isEn ? 'Destination (model / cut)' : 'Destino (modelo / corte)'}</label>
-              <input className="form-input" value={destino} onChange={e => setDestino(e.target.value)} placeholder={isEn ? 'Free text, e.g. model 723138' : 'Texto libre, ej. modelo 723138'} />
-            </div>
-            <button type="submit" className="btn btn-primary" disabled={guardando}>
-              {guardando ? (isEn ? 'Saving...' : 'Guardando...') : (isEn ? 'Register Outbound' : 'Registrar Salida')}
-            </button>
-          </form>
-        </div>
-
-        <div className="glass-card">
-          <h2 style={{ fontSize: '1.3rem', margin: '0 0 1.2rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <PackagePlus color="#34d399" /> {isEn ? 'Register Fabric Return' : 'Registrar Devolución de Tela'}
-          </h2>
-          <form onSubmit={handleSubmitDevolucion} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <div className="form-group">
-              <label className="form-label">{isEn ? 'Fabric Code' : 'Código de Tela'}</label>
-              <select className="form-input" value={devCodigoId} onChange={e => setDevCodigoId(e.target.value)} required>
-                <option value="">{isEn ? 'Select...' : 'Seleccionar...'}</option>
-                {codigos.map(c => <option key={c.id} value={c.id}>{c.codigo}</option>)}
-              </select>
-            </div>
-            {devCodigoSeleccionado && (
-              <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{devCodigoSeleccionado.descripcion}</p>
-            )}
-            <div className="form-group">
-              <label className="form-label">{isEn ? 'Meters' : 'Metros'}</label>
-              <input type="number" step="0.01" className="form-input" value={devMetros} onChange={e => setDevMetros(e.target.value)} required />
-            </div>
-            <div className="form-group">
-              <label className="form-label">{isEn ? 'Reason' : 'Motivo'}</label>
-              <input className="form-input" value={devMotivo} onChange={e => setDevMotivo(e.target.value)} placeholder={isEn ? 'e.g. unused excess, defect found later' : 'ej. sobrante sin usar, defecto detectado después'} />
-            </div>
-            {foliosEnUsoDelCodigo.length > 0 && (
-              <div className="form-group">
-                <label className="form-label">{isEn ? 'Roll folio it came from' : 'Folio del rollo del que salió'}</label>
-                <select className="form-input" value={devFolio} onChange={e => setDevFolio(e.target.value)}>
-                  <option value="">{isEn ? 'Not specified' : 'No especificar'}</option>
-                  {foliosEnUsoDelCodigo.map(f => <option key={f.folio} value={f.folio}>{f.folio}</option>)}
-                </select>
-                <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
-                  {isEn ? 'Optional, just for reference — does not free up the folio.' : 'Opcional, solo para referencia — no libera el folio.'}
-                </span>
-              </div>
-            )}
-            <button type="submit" className="btn btn-primary" disabled={guardandoDev}>
-              {guardandoDev ? (isEn ? 'Saving...' : 'Guardando...') : (isEn ? 'Register Return' : 'Registrar Devolución')}
-            </button>
-          </form>
-        </div>
-
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2.1fr) minmax(280px, 1fr)', gap: '1.5rem', alignItems: 'start' }}>
         <div className="glass-card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
             <h2 style={{ fontSize: '1.3rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -444,6 +290,40 @@ export default function TelasSalidas({ codigos, fetchCodigos }) {
             </div>
           )}
         </div>
+
+        <div className="glass-card">
+          <h2 style={{ fontSize: '1.15rem', margin: '0 0 1.2rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <PackagePlus color="#34d399" /> {isEn ? 'Register Fabric Return' : 'Registrar Devolución de Tela'}
+          </h2>
+          <form onSubmit={handleSubmitDevolucion} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div className="form-group">
+              <label className="form-label">{isEn ? 'Fabric Code' : 'Código de Tela'}</label>
+              <SearchableSelect
+                options={codigos}
+                value={devCodigoId}
+                onChange={setDevCodigoId}
+                labelKey="codigo"
+                valueKey="id"
+                placeholder={isEn ? 'Select...' : 'Seleccionar...'}
+                required
+              />
+            </div>
+            {devCodigoSeleccionado && (
+              <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{devCodigoSeleccionado.descripcion}</p>
+            )}
+            <div className="form-group">
+              <label className="form-label">{isEn ? 'Meters' : 'Metros'}</label>
+              <input type="number" step="0.01" className="form-input" value={devMetros} onChange={e => setDevMetros(e.target.value)} required />
+            </div>
+            <div className="form-group">
+              <label className="form-label">{isEn ? 'Reason' : 'Motivo'}</label>
+              <input className="form-input" value={devMotivo} onChange={e => setDevMotivo(e.target.value)} placeholder={isEn ? 'e.g. unused excess, defect found later' : 'ej. sobrante sin usar, defecto detectado después'} />
+            </div>
+            <button type="submit" className="btn btn-primary" disabled={guardandoDev}>
+              {guardandoDev ? (isEn ? 'Saving...' : 'Guardando...') : (isEn ? 'Register Return' : 'Registrar Devolución')}
+            </button>
+          </form>
+        </div>
       </div>
 
       <div className="glass-card">
@@ -465,10 +345,14 @@ export default function TelasSalidas({ codigos, fetchCodigos }) {
           </div>
           <div className="form-group">
             <label className="form-label">{isEn ? 'Fabric Code' : 'Código de Tela'}</label>
-            <select className="form-input" value={filtros.codigo_id} onChange={e => setFiltros({ ...filtros, codigo_id: e.target.value })}>
-              <option value="">{isEn ? 'All' : 'Todos'}</option>
-              {codigos.map(c => <option key={c.id} value={c.id}>{c.codigo}</option>)}
-            </select>
+            <SearchableSelect
+              options={codigosConTodos}
+              value={filtros.codigo_id}
+              onChange={val => setFiltros({ ...filtros, codigo_id: val })}
+              labelKey="codigo"
+              valueKey="id"
+              placeholder={isEn ? 'All' : 'Todos'}
+            />
           </div>
           <div className="form-group">
             <label className="form-label">{isEn ? 'Destination / Model' : 'Destino / Modelo'}</label>
@@ -482,7 +366,10 @@ export default function TelasSalidas({ codigos, fetchCodigos }) {
               <tr>
                 <th>{isEn ? 'Date & Time' : 'Fecha y Hora'}</th>
                 <th>{isEn ? 'Code' : 'Código'}</th>
-                <th style={{ textAlign: 'right' }}>{isEn ? 'Meters' : 'Metros'}</th>
+                <th style={{ textAlign: 'right' }}>{isEn ? 'Requested (m)' : 'Pedido (m)'}</th>
+                <th style={{ textAlign: 'right' }}>{isEn ? 'Fulfilled' : 'Surtido'}</th>
+                <th style={{ textAlign: 'right' }}>{isEn ? 'Stock (before)' : 'Metros'}</th>
+                <th style={{ textAlign: 'right' }}>{isEn ? 'Remaining' : 'Sobrante'}</th>
                 <th>{isEn ? 'Type' : 'Tipo'}</th>
                 <th>{isEn ? 'Destination' : 'Destino'}</th>
                 <th>{isEn ? 'User' : 'Usuario'}</th>
@@ -490,7 +377,7 @@ export default function TelasSalidas({ codigos, fetchCodigos }) {
             </thead>
             <tbody>
               {historial.length === 0 ? (
-                <tr><td colSpan="6" style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '1.5rem' }}>
+                <tr><td colSpan="9" style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '1.5rem' }}>
                   {isEn ? 'No outbound movements found.' : 'No se encontraron salidas.'}
                 </td></tr>
               ) : (
@@ -498,7 +385,10 @@ export default function TelasSalidas({ codigos, fetchCodigos }) {
                   <tr key={h.id}>
                     <td>{new Date(h.fecha).toLocaleString('es-MX')}</td>
                     <td style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>{h.codigo}</td>
-                    <td style={{ textAlign: 'right' }}>{parseFloat(h.metros).toFixed(2)}</td>
+                    <td style={{ textAlign: 'right' }}>{h.pedido_metros != null ? parseFloat(h.pedido_metros).toFixed(2) : '—'}</td>
+                    <td style={{ textAlign: 'right', fontWeight: 'bold' }}>{parseFloat(h.metros).toFixed(2)}</td>
+                    <td style={{ textAlign: 'right' }}>{h.inventario_antes != null ? parseFloat(h.inventario_antes).toFixed(2) : '—'}</td>
+                    <td style={{ textAlign: 'right' }}>{h.sobrante != null ? parseFloat(h.sobrante).toFixed(2) : '—'}</td>
                     <td>
                       <span className={`badge ${h.tipo === 'muestra' ? 'badge-warning' : 'badge-info'}`}>
                         {h.tipo === 'muestra' ? (isEn ? 'Sample' : 'Muestra') : (isEn ? 'Production' : 'Producción')}
@@ -523,14 +413,13 @@ export default function TelasSalidas({ codigos, fetchCodigos }) {
                 <th>{isEn ? 'Date & Time' : 'Fecha y Hora'}</th>
                 <th>{isEn ? 'Code' : 'Código'}</th>
                 <th style={{ textAlign: 'right' }}>{isEn ? 'Meters' : 'Metros'}</th>
-                <th>{isEn ? 'Folio' : 'Folio'}</th>
                 <th>{isEn ? 'Reason' : 'Motivo'}</th>
                 <th>{isEn ? 'User' : 'Usuario'}</th>
               </tr>
             </thead>
             <tbody>
               {devoluciones.length === 0 ? (
-                <tr><td colSpan="6" style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '1.5rem' }}>
+                <tr><td colSpan="5" style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '1.5rem' }}>
                   {isEn ? 'No returns found.' : 'No se encontraron devoluciones.'}
                 </td></tr>
               ) : (
@@ -539,7 +428,6 @@ export default function TelasSalidas({ codigos, fetchCodigos }) {
                     <td>{new Date(d.fecha).toLocaleString('es-MX')}</td>
                     <td style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>{d.codigo}</td>
                     <td style={{ textAlign: 'right', color: '#34d399', fontWeight: 'bold' }}>+{parseFloat(d.metros).toFixed(2)}</td>
-                    <td>{d.folio || '—'}</td>
                     <td>{d.motivo || '—'}</td>
                     <td>{d.username || '—'}</td>
                   </tr>

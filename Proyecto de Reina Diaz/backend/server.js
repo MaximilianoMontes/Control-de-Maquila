@@ -6586,8 +6586,13 @@ app.post('/api/telas/proveedores', authenticateToken, async (req, res) => {
     return res.status(400).json({ error: 'Nombre y letra única son requeridos' });
   }
   try {
-    const [existing] = await db.query("SELECT id FROM telas_proveedores WHERE letra = ?", [letra.toUpperCase()]);
-    if (existing.length > 0) return res.status(409).json({ error: `La letra ${letra.toUpperCase()} ya está en uso` });
+    // La letra sí se puede repetir entre proveedores distintos (igual que con tipos de tela)
+    // — solo se bloquea el duplicado exacto: mismo nombre y misma letra.
+    const [existing] = await db.query(
+      "SELECT id FROM telas_proveedores WHERE letra = ? AND nombre = ?",
+      [letra.toUpperCase(), nombre.trim()]
+    );
+    if (existing.length > 0) return res.status(409).json({ error: `Ya existe un proveedor idéntico (mismo nombre y letra)` });
     const [result] = await db.query(
       "INSERT INTO telas_proveedores (nombre, letra) VALUES (?, ?)",
       [nombre.trim(), letra.toUpperCase()]
@@ -6694,7 +6699,9 @@ app.get('/api/telas/codigos', authenticateToken, async (req, res) => {
       SELECT tc.*, tt.nombre as tipo_nombre, tp.nombre as proveedor_nombre, tcol.nombre as color_nombre,
         COALESCE((SELECT SUM(metros) FROM telas_recepciones WHERE codigo_id = tc.id AND estado != 'devuelto'), 0)
         - COALESCE((SELECT SUM(metros) FROM telas_salidas WHERE codigo_id = tc.id), 0)
-        + COALESCE((SELECT SUM(metros) FROM telas_devoluciones WHERE codigo_id = tc.id), 0) as stock_metros
+        + COALESCE((SELECT SUM(metros) FROM telas_devoluciones WHERE codigo_id = tc.id), 0) as stock_metros,
+        (SELECT tr.ancho FROM telas_recepciones tr WHERE tr.codigo_id = tc.id AND tr.ancho IS NOT NULL
+         ORDER BY tr.fecha_creacion DESC LIMIT 1) as ultimo_ancho
       FROM telas_codigos tc
       JOIN telas_tipos tt ON tc.tipo_id = tt.id
       JOIN telas_proveedores tp ON tc.proveedor_id = tp.id
@@ -6758,8 +6765,7 @@ app.get('/api/telas/facturas/:id', authenticateToken, async (req, res) => {
     if (!facturaRows[0]) return res.status(404).json({ error: 'Factura no encontrada' });
 
     const [recepciones] = await db.query(`
-      SELECT tr.*, tc.codigo, tc.descripcion, tc.precio_mxn,
-        (SELECT GROUP_CONCAT(trf.folio ORDER BY trf.folio ASC) FROM telas_recepcion_folios trf WHERE trf.recepcion_id = tr.id) as folios
+      SELECT tr.*, tc.codigo, tc.descripcion, tc.precio_mxn
       FROM telas_recepciones tr
       JOIN telas_codigos tc ON tr.codigo_id = tc.id
       WHERE tr.factura_id = ?
@@ -6784,6 +6790,33 @@ app.post('/api/telas/facturas', authenticateToken, uploadReporte.single('archivo
     );
     await db.query("INSERT INTO historial (user_id, action, target, description) VALUES (?, 'ALTA', 'TELAS', ?)", [req.user.id, `Registró la factura de telas ${numero_factura || '#' + result.insertId}`]);
     res.status(201).json({ id: result.insertId });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Reemplaza o quita el adjunto de una factura (solo se permite uno a la vez). Si llega un
+// archivo nuevo, sustituye al anterior; si llega "remove=true" sin archivo, solo lo quita.
+app.patch('/api/telas/facturas/:id/archivo', authenticateToken, uploadReporte.single('archivo'), async (req, res) => {
+  if (!telasAllowed(req)) return res.status(403).json({ error: 'No autorizado' });
+  try {
+    const [rows] = await db.query("SELECT archivo FROM telas_facturas WHERE id = ?", [req.params.id]);
+    if (!rows[0]) return res.status(404).json({ error: 'Factura no encontrada' });
+    const anterior = rows[0].archivo;
+
+    if (!req.file && req.body.remove !== 'true') {
+      return res.status(400).json({ error: 'Adjunta un archivo o marca remove=true' });
+    }
+    const nuevoArchivo = req.file ? `/uploads/${req.file.filename}` : null;
+    await db.query("UPDATE telas_facturas SET archivo = ? WHERE id = ?", [nuevoArchivo, req.params.id]);
+
+    if (anterior) {
+      const rutaAnterior = path.join(__dirname, anterior);
+      fs.unlink(rutaAnterior, () => {});
+    }
+
+    await db.query("INSERT INTO historial (user_id, action, target, description) VALUES (?, 'EDIT', 'TELAS', ?)", [req.user.id, `${nuevoArchivo ? 'Reemplazó' : 'Quitó'} el adjunto de la factura #${req.params.id}`]);
+    res.json({ archivo: nuevoArchivo });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -6858,14 +6891,28 @@ app.post('/api/telas/facturas/:id/parse-documento', authenticateToken, async (re
 
 app.post('/api/telas/facturas/:id/recepciones', authenticateToken, async (req, res) => {
   if (!telasAllowed(req)) return res.status(403).json({ error: 'No autorizado' });
-  const { codigo_id, rollos, yardas, observaciones } = req.body;
-  if (!codigo_id || yardas == null) return res.status(400).json({ error: 'Código y yardas son requeridos' });
+  const { codigo_id, rollos, yardas, metros: metrosInput, observaciones } = req.body;
+  const seDioEnMetros = metrosInput != null && metrosInput !== '';
+  if (!codigo_id || (!seDioEnMetros && (yardas == null || yardas === ''))) {
+    return res.status(400).json({ error: 'Código y una cantidad (yardas o metros) son requeridos' });
+  }
   try {
-    const metros = Math.floor(parseFloat(yardas) * 0.9144);
+    // La cantidad se puede capturar en yardas (como llega en la factura del proveedor) o
+    // directamente en metros (si ya se midió así) — cualquiera de las dos siempre deja
+    // ambos valores guardados, para que el resto del sistema (que trabaja en metros) no
+    // tenga que volver a convertir nada.
+    let metros, yardasFinal;
+    if (seDioEnMetros) {
+      metros = Math.floor(parseFloat(metrosInput));
+      yardasFinal = parseFloat((metros / 0.9144).toFixed(2));
+    } else {
+      yardasFinal = parseFloat(yardas);
+      metros = Math.floor(yardasFinal * 0.9144);
+    }
     const [result] = await db.query(
       `INSERT INTO telas_recepciones (factura_id, codigo_id, rollos, yardas, metros, observaciones)
        VALUES (?, ?, ?, ?, ?, ?)`,
-      [req.params.id, codigo_id, rollos || 0, yardas, metros, observaciones || null]
+      [req.params.id, codigo_id, rollos || 0, yardasFinal, metros, observaciones || null]
     );
     const [codigoRows] = await db.query("SELECT codigo FROM telas_codigos WHERE id = ?", [codigo_id]);
     await db.query("INSERT INTO historial (user_id, action, target, description) VALUES (?, 'ALTA', 'TELAS', ?)", [req.user.id, `Dio entrada a ${metros} m (${rollos || 0} rollos) del código ${codigoRows[0]?.codigo || codigo_id}`]);
@@ -6875,65 +6922,9 @@ app.post('/api/telas/facturas/:id/recepciones', authenticateToken, async (req, r
   }
 });
 
-// Solo hay 50 folios físicos para marcar rollos en la bodega — se reutilizan: un folio
-// está "en uso" mientras la recepción a la que se asignó todavía tenga tela disponible
-// (misma cuenta que ya se usa para "Disponible (m)" por recepción); en cuanto se agota,
-// vuelve a la lista de disponibles. excluirRecepcionId permite que una recepción vuelva a
-// aparecer como "libres" sus propios folios al re-editarla (para no bloquearse a sí misma).
-const TOTAL_FOLIOS = 50;
-const foliosEnUso = async (excluirRecepcionId) => {
-  const [rows] = await db.query(
-    `SELECT DISTINCT trf.folio
-     FROM telas_recepcion_folios trf
-     JOIN telas_recepciones tr ON trf.recepcion_id = tr.id
-     WHERE tr.estado != 'devuelto'
-       AND tr.id != COALESCE(?, 0)
-       AND (tr.metros - COALESCE((SELECT SUM(ts.metros) FROM telas_salidas ts WHERE ts.recepcion_id = tr.id), 0)) > 0`,
-    [excluirRecepcionId || null]
-  );
-  return rows.map(r => r.folio);
-};
-
-app.get('/api/telas/folios/disponibles', authenticateToken, async (req, res) => {
-  if (!telasAllowed(req)) return res.status(403).json({ error: 'No autorizado' });
-  try {
-    const excluirRecepcionId = req.query.excluir_recepcion_id ? parseInt(req.query.excluir_recepcion_id) : null;
-    const enUso = new Set(await foliosEnUso(excluirRecepcionId));
-    const disponibles = [];
-    for (let n = 1; n <= TOTAL_FOLIOS; n++) {
-      if (!enUso.has(n)) disponibles.push(n);
-    }
-    res.json(disponibles);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Folios actualmente en uso de UN código (para referenciar, al registrar una devolución,
-// de qué rollo salió el sobrante — no reserva nada, es solo informativo).
-app.get('/api/telas/folios/en-uso', authenticateToken, async (req, res) => {
-  if (!telasAllowed(req)) return res.status(403).json({ error: 'No autorizado' });
-  const { codigo_id } = req.query;
-  if (!codigo_id) return res.status(400).json({ error: 'codigo_id es requerido' });
-  try {
-    const [rows] = await db.query(
-      `SELECT trf.folio, tr.id as recepcion_id
-       FROM telas_recepcion_folios trf
-       JOIN telas_recepciones tr ON trf.recepcion_id = tr.id
-       WHERE tr.codigo_id = ? AND tr.estado != 'devuelto'
-         AND (tr.metros - COALESCE((SELECT SUM(ts.metros) FROM telas_salidas ts WHERE ts.recepcion_id = tr.id), 0)) > 0
-       ORDER BY trf.folio ASC`,
-      [codigo_id]
-    );
-    res.json(rows);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
 app.patch('/api/telas/recepciones/:id/revision', authenticateToken, async (req, res) => {
   if (!telasAllowed(req)) return res.status(403).json({ error: 'No autorizado' });
-  const { ancho_revisado, estado, devolucion_motivo, rollos, metros: metrosCorregidos, observaciones, ancho, folios } = req.body;
+  const { ancho_revisado, estado, devolucion_motivo, rollos, metros: metrosCorregidos, observaciones, ancho } = req.body;
   try {
     // Al aprobar (o en cualquier revisión), se puede corregir la cantidad que realmente
     // llegó — lo que ya se guardó al "dar de entrada" era la cantidad declarada, no
@@ -6945,28 +6936,6 @@ app.patch('/api/telas/recepciones/:id/revision', authenticateToken, async (req, 
     const metros = huboCorreccion ? parseFloat(metrosCorregidos) : null;
     const yardas = huboCorreccion ? parseFloat((metros / 0.9144).toFixed(2)) : null;
     const anchoValor = ancho != null && ancho !== '' ? parseFloat(ancho) : null;
-
-    // Un folio (etiqueta física de rollo) por cada rollo que se confirma en este paso —
-    // se valida server-side (no solo en el desplegable) que ninguno esté ya ocupado por
-    // otra recepción activa, y que no se repita dentro de esta misma solicitud.
-    if (Array.isArray(folios) && folios.length > 0) {
-      const foliosLimpios = folios
-        .map(f => parseInt(f))
-        .filter(f => Number.isInteger(f) && f >= 1 && f <= TOTAL_FOLIOS);
-      const repetidos = foliosLimpios.length !== new Set(foliosLimpios).size;
-      if (repetidos) {
-        return res.status(400).json({ error: 'No se puede repetir el mismo folio para dos rollos' });
-      }
-      const ocupados = new Set(await foliosEnUso(req.params.id));
-      const yaOcupado = foliosLimpios.find(f => ocupados.has(f));
-      if (yaOcupado) {
-        return res.status(400).json({ error: `El folio ${yaOcupado} ya está en uso por otro rollo` });
-      }
-      await db.query("DELETE FROM telas_recepcion_folios WHERE recepcion_id = ?", [req.params.id]);
-      for (const f of foliosLimpios) {
-        await db.query("INSERT INTO telas_recepcion_folios (recepcion_id, folio) VALUES (?, ?)", [req.params.id, f]);
-      }
-    }
 
     await db.query(
       `UPDATE telas_recepciones
@@ -6981,8 +6950,7 @@ app.patch('/api/telas/recepciones/:id/revision', authenticateToken, async (req, 
       [ancho_revisado ? 1 : 0, estado || 'pendiente', devolucion_motivo || null, estado || '', rollos != null && rollos !== '' ? rollos : null, yardas, metros, observaciones != null && observaciones !== '' ? observaciones : null, anchoValor, req.params.id]
     );
     const detalleCorreccion = huboCorreccion ? ` (cantidad corregida a ${metros} m / ${yardas} yardas)` : '';
-    const detalleFolios = Array.isArray(folios) && folios.length > 0 ? ` — folios: ${folios.join(', ')}` : '';
-    await db.query("INSERT INTO historial (user_id, action, target, description) VALUES (?, 'EDIT', 'TELAS', ?)", [req.user.id, `Actualizó la revisión de ancho de la recepción #${req.params.id} a "${estado}"${detalleCorreccion}${detalleFolios}`]);
+    await db.query("INSERT INTO historial (user_id, action, target, description) VALUES (?, 'EDIT', 'TELAS', ?)", [req.user.id, `Actualizó la revisión de ancho de la recepción #${req.params.id} a "${estado}"${detalleCorreccion}`]);
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -6990,45 +6958,22 @@ app.patch('/api/telas/recepciones/:id/revision', authenticateToken, async (req, 
 });
 
 // --- Salidas (paso 4 del flujo) ---
-app.post('/api/telas/salidas', authenticateToken, async (req, res) => {
-  if (!telasAllowed(req)) return res.status(403).json({ error: 'No autorizado' });
-  const { codigo_id, metros, destino, tipo } = req.body;
-  if (!codigo_id || !metros) return res.status(400).json({ error: 'Código y metros son requeridos' });
-  try {
-    const [recRows] = await db.query("SELECT COALESCE(SUM(metros), 0) as recibido FROM telas_recepciones WHERE codigo_id = ? AND estado != 'devuelto'", [codigo_id]);
-    const [salRows] = await db.query("SELECT COALESCE(SUM(metros), 0) as salido FROM telas_salidas WHERE codigo_id = ?", [codigo_id]);
-    const [devRows] = await db.query("SELECT COALESCE(SUM(metros), 0) as devuelto FROM telas_devoluciones WHERE codigo_id = ?", [codigo_id]);
-    const disponible = parseFloat(recRows[0].recibido) - parseFloat(salRows[0].salido) + parseFloat(devRows[0].devuelto);
-    if (parseFloat(metros) > disponible) {
-      return res.status(400).json({ error: `Stock insuficiente. Disponible: ${disponible} m` });
-    }
-    const [result] = await db.query(
-      "INSERT INTO telas_salidas (codigo_id, metros, destino, tipo, usuario_id) VALUES (?, ?, ?, ?, ?)",
-      [codigo_id, metros, destino || null, tipo === 'muestra' ? 'muestra' : 'produccion', req.user.id]
-    );
-    const [codigoRows] = await db.query("SELECT codigo FROM telas_codigos WHERE id = ?", [codigo_id]);
-    const etiquetaTipo = tipo === 'muestra' ? ' [MUESTRA]' : '';
-    await db.query("INSERT INTO historial (user_id, action, target, description) VALUES (?, 'EDIT', 'TELAS', ?)", [req.user.id, `Registró salida de ${metros} m del código ${codigoRows[0]?.codigo || codigo_id}${destino ? ` (${destino})` : ''}${etiquetaTipo}`]);
-    res.status(201).json({ id: result.insertId });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+// Ya no existe una salida manual libre: toda salida nace de surtir una línea de
+// requisición (ver POST /api/telas/requisiciones/lineas/:id/surtir más abajo), para que
+// siempre quede ligada a qué se pidió y para qué modelo.
 
 // Devolución de tela: metros que regresan a la existencia de un código.
 app.post('/api/telas/devoluciones', authenticateToken, async (req, res) => {
   if (!telasAllowed(req)) return res.status(403).json({ error: 'No autorizado' });
-  const { codigo_id, metros, motivo, salida_id, folio } = req.body;
+  const { codigo_id, metros, motivo, salida_id } = req.body;
   if (!codigo_id || !(parseFloat(metros) > 0)) return res.status(400).json({ error: 'Código y metros son requeridos' });
   try {
-    const folioValor = folio != null && folio !== '' ? parseInt(folio) : null;
     const [result] = await db.query(
-      "INSERT INTO telas_devoluciones (codigo_id, salida_id, metros, motivo, usuario_id, folio) VALUES (?, ?, ?, ?, ?, ?)",
-      [codigo_id, salida_id || null, metros, motivo || null, req.user.id, folioValor]
+      "INSERT INTO telas_devoluciones (codigo_id, salida_id, metros, motivo, usuario_id) VALUES (?, ?, ?, ?, ?)",
+      [codigo_id, salida_id || null, metros, motivo || null, req.user.id]
     );
     const [codigoRows] = await db.query("SELECT codigo FROM telas_codigos WHERE id = ?", [codigo_id]);
-    const detalleFolio = folioValor ? ` (folio ${folioValor})` : '';
-    await db.query("INSERT INTO historial (user_id, action, target, description) VALUES (?, 'EDIT', 'TELAS', ?)", [req.user.id, `Registró devolución de ${metros} m al código ${codigoRows[0]?.codigo || codigo_id}${motivo ? ` (${motivo})` : ''}${detalleFolio}`]);
+    await db.query("INSERT INTO historial (user_id, action, target, description) VALUES (?, 'EDIT', 'TELAS', ?)", [req.user.id, `Registró devolución de ${metros} m al código ${codigoRows[0]?.codigo || codigo_id}${motivo ? ` (${motivo})` : ''}`]);
     res.status(201).json({ id: result.insertId });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -7055,7 +7000,13 @@ app.get('/api/telas/salidas', authenticateToken, async (req, res) => {
   if (!telasAllowed(req)) return res.status(403).json({ error: 'No autorizado' });
   try {
     let query = `
-      SELECT ts.*, tc.codigo, u.username
+      SELECT ts.*, tc.codigo, u.username,
+        CASE WHEN ts.inventario_antes IS NULL THEN NULL
+          ELSE ts.inventario_antes - COALESCE(
+            (SELECT SUM(ts2.metros) FROM telas_salidas ts2 WHERE ts2.requisicion_linea_id = ts.requisicion_linea_id),
+            ts.metros
+          )
+        END as sobrante
       FROM telas_salidas ts
       JOIN telas_codigos tc ON ts.codigo_id = tc.id
       LEFT JOIN users u ON ts.usuario_id = u.id
@@ -7077,13 +7028,21 @@ app.get('/api/telas/salidas', authenticateToken, async (req, res) => {
 app.get('/api/telas/codigos/:id/historial', authenticateToken, async (req, res) => {
   if (!telasAllowed(req)) return res.status(403).json({ error: 'No autorizado' });
   try {
+    // Salidas y devoluciones combinadas en un solo historial por código, ordenadas por
+    // fecha — antes solo se veían las salidas, y una devolución (tela que regresa al
+    // almacén) no aparecía en ningún lado dentro del detalle del código.
     const [rows] = await db.query(`
-      SELECT ts.*, u.username
+      SELECT ts.id, ts.fecha, ts.metros, ts.destino, ts.tipo, u.username, 'salida' as movimiento
       FROM telas_salidas ts
       LEFT JOIN users u ON ts.usuario_id = u.id
       WHERE ts.codigo_id = ?
-      ORDER BY ts.fecha DESC
-    `, [req.params.id]);
+      UNION ALL
+      SELECT td.id, td.fecha, td.metros, td.motivo as destino, 'devolucion' as tipo, u.username, 'devolucion' as movimiento
+      FROM telas_devoluciones td
+      LEFT JOIN users u ON td.usuario_id = u.id
+      WHERE td.codigo_id = ?
+      ORDER BY fecha DESC
+    `, [req.params.id, req.params.id]);
     res.json(rows);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -7097,8 +7056,7 @@ app.get('/api/telas/codigos/:id/recepciones', authenticateToken, async (req, res
   try {
     const [rows] = await db.query(`
       SELECT tr.id, tr.rollos, tr.yardas, tr.metros, tr.estado, tr.fecha_creacion, tr.ancho, tf.numero_factura,
-        tr.metros - COALESCE((SELECT SUM(ts.metros) FROM telas_salidas ts WHERE ts.recepcion_id = tr.id), 0) as disponible,
-        (SELECT GROUP_CONCAT(trf.folio ORDER BY trf.folio ASC) FROM telas_recepcion_folios trf WHERE trf.recepcion_id = tr.id) as folios
+        tr.metros - COALESCE((SELECT SUM(ts.metros) FROM telas_salidas ts WHERE ts.recepcion_id = tr.id), 0) as disponible
       FROM telas_recepciones tr
       LEFT JOIN telas_facturas tf ON tr.factura_id = tf.id
       WHERE tr.codigo_id = ? AND tr.estado != 'devuelto'
@@ -7285,15 +7243,15 @@ app.post('/api/telas/requisiciones/lineas/:id/surtir', authenticateToken, async 
           return res.status(400).json({ error: `El rollo #${asign.recepcion_id} solo tiene ${recepcion.disponible_linea} m disponibles` });
         }
         const [salidaResult] = await connection.query(
-          "INSERT INTO telas_salidas (codigo_id, recepcion_id, metros, destino, usuario_id) VALUES (?, ?, ?, ?, ?)",
-          [linea.codigo_id, asign.recepcion_id, metrosAsignados, destino, req.user.id]
+          "INSERT INTO telas_salidas (codigo_id, recepcion_id, metros, destino, usuario_id, pedido_metros, inventario_antes, requisicion_linea_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+          [linea.codigo_id, asign.recepcion_id, metrosAsignados, destino, req.user.id, linea.cantidad_requerida, disponible, linea.id]
         );
         ultimaSalidaId = salidaResult.insertId;
       }
     } else {
       const [salidaResult] = await connection.query(
-        "INSERT INTO telas_salidas (codigo_id, metros, destino, usuario_id) VALUES (?, ?, ?, ?)",
-        [linea.codigo_id, metrosSurtir, destino, req.user.id]
+        "INSERT INTO telas_salidas (codigo_id, metros, destino, usuario_id, pedido_metros, inventario_antes, requisicion_linea_id) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        [linea.codigo_id, metrosSurtir, destino, req.user.id, linea.cantidad_requerida, disponible, linea.id]
       );
       ultimaSalidaId = salidaResult.insertId;
     }

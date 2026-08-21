@@ -4,6 +4,7 @@ import { Plus, Wand2, Copy, List, X, Search } from 'lucide-react';
 import { useSettings } from '../../context/SettingsContext';
 import API_URL from '../../config';
 import { toast } from '../../utils/themeNotifications';
+import SearchableSelect from '../SearchableSelect';
 
 const authHeaders = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
 
@@ -107,6 +108,10 @@ export default function TelasCatalogos({ catalogos, refetchCatalogos }) {
   const [resultado, setResultado] = useState(null);
   const [generando, setGenerando] = useState(false);
 
+  const tiposOpciones = tipos.map(t => ({ ...t, _label: `${t.abreviatura} — ${t.nombre}` }));
+  const proveedoresOpciones = proveedores.map(p => ({ ...p, _label: `${p.letra} — ${p.nombre}` }));
+  const coloresOpciones = colores.map(c => ({ ...c, _label: `${c.abreviatura} — ${c.nombre}` }));
+
   const crearTipo = async ([nombre, abreviatura, composicion]) => {
     try {
       await axios.post(`${API_URL}/api/telas/tipos`, { nombre, abreviatura, composicion_default: composicion }, authHeaders());
@@ -198,17 +203,25 @@ export default function TelasCatalogos({ catalogos, refetchCatalogos }) {
         <form onSubmit={handleGenerar} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1rem' }}>
           <div className="form-group">
             <label className="form-label">{isEn ? 'Fabric Type' : 'Tipo de Tela'}</label>
-            <select className="form-input" value={gen.tipo_id} onChange={e => setGen({ ...gen, tipo_id: e.target.value })}>
-              <option value="">{isEn ? 'Select...' : 'Seleccionar...'}</option>
-              {tipos.map(t => <option key={t.id} value={t.id}>{t.abreviatura} — {t.nombre}</option>)}
-            </select>
+            <SearchableSelect
+              options={tiposOpciones}
+              value={gen.tipo_id}
+              onChange={val => setGen({ ...gen, tipo_id: val })}
+              labelKey="_label"
+              valueKey="id"
+              placeholder={isEn ? 'Select...' : 'Seleccionar...'}
+            />
           </div>
           <div className="form-group">
             <label className="form-label">{isEn ? 'Supplier' : 'Proveedor'}</label>
-            <select className="form-input" value={gen.proveedor_id} onChange={e => setGen({ ...gen, proveedor_id: e.target.value })}>
-              <option value="">{isEn ? 'Select...' : 'Seleccionar...'}</option>
-              {proveedores.map(p => <option key={p.id} value={p.id}>{p.letra} — {p.nombre}</option>)}
-            </select>
+            <SearchableSelect
+              options={proveedoresOpciones}
+              value={gen.proveedor_id}
+              onChange={val => setGen({ ...gen, proveedor_id: val })}
+              labelKey="_label"
+              valueKey="id"
+              placeholder={isEn ? 'Select...' : 'Seleccionar...'}
+            />
           </div>
           <div className="form-group">
             <label className="form-label">{isEn ? 'Supplier Reference' : 'Referencia del Proveedor'}</label>
@@ -216,10 +229,14 @@ export default function TelasCatalogos({ catalogos, refetchCatalogos }) {
           </div>
           <div className="form-group">
             <label className="form-label">{isEn ? 'Color' : 'Color'}</label>
-            <select className="form-input" value={gen.color_id} onChange={e => setGen({ ...gen, color_id: e.target.value })}>
-              <option value="">{isEn ? 'Select...' : 'Seleccionar...'}</option>
-              {colores.map(c => <option key={c.id} value={c.id}>{c.abreviatura} — {c.nombre}</option>)}
-            </select>
+            <SearchableSelect
+              options={coloresOpciones}
+              value={gen.color_id}
+              onChange={val => setGen({ ...gen, color_id: val })}
+              labelKey="_label"
+              valueKey="id"
+              placeholder={isEn ? 'Select...' : 'Seleccionar...'}
+            />
           </div>
           <div className="form-group">
             <label className="form-label">{isEn ? 'Price (USD)' : 'Precio (USD)'}</label>

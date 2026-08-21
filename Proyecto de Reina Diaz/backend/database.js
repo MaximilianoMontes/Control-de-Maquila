@@ -2059,6 +2059,18 @@ async function initializeDatabase() {
       } catch (e) {
         // Columna ya existe
       }
+      try {
+        // Toda salida ahora nace de surtir una línea de requisición — estas tres columnas
+        // dejan registrado, en el momento exacto de esa salida: cuánto se había pedido,
+        // cuánta existencia total había ANTES de tomarla, y a qué línea pertenece (para
+        // poder sumar correctamente el "sobrante" cuando una misma línea se reparte entre
+        // varios rollos y por lo tanto genera más de un renglón en telas_salidas).
+        await connection.query("ALTER TABLE telas_salidas ADD COLUMN pedido_metros DECIMAL(10, 2) DEFAULT NULL");
+        await connection.query("ALTER TABLE telas_salidas ADD COLUMN inventario_antes DECIMAL(10, 2) DEFAULT NULL");
+        await connection.query("ALTER TABLE telas_salidas ADD COLUMN requisicion_linea_id INT DEFAULT NULL");
+      } catch (e) {
+        // Columnas ya existen
+      }
 
       // Devolución de tela: metros que regresan a la existencia de un código (excedente no
       // usado, tela defectuosa detectada después de una salida, etc.) — movimiento contrario

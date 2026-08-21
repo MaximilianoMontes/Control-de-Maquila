@@ -679,15 +679,16 @@ const guides_es = {
             <li><strong>Generar Código:</strong> En la pestaña "Catálogos y Códigos", se elige el tipo de tela, el proveedor, la referencia del proveedor y el color, junto con el precio en dólares y el tipo de cambio. El sistema arma el código automáticamente (no requiere escribirlo a mano ni pedirlo a una IA cada vez).</li>
             <li><strong>Dar de Entrada:</strong> En "Facturas y Recepción", se registra la factura del proveedor y se agregan las líneas de recepción (código, rollos, yardas y observaciones opcionales si algo llegó con fallas). El sistema convierte yardas a metros automáticamente y muestra el resultado antes de guardar.</li>
             <li><strong>Revisión de Ancho / Devolución:</strong> Cada línea recibida se puede marcar como Aprobada o Devuelta una vez que se revisa físicamente el ancho del rollo. Al <strong>aprobar</strong>, se puede corregir la cantidad de rollos/metros (ya en metros, no en yardas, para que coincida con cómo se vuelve a medir físicamente) si lo que llegó fue distinto de lo capturado al dar de entrada, y agregar observaciones — esa corrección actualiza la existencia real. Una línea marcada como <strong>Devuelta</strong> deja de contar en la existencia disponible.</li>
-            <li><strong>Salidas:</strong> Cuando se usa tela de la existencia, se registra la salida en metros, su destino y si es de <strong>Producción</strong> o <strong>Muestra</strong>, para mantener actualizada la existencia disponible de cada código. Si tela que ya salió regresa al almacén (sobrante, defecto detectado después), se registra como <strong>Devolución de Tela</strong> — un movimiento aparte que suma de vuelta a la existencia.</li>
+            <li><strong>Salidas:</strong> Ya no existe un registro manual de "Salida de Tela" — toda salida de existencia ocurre exclusivamente al <strong>surtir una Requisición</strong> (ver guía siguiente), para que cada metro que sale quede siempre ligado a un modelo. Si tela que ya salió regresa al almacén (sobrante, defecto detectado después), se registra como <strong>Devolución de Tela</strong> — un movimiento aparte que suma de vuelta a la existencia.</li>
           </ol>
           <p style={{ marginTop: '10px' }}>La sección de recepción ya no maneja "modelos" como campo — para pedir tela destinada a un modelo específico se usa la <strong>Requisición de Tela</strong> (ver guía siguiente).</p>
           <p>Cada factura muestra un estado de revisión general en su listado: <strong>Sin revisar</strong> (ninguna línea tocada), <strong>Revisado parcial</strong> (algunas líneas aprobadas/devueltas, otras pendientes) o <strong>Revisado total</strong> (todas las líneas ya resueltas).</p>
-          <p>En "Códigos de Tela y Existencias", al hacer clic sobre un código se puede ver su <strong>inventario por rollo</strong> (cada línea recibida, con su propia existencia disponible y su ancho real) además de su historial de salidas.</p>
-          <p>Al <strong>aprobar</strong> una recepción (confirmar la cantidad que realmente llegó) también se puede capturar el <strong>ancho</strong> real del rollo y, opcionalmente, asignarle a cada rollo un <strong>folio</strong> — solo existen 50 folios físicos (etiquetas reutilizables) para marcar rollos en la bodega; el sistema solo deja elegir folios que no estén ya ocupados por otro rollo con existencia disponible, y en cuanto un rollo se agota por completo su folio vuelve a estar libre para el siguiente. Al registrar una <strong>Devolución de Tela</strong> se puede indicar, solo como referencia, de qué folio salió el sobrante.</p>
+          <p>En "Códigos de Tela y Existencias", al hacer clic sobre un código se puede ver su <strong>inventario por rollo</strong> (cada línea recibida, con su propia existencia disponible y su ancho real) además de su historial combinado de salidas y devoluciones.</p>
+          <p>Al <strong>aprobar</strong> una recepción (confirmar la cantidad que realmente llegó) también se puede capturar el <strong>ancho</strong> real del rollo. Al dar de entrada, la cantidad se puede escribir en <strong>yardas o en metros</strong> (el sistema convierte automáticamente a la unidad que falte). Una factura solo admite <strong>un archivo adjunto</strong> a la vez, pero se puede cambiar o quitar en cualquier momento desde el detalle de la factura.</p>
+          <p>La abreviatura de un proveedor también se puede repetir entre dos proveedores distintos — solo se bloquea si el nombre y la abreviatura juntos son exactamente iguales a un proveedor ya existente. Y en todo el módulo, cualquier campo de selección (código, proveedor, tipo de tela, color) se puede filtrar escribiendo directamente, sin tener que desplazarse por la lista.</p>
         </div>
       ),
-      keywords: 'telas almacen materia prima algodon proveedor rollos yardas metros codigo generar recepcion revisado devolucion muestra observaciones inventario por rollo ancho folio folios etiqueta'
+      keywords: 'telas almacen materia prima algodon proveedor rollos yardas metros codigo generar recepcion revisado devolucion muestra observaciones inventario por rollo ancho adjunto archivo buscar escribiendo abreviatura repetida sin salida manual'
     },
     {
       title: 'Generar un código de tela y su fórmula de precio',
@@ -707,27 +708,27 @@ const guides_es = {
         <div>
           <p>La <strong>Requisición de Tela</strong> (pestaña "Requisiciones") es cómo se pide tela ya existente en el almacén para un modelo específico:</p>
           <ol>
-            <li>Se captura el modelo (funciona como folio) y se agregan una o más líneas (código de tela, cantidad en metros y ancho).</li>
+            <li>Se captura el modelo (funciona como folio) y se agregan una o más líneas (código de tela, cantidad en metros y ancho). Al elegir el código, el campo de ancho se autocompleta con el último ancho revisado de ese código (se puede corregir a mano si hace falta).</li>
             <li>Se guarda como <strong>borrador</strong> y se le pueden seguir agregando líneas.</li>
             <li>Al presionar <strong>"Finalizar"</strong>, la requisición pasa a la pestaña "Salidas", en la sección "Requisiciones por Surtir", agrupada con todas sus líneas juntas bajo el mismo folio.</li>
-            <li>Alguien del almacén presiona <strong>"Surtir"</strong> en la línea que le corresponde: el sistema muestra <strong>todos los rollos con existencia de ese código</strong> (fecha, factura de origen, metros disponibles de cada uno) y ya sugiere de cuáles tomar los metros para cubrir lo más cercano posible a lo pedido — se puede ajustar cuánto tomar de cada rollo, o repartir entre varios. Al confirmar, <strong>solo hasta ese momento se descuenta la existencia real</strong> del código.</li>
+            <li>Alguien del almacén presiona <strong>"Surtir"</strong> en la línea que le corresponde: el sistema muestra la <strong>existencia total disponible</strong> de ese código y propone surtir lo menor entre lo pedido y esa existencia — la cantidad se puede ajustar a mano antes de confirmar. Internamente el sistema sigue repartiendo esos metros entre los rollos más antiguos con existencia (no hay que elegir rollo por rollo). Al confirmar, <strong>solo hasta ese momento se descuenta la existencia real</strong> del código.</li>
           </ol>
           <p>Finalizar la requisición no descuenta nada por sí solo — la confirmación de "Surtir" es la única acción que mueve existencia.</p>
           <p>Para autorizar varias líneas de un jalón, cada una tiene una casilla junto a su nombre (solo se puede marcar si tiene existencia disponible); al marcar una o más y presionar <strong>"Autorizar (N)"</strong>, el sistema las surte automáticamente usando la asignación de rollos sugerida para cada una, sin tener que abrir cada línea por separado.</p>
           <p>El detalle de cada requisición muestra <strong>"Pedida (m)"</strong> junto a <strong>"Surtida (m)"</strong> — si una línea se surtió por menos de lo pedido (por ejemplo, porque no había suficiente existencia), la diferencia queda resaltada ahí mismo.</p>
         </div>
       ),
-      keywords: 'requisicion tela modelo surtir pendiente almacen pedido ancho folio rollos elegir autorizar lote casilla surtida pedida'
+      keywords: 'requisicion tela modelo surtir pendiente almacen pedido ancho autocompletar rollos elegir autorizar lote casilla surtida pedida existencia total'
     },
     {
       title: 'Ver el historial de salidas de un código o en general',
       content: (
         <div>
-          <p>En "Códigos de Tela y Existencias", al hacer clic sobre cualquier fila se abre el historial de salidas de ese código específico (fecha, metros, destino y usuario).</p>
-          <p>En "Salidas" hay además un historial general de todos los movimientos, con filtros de fecha, código de tela y destino/modelo.</p>
+          <p>En "Códigos de Tela y Existencias", al hacer clic sobre cualquier fila se abre el historial de ese código específico, combinando en una sola tabla sus <strong>salidas y devoluciones</strong> (cada renglón indica de cuál de los dos movimientos se trata).</p>
+          <p>En "Salidas" hay además un historial general de todos los movimientos, con filtros de fecha, código de tela y destino/modelo. Ahí cada salida muestra, además de fecha/código/usuario: <strong>Pedido (m)</strong> (lo que pedía la línea de la requisición), <strong>Surtido</strong> y <strong>Metros</strong> (lo que realmente se entregó en ese movimiento) y <strong>Sobrante</strong> (lo que quedó disponible del código justo después de esa salida).</p>
         </div>
       ),
-      keywords: 'historial salidas filtro fecha codigo modelo consultar'
+      keywords: 'historial salidas devoluciones filtro fecha codigo modelo consultar pedido surtido sobrante'
     },
     {
       title: 'Leer una factura o packing list con IA',
@@ -1342,15 +1343,16 @@ const guides_en = {
             <li><strong>Generate Code:</strong> In "Catalogs & Codes", select the fabric type, supplier, supplier reference, and color, along with the USD price and exchange rate. The system builds the code automatically (no need to write it by hand or ask an AI each time).</li>
             <li><strong>Receive Stock:</strong> In "Invoices & Receiving", register the supplier's invoice and add receipt lines (code, rolls, yards, and optional observations if something arrived with a flaw). The system converts yards to meters automatically and shows the result before saving.</li>
             <li><strong>Width Review / Return:</strong> Each received line can be marked as Approved or Returned once the roll's width is physically checked. When <strong>approving</strong>, you can correct the rolls/meters (in meters, not yards, matching how it gets re-measured physically) if what arrived was different from what was captured on receipt, and add observations — that correction updates the real stock. A line marked <strong>Returned</strong> stops counting toward available stock.</li>
-            <li><strong>Outbound:</strong> When fabric is used from stock, the outbound movement is registered in meters, its destination, and whether it's <strong>Production</strong> or <strong>Sample</strong>, keeping each code's available stock up to date. If fabric that already went out comes back (unused excess, a defect found later), register it as a <strong>Fabric Return</strong> — a separate movement that adds it back to stock.</li>
+            <li><strong>Outbound:</strong> There's no longer a manual "Fabric Outbound" entry — all stock leaves exclusively by <strong>fulfilling a Requisition</strong> (see the next guide), so every meter that goes out is always tied to a model. If fabric that already went out comes back (unused excess, a defect found later), register it as a <strong>Fabric Return</strong> — a separate movement that adds it back to stock.</li>
           </ol>
           <p style={{ marginTop: '10px' }}>Receiving no longer has a "models" field — to request fabric for a specific model, use a <strong>Fabric Requisition</strong> instead (see the next guide).</p>
           <p>Each invoice shows an overall review status in its list: <strong>Not reviewed</strong> (no line touched yet), <strong>Partially reviewed</strong> (some lines approved/returned, others still pending), or <strong>Fully reviewed</strong> (every line resolved).</p>
-          <p>In "Fabric Codes & Stock", clicking a code shows its <strong>inventory by roll</strong> (each received line, with its own available stock and actual width) in addition to its outbound history.</p>
-          <p>When <strong>approving</strong> a receipt (confirming the quantity that actually arrived) you can also capture the roll's actual <strong>width</strong> and, optionally, assign each roll a <strong>folio</strong> — there are only 50 physical folios (reusable tags) to mark rolls in the warehouse; the system only lets you pick folios that aren't already held by another roll with remaining stock, and once a roll is fully used up its folio becomes free again for the next one. When registering a <strong>Fabric Return</strong> you can note, just for reference, which folio the leftover came from.</p>
+          <p>In "Fabric Codes & Stock", clicking a code shows its <strong>inventory by roll</strong> (each received line, with its own available stock and actual width) in addition to its combined outbound + return history.</p>
+          <p>When <strong>approving</strong> a receipt (confirming the quantity that actually arrived) you can also capture the roll's actual <strong>width</strong>. When entering a receipt, the quantity can be typed in <strong>yards or meters</strong> (the system converts automatically to whichever unit is missing). An invoice only holds <strong>one attachment</strong> at a time, but it can be changed or removed at any point from the invoice detail view.</p>
+          <p>A supplier's abbreviation can also be reused across two different suppliers — it's only blocked if the name and abbreviation together are identical to an existing supplier. And anywhere in this module, any selection field (code, supplier, fabric type, color) can be filtered by typing directly, without scrolling the list.</p>
         </div>
       ),
-      keywords: 'fabrics warehouse raw material supplier rolls yards meters code generate receiving reviewed return sample observations inventory by roll width folio folios tag'
+      keywords: 'fabrics warehouse raw material supplier rolls yards meters code generate receiving reviewed return sample observations inventory by roll width attached file searchable typing repeated abbreviation no manual outbound'
     },
     {
       title: 'Generating a fabric code and its price formula',
@@ -1370,27 +1372,27 @@ const guides_en = {
         <div>
           <p>A <strong>Fabric Requisition</strong> ("Requisitions" tab) is how you request fabric already in stock for a specific model:</p>
           <ol>
-            <li>Enter the model (it works as the folio) and add one or more lines (fabric code, quantity in meters, and width).</li>
+            <li>Enter the model (it works as the folio) and add one or more lines (fabric code, quantity in meters, and width). Picking a code auto-fills the width field with that code's last reviewed width (it can still be corrected by hand).</li>
             <li>It's saved as a <strong>draft</strong> and more lines can still be added.</li>
             <li>Pressing <strong>"Finalize"</strong> moves it to the "Outbound" tab, under "Requisitions Ready to Fulfill", grouped with all its lines together under the same folio.</li>
-            <li>Someone in the warehouse presses <strong>"Fulfill"</strong> on the line they're handling: the system shows <strong>every roll with stock for that code</strong> (date, source invoice, meters available on each) and already suggests which ones to draw from to cover as close to the requested amount as possible — how much to take from each roll can be adjusted, or split across several. Confirming is what actually deducts stock.</li>
+            <li>Someone in the warehouse presses <strong>"Fulfill"</strong> on the line they're handling: the system shows the <strong>total available stock</strong> for that code and proposes fulfilling whichever is smaller between the requested amount and that stock — the amount can be adjusted by hand before confirming. Internally the system still splits those meters across the oldest rolls with stock (no need to pick a roll one by one). Confirming is what actually deducts stock.</li>
           </ol>
           <p>Finalizing a requisition alone doesn't touch stock — confirming "Fulfill" is the only action that does.</p>
           <p>To authorize several lines at once, each one has a checkbox next to it (only selectable if it has available stock); checking one or more and pressing <strong>"Authorize (N)"</strong> fulfills them automatically using each line's suggested roll allocation, without opening each one individually.</p>
           <p>Each requisition's detail shows <strong>"Requested (m)"</strong> next to <strong>"Supplied (m)"</strong> — if a line was fulfilled for less than requested (for example, because there wasn't enough stock), the difference is highlighted right there.</p>
         </div>
       ),
-      keywords: 'requisition fabric model fulfill pending warehouse request width folio rolls choose authorize bulk checkbox supplied requested'
+      keywords: 'requisition fabric model fulfill pending warehouse request width folio auto-fill authorize bulk checkbox supplied requested total stock'
     },
     {
       title: "Viewing a code's outbound history or the general one",
       content: (
         <div>
-          <p>In "Fabric Codes & Stock", clicking any row opens that code's outbound history (date, meters, destination, and user).</p>
-          <p>"Outbound" also has a general history of every movement, with filters by date, fabric code, and destination/model.</p>
+          <p>In "Fabric Codes & Stock", clicking any row opens that code's history, combining its <strong>outbound movements and returns</strong> into one table (each row indicates which of the two it is).</p>
+          <p>"Outbound" also has a general history of every movement, with filters by date, fabric code, and destination/model. There, each outbound row also shows <strong>Requested (m)</strong> (what the requisition line originally asked for), <strong>Supplied</strong> and <strong>Meters</strong> (what was actually delivered in that movement), and <strong>Remaining</strong> (what stayed available for that code right after that outbound movement).</p>
         </div>
       ),
-      keywords: 'history outbound filter date code model check'
+      keywords: 'history outbound returns filter date code model check requested supplied remaining'
     },
     {
       title: 'Reading an invoice or packing list with AI',
