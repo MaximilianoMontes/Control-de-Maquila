@@ -708,7 +708,7 @@ const guides_es = {
         <div>
           <p>La <strong>Requisición de Tela</strong> (pestaña "Requisiciones") es cómo se pide tela ya existente en el almacén para un modelo específico:</p>
           <ol>
-            <li>Se captura el modelo (funciona como folio) y se agregan una o más líneas (código de tela, cantidad en metros y ancho). Al elegir el código, el campo de ancho se autocompleta con el último ancho revisado de ese código (se puede corregir a mano si hace falta).</li>
+            <li>Se captura el modelo (funciona como folio) y se agregan una o más líneas (código de tela, cantidad en metros y ancho). Hay un campo <strong>Color</strong> junto al de código de tela que sirve como filtro: al elegir un color, el selector de código de tela solo muestra los códigos de ese color, para encontrarlo más rápido cuando hay muchos. Al elegir el código, el campo de ancho se autocompleta con el último ancho revisado de ese código (se puede corregir a mano si hace falta).</li>
             <li>Se guarda como <strong>borrador</strong> y se le pueden seguir agregando líneas.</li>
             <li>Al presionar <strong>"Finalizar"</strong>, la requisición pasa a la pestaña "Salidas", en la sección "Requisiciones por Surtir", agrupada con todas sus líneas juntas bajo el mismo folio.</li>
             <li>Alguien del almacén presiona <strong>"Surtir"</strong> en la línea que le corresponde: el sistema muestra la <strong>existencia total disponible</strong> de ese código y propone surtir lo menor entre lo pedido y esa existencia — la cantidad se puede ajustar a mano antes de confirmar. Internamente el sistema sigue repartiendo esos metros entre los rollos más antiguos con existencia (no hay que elegir rollo por rollo). Al confirmar, <strong>solo hasta ese momento se descuenta la existencia real</strong> del código.</li>
@@ -1372,7 +1372,7 @@ const guides_en = {
         <div>
           <p>A <strong>Fabric Requisition</strong> ("Requisitions" tab) is how you request fabric already in stock for a specific model:</p>
           <ol>
-            <li>Enter the model (it works as the folio) and add one or more lines (fabric code, quantity in meters, and width). Picking a code auto-fills the width field with that code's last reviewed width (it can still be corrected by hand).</li>
+            <li>Enter the model (it works as the folio) and add one or more lines (fabric code, quantity in meters, and width). A <strong>Color</strong> field next to the fabric code acts as a filter: picking a color narrows the fabric code dropdown to only codes of that color, making it faster to find when there are many. Picking a code auto-fills the width field with that code's last reviewed width (it can still be corrected by hand).</li>
             <li>It's saved as a <strong>draft</strong> and more lines can still be added.</li>
             <li>Pressing <strong>"Finalize"</strong> moves it to the "Outbound" tab, under "Requisitions Ready to Fulfill", grouped with all its lines together under the same folio.</li>
             <li>Someone in the warehouse presses <strong>"Fulfill"</strong> on the line they're handling: the system shows the <strong>total available stock</strong> for that code and proposes fulfilling whichever is smaller between the requested amount and that stock — the amount can be adjusted by hand before confirming. Internally the system still splits those meters across the oldest rolls with stock (no need to pick a roll one by one). Confirming is what actually deducts stock.</li>

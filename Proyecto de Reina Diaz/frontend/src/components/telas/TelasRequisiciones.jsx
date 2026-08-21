@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import axios from 'axios';
 import { ClipboardList, Plus, X, CheckCircle2, Trash2 } from 'lucide-react';
 import { useSettings } from '../../context/SettingsContext';
@@ -17,9 +17,28 @@ export default function TelasRequisiciones({ codigos }) {
   const [notas, setNotas] = useState('');
   const [lineas, setLineas] = useState([]);
   const [lineaNueva, setLineaNueva] = useState({ codigo_id: '', cantidad_requerida: '', ancho: '' });
+  const [colorFiltro, setColorFiltro] = useState('');
   const [guardando, setGuardando] = useState(false);
 
   const [detalle, setDetalle] = useState(null);
+
+  const coloresDisponibles = useMemo(() => {
+    const vistos = new Map();
+    (codigos || []).forEach(c => {
+      if (c.color_id != null && !vistos.has(c.color_id)) vistos.set(c.color_id, { id: c.color_id, nombre: c.color_nombre });
+    });
+    return Array.from(vistos.values()).sort((a, b) => a.nombre.localeCompare(b.nombre));
+  }, [codigos]);
+
+  const codigosFiltrados = useMemo(() => {
+    if (!colorFiltro) return codigos || [];
+    return (codigos || []).filter(c => String(c.color_id) === String(colorFiltro));
+  }, [codigos, colorFiltro]);
+
+  const seleccionarColorFiltro = (colorId) => {
+    setColorFiltro(colorId);
+    setLineaNueva(prev => ({ ...prev, codigo_id: '', ancho: '' }));
+  };
 
   const fetchRequisiciones = useCallback(async () => {
     try {
@@ -48,6 +67,7 @@ export default function TelasRequisiciones({ codigos }) {
     const codigo = codigos.find(c => String(c.id) === String(lineaNueva.codigo_id));
     setLineas(prev => [...prev, { ...lineaNueva, codigoTexto: codigo?.codigo || lineaNueva.codigo_id }]);
     setLineaNueva({ codigo_id: '', cantidad_requerida: '', ancho: '' });
+    setColorFiltro('');
   };
 
   const quitarLinea = (idx) => {
@@ -117,9 +137,20 @@ export default function TelasRequisiciones({ codigos }) {
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.8rem', padding: '1rem', background: 'rgba(255,255,255,0.02)', borderRadius: '10px', marginBottom: '1rem' }}>
           <div className="form-group">
+            <label className="form-label">{isEn ? 'Color' : 'Color'}</label>
+            <SearchableSelect
+              options={coloresDisponibles}
+              value={colorFiltro}
+              onChange={seleccionarColorFiltro}
+              labelKey="nombre"
+              valueKey="id"
+              placeholder={isEn ? 'All' : 'Todos'}
+            />
+          </div>
+          <div className="form-group">
             <label className="form-label">{isEn ? 'Fabric Code' : 'Código de Tela'}</label>
             <SearchableSelect
-              options={codigos}
+              options={codigosFiltrados}
               value={lineaNueva.codigo_id}
               onChange={seleccionarCodigoLinea}
               labelKey="codigo"
