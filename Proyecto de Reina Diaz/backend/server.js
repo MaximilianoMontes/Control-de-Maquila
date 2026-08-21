@@ -7001,11 +7001,11 @@ app.get('/api/telas/salidas', authenticateToken, async (req, res) => {
   try {
     let query = `
       SELECT ts.*, tc.codigo, u.username,
-        CASE WHEN ts.inventario_antes IS NULL THEN NULL
-          ELSE ts.inventario_antes - COALESCE(
+        CASE WHEN ts.pedido_metros IS NULL THEN NULL
+          ELSE COALESCE(
             (SELECT SUM(ts2.metros) FROM telas_salidas ts2 WHERE ts2.requisicion_linea_id = ts.requisicion_linea_id),
             ts.metros
-          )
+          ) - ts.pedido_metros
         END as sobrante
       FROM telas_salidas ts
       JOIN telas_codigos tc ON ts.codigo_id = tc.id
@@ -7168,6 +7168,44 @@ app.get('/api/telas/requisiciones/:id', authenticateToken, async (req, res) => {
     res.json({ ...reqRows[0], lineas });
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+// Editar una requisición completa (modelo, colores/notas y líneas) — solo mientras sigue en
+// borrador; una vez finalizada, sus líneas pueden ya estar ligadas a un surtido real y editarlas
+// dejaría inconsistente el historial de salidas.
+app.patch('/api/telas/requisiciones/:id', authenticateToken, async (req, res) => {
+  if (!telasAllowed(req)) return res.status(403).json({ error: 'No autorizado' });
+  const { modelo, notas, lineas } = req.body;
+  if (!modelo || !Array.isArray(lineas) || lineas.length === 0) {
+    return res.status(400).json({ error: 'Modelo y al menos una línea son requeridos' });
+  }
+  const connection = await db.getConnection();
+  try {
+    await connection.beginTransaction();
+    const [reqRows] = await connection.query("SELECT estado FROM telas_requisiciones WHERE id = ?", [req.params.id]);
+    if (!reqRows[0]) { await connection.rollback(); return res.status(404).json({ error: 'Requisición no encontrada' }); }
+    if (reqRows[0].estado !== 'borrador') {
+      await connection.rollback();
+      return res.status(400).json({ error: 'Solo se puede editar una requisición mientras está en borrador' });
+    }
+    await connection.query("UPDATE telas_requisiciones SET modelo = ?, notas = ? WHERE id = ?", [modelo, notas || null, req.params.id]);
+    await connection.query("DELETE FROM telas_requisicion_lineas WHERE requisicion_id = ?", [req.params.id]);
+    for (const linea of lineas) {
+      if (!linea.codigo_id || !linea.cantidad_requerida) continue;
+      await connection.query(
+        "INSERT INTO telas_requisicion_lineas (requisicion_id, codigo_id, cantidad_requerida, ancho) VALUES (?, ?, ?, ?)",
+        [req.params.id, linea.codigo_id, linea.cantidad_requerida, linea.ancho || null]
+      );
+    }
+    await connection.query("INSERT INTO historial (user_id, action, target, description) VALUES (?, 'EDIT', 'TELAS', ?)", [req.user.id, `Editó la requisición de tela para el modelo ${modelo}`]);
+    await connection.commit();
+    res.json({ success: true });
+  } catch (error) {
+    await connection.rollback();
+    res.status(500).json({ error: error.message });
+  } finally {
+    connection.release();
   }
 });
 

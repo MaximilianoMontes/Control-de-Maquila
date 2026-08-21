@@ -271,10 +271,11 @@ async function resetTrainingData() {
     [facturaJiaxing.insertId, codigoIds['FTJJ862AZU'], 4, 150, Math.floor(150 * 0.9144), 1.50]
   );
 
-  // Requisición en borrador — practicar "Finalizar"
+  // Requisición en borrador — practicar "Editar" y "Finalizar". "notas" guarda los colores
+  // del modelo (separados por coma), igual que hace el formulario de "Colores" en el frontend.
   const [reqBorrador] = await db.query(
     "INSERT INTO telas_requisiciones (modelo, notas, estado) VALUES (?,?,'borrador')",
-    ['531200-DEMO', 'Requisición de práctica sin finalizar']
+    ['531200-DEMO', 'Negro']
   );
   await db.query(
     'INSERT INTO telas_requisicion_lineas (requisicion_id, codigo_id, cantidad_requerida, ancho) VALUES (?,?,?,?)',
@@ -284,7 +285,7 @@ async function resetTrainingData() {
   // Requisición finalizada — aparece en Salidas → "Requisiciones por Surtir", lista para practicar "Surtir"
   const [reqFinalizada] = await db.query(
     "INSERT INTO telas_requisiciones (modelo, notas, estado, fecha_finalizada) VALUES (?,?,'finalizada',?)",
-    ['531300-DEMO', 'Requisición de práctica lista para surtir', daysFromNow(-1)]
+    ['531300-DEMO', 'Azul', daysFromNow(-1)]
   );
   await db.query(
     'INSERT INTO telas_requisicion_lineas (requisicion_id, codigo_id, cantidad_requerida, ancho) VALUES (?,?,?,?)',

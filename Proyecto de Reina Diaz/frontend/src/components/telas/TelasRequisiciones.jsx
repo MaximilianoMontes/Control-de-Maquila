@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import axios from 'axios';
-import { ClipboardList, Plus, X, CheckCircle2, Trash2 } from 'lucide-react';
+import { ClipboardList, Plus, X, CheckCircle2, Trash2, Pencil } from 'lucide-react';
 import { useSettings } from '../../context/SettingsContext';
 import API_URL from '../../config';
 import { toast } from '../../utils/themeNotifications';
@@ -14,30 +14,54 @@ export default function TelasRequisiciones({ codigos }) {
 
   const [requisiciones, setRequisiciones] = useState([]);
   const [modelo, setModelo] = useState('');
-  const [notas, setNotas] = useState('');
+  const [coloresModelo, setColoresModelo] = useState([]);
+  const [colorInput, setColorInput] = useState('');
   const [lineas, setLineas] = useState([]);
   const [lineaNueva, setLineaNueva] = useState({ codigo_id: '', cantidad_requerida: '', ancho: '' });
   const [colorFiltro, setColorFiltro] = useState('');
   const [guardando, setGuardando] = useState(false);
+  const [editandoId, setEditandoId] = useState(null);
 
   const [detalle, setDetalle] = useState(null);
 
-  const coloresDisponibles = useMemo(() => {
+  // Colores que ya tienen al menos un código generado — sugerencias para el campo de
+  // texto libre de "Colores" (no restringe: también se puede escribir una variante nueva).
+  const coloresCatalogo = useMemo(() => {
     const vistos = new Map();
     (codigos || []).forEach(c => {
-      if (c.color_id != null && !vistos.has(c.color_id)) vistos.set(c.color_id, { id: c.color_id, nombre: c.color_nombre });
+      if (c.color_nombre && !vistos.has(c.color_nombre.toLowerCase())) vistos.set(c.color_nombre.toLowerCase(), c.color_nombre);
     });
-    return Array.from(vistos.values()).sort((a, b) => a.nombre.localeCompare(b.nombre));
+    return Array.from(vistos.values()).sort((a, b) => a.localeCompare(b));
   }, [codigos]);
+
+  // El selector de Color de la línea solo ofrece los colores que se agregaron arriba para
+  // este modelo — así cada línea nueva se limita a uno de esos colores, nunca al catálogo completo.
+  const coloresOpciones = useMemo(() => coloresModelo.map(c => ({ id: c, nombre: c })), [coloresModelo]);
 
   const codigosFiltrados = useMemo(() => {
     if (!colorFiltro) return codigos || [];
-    return (codigos || []).filter(c => String(c.color_id) === String(colorFiltro));
+    return (codigos || []).filter(c => (c.color_nombre || '').toLowerCase() === colorFiltro.toLowerCase());
   }, [codigos, colorFiltro]);
 
-  const seleccionarColorFiltro = (colorId) => {
-    setColorFiltro(colorId);
+  const seleccionarColorFiltro = (colorNombre) => {
+    setColorFiltro(colorNombre);
     setLineaNueva(prev => ({ ...prev, codigo_id: '', ancho: '' }));
+  };
+
+  const agregarColorModelo = () => {
+    const valor = colorInput.trim();
+    if (!valor) return;
+    setColoresModelo(prev => prev.some(c => c.toLowerCase() === valor.toLowerCase()) ? prev : [...prev, valor]);
+    setColorInput('');
+  };
+
+  const quitarColorModelo = (idx) => {
+    const valor = coloresModelo[idx];
+    setColoresModelo(prev => prev.filter((_, i) => i !== idx));
+    if (colorFiltro && valor && colorFiltro.toLowerCase() === valor.toLowerCase()) {
+      setColorFiltro('');
+      setLineaNueva(prev => ({ ...prev, codigo_id: '', ancho: '' }));
+    }
   };
 
   const fetchRequisiciones = useCallback(async () => {
@@ -74,23 +98,63 @@ export default function TelasRequisiciones({ codigos }) {
     setLineas(prev => prev.filter((_, i) => i !== idx));
   };
 
+  const resetFormulario = () => {
+    setModelo('');
+    setColoresModelo([]);
+    setColorInput('');
+    setLineas([]);
+    setLineaNueva({ codigo_id: '', cantidad_requerida: '', ancho: '' });
+    setColorFiltro('');
+    setEditandoId(null);
+  };
+
   const guardarRequisicion = async () => {
     if (!modelo.trim() || lineas.length === 0) {
       toast.error(isEn ? 'Model and at least one line are required' : 'El modelo y al menos una línea son requeridos');
       return;
     }
     setGuardando(true);
+    const payload = {
+      modelo,
+      notas: coloresModelo.join(', '),
+      lineas: lineas.map(l => ({ codigo_id: l.codigo_id, cantidad_requerida: l.cantidad_requerida, ancho: l.ancho || null }))
+    };
     try {
-      await axios.post(`${API_URL}/api/telas/requisiciones`, { modelo, notas, lineas }, authHeaders());
-      toast.success(isEn ? 'Requisition created' : 'Requisición creada');
-      setModelo('');
-      setNotas('');
-      setLineas([]);
+      if (editandoId) {
+        await axios.patch(`${API_URL}/api/telas/requisiciones/${editandoId}`, payload, authHeaders());
+        toast.success(isEn ? 'Requisition updated' : 'Requisición actualizada');
+      } else {
+        await axios.post(`${API_URL}/api/telas/requisiciones`, payload, authHeaders());
+        toast.success(isEn ? 'Requisition created' : 'Requisición creada');
+      }
+      resetFormulario();
       fetchRequisiciones();
     } catch (e) {
-      toast.error(e.response?.data?.error || (isEn ? 'Error creating requisition' : 'Error al crear la requisición'));
+      toast.error(e.response?.data?.error || (isEn ? 'Error saving requisition' : 'Error al guardar la requisición'));
     } finally {
       setGuardando(false);
+    }
+  };
+
+  const editar = async (id) => {
+    try {
+      const res = await axios.get(`${API_URL}/api/telas/requisiciones/${id}`, authHeaders());
+      const req = res.data;
+      if (req.estado !== 'borrador') {
+        toast.error(isEn ? 'Only draft requisitions can be edited' : 'Solo se puede editar una requisición en borrador');
+        return;
+      }
+      setModelo(req.modelo || '');
+      setColoresModelo((req.notas || '').split(',').map(s => s.trim()).filter(Boolean));
+      setLineas((req.lineas || []).map(l => ({
+        codigo_id: l.codigo_id, cantidad_requerida: l.cantidad_requerida, ancho: l.ancho, codigoTexto: l.codigo
+      })));
+      setLineaNueva({ codigo_id: '', cantidad_requerida: '', ancho: '' });
+      setColorFiltro('');
+      setEditandoId(id);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch {
+      toast.error(isEn ? 'Error loading requisition' : 'Error al cargar la requisición');
     }
   };
 
@@ -122,7 +186,8 @@ export default function TelasRequisiciones({ codigos }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       <div className="glass-card">
         <h2 style={{ fontSize: '1.3rem', margin: '0 0 1rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <ClipboardList color="#f59e0b" /> {isEn ? 'New Fabric Requisition' : 'Nueva Requisición de Tela'}
+          {editandoId ? <Pencil color="#f59e0b" /> : <ClipboardList color="#f59e0b" />}
+          {editandoId ? (isEn ? 'Edit Fabric Requisition' : 'Editar Requisición de Tela') : (isEn ? 'New Fabric Requisition' : 'Nueva Requisición de Tela')}
         </h2>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1rem' }}>
           <div className="form-group">
@@ -130,8 +195,32 @@ export default function TelasRequisiciones({ codigos }) {
             <input className="form-input" value={modelo} onChange={e => setModelo(e.target.value)} placeholder="Ej: 53 2182" />
           </div>
           <div className="form-group">
-            <label className="form-label">{isEn ? 'Notes' : 'Notas'}</label>
-            <input className="form-input" value={notas} onChange={e => setNotas(e.target.value)} />
+            <label className="form-label">{isEn ? 'Colors' : 'Colores'}</label>
+            <div style={{ display: 'flex', gap: '0.4rem' }}>
+              <input
+                className="form-input"
+                list="telas-requisicion-colores-catalogo"
+                value={colorInput}
+                onChange={e => setColorInput(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); agregarColorModelo(); } }}
+                placeholder={isEn ? 'Type or pick, then Enter' : 'Escribe o elige y Enter'}
+              />
+              <button type="button" className="btn btn-secondary" onClick={agregarColorModelo}>
+                <Plus size={16} />
+              </button>
+            </div>
+            <datalist id="telas-requisicion-colores-catalogo">
+              {coloresCatalogo.map(c => <option key={c} value={c} />)}
+            </datalist>
+            {coloresModelo.length > 0 && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', marginTop: '0.5rem' }}>
+                {coloresModelo.map((c, idx) => (
+                  <span key={idx} className="badge badge-info" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    {c} <X size={12} style={{ cursor: 'pointer' }} onClick={() => quitarColorModelo(idx)} />
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -139,12 +228,13 @@ export default function TelasRequisiciones({ codigos }) {
           <div className="form-group">
             <label className="form-label">{isEn ? 'Color' : 'Color'}</label>
             <SearchableSelect
-              options={coloresDisponibles}
+              options={coloresOpciones}
               value={colorFiltro}
               onChange={seleccionarColorFiltro}
               labelKey="nombre"
               valueKey="id"
-              placeholder={isEn ? 'All' : 'Todos'}
+              placeholder={coloresModelo.length === 0 ? (isEn ? 'Add colors above first' : 'Agrega colores arriba') : (isEn ? 'All' : 'Todos')}
+              disabled={coloresModelo.length === 0}
             />
           </div>
           <div className="form-group">
@@ -186,9 +276,18 @@ export default function TelasRequisiciones({ codigos }) {
           </div>
         )}
 
-        <button className="btn btn-primary" disabled={guardando} onClick={guardarRequisicion}>
-          {guardando ? (isEn ? 'Saving...' : 'Guardando...') : (isEn ? 'Save Requisition' : 'Guardar Requisición')}
-        </button>
+        <div style={{ display: 'flex', gap: '0.6rem' }}>
+          <button className="btn btn-primary" disabled={guardando} onClick={guardarRequisicion}>
+            {guardando
+              ? (isEn ? 'Saving...' : 'Guardando...')
+              : editandoId ? (isEn ? 'Save Changes' : 'Guardar Cambios') : (isEn ? 'Save Requisition' : 'Guardar Requisición')}
+          </button>
+          {editandoId && (
+            <button type="button" className="btn btn-secondary" onClick={resetFormulario}>
+              {isEn ? 'Cancel' : 'Cancelar'}
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="glass-card">
@@ -221,9 +320,14 @@ export default function TelasRequisiciones({ codigos }) {
                         {isEn ? 'View' : 'Ver'}
                       </button>
                       {r.estado === 'borrador' && (
-                        <button className="btn btn-primary" style={{ padding: '4px 10px', fontSize: '0.78rem' }} onClick={() => finalizar(r.id)}>
-                          <CheckCircle2 size={14} style={{ marginRight: '4px' }} /> {isEn ? 'Finalize' : 'Finalizar'}
-                        </button>
+                        <>
+                          <button className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: '0.78rem' }} onClick={() => editar(r.id)}>
+                            <Pencil size={14} style={{ marginRight: '4px' }} /> {isEn ? 'Edit' : 'Editar'}
+                          </button>
+                          <button className="btn btn-primary" style={{ padding: '4px 10px', fontSize: '0.78rem' }} onClick={() => finalizar(r.id)}>
+                            <CheckCircle2 size={14} style={{ marginRight: '4px' }} /> {isEn ? 'Finalize' : 'Finalizar'}
+                          </button>
+                        </>
                       )}
                     </td>
                   </tr>

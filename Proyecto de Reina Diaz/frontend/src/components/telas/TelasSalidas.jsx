@@ -368,8 +368,7 @@ export default function TelasSalidas({ codigos, fetchCodigos }) {
                 <th>{isEn ? 'Code' : 'Código'}</th>
                 <th style={{ textAlign: 'right' }}>{isEn ? 'Requested (m)' : 'Pedido (m)'}</th>
                 <th style={{ textAlign: 'right' }}>{isEn ? 'Fulfilled' : 'Surtido'}</th>
-                <th style={{ textAlign: 'right' }}>{isEn ? 'Stock (before)' : 'Metros'}</th>
-                <th style={{ textAlign: 'right' }}>{isEn ? 'Remaining' : 'Sobrante'}</th>
+                <th style={{ textAlign: 'right' }}>{isEn ? 'Surplus' : 'Sobrante'}</th>
                 <th>{isEn ? 'Type' : 'Tipo'}</th>
                 <th>{isEn ? 'Destination' : 'Destino'}</th>
                 <th>{isEn ? 'User' : 'Usuario'}</th>
@@ -377,7 +376,7 @@ export default function TelasSalidas({ codigos, fetchCodigos }) {
             </thead>
             <tbody>
               {historial.length === 0 ? (
-                <tr><td colSpan="9" style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '1.5rem' }}>
+                <tr><td colSpan="8" style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '1.5rem' }}>
                   {isEn ? 'No outbound movements found.' : 'No se encontraron salidas.'}
                 </td></tr>
               ) : (
@@ -387,7 +386,6 @@ export default function TelasSalidas({ codigos, fetchCodigos }) {
                     <td style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>{h.codigo}</td>
                     <td style={{ textAlign: 'right' }}>{h.pedido_metros != null ? parseFloat(h.pedido_metros).toFixed(2) : '—'}</td>
                     <td style={{ textAlign: 'right', fontWeight: 'bold' }}>{parseFloat(h.metros).toFixed(2)}</td>
-                    <td style={{ textAlign: 'right' }}>{h.inventario_antes != null ? parseFloat(h.inventario_antes).toFixed(2) : '—'}</td>
                     <td style={{ textAlign: 'right' }}>{h.sobrante != null ? parseFloat(h.sobrante).toFixed(2) : '—'}</td>
                     <td>
                       <span className={`badge ${h.tipo === 'muestra' ? 'badge-warning' : 'badge-info'}`}>

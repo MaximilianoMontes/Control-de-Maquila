@@ -56,7 +56,7 @@ export default function TelasCodigos({ codigos, fetchCodigos }) {
   return (
     <div className="glass-card">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', gap: '1rem', flexWrap: 'wrap' }}>
-        <h2 style={{ fontSize: '1.3rem', margin: 0 }}>{isEn ? 'Fabric Codes & Stock' : 'Códigos de Tela y Existencias'}</h2>
+        <h2 style={{ fontSize: '1.3rem', margin: 0 }}>{isEn ? 'Warehouse & Stock' : 'Almacén y Existencias'}</h2>
         <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
           <div className="search-box">
             <Search size={16} className="search-box-icon" />
